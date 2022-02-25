@@ -45,7 +45,7 @@ if __name__ == "__main__":
                type_name           = "foo_type",
                verb                = HTTPVerb.GET,
                uri                 = "http://localhost",
-               uri_parameters      = ["foo"],
+               uri_parameters      = ["field_id", "start", "end"],
                request_body_schema = None,
              )
   http_get_id = insertHTTPType(cursor, http_get)
@@ -59,7 +59,11 @@ if __name__ == "__main__":
                 uri_parameters      = None,
                 request_body_schema = RequestBodySchema({"type": "object",
                                                          "properties": {
-                                                             "fizz": {"type": "string"},
+                                                             "field_id": {"type": "number"},
+                                                             "start":    {"type": "string",
+                                                                           "format": "date-time"
+                                                                         },
+
                                                          }
                                                        })
               )

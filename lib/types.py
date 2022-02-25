@@ -29,9 +29,11 @@ class UnitType(TypeTable):
   unit          : str
   local_type_id : int
 
+
 class LocalType(TypeTable):
   type_name      : str
   type_category  : Optional[str]
+
 
 # TODO: NHA Rate?
 # TODO: Cultivar vs Variety?
@@ -99,12 +101,21 @@ class LocalValue(Detailed):
   unit_type_id   : int
   quantity       : float
   local_group_id : Optional[int]
+  acquired       : date
 
 
 class LocalParameter(Table):
-  local_value_id : int
-  acquired       : date
+  local_parameter_name : str
+  local_value_id       : int
 
+
+class GeoSpatialKey(TypedDict):
+  geom_id  : int
+  field_id : Optional[int]
+
+class TemporalKey(TypedDict):
+  start_date : date
+  end_date   : date
 
 
 class Key(TypedDict):
@@ -160,7 +171,7 @@ class RequestBodySchema(object):
     self.schema = schema
 
 
-class HTTPType(TypedDict):
+class HTTPType(TypeTable):
   type_name           : str
   verb                : HTTPVerb
   uri                 : str
@@ -179,7 +190,7 @@ type_table_lookup = {
   HTTPType   : "http_type",
 }
 
-AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, HTTPType]
+AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType]
 
 
 data_table_lookup = {
@@ -189,9 +200,11 @@ data_table_lookup = {
   Field           : "field",
   LocalValue      : "local_value",
   LocalParameter  : "local_parameter",
+  GeoSpatialKey   : "geospatial_key",
+  TemporalKey     : "temporal_key",
 }
 
-AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, LocalParameter, LocalGroup]
+AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, LocalParameter, GeoSpatialKey, TemporalKey]
 
 id_table_lookup = type_table_lookup.copy()
 id_table_lookup.update(data_table_lookup)

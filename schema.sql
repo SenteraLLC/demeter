@@ -424,23 +424,24 @@ ALTER TABLE function
 -- Argument Tables --
 ---------------------
 
-create table key_set (
-  key_set_id bigserial
-             primary key,
-
+create table geospatial_key (
+  geospatial_key_id bigserial
+                    primary key,
   geom_id    bigint
              not null
              references geom(geom_id),
-
   field_id   bigint
-             references field(field_id),
-  start_time timestamp without time zone
-             not null,
-  end_time   timestamp without time zone
-             not null,
-  details    jsonb
-             not null
-             default '{}'::jsonb
+             references field(field_id)
+);
+
+
+create table temporal_key (
+  temporal_key_id bigserial
+                  primary key,
+  start_date      date
+                  not null,
+  end_date        date
+                  not null
 );
 
 
@@ -472,6 +473,10 @@ create table local_value (
 
   local_group_id bigint
                  references local_group(local_group_id),
+
+  acquired       timestamp without time zone
+                 not null
+                 default now(),
 
   last_updated   timestamp without time zone
                  not null
@@ -549,6 +554,19 @@ create table s3_output (
 );
 
 alter table s3_parameter add constraint s3_input_output foreign key (s3_output_name, s3_type_id, output_function_id) references s3_output(s3_output_name, s3_type_id, function_id);
+
+
+create table s3_output_key (
+  s3_output_name    text,
+  s3_type_id        bigint
+                    references s3_type(s3_type_id),
+  function_id       bigint
+                    references function(function_id),
+  geospatial_key_id bigint
+                    references geospatial_key(geospatial_key_id),
+  temporal_key_id   bigint
+                    references temporal_key(temporal_key_id)
+);
 
 
 -- TODO: This should, by some (undecided) means, be a relation between a ML Ops Model Function and an Airflow DAG

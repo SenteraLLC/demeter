@@ -41,8 +41,6 @@ def _insertAndReturnId(table_name : str,
   table_id = table_name + "_id"
   return_key = [table_id]
   stmt = _generateInsertStmt(table_name, table, return_key)
-  print("STMT: ",stmt.as_string(cursor))
-  print("Table: ",table)
   cursor.execute(stmt, table)
   result = cursor.fetchone()
   return int(result[table_id])

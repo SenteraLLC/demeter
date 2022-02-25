@@ -19,9 +19,11 @@ ReturnId = Callable[[Any, T], int]
 
 insertField          : ReturnId[types.Field]      = getInsertReturnIdFunction(types.Field)
 insertLocalParameter : ReturnId[types.LocalParameter]      = getInsertReturnIdFunction(types.LocalParameter)
-insertLocalValue : ReturnId[types.LocalValue] = getInsertReturnIdFunction(types.LocalValue)
-insertOwner      : ReturnId[types.Owner]      = getInsertReturnIdFunction(types.Owner)
-insertGrower     : ReturnId[types.Grower]     = getInsertReturnIdFunction(types.Grower)
+insertLocalValue     : ReturnId[types.LocalValue] = getInsertReturnIdFunction(types.LocalValue)
+insertOwner          : ReturnId[types.Owner]      = getInsertReturnIdFunction(types.Owner)
+insertGrower         : ReturnId[types.Grower]     = getInsertReturnIdFunction(types.Grower)
+insertGeoSpatialKey : ReturnId[types.GeoSpatialKey] = getInsertReturnIdFunction(types.GeoSpatialKey)
+insertTemporalKey : ReturnId[types.TemporalKey] = getInsertReturnIdFunction(types.TemporalKey)
 
 
 insertUnitType   : ReturnId[types.UnitType]   = getInsertReturnIdFunction(types.UnitType)
@@ -31,6 +33,7 @@ insertCropStage  : ReturnId[types.CropStage]  = getInsertReturnIdFunction(types.
 insertReportType : ReturnId[types.ReportType] = getInsertReturnIdFunction(types.ReportType)
 insertLocalGroup : ReturnId[types.LocalGroup] = getInsertReturnIdFunction(types.LocalGroup)
 insertHTTPType : ReturnId[types.HTTPType] = getInsertReturnIdFunction(types.HTTPType)
+
 
 # TODO: Fix typing issues here
 S = TypeVar('S', bound=types.AnyKeyTable)
@@ -67,7 +70,6 @@ GetTable = Callable[[Any, int], V]
 getField : GetTable[types.Field] = getTableFunction(types.Field)
 getOwner : GetTable[types.Owner] = getTableFunction(types.Owner)
 getGeom  : GetTable[types.Geom]  = getTableFunction(types.Geom)
-
 
 W = TypeVar('W', bound=types.AnyTypeTable)
 

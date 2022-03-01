@@ -1,8 +1,6 @@
-from lib.datasource import DataSource, S3
-from lib.function import Function
-from lib.types import LocalType
-
-# TODO: Stubs?
+from ..lib.datasource import DataSource, S3
+from ..lib.function import Function
+from ..lib.types import LocalType
 
 import geopandas as gpd  # type: ignore
 
@@ -31,7 +29,6 @@ def example_transformation(datasource : DataSource, some_constant : int) -> S3[g
 
 if __name__ == "__main__":
   example_transformation(some_constant = 5)
-
 
   #geom_binary = schema_api.getGeom(cursor, g["geom_id"])
   #geom = wkb.loads(geom_binary, hex=True)

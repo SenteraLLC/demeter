@@ -4,6 +4,7 @@ from .connections import S3Connection, PGConnection
 from .connections import getS3Connection
 
 import json
+import os
 from typing import List, TypedDict, Dict, Any, Callable
 import psycopg2
 
@@ -20,8 +21,10 @@ from psycopg2.extensions import connection as PGConnection
 
 
 # TODO: Get this information via Airflow XCOM
-GEO_KEYS = json.load(open("./test_data/geospatial.json"))
-TEMPORAL_KEYS = json.load(open("./test_data/temporal.json"))
+my_path = os.path.dirname(os.path.realpath(__file__))
+print("PATH: ",my_path)
+GEO_KEYS = json.load(open(os.path.join(my_path, "../scripts/test_data/geospatial.json")))
+TEMPORAL_KEYS = json.load(open(os.path.join(my_path, "../scripts/test_data/temporal.json")))
 
 # TODO: Get this information from ENV variables
 mlops_db_connection : PGConnection = psycopg2.connect(host="localhost", options="-c search_path=test_mlops,public", database="postgres")

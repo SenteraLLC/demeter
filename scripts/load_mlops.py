@@ -1,5 +1,5 @@
-from .lib import schema_api as db
-from .lib import types
+from ..lib import schema_api as db
+from ..lib import types
 
 import psycopg2
 import psycopg2.extras

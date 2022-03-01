@@ -1,9 +1,9 @@
 import psycopg2
 import datetime
 
-from lib.types import GeoSpatialKey, TemporalKey
+from ..lib.types import GeoSpatialKey, TemporalKey
 
-from lib.schema_api import insertGeoSpatialKey, insertTemporalKey
+from ..lib.schema_api import insertGeoSpatialKey, insertTemporalKey
 
 if __name__ == "__main__":
   connection = psycopg2.connect(host="localhost", options="-c search_path=test_mlops,public", database="postgres")

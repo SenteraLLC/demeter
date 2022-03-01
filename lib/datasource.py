@@ -61,10 +61,12 @@ class DataSource(object):
     try:
       params = kwargs["params"]
       expected_params = http_type["uri_parameters"]
-      missing = set(params.keys()) - set(expected_params.keys())
+      print("Params: ",params)
+      print("Expected: ",expected_params)
+      missing = set(expected_params) - set(params.keys())
       if len(missing):
-        raise Exception(f"Missing args: {missing.keys()}")
-      extraneous = set(expected_params.keys()) - set(params.keys())
+        raise Exception(f"Missing args: {missing}")
+      extraneous = set(params.keys()) - set(expected_params)
       if len(extraneous):
         raise Exception(f"Extraneous args: {extraneous.keys()}")
     except KeyError:

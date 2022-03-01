@@ -15,10 +15,10 @@ boto3 = "^1.20.48"
 
 [tool.poetry.dev-dependencies]
 types-jsonschema = "^4.4.1"
-types.psycopg2 = "^2.9.7"
-types.requests = "^2.27.10"
-types.urllib3 = "^1.26.9"
-types.boto3 = "^1.21.5"
+types-psycopg2 = "^2.9.7"
+types-requests = "^2.27.10"
+types-urllib3 = "^1.26.9"
+types-boto3 = "^1.0.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

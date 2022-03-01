@@ -15,16 +15,17 @@ def example_transformation(datasource : DataSource, some_constant : int) -> S3[g
   for k in datasource.keys():
     print(k)
 
-  nitrogen = datasource.local.load(LocalType(type_name="nitrogen",
-                                             type_category="application",
-                                            ),
-                                  )
+  nitrogen = datasource.local(LocalType(type_name="nitrogen",
+                                        type_category="application",
+                                       ),
+                             )
   for i, n in enumerate(nitrogen):
     print("Result #",i)
     print(n)
     print("\n")
 
-  #my_stuff = datasource.http.get("http://localhost", paramete)
+  parameters = {"field_id": 1, "start_date": 2, "end_date": 3}
+  my_stuff = datasource.http("foo_type", params=parameters)
   #my_fizzbuzz = datasource.s3.get("fizzbuzz")
   return S3(gpd.GeoDataFrame())
 

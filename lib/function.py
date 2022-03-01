@@ -42,7 +42,7 @@ def Function(name  : str,
     datasource          : DataSource = DataSource(GEO_KEYS, TEMPORAL_KEYS, mlops_db_connection, s3_connection)
 
     # TODO: Warn if non-keyword arguments exist?
-    # @wraps
+    @wraps(fn)
     def add_datasource(**kwargs):
       return fn(datasource, **kwargs)
     return add_datasource

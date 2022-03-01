@@ -70,6 +70,25 @@ GetTable = Callable[[Any, int], V]
 getField : GetTable[types.Field] = getTableFunction(types.Field)
 getOwner : GetTable[types.Owner] = getTableFunction(types.Owner)
 getGeom  : GetTable[types.Geom]  = getTableFunction(types.Geom)
+getHTTP  : GetTable[types.HTTPType] = getTableFunction(types.HTTPType)
+
+
+def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, types.HTTPType]:
+  stmt = """select * from http_type where type_name = %(name)s"""
+  cursor.execute(stmt, { 'name' : http_type_name })
+
+  results = cursor.fetchall()
+  # TODO: Better exceptions
+  assert(len(results) == 1)
+  result_with_id = results[0]
+
+  http_type_id = result_with_id["http_type_id"]
+  result_with_id["verb"] = types.stringToHTTPVerb(result_with_id["verb"])
+  del result_with_id["http_type_id"]
+  http_type = cast(types.HTTPType, result_with_id)
+
+  return http_type_id, http_type
+
 
 W = TypeVar('W', bound=types.AnyTypeTable)
 

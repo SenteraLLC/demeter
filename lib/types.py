@@ -164,6 +164,8 @@ class HTTPVerb(Enum):
   POST   = 3
   DELETE = 4
 
+def stringToHTTPVerb(s : str):
+  return HTTPVerb[s.upper()]
 
 class RequestBodySchema(object):
   def __init__(self : Any, schema : Any):

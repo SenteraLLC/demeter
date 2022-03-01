@@ -7,6 +7,12 @@ Installing GeoPandas for M1
 https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1
 
 
+How to run 'load_mlops' script
+1) Rename git repo from "mlops-db" to "mlops_db" because python doesn't allow hyphens in package names
+2) Execute a command like the following:
+python3 -m mlops_db.load_mlops --host localhost --data_path ~/projects/geoml_db/new_db/sample_data --field_id_path /tmp/field_stuff.json
+Note: The 'field_id_path' argument points to a generated file, it store some intermediate data that is used between sample data loads.
+
 
 Process flow:
 

@@ -543,7 +543,7 @@ def loadDataFolder(hostname : str, data_path : str, field_id_map : Dict[str, int
   psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
 
   options = "-c search_path=test_mlops,public"
-  connection = psycopg2.connect(host=hostname, dbname="postgres", options=options, port=8765)
+  connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
   cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
   print("Loading Data Directory: ",data_path)

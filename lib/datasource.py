@@ -1,7 +1,9 @@
 import itertools
 import jsonschema
 
-from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, Set
+from io import BytesIO
+
+from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, Set, BinaryIO
 
 import psycopg2
 import requests
@@ -23,7 +25,7 @@ class DataSource(object):
                geospatial_keys : List[GeoSpatialKey],
                temporal_keys   : List[TemporalKey],
                pg_connection   : PGConnection,
-               s3_connection   : S3Connection,
+               s3_connection   : Any,
               ):
     self.geospatial_keys = geospatial_keys
     self.temporal_keys = temporal_keys
@@ -78,29 +80,24 @@ class DataSource(object):
                             ) -> None:
     validator = jsonschema.Draft7Validator(request_schema)
     is_valid = validator.is_valid(request_body)
-    print("IS VALID: ",is_valid)
-
 
   def http(self, http_type_name, *args, **kwargs):
     http_type_id, http_type = schema_api.getHTTPByName(self.cursor, http_type_name)
-    print("HTTP TYPE: ",http_type)
 
     expected_params = http_type["uri_parameters"]
-    print("Expected: ",expected_params)
     if expected_params is not None:
       params = kwargs["params"]
       self.__checkHTTPParams(params, expected_params)
 
     request_schema = http_type["request_body_schema"]
-    print("Schema: ",request_schema)
     if request_schema is not None:
       request_body = kwargs["json"]
       self.__checkHTTPRequestBody(request_body, request_schema)
 
     verb = http_type["verb"]
-    func = {HTTPVerb.GET : requests.get,
-            HTTPVerb.POST : requests.post,
-            HTTPVerb.PUT : requests.put,
+    func = {HTTPVerb.GET    : requests.get,
+            HTTPVerb.POST   : requests.post,
+            HTTPVerb.PUT    : requests.put,
             HTTPVerb.DELETE : requests.delete,
            }[verb]
     uri = http_type["uri"]
@@ -109,14 +106,22 @@ class DataSource(object):
     return response
 
 
-  class HTTP(object):
-    def __init__(self):
-      self.get    = http.wrap_requests_fn(cursor, requests.get, HTTPVerb.GET)
-      self.post   = http.wrap_requests_fn(cursor, requests.post, HTTPVerb.POST)
-      self.put    = http.wrap_requests_fn(cursor, requests.put, HTTPVerb.PUT)
-      self.delete = http.wrap_requests_fn(cursor, requests.delete, HTTPVerb.DELETE)
+  # TODO: S3 Namespace?
+  def download(self, bucket_name : str, key : str) -> BytesIO:
+    dst = BytesIO()
+    self.s3_connection.Bucket(bucket_name).download_fileobj(Key=key, Fileobj=dst)
+    dst.seek(0)
+    return dst
 
 
+  #def upload(self, bucket_name : str, key : str, filename : BytesIO) -> bool:
+  #  self.s3_connection.Bucket(bucket_name).upload_fileobj(Key=key, Fileobj = filename)
+  #  return True
+
+
+  #def upload_file(self, bucket_name : str, key : str, file : BinaryIO) -> bool:
+  #  as_bytes = BytesIO(file.read())
+  #  return self.upload(bucket_name, key, as_bytes)
 
 
 class OutputObject(object):

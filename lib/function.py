@@ -1,6 +1,6 @@
 from .datasource import DataSource, OutputObject
 
-from .connections import S3Connection, PGConnection
+from .connections import PGConnection
 from .connections import getS3Connection
 
 import json
@@ -41,7 +41,7 @@ def Function(name  : str,
   def setup_datasource(fn : Callable[[DataSource, Any], OutputObject]):
 
     # TODO: How to handle aws credentials and role assuming?
-    s3_connection       : S3Connection = getS3Connection(S3_ROLE_ARN)
+    s3_connection       : Any = getS3Connection(S3_ROLE_ARN)
     datasource          : DataSource = DataSource(GEO_KEYS, TEMPORAL_KEYS, mlops_db_connection, s3_connection)
 
     # TODO: Warn if non-keyword arguments exist?

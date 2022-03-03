@@ -1,9 +1,9 @@
 from psycopg2.extensions import connection as PGConnection
 import boto3
 
-S3Connection = boto3.resources.factory.ServiceResource
+from typing import Any
 
-def getS3Connection(role_arn : str) -> S3Connection:
+def getS3Connection(role_arn : str) -> Any:
   sts_client = boto3.client('sts')
 
   # Call the assume_role method of the STSConnection object and pass the role

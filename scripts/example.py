@@ -30,7 +30,9 @@ def example_transformation(datasource : DataSource, some_constant : int) -> S3[g
   bar_response = datasource.http("bar_type", json=request_body)
   print("Bar response: ",bar_response.text)
 
-  my_fizzbuzz = datasource.s3.get("fizzbuzz")
+  #my_fizzbuzz = datasource.upload("fizzbuzz")
+  my_s3 = datasource.download("sentera-sagemaker-dev", "foo.csv")
+  print("MY S3: ",my_s3.read())
 
   return S3(gpd.GeoDataFrame())
 

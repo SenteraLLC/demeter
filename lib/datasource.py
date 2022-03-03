@@ -1,6 +1,7 @@
 import itertools
+import jsonschema
 
-from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any
+from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, Set
 
 import psycopg2
 import requests
@@ -11,7 +12,6 @@ from . import schema_api
 from .connections import *
 from .types import GeoSpatialKey, TemporalKey, LocalType, LocalValue, UnitType, HTTPVerb
 from . import http
-
 from . import local
 
 # TODO: Stubs?
@@ -56,21 +56,46 @@ class DataSource(object):
     return results
 
 
-  def http(self, http_type_name, *args, **kwargs):
-    http_type_id, http_type = schema_api.getHTTPByName(self.cursor, http_type_name)
+  def __checkHTTPParams(self,
+                        params : Dict[str, Any],
+                        expected_params :  Set[str]
+                       ) -> None:
     try:
-      params = kwargs["params"]
-      expected_params = http_type["uri_parameters"]
-      print("Params: ",params)
-      print("Expected: ",expected_params)
       missing = set(expected_params) - set(params.keys())
+      # TODO: Allow optional params?
       if len(missing):
         raise Exception(f"Missing args: {missing}")
       extraneous = set(params.keys()) - set(expected_params)
       if len(extraneous):
-        raise Exception(f"Extraneous args: {extraneous.keys()}")
+        raise Exception(f"Extraneous args: {extraneous}")
     except KeyError:
-      raise Exception("Foo.")
+      pass # no params
+    return
+
+  def __checkHTTPRequestBody(self,
+                             request_body : Any,
+                             request_schema : Any,
+                            ) -> None:
+    validator = jsonschema.Draft7Validator(request_schema)
+    is_valid = validator.is_valid(request_body)
+    print("IS VALID: ",is_valid)
+
+
+  def http(self, http_type_name, *args, **kwargs):
+    http_type_id, http_type = schema_api.getHTTPByName(self.cursor, http_type_name)
+    print("HTTP TYPE: ",http_type)
+
+    expected_params = http_type["uri_parameters"]
+    print("Expected: ",expected_params)
+    if expected_params is not None:
+      params = kwargs["params"]
+      self.__checkHTTPParams(params, expected_params)
+
+    request_schema = http_type["request_body_schema"]
+    print("Schema: ",request_schema)
+    if request_schema is not None:
+      request_body = kwargs["json"]
+      self.__checkHTTPRequestBody(request_body, request_schema)
 
     verb = http_type["verb"]
     func = {HTTPVerb.GET : requests.get,

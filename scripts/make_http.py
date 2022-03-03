@@ -32,7 +32,7 @@ if __name__ == "__main__":
   http_post = HTTPType(
                 type_name           = "bar_type",
                 verb                = HTTPVerb.POST,
-                uri                 = "http://localhost",
+                uri                 = "http://localhost:8080",
                 uri_parameters      = None,
                 request_body_schema = RequestBodySchema({"type": "object",
                                                          "properties": {

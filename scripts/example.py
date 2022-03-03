@@ -22,9 +22,16 @@ def example_transformation(datasource : DataSource, some_constant : int) -> S3[g
     print(n)
     print("\n")
 
-  parameters = {"field_id": 1, "start_date": 2, "end_date": 3}
-  my_stuff = datasource.http("foo_type", params=parameters)
-  #my_fizzbuzz = datasource.s3.get("fizzbuzz")
+  parameters = {"field_id": 1, "start_date": "01/01/2020", "end_date": "01/06/2020"}
+  foo_response = datasource.http("foo_type", params=parameters)
+  print("Foo response: ",foo_response.text)
+
+  request_body = {"field_id": 2, "start_date": "01/07/2020", "end_date": "01/12/2020"}
+  bar_response = datasource.http("bar_type", json=request_body)
+  print("Bar response: ",bar_response.text)
+
+  my_fizzbuzz = datasource.s3.get("fizzbuzz")
+
   return S3(gpd.GeoDataFrame())
 
 if __name__ == "__main__":

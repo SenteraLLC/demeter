@@ -11,8 +11,8 @@ serverPort = 8080
 class MyServer(BaseHTTPRequestHandler):
     def do_GET(self):
         query = urllib.parse.urlparse(self.path).query
+        query = urllib.parse.unquote(query)
         query_components = dict(qc.split("=") for qc in query.split("&"))
-        print("Query compontents", query_components)
         try:
             field_id = query_components["field_id"]
             start = query_components["start_date"]
@@ -41,13 +41,13 @@ class MyServer(BaseHTTPRequestHandler):
         post_body = self.rfile.read(content_len)
         as_json = json.loads(post_body)
 
-        field_Id = as_json["field_id"]
+        field_id = str(as_json["field_id"])
         start = as_json["start_date"]
         end = as_json["end_date"]
 
         result = hash(field_id + start + end)
 
-        self.wfile.write(bytes(result, "utf-8"))
+        self.wfile.write(bytes(str(result), "utf-8"))
 
 
 if __name__ == "__main__":

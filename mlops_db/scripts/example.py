@@ -56,8 +56,12 @@ def example_transformation(datasource : DataSource, some_constant : int) -> S3Fi
   return S3File("test_geojson_type", geoms)
 
 
-if __name__ == "__main__":
+def main():
   example_transformation(some_constant = 5)
+
+
+if __name__ == "__main__":
+  main()
 
   #geom_binary = schema_api.getGeom(cursor, g["geom_id"])
   #geom = wkb.loads(geom_binary, hex=True)

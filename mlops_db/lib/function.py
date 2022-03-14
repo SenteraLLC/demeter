@@ -81,7 +81,7 @@ def Function(name  : str,
 
       filename = s3_file_meta["filename_on_disk"]
       datasource.upload_file(s3_type_id, BUCKET_NAME, s3_file_meta, datasource.keys)
-      mlops_db_connection.commit()
+      #mlops_db_connection.commit()
 
     return add_datasource
 

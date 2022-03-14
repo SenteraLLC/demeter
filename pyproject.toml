@@ -13,7 +13,6 @@ geopandas = "^0.10.2"
 boto3 = "^1.20.48"
 requests = "^2.27.1"
 
-
 [tool.poetry.dev-dependencies]
 types-jsonschema = "^4.4.1"
 types-psycopg2 = "^2.9.7"
@@ -24,3 +23,6 @@ types-boto3 = "^1.0.1"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+example = "mlops_db.scripts.example:main"

@@ -34,6 +34,29 @@ def _generateInsertStmt(table_name : str,
   return stmt
 
 
+# TODO: Combine with _generateInsertStmt ?
+def generateInsertMany(table_name     : str,
+                       field_names    : List[str],
+                       number_inserts : int,
+                      ) -> sql.SQL:
+  placeholder = sql.SQL("").join([sql.SQL("("),
+                                  sql.SQL(", ").join([sql.Placeholder()] * len(field_names)),
+                                  sql.SQL(")")
+                                 ]
+                                )
+  values = sql.SQL(", ").join(
+                   [placeholder] * number_inserts
+                  )
+  fields = sql.SQL(", ").join(map(sql.Identifier, field_names))
+
+  stmt = sql.SQL("insert into {table_name} ({fields}) values{values}").format(
+                 table_name = sql.Identifier(table_name),
+                 fields = fields,
+                 values = values,
+                )
+  return stmt
+
+
 def _insertAndReturnId(table_name : str,
                        cursor     : Any,
                        table      : types.AnyIdTable,

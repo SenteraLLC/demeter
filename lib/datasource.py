@@ -3,18 +3,21 @@ import jsonschema
 
 from io import BytesIO
 
-from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, Set, BinaryIO
+from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, Set, BinaryIO, Iterator
 
 import psycopg2
 import requests
+import geopandas as gpd
 
 from datetime import date
 
 from . import schema_api
 from .connections import *
-from .types import GeoSpatialKey, TemporalKey, LocalType, LocalValue, UnitType, HTTPVerb
+from .types import GeoSpatialKey, TemporalKey, Key, KeyGenerator, LocalType, LocalValue, UnitType, HTTPVerb, Key, S3Object
 from . import http
 from . import local
+from . import ingest
+from .generators import generateInsertMany
 
 # TODO: Stubs?
 from shapely import wkb  # type: ignore
@@ -22,38 +25,20 @@ from shapely import wkb  # type: ignore
 
 class DataSource(object):
   def __init__(self,
-               geospatial_keys : List[GeoSpatialKey],
-               temporal_keys   : List[TemporalKey],
-               pg_connection   : PGConnection,
+               keys            : KeyGenerator,
+               cursor          : Any,
                s3_connection   : Any,
               ):
-    self.geospatial_keys = geospatial_keys
-    self.temporal_keys = temporal_keys
-    self.pg_connection = pg_connection
     self.s3_connection = s3_connection
-
-    self.cursor = self.pg_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-
-
-  # TODO: Can we always assume cartesian products?
-  def keys(self) -> Generator[Tuple[GeoSpatialKey, TemporalKey], None, None]:
-    geospatial = (g for g in self.geospatial_keys)
-    temporal = (t for t in self.temporal_keys)
-
-    for g, t in itertools.product(geospatial, temporal):
-
-      yield g, t
-
-  def key(self) -> Any:
-    return {}
+    self.cursor = cursor
+    self.keys = list(keys)
 
 
   def local(self, local_type : LocalType) -> List[Tuple[LocalValue, UnitType]]:
     results : List[Tuple[LocalValue, UnitType]] = []
-    for g, t in self.keys():
+    for k in self.keys:
 
-      partial_results = local._load(self.cursor, g, t, local_type)
+      partial_results = local._load(self.cursor, k, local_type)
       results.extend(partial_results)
     return results
 
@@ -73,6 +58,7 @@ class DataSource(object):
     except KeyError:
       pass # no params
     return
+
 
   def __checkHTTPRequestBody(self,
                              request_body : Any,
@@ -106,29 +92,50 @@ class DataSource(object):
     return response
 
 
-  # TODO: S3 Namespace?
-  def download(self, bucket_name : str, key : str) -> BytesIO:
-    dst = BytesIO()
-    self.s3_connection.Bucket(bucket_name).download_fileobj(Key=key, Fileobj=dst)
-    dst.seek(0)
-    return dst
+  def download(self,
+               type_name   : str,
+               key         : Key,
+              ) -> BytesIO:
+    s3_object = schema_api.getS3ObjectByKey(self.cursor, key)
+    s3_key = s3_object["key"]
+    bucket_name = s3_object["bucket_name"]
+    return ingest.download(self.s3_connection, bucket_name, s3_key)
 
 
-  #def upload(self, bucket_name : str, key : str, filename : BytesIO) -> bool:
-  #  self.s3_connection.Bucket(bucket_name).upload_fileobj(Key=key, Fileobj = filename)
-  #  return True
+  def upload(self,
+             s3_type_id  : int,
+             bucket_name : str,
+             key         : str,
+             blob        : BytesIO,
+            ) -> bool:
+    ingest.upload(self.s3_connection, bucket_name, key, blob)
+    s3_object = S3Object(
+                  s3_type_id = s3_type_id,
+                  key = key,
+                  bucket_name = bucket_name,
+                )
+    s3_object_id = schema_api.insertS3Object(self.cursor, s3_object)
+    schema_api.insertS3ObjectKeys(self.cursor, s3_object_id, self.keys)
+    return True
 
 
-  #def upload_file(self, bucket_name : str, key : str, file : BinaryIO) -> bool:
-  #  as_bytes = BytesIO(file.read())
-  #  return self.upload(bucket_name, key, as_bytes)
+  def upload_file(self,
+                  s3_type_id   : int,
+                  bucket_name  : str,
+                  s3_file_meta : ingest.S3FileMeta,
+                  keys         : List[Key],
+                 ) -> bool:
+    s3_filename_on_disk = s3_file_meta["filename_on_disk"]
+    f = open(s3_filename_on_disk, "rb")
+    as_bytes = BytesIO(f.read())
+    s3_key = s3_file_meta["key"]
+    return self.upload(s3_type_id, bucket_name, s3_key, as_bytes)
 
+  def get_geometry(self) -> gpd.GeoDataFrame:
+    geo_ids = [k["geom_id"] for k in self.keys]
+    stmt = """
+             select geom from geom where geom_id = any(%(geo_ids)s)
+           """
+    result = gpd.read_postgis(stmt, self.cursor.connection, "geom", params = {"geo_ids": geo_ids})
+    return result
 
-class OutputObject(object):
-  pass
-
-T = TypeVar('T')
-
-class S3(Generic[T]):
-  def __init__(self, v : T):
-    self.value = v

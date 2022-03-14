@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import TypedDict, Literal, Dict, List, Any, Optional, Tuple, Union, Type
+from typing import TypedDict, Literal, Dict, List, Any, Optional, Tuple, Union, Type, Generator
 
 import json
 import jsonschema
@@ -109,23 +109,28 @@ class LocalParameter(Table):
   local_value_id       : int
 
 
-class GeoSpatialKey(TypedDict):
+class GeoSpatialKey(Table):
   geom_id  : int
   field_id : Optional[int]
 
-class TemporalKey(TypedDict):
+class TemporalKey(Table):
   start_date : date
   end_date   : date
 
+class Key(GeoSpatialKey, TemporalKey):
+  geospatial_key_id : int
+  temporal_key_id   : int
 
-class Key(TypedDict):
+KeyGenerator = Generator[Key, None, None]
+
+
+class TableKey(TypedDict):
   pass
 
-class PlantHarvestKey(Key):
+class PlantHarvestKey(TableKey):
   field_id      : int
   crop_type_id  : int
   geom_id       : int
-
 
 class PlantingKey(PlantHarvestKey):
   pass
@@ -133,8 +138,6 @@ class PlantingKey(PlantHarvestKey):
 
 class HarvestKey(PlantHarvestKey):
   pass
-
-AnyKey = Union[PlantingKey, HarvestKey]
 
 class PlantHarvest(Detailed):
   completed : Optional[date]
@@ -145,7 +148,7 @@ class Planting(PlantingKey, PlantHarvest):
 class Harvest(HarvestKey, PlantHarvest):
   pass
 
-class CropProgressKey(Key):
+class CropProgressKey(TableKey):
   field_id         : int
   crop_type_id     : int
   planting_geom_id : int
@@ -172,7 +175,6 @@ class RequestBodySchema(object):
     jsonschema.Draft7Validator.check_schema(schema)
     self.schema = schema
 
-
 class HTTPType(TypeTable):
   type_name           : str
   verb                : HTTPVerb
@@ -180,6 +182,29 @@ class HTTPType(TypeTable):
   # TODO: Required vs optional?
   uri_parameters      : Optional[List[str]]
   request_body_schema : Optional[RequestBodySchema]
+
+
+# TODO: Type Versions?
+class S3Type(TypeTable):
+  type_name : str
+  driver    : str
+
+
+class S3Output(Table):
+  function_id : int
+  s3_type_id  : int
+
+
+class S3Object(Table):
+  key         : str
+  bucket_name : str
+  s3_type_id  : int
+
+
+class S3ObjectKey(Table):
+  s3_object_id      : int
+  geospatial_key_id : int
+  temporal_key_id   : int
 
 
 type_table_lookup = {
@@ -190,9 +215,10 @@ type_table_lookup = {
   ReportType : "report_type",
   LocalGroup : "local_group",
   HTTPType   : "http_type",
+  S3Type     : "s3_type",
 }
 
-AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType]
+AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType, S3Type]
 
 
 data_table_lookup = {
@@ -204,9 +230,11 @@ data_table_lookup = {
   LocalParameter  : "local_parameter",
   GeoSpatialKey   : "geospatial_key",
   TemporalKey     : "temporal_key",
+  S3Output        : "s3_output",
+  S3Object        : "s3_object",
 }
 
-AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, LocalParameter, GeoSpatialKey, TemporalKey]
+AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, LocalParameter, GeoSpatialKey, TemporalKey, S3Output, S3Object]
 
 id_table_lookup = type_table_lookup.copy()
 id_table_lookup.update(data_table_lookup)
@@ -216,8 +244,9 @@ key_table_lookup = {
   Planting     : ("planting", PlantingKey),
   Harvest      : ("harvest",  HarvestKey),
   CropProgress : ("crop_progress", CropProgressKey),
+  S3ObjectKey  : ("s3_object_key", S3ObjectKey),
 }
-AnyKeyTable = Union[Planting, Harvest, CropProgress]
+AnyKeyTable = Union[Planting, Harvest, CropProgress, S3ObjectKey]
 
 
 # TODO: More complex selections

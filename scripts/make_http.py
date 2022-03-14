@@ -8,8 +8,12 @@ from ..lib.schema_api import insertHTTPType
 
 
 http_verb_to_string : Callable[[HTTPVerb], str] = lambda v : v.name.lower()
-psycopg2.extensions.register_adapter(HTTPVerb, lambda v : psycopg2.extensions.AsIs("".join(["'", http_verb_to_string(v), "'"])))
-psycopg2.extensions.register_adapter(RequestBodySchema, lambda d : psycopg2.extras.Json(d.schema))
+
+http_verb_to_postgres = lambda v : psycopg2.extensions.AsIs("".join(["'", http_verb_to_string(v), "'"]))
+psycopg2.extensions.register_adapter(HTTPVerb, http_verb_to_postgres)
+
+json_schema_to_postgres = lambda d : psycopg2.extras.Json(d.schema)
+psycopg2.extensions.register_adapter(RequestBodySchema, json_schema_to_postgres)
 
 
 if __name__ == "__main__":

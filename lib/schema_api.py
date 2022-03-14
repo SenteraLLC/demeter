@@ -7,7 +7,7 @@ from shapely.geometry import LineString # type: ignore
 from functools import partial
 from collections import OrderedDict
 
-from typing import TypedDict, Any, Literal, List, Tuple, Dict, Callable, Optional, Sequence, Type, TypeVar
+from typing import TypedDict, Any, List, Tuple, Dict, Callable, Optional, Type, TypeVar, Set
 from typing import cast
 
 from .generators import *
@@ -24,6 +24,7 @@ insertOwner          : ReturnId[types.Owner]      = getInsertReturnIdFunction(ty
 insertGrower         : ReturnId[types.Grower]     = getInsertReturnIdFunction(types.Grower)
 insertGeoSpatialKey : ReturnId[types.GeoSpatialKey] = getInsertReturnIdFunction(types.GeoSpatialKey)
 insertTemporalKey : ReturnId[types.TemporalKey] = getInsertReturnIdFunction(types.TemporalKey)
+insertS3Object : ReturnId[types.S3Object] = getInsertReturnIdFunction(types.S3Object)
 
 
 insertUnitType   : ReturnId[types.UnitType]   = getInsertReturnIdFunction(types.UnitType)
@@ -33,6 +34,7 @@ insertCropStage  : ReturnId[types.CropStage]  = getInsertReturnIdFunction(types.
 insertReportType : ReturnId[types.ReportType] = getInsertReturnIdFunction(types.ReportType)
 insertLocalGroup : ReturnId[types.LocalGroup] = getInsertReturnIdFunction(types.LocalGroup)
 insertHTTPType : ReturnId[types.HTTPType] = getInsertReturnIdFunction(types.HTTPType)
+insertS3Type   : ReturnId[types.S3Type] = getInsertReturnIdFunction(types.S3Type)
 
 
 # TODO: Fix typing issues here
@@ -43,6 +45,33 @@ ReturnKey = Callable[[Any, S], SK]
 insertPlanting     : ReturnKey[types.Planting, types.PlantingKey] = getInsertReturnKeyFunction(types.Planting) # type: ignore
 insertHarvest      : ReturnKey[types.Harvest, types.HarvestKey] = getInsertReturnKeyFunction(types.Harvest) # type: ignore
 insertCropProgress : ReturnKey[types.CropProgress, types.CropProgressKey] = getInsertReturnKeyFunction(types.CropProgress) # type: ignore
+insertS3ObjectKey : ReturnKey[types.S3ObjectKey, types.S3ObjectKey] = getInsertReturnKeyFunction(types.S3ObjectKey) # type: ignore
+
+
+def insertS3ObjectKeys(cursor       : Any,
+                       s3_object_id : int,
+                       keys         : List[types.Key],
+                      ) -> bool:
+  s3_key_names = list(types.S3ObjectKey.__annotations__.keys())
+  stmt = generateInsertMany("s3_object_key", s3_key_names, len(keys))
+  args = []
+  for k in keys:
+    args.append(s3_object_id)
+    args.append(k["geospatial_key_id"])
+    args.append(k["temporal_key_id"])
+  results = cursor.execute(stmt, args)
+  return True
+
+#def insertS3ObjectKeys(cursor : Any, s3_object_id : int, keys : List[types.Key]) -> List[types.S3ObjectKey]:
+#  out : List[types.S3ObjectKey] = []
+#  for k in keys:
+#    object_key = types.S3ObjectKey(
+#                   s3_object_id = s3_object_id,
+#                   geospatial_key_id = k["geospatial_key_id"],
+#                   temporal_key_id = k["temporal_key_id"],
+#                 )
+#    insertS3ObjectKey(cursor, object_key)
+#  return out
 
 
 U = TypeVar('U', bound=types.AnyIdTable)
@@ -53,6 +82,9 @@ getMaybeLocalParameterId : GetId[types.LocalParameter]      = getMaybeIdFunction
 getMaybeLocalValue       : GetId[types.LocalValue] = getMaybeIdFunction(types.LocalValue)
 getMaybeOwnerId          : GetId[types.Owner]      = getMaybeIdFunction(types.Owner)
 getMaybeGrowerId         : GetId[types.Grower]      = getMaybeIdFunction(types.Grower)
+getMaybeGeoSpatialKeyId  : GetId[types.GeoSpatialKey] = getMaybeIdFunction(types.GeoSpatialKey)
+getMaybeTemporalKeyId  : GetId[types.TemporalKey] = getMaybeIdFunction(types.TemporalKey)
+
 
 getMaybeUnitTypeId       : GetId[types.UnitType]   = getMaybeIdFunction(types.UnitType)
 getMaybeLocalTypeId  : GetId[types.LocalType]  = getMaybeIdFunction(types.LocalType)
@@ -61,16 +93,19 @@ getMaybeCropStageId  : GetId[types.CropStage]  = getMaybeIdFunction(types.CropSt
 getMaybeReportTypeId : GetId[types.ReportType] = getMaybeIdFunction(types.ReportType)
 getMaybeLocalGroupId : GetId[types.LocalGroup] = getMaybeIdFunction(types.LocalGroup)
 getMaybeHTTPTypeId   : GetId[types.HTTPType] = getMaybeIdFunction(types.HTTPType)
+getMaybeS3TypeId   : GetId[types.S3Type] = getMaybeIdFunction(types.S3Type)
 
 
 
 V = TypeVar('V', bound=types.AnyIdTable)
 GetTable = Callable[[Any, int], V]
 
-getField : GetTable[types.Field] = getTableFunction(types.Field)
-getOwner : GetTable[types.Owner] = getTableFunction(types.Owner)
-getGeom  : GetTable[types.Geom]  = getTableFunction(types.Geom)
-getHTTP  : GetTable[types.HTTPType] = getTableFunction(types.HTTPType)
+getField    : GetTable[types.Field] = getTableFunction(types.Field)
+getOwner    : GetTable[types.Owner] = getTableFunction(types.Owner)
+getGeom     : GetTable[types.Geom]  = getTableFunction(types.Geom)
+getHTTPType : GetTable[types.HTTPType] = getTableFunction(types.HTTPType)
+getS3Type   : GetTable[types.S3Type] = getTableFunction(types.S3Type)
+getS3Object : GetTable[types.S3Object] = getTableFunction(types.S3Object)
 
 
 def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, types.HTTPType]:
@@ -90,6 +125,37 @@ def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, types.HTTPTy
   return http_type_id, http_type
 
 
+# TODO: Implement complex caching behavior using S3
+def getS3ObjectByKey(cursor         : Any,
+                     k              : types.Key,
+                    ) -> types.S3Object:
+  stmt = """select *
+            from s3_object O, s3_object_key K
+            where O.s3_object_id = K.s3_object_id and
+                  K.geospatial_key_id = %(geospatial_key_id)s and
+                  K.temporal_key_id = %(temporal_key_id)s
+         """
+  args = { k : v for k, v in k.items() if k in ["geospatial_key_id", "temporal_key_id"] }
+  cursor.execute(stmt, args)
+  results = cursor.fetchall()
+  if len(results) <= 0:
+    raise Exception("No S3 object exists for: ",k)
+
+  result_with_id = results[0]
+  del result_with_id["s3_object_id"]
+  s3_object = result_with_id
+
+  return cast(types.S3Object, s3_object)
+
+def getS3TypeIdByName(cursor : Any, type_name : str) -> int:
+  stmt = """select s3_type_id from s3_type where type_name = %(type_name)s"""
+  cursor.execute(stmt, {"type_name": type_name})
+  results = cursor.fetchall()
+  if len(results) <= 0:
+    raise Exception("No type exists '%(type_name)s'",type_name)
+  return results[0]["s3_type_id"]
+
+
 W = TypeVar('W', bound=types.AnyTypeTable)
 
 def insertOrGetType(get_id    : GetId[W],
@@ -102,6 +168,7 @@ def insertOrGetType(get_id    : GetId[W],
     return maybe_type_id
   return return_id(cursor, some_type)
 
+
 # TODO: These probably shouldn't be allowed in practice
 #       There should be a separate setup script(s) for establishing types
 # TODO: Build a python enum for crop stages?
@@ -111,6 +178,9 @@ insertOrGetLocalType = partial(insertOrGetType, getMaybeLocalTypeId, insertLocal
 insertOrGetCropType = partial(insertOrGetType, getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = partial(insertOrGetType, getMaybeCropStageId, insertCropStage)
 insertOrGetLocalGroup = partial(insertOrGetType, getMaybeLocalGroupId, insertLocalGroup)
+insertOrGetGeoSpatialKey = partial(insertOrGetType, getMaybeGeoSpatialKeyId, insertGeoSpatialKey)
+insertOrGetTemporalKey = partial(insertOrGetType, getMaybeTemporalKeyId, insertTemporalKey)
+
 
 
 def makeInsertable(geom : types.Geom) -> types.InsertableGeom:

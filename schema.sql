@@ -329,11 +329,12 @@ ALTER TABLE unit_type
 
 create table s3_type (
   s3_type_id bigserial primary key,
-  type_name text not null
+  type_name text not null unique,
 );
 ALTER TABLE s3_type
   ADD CONSTRAINT s3_type_lowercase_ck
   CHECK (type_name = lower(type_name));
+
 
 -- HTTP Input Type
 
@@ -493,6 +494,30 @@ ON local_value FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 
+create table test_mlops.s3_object (
+  s3_object_id bigserial primary key,
+  key          text not null,
+  bucket_name  text not null,
+  driver       text not null,
+
+  unique (s3_object_id, key, bucket_name),
+
+  s3_type_id     bigint references test_mlops.s3_type(s3_type_id)
+);
+
+
+create table test_mlops.s3_object_key (
+  s3_object_id      bigint
+                    references test_mlops.s3_object(s3_object_id),
+  geospatial_key_id bigint
+                    references test_mlops.geospatial_key(geospatial_key_id),
+  temporal_key_id   bigint
+                    references test_mlops.temporal_key(temporal_key_id),
+
+  primary key(s3_object_id, geospatial_key_id, temporal_key_id)
+);
+
+
 ----------------------
 -- Parameter Tables --
 ----------------------
@@ -555,18 +580,6 @@ create table s3_output (
 
 alter table s3_parameter add constraint s3_input_output foreign key (s3_output_name, s3_type_id, output_function_id) references s3_output(s3_output_name, s3_type_id, function_id);
 
-
-create table s3_output_key (
-  s3_output_name    text,
-  s3_type_id        bigint
-                    references s3_type(s3_type_id),
-  function_id       bigint
-                    references function(function_id),
-  geospatial_key_id bigint
-                    references geospatial_key(geospatial_key_id),
-  temporal_key_id   bigint
-                    references temporal_key(temporal_key_id)
-);
 
 
 -- TODO: This should, by some (undecided) means, be a relation between a ML Ops Model Function and an Airflow DAG

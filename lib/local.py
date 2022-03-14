@@ -1,7 +1,7 @@
 from typing import List, Tuple, Any, Type, TypeVar
 from typing import cast
 
-from .types import GeoSpatialKey, TemporalKey, LocalType, LocalValue, UnitType
+from .types import LocalType, LocalValue, UnitType, Key
 
 from .schema_api import getMaybeLocalTypeId
 
@@ -13,9 +13,8 @@ def sqlToTypedDict(rows : List[Any],
   return cast(List[T], [{k : v for k, v in row.items() if k in some_type.__annotations__.keys()} for row in rows])
 
 def _load(cursor : Any,
-          geospatial_key : GeoSpatialKey,
-          temporal_key   : TemporalKey,
-          local_type     : LocalType,
+          key        : Key,
+          local_type : LocalType,
          ) -> List[Tuple[LocalValue, UnitType]]:
   local_type_id = getMaybeLocalTypeId(cursor, local_type)
   stmt = """select *
@@ -25,10 +24,10 @@ def _load(cursor : Any,
 
           """
 
-  geom_id    = geospatial_key["geom_id"]
-  field_id   = geospatial_key["field_id"]
-  start_date = temporal_key["start_date"]
-  end_date   = temporal_key["end_date"]
+  geom_id    = key["geom_id"]
+  field_id   = key["field_id"]
+  start_date = key["start_date"]
+  end_date   = key["end_date"]
 
   args = (local_type_id, geom_id, field_id, start_date, end_date)
 

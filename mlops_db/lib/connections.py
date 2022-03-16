@@ -1,4 +1,3 @@
-from psycopg2.extensions import connection as PGConnection
 import boto3
 
 from typing import Any

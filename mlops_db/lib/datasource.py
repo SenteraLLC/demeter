@@ -3,11 +3,11 @@ import jsonschema
 
 from io import BytesIO
 
-from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, Set, BinaryIO, Iterator
+from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, Set, BinaryIO, Iterator, Callable
 
 import psycopg2
 import requests
-import geopandas as gpd
+import geopandas as gpd # type: ignore
 
 from datetime import date
 
@@ -20,7 +20,7 @@ from . import ingest
 from .generators import generateInsertMany
 
 # TODO: Stubs?
-from shapely import wkb  # type: ignore
+from shapely import wkb # type: ignore
 
 
 class DataSource(object):
@@ -67,18 +67,16 @@ class DataSource(object):
     validator = jsonschema.Draft7Validator(request_schema)
     is_valid = validator.is_valid(request_body)
 
-  def http(self, http_type_name, *args, **kwargs):
+  KeyToArgsFunction = Callable[[Key], Dict[str, Any]]
+
+  # TODO: Assuming JSON response for now
+  def http(self,
+           http_type_name : str,
+           param_fn : Optional[KeyToArgsFunction] = None,
+           json_fn : Optional[KeyToArgsFunction] = None,
+           http_options : Dict[str, Any] = {}
+          ) -> List[Dict[str, Any]]:
     http_type_id, http_type = schema_api.getHTTPByName(self.cursor, http_type_name)
-
-    expected_params = http_type["uri_parameters"]
-    if expected_params is not None:
-      params = kwargs["params"]
-      self.__checkHTTPParams(params, expected_params)
-
-    request_schema = http_type["request_body_schema"]
-    if request_schema is not None:
-      request_body = kwargs["json"]
-      self.__checkHTTPRequestBody(request_body, request_schema)
 
     verb = http_type["verb"]
     func = {HTTPVerb.GET    : requests.get,
@@ -87,31 +85,56 @@ class DataSource(object):
             HTTPVerb.DELETE : requests.delete,
            }[verb]
     uri = http_type["uri"]
-    wrapped = http.wrap_requests_fn(func, self.cursor)
-    response = wrapped(uri, *args, **kwargs)
-    return response
+
+    responses : List[Any] = []
+    for k in self.keys:
+      expected_params = http_type["uri_parameters"]
+      if expected_params is not None:
+        if param_fn is not None:
+          params = param_fn(k)
+          self.__checkHTTPParams(params, set(expected_params))
+          http_options["params"] = params
+        else:
+          raise Exception("Expecting URL params but no param function provided")
+
+      request_schema = http_type["request_body_schema"]
+      if request_schema is not None:
+        if json_fn is not None:
+          request_body = json_fn(k)
+          self.__checkHTTPRequestBody(request_body, request_schema)
+          http_options["json"] = request_body
+
+      wrapped = http.wrap_requests_fn(func, self.cursor)
+      response = wrapped(uri, **http_options)
+      responses.append(response.json())
+    return responses
 
 
-  def download(self,
-               type_name   : str,
-               key         : Key,
-              ) -> BytesIO:
-    s3_object = schema_api.getS3ObjectByKey(self.cursor, key)
+  def s3(self,
+         type_name   : str,
+        ) -> gpd.GeoDataFrame:
+    s3_object_id, s3_object = schema_api.getS3ObjectByKeys(self.cursor, self.keys, type_name)
+    s3_type = schema_api.getS3Type(self.cursor, s3_object["s3_type_id"])
+    if s3_object is None:
+      raise Exception(f"Failed to find S3 object '{type_name}' associated with keys")
     s3_key = s3_object["key"]
     bucket_name = s3_object["bucket_name"]
-    return ingest.download(self.s3_connection, bucket_name, s3_key)
+    driver = s3_type["driver"]
+    f = ingest.download(self.s3_connection, bucket_name, s3_key)
+    df = gpd.read_file(f, driver = driver)
+    return df
 
 
   def upload(self,
              s3_type_id  : int,
              bucket_name : str,
-             key         : str,
+             s3_key      : str,
              blob        : BytesIO,
             ) -> bool:
-    ingest.upload(self.s3_connection, bucket_name, key, blob)
+    ingest.upload(self.s3_connection, bucket_name, s3_key, blob)
     s3_object = S3Object(
                   s3_type_id = s3_type_id,
-                  key = key,
+                  key = s3_key,
                   bucket_name = bucket_name,
                 )
     s3_object_id = schema_api.insertS3Object(self.cursor, s3_object)
@@ -123,13 +146,14 @@ class DataSource(object):
                   s3_type_id   : int,
                   bucket_name  : str,
                   s3_file_meta : ingest.S3FileMeta,
-                  keys         : List[Key],
                  ) -> bool:
     s3_filename_on_disk = s3_file_meta["filename_on_disk"]
     f = open(s3_filename_on_disk, "rb")
     as_bytes = BytesIO(f.read())
+
     s3_key = s3_file_meta["key"]
     return self.upload(s3_type_id, bucket_name, s3_key, as_bytes)
+
 
   def get_geometry(self) -> gpd.GeoDataFrame:
     geo_ids = [k["geom_id"] for k in self.keys]

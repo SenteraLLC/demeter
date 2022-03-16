@@ -1,26 +1,21 @@
-import os
 import json
 import uuid
-import itertools
 
+import pandas as pd
+import geopandas as gpd # type: ignore
 import psycopg2
+import psycopg2.extras
 
 from typing import Any
-from typing import cast
 
-from ..lib.ingest import upload
 from ..lib.connections import getS3Connection
+from ..lib.datasource import DataSource
 
-from ..lib.schema_api import insertGeoSpatialKey, insertTemporalKey
-from ..lib.types import GeoSpatialKey, TemporalKey
+from ..lib import temporary
+from ..lib import schema_api
+from ..lib.types import S3Type
+from ..lib.ingest import S3File
 
-# TODO: Move to ENV
-from ..lib.function import S3_ROLE_ARN, BUCKET_NAME
-
-my_path = os.path.dirname(os.path.realpath(__file__))
-print("PATH: ",my_path)
-GEO_KEYS = json.load(open(os.path.join(my_path, "./test_data/geospatial.json")))
-TEMPORAL_KEYS = json.load(open(os.path.join(my_path, "./test_data/temporal.json")))
 
 if __name__ == "__main__":
   hostname = "localhost"
@@ -28,27 +23,32 @@ if __name__ == "__main__":
   connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
   cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-  s3_connection       : Any = getS3Connection(S3_ROLE_ARN)
+  s3_connection       : Any = getS3Connection(temporary.S3_ROLE_ARN)
 
-  geospatial = (g for g in GEO_KEYS)
-  temporal   = (t for t in TEMPORAL_KEYS)
-  for i, (g, t) in enumerate(itertools.product(geospatial, temporal)):
-    gkey = cast(GeoSpatialKey, g)
-    gkey_id = insertGeoSpatialKey(cursor, gkey)
-    tkey = cast(TemporalKey, t)
-    tkey_id = insertTemporalKey(cursor, tkey)
+  type_name = "my_test_type"
+  driver = "GeoJSON"
+  s3_type = S3Type(
+              type_name = type_name,
+              driver    = driver,
+            )
+  s3_type_id = schema_api.insertOrGetS3Type(cursor, s3_type)
 
-    bucket_name = "sentera-sagemaker-dev"
-    key_name = str(i) + "_testkey"
+  test_keys = temporary.load_keys(cursor)
+  print("KEYS: ",test_keys)
 
-    x = hash(str(gkey_id) + str(tkey_id))
-    tmp_filename = os.path.join("/tmp", str(uuid.uuid4()))
-    with open(tmp_filename, "w") as f:
-      f.write(str(x))
-      print(f"Wrote '{x}' for {i}")
+  datasource = DataSource(test_keys, cursor, s3_connection)
 
-    with open(tmp_filename, "rb") as g:
-      upload(s3_connection, bucket_name, key_name, g)
+  geoms = datasource.get_geometry()
+  print("GEOMS: ",geoms)
+  geoms = geoms.assign(N = pd.Series(range(0, len(geoms))))
+  print("Geoms now: ",geoms)
 
+  bucket_name = "sentera-sagemaker-dev"
+  key_name = str(uuid.uuid4()) + "_test_upload_s3"
 
+  to_upload = S3File(type_name, geoms)
+  s3_file_meta = to_upload.to_file(driver)
 
+  datasource.upload_file(s3_type_id, temporary.BUCKET_NAME, s3_file_meta)
+
+  connection.commit()

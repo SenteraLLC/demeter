@@ -21,14 +21,14 @@ class MyServer(BaseHTTPRequestHandler):
             self.send_response(400)
             return
 
-        result = hash(field_id + start + end)
+        result = {"hash": hash(field_id + start + end)}
 
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
 
         #self.wfile.write(bytes(result, "utf-8"))
-        self.wfile.write(bytes(str(result), "utf-8"))
+        self.wfile.write(bytes(json.dumps(result), "utf-8"))
 
 
     def do_POST(self):
@@ -45,9 +45,9 @@ class MyServer(BaseHTTPRequestHandler):
         start = as_json["start_date"]
         end = as_json["end_date"]
 
-        result = hash(field_id + start + end)
+        result = {"hash": hash(field_id + start + end)}
 
-        self.wfile.write(bytes(str(result), "utf-8"))
+        self.wfile.write(bytes(json.dumps(result), "utf-8"))
 
 
 if __name__ == "__main__":

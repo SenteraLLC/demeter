@@ -10,7 +10,7 @@ import geopandas as gpd  # type: ignore
 def example_transformation(datasource : DataSource, some_constant : int) -> S3File[gpd.GeoDataFrame]:
   print("Some constant: ",some_constant)
 
-  print("Keys: ")
+  print("\nKeys: ")
   for k in datasource.keys:
     print(k)
 
@@ -18,39 +18,32 @@ def example_transformation(datasource : DataSource, some_constant : int) -> S3Fi
                                         type_category="application",
                                        ),
                              )
+  print("\nLocal nitrogen data: ")
   for i, n in enumerate(nitrogen):
     print("Result #",i)
     print(n)
-    print("\n")
 
-  parameters = {"field_id": 1, "start_date": "01/01/2020", "end_date": "01/06/2020"}
-  #parameters = lambda k : {"field_id"   : k.field_id(),
-  #                         "start_date" : k.start_date(),
-  #                         "end_date"   : k.end_date(),
-  #                        }
+  parameters = lambda k : {"field_id"   : k["field_id"],
+                           "start_date" : k["start_date"],
+                           "end_date"   : k["end_date"],
+                          }
 
-  foo_response = datasource.http("foo_type", params=parameters)
-  print("Foo response: ",foo_response.text)
+  foo_responses = datasource.http("foo_type", param_fn=parameters)
+  print("\nFoo responses: ",foo_responses)
 
-  request_body = {"field_id": 2, "start_date": "01/07/2020", "end_date": "01/12/2020"}
-  #request_body = lambda k : {"field_id": k.field_id(),
-  #                           "start_date": k.start_date(),
-  #                           "end_date": k.end_date()
-  #                          }
+  request_body = lambda k : {"field_id"   : k["field_id"],
+                             "start_date" : k["start_date"],
+                             "end_date"   : k["end_date"]
+                            }
 
-  bar_response = datasource.http("bar_type", json=request_body)
-  print("Bar response: ",bar_response.text)
+  bar_responses = datasource.http("bar_type", json_fn=request_body)
+  print("\nBar responses: ",bar_responses)
 
-  #my_fizzbuzz = datasource.upload("fizzbuzz")
-
-  # TODO: Auto-fetch results using 's3_object' table
-  #for k in datasource.keys:
-  #  my_s3_results = datasource.download("fizzbuzz_type", k)
-  #  print("Key: ",k)
-  #  print("  S3 results: ",my_s3_results.read())
+  my_s3_results = datasource.s3("my_test_type")
+  print("\nS3 Results: ",my_s3_results)
 
   geoms = datasource.get_geometry()
-  print("Geoms: ",geoms)
+  print("\nGeoms: ",geoms)
 
   # TODO: Record output and related keys
   return S3File("test_geojson_type", geoms)

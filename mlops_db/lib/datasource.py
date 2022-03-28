@@ -1,9 +1,8 @@
 import itertools
-import jsonschema
 
 from io import BytesIO
 
-from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, Set, BinaryIO, Iterator, Callable
+from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, BinaryIO, Iterator
 
 import psycopg2
 import requests
@@ -13,7 +12,7 @@ from datetime import date
 
 from . import schema_api
 from .connections import *
-from .types import GeoSpatialKey, TemporalKey, Key, KeyGenerator, LocalType, LocalValue, UnitType, HTTPVerb, Key, S3Object
+from .types import GeoSpatialKey, TemporalKey, KeyGenerator, LocalType, LocalValue, UnitType, HTTPVerb, S3Object, RequestBodySchema, HTTPType
 from . import http
 from . import local
 from . import ingest
@@ -37,47 +36,20 @@ class DataSource(object):
   def local(self, local_type : LocalType) -> List[Tuple[LocalValue, UnitType]]:
     results : List[Tuple[LocalValue, UnitType]] = []
     for k in self.keys:
-
       partial_results = local._load(self.cursor, k, local_type)
       results.extend(partial_results)
     return results
 
 
-  def __checkHTTPParams(self,
-                        params : Dict[str, Any],
-                        expected_params :  Set[str]
-                       ) -> None:
-    try:
-      missing = set(expected_params) - set(params.keys())
-      # TODO: Allow optional params?
-      if len(missing):
-        raise Exception(f"Missing args: {missing}")
-      extraneous = set(params.keys()) - set(expected_params)
-      if len(extraneous):
-        raise Exception(f"Extraneous args: {extraneous}")
-    except KeyError:
-      pass # no params
-    return
 
-
-  def __checkHTTPRequestBody(self,
-                             request_body : Any,
-                             request_schema : Any,
-                            ) -> None:
-    validator = jsonschema.Draft7Validator(request_schema)
-    is_valid = validator.is_valid(request_body)
-
-  KeyToArgsFunction = Callable[[Key], Dict[str, Any]]
 
   # TODO: Assuming JSON response for now
-  def http(self,
-           http_type_name : str,
-           param_fn : Optional[KeyToArgsFunction] = None,
-           json_fn : Optional[KeyToArgsFunction] = None,
-           http_options : Dict[str, Any] = {}
-          ) -> List[Dict[str, Any]]:
-    http_type_id, http_type = schema_api.getHTTPByName(self.cursor, http_type_name)
-
+  def _http(self,
+            http_type    : HTTPType,
+            param_fn     : Optional[http.KeyToArgsFunction] = None,
+            json_fn      : Optional[http.KeyToArgsFunction] = None,
+            http_options : Dict[str, Any] = {}
+           ) -> List[Dict[str, Any]]:
     verb = http_type["verb"]
     func = {HTTPVerb.GET    : requests.get,
             HTTPVerb.POST   : requests.post,
@@ -90,25 +62,25 @@ class DataSource(object):
     for k in self.keys:
       expected_params = http_type["uri_parameters"]
       if expected_params is not None:
-        if param_fn is not None:
-          params = param_fn(k)
-          self.__checkHTTPParams(params, set(expected_params))
-          http_options["params"] = params
-        else:
-          raise Exception("Expecting URL params but no param function provided")
+        http_options["params"] = http.parseHTTPParams(expected_params, param_fn, k)
 
-      request_schema = http_type["request_body_schema"]
-      if request_schema is not None:
-        if json_fn is not None:
-          request_body = json_fn(k)
-          self.__checkHTTPRequestBody(request_body, request_schema)
-          http_options["json"] = request_body
+      request_body_schema = http_type["request_body_schema"]
+      if request_body_schema is not None:
+        http_options["json"] = http.parseRequestSchema(request_body_schema, json_fn, k)
 
       wrapped = http.wrap_requests_fn(func, self.cursor)
       response = wrapped(uri, **http_options)
       responses.append(response.json())
     return responses
 
+  def http(self,
+           type_name : str,
+           param_fn     : Optional[http.KeyToArgsFunction] = None,
+           json_fn      : Optional[http.KeyToArgsFunction] = None,
+           http_options : Dict[str, Any] = {}
+          ) -> List[Dict[str, Any]]:
+    http_type_id, http_type = schema_api.getHTTPByName(self.cursor, type_name)
+    return self._http(http_type, param_fn, json_fn, http_options)
 
   def s3(self,
          type_name   : str,
@@ -162,4 +134,9 @@ class DataSource(object):
            """
     result = gpd.read_postgis(stmt, self.cursor.connection, "geom", params = {"geo_ids": geo_ids})
     return result
+
+  def getMatrix(self) -> gpd.GeoDataFrame:
+    return gpd.GeoDataFrame()
+
+
 

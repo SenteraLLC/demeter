@@ -8,8 +8,9 @@ from . import temporary
 
 from .connections import getS3Connection
 
-from typing import List, TypedDict, Dict, Any, Callable, Tuple, Generator, Union
+from typing import List, TypedDict, Dict, Any, Callable, Tuple, Generator, Union, TypeVar
 import psycopg2
+import geopandas as gpd # type: ignore
 
 from functools import wraps
 
@@ -17,11 +18,12 @@ from functools import wraps
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Local) -> (S3, Local)
 
-WrappableFunction = Callable[[DataSource, Any], Union[S3File, LocalFile]]
-WrappedFunction = Callable[[WrappableFunction], Any]
+WrappableFunction = Callable[[DataSource, Any], Dict[str, Union[S3File, LocalFile]]]
+WrappedFunction = Callable[[WrappableFunction], None]
 
-def Function(name  : str,
-             major : int,
+def Function(name    : str,
+             major   : int,
+             outputs : Dict[str, str],
             ) -> WrappedFunction:
   def setup_datasource(fn : WrappableFunction):
 
@@ -50,4 +52,18 @@ def Function(name  : str,
     return add_datasource
 
   return setup_datasource
+
+
+T = TypeVar('T')
+LoadFunction = Callable[[DataSource, Any], T]
+InputLoadFunction = LoadFunction[None]
+OutputLoadFunction = LoadFunction[gpd.GeoDataFrame]
+
+def Load(fn : InputLoadFunction) -> OutputLoadFunction:
+  def wrapped(datasource : DataSource, *args, **kwargs) -> DataSource:
+    fn(datasource, *args, **kwargs)
+    return datasource.getMatrix()
+  return wrapped
+
+
 

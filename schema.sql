@@ -494,7 +494,7 @@ ON local_value FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 
-create table test_mlops.s3_object (
+create table s3_object (
   s3_object_id bigserial primary key,
   key          text not null,
   bucket_name  text not null,
@@ -502,17 +502,17 @@ create table test_mlops.s3_object (
 
   unique (s3_object_id, key, bucket_name),
 
-  s3_type_id     bigint references test_mlops.s3_type(s3_type_id)
+  s3_type_id     bigint references s3_type(s3_type_id)
 );
 
 
-create table test_mlops.s3_object_key (
+create table s3_object_key (
   s3_object_id      bigint
-                    references test_mlops.s3_object(s3_object_id),
+                    references s3_object(s3_object_id),
   geospatial_key_id bigint
-                    references test_mlops.geospatial_key(geospatial_key_id),
+                    references geospatial_key(geospatial_key_id),
   temporal_key_id   bigint
-                    references test_mlops.temporal_key(temporal_key_id),
+                    references temporal_key(temporal_key_id),
 
   primary key(s3_object_id, geospatial_key_id, temporal_key_id)
 );

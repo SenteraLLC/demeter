@@ -35,7 +35,8 @@ insertCropStage  : ReturnId[types.CropStage]  = getInsertReturnIdFunction(types.
 insertReportType : ReturnId[types.ReportType] = getInsertReturnIdFunction(types.ReportType)
 insertLocalGroup : ReturnId[types.LocalGroup] = getInsertReturnIdFunction(types.LocalGroup)
 insertHTTPType : ReturnId[types.HTTPType] = getInsertReturnIdFunction(types.HTTPType)
-insertS3Type   : ReturnId[types.S3Type] = getInsertReturnIdFunction(types.S3Type)
+insertS3TypeBase   : ReturnId[types.S3Type] = getInsertReturnIdFunction(types.S3Type)
+
 
 
 # TODO: Fix typing issues here
@@ -48,31 +49,33 @@ insertHarvest      : ReturnKey[types.Harvest, types.HarvestKey] = getInsertRetur
 insertCropProgress : ReturnKey[types.CropProgress, types.CropProgressKey] = getInsertReturnKeyFunction(types.CropProgress) # type: ignore
 insertS3ObjectKey : ReturnKey[types.S3ObjectKey, types.S3ObjectKey] = getInsertReturnKeyFunction(types.S3ObjectKey) # type: ignore
 
+insertS3TypeDataFrame : ReturnKey[types.S3TypeDataFrame, types.S3TypeDataFrame] = getInsertReturnKeyFunction(types.S3TypeDataFrame) # type: ignore
+
+s3_sub_type_insert_lookup = {
+  types.S3TypeDataFrame : insertS3TypeDataFrame
+}
+
+
 
 def insertS3ObjectKeys(cursor       : Any,
                        s3_object_id : int,
                        keys         : List[types.Key],
+                       s3_type_id   : int,
                       ) -> bool:
   s3_key_names = list(types.S3ObjectKey.__annotations__.keys())
   stmt = generateInsertMany("s3_object_key", s3_key_names, len(keys))
   args = []
   for k in keys:
-    args.append(s3_object_id)
-    args.append(k["geospatial_key_id"])
-    args.append(k["temporal_key_id"])
+    s3_object_key = types.S3ObjectKey(
+                      s3_object_id      = s3_object_id,
+                      s3_type_id        = s3_type_id,
+                      geospatial_key_id = k["geospatial_key_id"],
+                      temporal_key_id   = k["temporal_key_id"],
+                    )
+    for key_name in s3_key_names:
+      args.append(s3_object_key[key_name])  # type: ignore
   results = cursor.execute(stmt, args)
   return True
-
-#def insertS3ObjectKeys(cursor : Any, s3_object_id : int, keys : List[types.Key]) -> List[types.S3ObjectKey]:
-#  out : List[types.S3ObjectKey] = []
-#  for k in keys:
-#    object_key = types.S3ObjectKey(
-#                   s3_object_id = s3_object_id,
-#                   geospatial_key_id = k["geospatial_key_id"],
-#                   temporal_key_id = k["temporal_key_id"],
-#                 )
-#    insertS3ObjectKey(cursor, object_key)
-#  return out
 
 
 U = TypeVar('U', bound=types.AnyIdTable)
@@ -87,26 +90,31 @@ getMaybeGeoSpatialKeyId  : GetId[types.GeoSpatialKey] = getMaybeIdFunction(types
 getMaybeTemporalKeyId  : GetId[types.TemporalKey] = getMaybeIdFunction(types.TemporalKey)
 
 
-getMaybeUnitTypeId       : GetId[types.UnitType]   = getMaybeIdFunction(types.UnitType)
+getMaybeUnitTypeId   : GetId[types.UnitType]   = getMaybeIdFunction(types.UnitType)
 getMaybeLocalTypeId  : GetId[types.LocalType]  = getMaybeIdFunction(types.LocalType)
 getMaybeCropTypeId   : GetId[types.CropType]   = getMaybeIdFunction(types.CropType)
 getMaybeCropStageId  : GetId[types.CropStage]  = getMaybeIdFunction(types.CropStage)
 getMaybeReportTypeId : GetId[types.ReportType] = getMaybeIdFunction(types.ReportType)
 getMaybeLocalGroupId : GetId[types.LocalGroup] = getMaybeIdFunction(types.LocalGroup)
-getMaybeHTTPTypeId   : GetId[types.HTTPType] = getMaybeIdFunction(types.HTTPType)
-getMaybeS3TypeId   : GetId[types.S3Type] = getMaybeIdFunction(types.S3Type)
-
+getMaybeHTTPTypeId   : GetId[types.HTTPType]   = getMaybeIdFunction(types.HTTPType)
+getMaybeS3TypeId     : GetId[types.S3Type]     = getMaybeIdFunction(types.S3Type)
 
 
 V = TypeVar('V', bound=types.AnyIdTable)
 GetTable = Callable[[Any, int], V]
 
-getField    : GetTable[types.Field] = getTableFunction(types.Field)
-getOwner    : GetTable[types.Owner] = getTableFunction(types.Owner)
-getGeom     : GetTable[types.Geom]  = getTableFunction(types.Geom)
-getHTTPType : GetTable[types.HTTPType] = getTableFunction(types.HTTPType)
-getS3Type   : GetTable[types.S3Type] = getTableFunction(types.S3Type)
-getS3Object : GetTable[types.S3Object] = getTableFunction(types.S3Object)
+getField      : GetTable[types.Field]    = getTableFunction(types.Field)
+getOwner      : GetTable[types.Owner]    = getTableFunction(types.Owner)
+getGeom       : GetTable[types.Geom]     = getTableFunction(types.Geom)
+getHTTPType   : GetTable[types.HTTPType] = getTableFunction(types.HTTPType)
+getS3Object   : GetTable[types.S3Object] = getTableFunction(types.S3Object)
+
+getS3TypeBase      : GetTable[types.S3Type]   = getTableFunction(types.S3Type)
+getMaybeS3TypeDataFrame : GetTable[types.S3TypeDataFrame] = getTableFunction(types.S3TypeDataFrame, "s3_type_id")
+
+s3_sub_type_get_lookup = {
+  types.S3TypeDataFrame : getMaybeS3TypeDataFrame
+}
 
 
 def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, types.HTTPType]:
@@ -228,7 +236,7 @@ insertOrGetLocalType = partial(insertOrGetType, getMaybeLocalTypeId, insertLocal
 insertOrGetCropType = partial(insertOrGetType, getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = partial(insertOrGetType, getMaybeCropStageId, insertCropStage)
 insertOrGetLocalGroup = partial(insertOrGetType, getMaybeLocalGroupId, insertLocalGroup)
-insertOrGetS3Type = partial(insertOrGetType, getMaybeS3TypeId, insertS3Type)
+insertOrGetS3Type = partial(insertOrGetType, getMaybeS3TypeId, insertS3TypeBase)
 insertOrGetGeoSpatialKey = partial(insertOrGetType, getMaybeGeoSpatialKeyId, insertGeoSpatialKey)
 insertOrGetTemporalKey = partial(insertOrGetType, getMaybeTemporalKeyId, insertTemporalKey)
 
@@ -278,5 +286,52 @@ def insertGeom(cursor   : Any,
     return maybe_geom_id
   igeo = makeInsertable(geom)
   return insertInsertableGeom(cursor, igeo) # type: ignore
+
+
+def insertOrGetS3TypeDataFrame(cursor : Any,
+                               s3_type : types.S3Type,
+                               driver : str,
+                               has_geometry : bool,
+                              ) -> int:
+  s3_type_id = insertOrGetS3Type(cursor, s3_type)
+  stmt = """insert into s3_type_dataframe(s3_type_id, driver, has_geometry)
+            values(%(s3_type_id)s, %(driver)s, %(has_geometry)s)
+            on conflict do nothing"""
+  args = {"s3_type_id"   : s3_type_id,
+          "driver"       : driver,
+          "has_geometry" : has_geometry,
+         }
+  cursor.execute(stmt, args)
+
+  return s3_type_id
+
+
+def insertS3Type(cursor : Any,
+                 s3_type : types.S3Type,
+                 s3_sub_type : Optional[types.S3SubType],
+                ) -> int:
+  s3_type_id = insertOrGetS3Type(cursor, s3_type)
+  if s3_sub_type is not None:
+    sub_type_insert_fn = s3_sub_type_insert_lookup[type(s3_sub_type)]
+    s3_sub_type_key = sub_type_insert_fn(cursor, s3_sub_type)
+  return s3_type_id
+
+
+def getS3Type(cursor : Any,
+              s3_type_id : int,
+             ) -> Tuple[types.S3Type, Optional[types.TaggedS3SubType]]:
+  s3_type = getS3TypeBase(cursor, s3_type_id)
+  maybe_s3_sub_type = None
+  for s3_sub_type_tag, s3_sub_type_get_lookup_fn in s3_sub_type_get_lookup.items():
+    maybe_s3_sub_type = s3_sub_type_get_lookup_fn(cursor, s3_type_id)
+    if maybe_s3_sub_type is not None:
+      s3_sub_type = maybe_s3_sub_type
+      s3_subtype_value = types.TaggedS3SubType(
+                           tag = s3_sub_type_tag,  # type: ignore
+                           value = s3_sub_type,
+                         )
+      return s3_type, s3_subtype_value
+
+  return s3_type, None
 
 

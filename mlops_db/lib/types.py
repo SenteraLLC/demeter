@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import TypedDict, Literal, Dict, List, Any, Optional, Tuple, Union, Type, Generator
+from typing import TypedDict, Literal, Dict, List, Any, Optional, Tuple, Union, Type, Generator, Set
 
 import json
 import jsonschema
@@ -184,10 +184,24 @@ class HTTPType(TypeTable):
   request_body_schema : Optional[RequestBodySchema]
 
 
+
 # TODO: Type Versions?
 class S3Type(TypeTable):
   type_name : str
-  driver    : str
+
+class S3TypeDataFrame(Table):
+  driver       : str
+  has_geometry : bool
+
+S3SubType = Union[S3TypeDataFrame]
+
+class TaggedS3SubType(TypedDict):
+  tag   : Type[S3SubType]
+  value : S3SubType
+
+s3_subtype_table_lookup = {
+  S3TypeDataFrame : "s3_type_dataframe",
+}
 
 
 class S3Output(Table):
@@ -203,6 +217,7 @@ class S3Object(Table):
 
 class S3ObjectKey(Table):
   s3_object_id      : int
+  s3_type_id        : int
   geospatial_key_id : int
   temporal_key_id   : int
 
@@ -216,8 +231,10 @@ type_table_lookup = {
   LocalGroup : "local_group",
   HTTPType   : "http_type",
   S3Type     : "s3_type",
+  S3TypeDataFrame : "s3_type_dataframe",
 }
 
+RequestType = Union[LocalType, HTTPType, S3Type]
 AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType, S3Type]
 
 
@@ -238,13 +255,14 @@ AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, LocalParameter, Geo
 
 id_table_lookup = type_table_lookup.copy()
 id_table_lookup.update(data_table_lookup)
-AnyIdTable = Union[AnyTypeTable, AnyDataTable]
+AnyIdTable = Union[AnyTypeTable, AnyDataTable, S3SubType]
 
 key_table_lookup = {
   Planting     : ("planting", PlantingKey),
   Harvest      : ("harvest",  HarvestKey),
   CropProgress : ("crop_progress", CropProgressKey),
   S3ObjectKey  : ("s3_object_key", S3ObjectKey),
+  S3TypeDataFrame : ("s3_type_dataframe", S3TypeDataFrame)
 }
 AnyKeyTable = Union[Planting, Harvest, CropProgress, S3ObjectKey]
 

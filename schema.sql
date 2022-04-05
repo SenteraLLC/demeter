@@ -327,13 +327,25 @@ ALTER TABLE unit_type
 -- S3 Type
 --   Matrix, Raster, etc
 
+-- TODO: Versioning?
 create table s3_type (
-  s3_type_id bigserial primary key,
-  type_name text not null unique,
+  s3_type_id   bigserial primary key,
+  type_name    text not null unique
 );
 ALTER TABLE s3_type
   ADD CONSTRAINT s3_type_lowercase_ck
   CHECK (type_name = lower(type_name));
+
+-- TODO: Consider using the 'citext' extension to enforce
+--         case-insensitive uniqueness on 'driver'
+create table s3_type_dataframe (
+  s3_type_id   bigint
+               primary key
+               references s3_type(s3_type_id),
+  driver       text not null,
+  has_geometry boolean not null
+);
+
 
 
 -- HTTP Input Type
@@ -495,26 +507,33 @@ update_last_updated_column();
 
 
 create table s3_object (
-  s3_object_id bigserial primary key,
+  s3_object_id bigserial unique,
+  s3_type_id   bigint references s3_type(s3_type_id),
+
+  primary key(s3_object_id, s3_type_id),
+
   key          text not null,
   bucket_name  text not null,
-  driver       text not null,
 
-  unique (s3_object_id, key, bucket_name),
+  unique (s3_object_id, key, bucket_name)
 
-  s3_type_id     bigint references s3_type(s3_type_id)
 );
 
 
-create table s3_object_key (
-  s3_object_id      bigint
-                    references s3_object(s3_object_id),
-  geospatial_key_id bigint
-                    references geospatial_key(geospatial_key_id),
-  temporal_key_id   bigint
-                    references temporal_key(temporal_key_id),
+create table test_mlops.s3_object_key (
+  s3_object_id      bigint,
+  s3_type_id        bigint,
+  foreign key (s3_object_id, s3_type_id)
+    references test_mlops.s3_object(s3_object_id, s3_type_id),
 
-  primary key(s3_object_id, geospatial_key_id, temporal_key_id)
+  geospatial_key_id bigint
+                    references test_mlops.geospatial_key(geospatial_key_id),
+  temporal_key_id   bigint
+                    references test_mlops.temporal_key(temporal_key_id),
+
+  primary key(s3_object_id, geospatial_key_id, temporal_key_id),
+
+  unique (s3_type_id, geospatial_key_id, temporal_key_id)
 );
 
 

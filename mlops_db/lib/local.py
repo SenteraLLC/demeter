@@ -1,4 +1,4 @@
-from typing import List, Tuple, Any, Type, TypeVar
+from typing import List, Tuple, Any, Type, TypeVar, Iterable
 from typing import cast
 
 from .types import LocalType, LocalValue, UnitType, Key
@@ -7,21 +7,23 @@ from .schema_api import getMaybeLocalTypeId
 
 T = TypeVar('T')
 
+
 def sqlToTypedDict(rows : List[Any],
                    some_type : Type,
                   ) -> List[T]:
   return cast(List[T], [{k : v for k, v in row.items() if k in some_type.__annotations__.keys()} for row in rows])
 
+
+
 def _load(cursor : Any,
           key        : Key,
           local_type : LocalType,
-         ) -> List[Tuple[LocalValue, UnitType]]:
+         ) -> Iterable[Tuple[LocalValue, UnitType]]:
   local_type_id = getMaybeLocalTypeId(cursor, local_type)
   stmt = """select *
             from local_value V, unit_type U
             where V.unit_type_id = U.unit_type_id and U.local_type_id = %s and
               V.geom_id = %s and V.field_id = %s and V.acquired > %s and V.acquired < %s
-
           """
 
   geom_id    = key["geom_id"]
@@ -37,4 +39,18 @@ def _load(cursor : Any,
   local_value : List[LocalValue] = sqlToTypedDict(results, LocalValue)
   unit_type : List[UnitType] = sqlToTypedDict(results, UnitType)
 
-  return list(zip(local_value, unit_type))
+  return zip(local_value, unit_type)
+
+
+def load(cursor     : Any,
+         keys       : List[Key],
+         local_type : LocalType,
+        ) -> List[Tuple[LocalValue, UnitType]]:
+
+    results : List[Tuple[LocalValue, UnitType]] = []
+    for k in keys:
+      partial_results = _load(cursor, k, local_type)
+
+      results.extend(partial_results)
+    return results
+

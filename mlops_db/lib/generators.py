@@ -122,11 +122,12 @@ def getMaybeIdFunction(table : Type[Any]) -> Callable[[Any, types.AnyIdTable], O
 
 
 M = TypeVar('M', bound=types.AnyIdTable)
-def getTableById(table_name : str,
-                 cursor     : Any,
-                 table_id   : int,
-                ) -> M:
-  table_id_name = "_".join([table_name, "id"])
+
+def getMaybeTableById(table_name    : str,
+                      table_id_name : str,
+                      cursor        : Any,
+                      table_id      : int,
+                     ) -> Optional[M]:
   condition = sql.SQL(' = ').join([sql.Identifier(table_id_name), sql.Placeholder(table_id_name)])
   stmt = sql.SQL("select * from {0} where {1}").format(
     sql.Identifier(table_name),
@@ -134,13 +135,31 @@ def getTableById(table_name : str,
   )
   cursor.execute(stmt, {table_id_name : table_id})
   result = cursor.fetchone()
+  if result is None:
+    return None
   del result[table_id_name]
   return cast(M, result)
 
 
-def getTableFunction(table : Type[Any]) -> Callable[[Any, int], M]:
+def getTableById(table_name    : str,
+                 table_id_name : str,
+                 cursor        : Any,
+                 table_id      : int,
+                ) -> M:
+  maybe_table = getMaybeTableById(table_name, table_id_name, cursor, table_id)
+  if maybe_table is None:
+    raise Exception(f"No entry found for {table_id_name} = {table_id} in {table_name}")
+  table = maybe_table
+  return cast(M, table)
+
+
+def getTableFunction(table : Type[Any],
+                     table_id_name : Optional[str] = None
+                    ) -> Callable[[Any, int], M]:
   table_name = types.id_table_lookup[table]
-  return partial(getTableById, table_name)
+  if table_id_name is None:
+    table_id_name = "_".join([table_name, "id"])
+  return partial(getTableById, table_name, table_id_name)
 
 
 N = TypeVar('N', bound=types.AnyKeyTable)

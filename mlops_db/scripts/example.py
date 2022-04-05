@@ -3,9 +3,12 @@ from ..lib.ingest import S3File
 from ..lib.function import Function, Load
 from ..lib.types import LocalType
 
+import pandas as pd
 import geopandas as gpd  # type: ignore
-from typing import Dict
+from typing import Dict, List, Union
 # TODO: Defer datasource loading
+
+# TODO: Get Matrix at end
 # TODO: Register function signature with database
 #       This will require a preliminary run
 #       Should always double-check in the future that this hasn't changed
@@ -18,10 +21,12 @@ from typing import Dict
 # TODO: Add 'idempotent' boolean property? And/or 'mapping' property?
 # TODO: ???? Add meta-functionality to toggle the above options?
 
+# TODO: Handle missing data that becomes available
+
 
 @Load
-def init(datasource : DataSource, some_constant : int):
-  datasource.local(LocalType(type_name="nitrogen",
+def init(datasource : DataSource, some_constant : int) -> None:
+  local = datasource.local(LocalType(type_name="nitrogen",
                              type_category="application",
                             ),
                    )
@@ -30,22 +35,27 @@ def init(datasource : DataSource, some_constant : int):
                            "start_date" : k["start_date"],
                            "end_date"   : k["end_date"],
                           }
-  datasource.http("foo_type", param_fn=parameters)
+  hp = datasource.http("foo_type", param_fn=parameters)
+
 
   request_body = lambda k : {"field_id"   : k["field_id"],
                              "start_date" : k["start_date"],
                              "end_date"   : k["end_date"]
                             }
-  datasource.http("bar_type", json_fn=request_body)
+  hj = datasource.http("bar_type", json_fn=request_body)
 
-  datasource.s3("my_test_type")
+  s3_geo = datasource.s3("my_test_geo_type")
+  print("GEO: ",s3_geo)
+
+  s3_non_geo = datasource.s3("my_test_nongeo_type")
+  print("Non GEO: ",s3_non_geo)
+
 
 
 FUNCTION_NAME = "my_function"
 VERSION = 1
-OUTPUTS = {"foo": "test_geojson_type"}
 
-@Function(FUNCTION_NAME, VERSION, OUTPUTS)
+@Function(FUNCTION_NAME, VERSION)
 def example_transformation(datasource : DataSource, some_constant : int):
   print("Some constant: ",some_constant)
 
@@ -55,11 +65,11 @@ def example_transformation(datasource : DataSource, some_constant : int):
   geoms = datasource.get_geometry()
   print("\nGeoms: ",geoms)
 
-  #m = datasource.getMatrix()
+  m = datasource.getMatrix()
 
   # TODO: Record output and related keys
   #return {"foo": "test_geojson_type"}
-  return S3File("test_geojson_type", geoms)
+  return {"foo": S3File("test_geojson_type", geoms, key_prefix="testing_geojson")}
 
 
 def main():

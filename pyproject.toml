@@ -12,6 +12,7 @@ jsonschema = "^4.4.0"
 geopandas = "^0.10.2"
 boto3 = "^1.20.48"
 requests = "^2.27.1"
+scoping = "^0.1.2"
 
 [tool.poetry.dev-dependencies]
 types-jsonschema = "^4.4.1"

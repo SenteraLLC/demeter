@@ -37,12 +37,12 @@ class DataSource(object):
     self.keys = list(keys)
 
 
-  def local_raw(self, local_type : types.LocalType) -> List[Tuple[types.LocalValue, types.UnitType]]:
-    return local.load(self.cursor, self.keys, local_type)
+  def local_raw(self, local_types : List[types.LocalType]) -> List[Tuple[types.LocalValue, types.UnitType]]:
+    return local.load(self.cursor, self.keys, local_types)
 
 
-  def local(self, local_type : types.LocalType) -> pd.DataFrame:
-    raw = self.local_raw(local_type)
+  def local(self, local_types : List[types.LocalType]) -> pd.DataFrame:
+    raw = self.local_raw(local_types)
     rows = []
     for local_value, unit_type in raw:
       rows.append(dict(**local_value, **unit_type))
@@ -160,7 +160,6 @@ class DataSource(object):
                   bucket_name = bucket_name,
                 )
     s3_object_id = schema_api.insertS3Object(self.cursor, s3_object)
-    print("KEYS: ",self.keys)
     schema_api.insertS3ObjectKeys(self.cursor, s3_object_id, self.keys, s3_type_id)
     return True
 

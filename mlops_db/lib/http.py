@@ -9,6 +9,8 @@ from .schema_api import getHTTPByName
 
 import jsonschema
 
+ResponseFunction = Callable[[requests.models.Response], List[Dict[str, Any]]]
+
 
 def checkHTTPParams(params : Dict[str, Any],
                       expected_params :  Set[str]

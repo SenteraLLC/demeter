@@ -1,12 +1,16 @@
 # Python 3 server example
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import time
 import json
+import datetime
 
 import urllib
 
 hostName = "localhost"
 serverPort = 8080
+
+dateFormat = "%Y-%m-%d"
+parseDate = lambda s : datetime.datetime.strptime(s, dateFormat)
+dateToString = lambda d : d.strftime(dateFormat)
 
 class MyServer(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -21,7 +25,18 @@ class MyServer(BaseHTTPRequestHandler):
             self.send_response(400)
             return
 
-        result = {"hash": hash(field_id + start + end)}
+        start_date = parseDate(start)
+        end_date = parseDate(end)
+        interval_half = (end_date - start_date) / 2
+
+        middle_date = start_date + interval_half
+        three_dates = [start_date, middle_date, end_date]
+
+        result = []
+
+        for d in three_dates:
+          date = dateToString(d)
+          result.append({"hash": hash(field_id + date), "date": date})
 
         self.send_response(200)
         self.send_header('Content-type', 'application/json')

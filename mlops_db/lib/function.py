@@ -11,6 +11,7 @@ from .connections import getS3Connection
 from typing import List, TypedDict, Dict, Any, Callable, Tuple, Generator, Union, TypeVar, Protocol, Optional
 import psycopg2
 import pandas as pd
+# TODO: Write a stub for GeoDataFrame
 import geopandas as gpd # type: ignore
 
 from functools import wraps
@@ -69,7 +70,8 @@ def Function(name    : str,
 
 T = TypeVar('T')
 LoadFunction = Callable[[DataSource, Any], T]
-InputLoadFunction = LoadFunction[None]
+AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
+InputLoadFunction = LoadFunction[AnyDataFrame]
 OutputLoadFunction = LoadFunction[gpd.GeoDataFrame]
 
 def Load(fn : InputLoadFunction) -> OutputLoadFunction:

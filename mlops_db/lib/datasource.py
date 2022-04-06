@@ -20,9 +20,11 @@ from . import local
 from . import ingest
 from .generators import generateInsertMany
 
-# TODO: Stubs?
-from shapely import wkb # type: ignore
 
+OneToOneResponseFunction : http.ResponseFunction = lambda r : [cast(Dict[str, Any], r.json())]
+OneToManyResponseFunction : http.ResponseFunction = lambda rs : [cast(Dict[str, Any], r) for r in rs.json()]
+
+# TODO: Memoize or throw error?
 
 class DataSource(object):
   def __init__(self,
@@ -50,9 +52,10 @@ class DataSource(object):
   # TODO: Assuming JSON response for now
   def _http(self,
             http_type    : types.HTTPType,
-            param_fn     : Optional[http.KeyToArgsFunction] = None,
-            json_fn      : Optional[http.KeyToArgsFunction] = None,
-            http_options : Dict[str, Any] = {}
+            param_fn     : Optional[http.KeyToArgsFunction],
+            json_fn      : Optional[http.KeyToArgsFunction],
+            response_fn  : http.ResponseFunction,
+            http_options : Dict[str, Any] = {},
            ) -> List[Tuple[types.Key, Dict[str, Any]]]:
     verb = http_type["verb"]
     func = {types.HTTPVerb.GET    : requests.get,
@@ -74,9 +77,11 @@ class DataSource(object):
 
       wrapped = http.wrap_requests_fn(func, self.cursor)
       raw_response = wrapped(uri, **http_options)
-      response = cast(Dict[str, Any], raw_response.json())
+      response_rows = response_fn(raw_response)
 
-      responses.append((k, response))
+      for row in response_rows:
+        responses.append((k, row))
+
     return responses
 
 
@@ -84,10 +89,11 @@ class DataSource(object):
                type_name : str,
                param_fn     : Optional[http.KeyToArgsFunction] = None,
                json_fn      : Optional[http.KeyToArgsFunction] = None,
+               response_fn  : http.ResponseFunction = OneToOneResponseFunction,
                http_options : Dict[str, Any] = {}
               ) -> List[Tuple[types.Key, Dict[str, Any]]]:
     http_type_id, http_type = schema_api.getHTTPByName(self.cursor, type_name)
-    http_result = self._http(http_type, param_fn, json_fn, http_options)
+    http_result = self._http(http_type, param_fn, json_fn, response_fn, http_options)
     return http_result
 
 
@@ -95,9 +101,10 @@ class DataSource(object):
            type_name : str,
            param_fn     : Optional[http.KeyToArgsFunction] = None,
            json_fn      : Optional[http.KeyToArgsFunction] = None,
+           response_fn  : http.ResponseFunction = OneToOneResponseFunction,
            http_options : Dict[str, Any] = {}
           ) -> pd.DataFrame:
-    raw_results = self.http_raw(type_name, param_fn, json_fn, http_options)
+    raw_results = self.http_raw(type_name, param_fn, json_fn, response_fn, http_options)
     results = []
     for key, row in raw_results:
       results.append(dict(**key, **row))

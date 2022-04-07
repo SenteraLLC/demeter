@@ -33,7 +33,7 @@ if __name__ == "__main__":
   def newS3TypeDataFrame(type_name : str,
                          driver : str,
                          has_geometry : bool
-                        ) -> Tuple[int, types.S3TypeDataFrame]:
+                        ) -> Tuple[int, types.TaggedS3SubType]:
     s3_type = types.S3Type(
                 type_name = type_name,
               )
@@ -42,7 +42,13 @@ if __name__ == "__main__":
                            has_geometry = has_geometry,
                          )
     s3_type_id = schema_api.insertOrGetS3TypeDataFrame(cursor, s3_type, driver, has_geometry)
-    return s3_type_id, s3_type_data_frame
+
+    tagged_s3_subtype = types.TaggedS3SubType(
+                          tag = types.S3TypeDataFrame,  # type: ignore
+                          value = s3_type_data_frame,
+                        )
+
+    return s3_type_id, tagged_s3_subtype
 
   newS3TypeDataFrame("test_geojson_type", "GeoJSON", True)
 
@@ -73,8 +79,8 @@ if __name__ == "__main__":
     has_geometry = True
     uploadTestFile(geoms_df, type_name, driver, has_geometry)
 
-
-  nongeoms_df = pd.DataFrame().assign(N = ns)
+  geom_id_column = geoms_df["geom_id"]
+  nongeoms_df = pd.DataFrame().assign(geom_id = geom_id_column, N = ns)
 
   # Non-Geometric type
   with scoping():

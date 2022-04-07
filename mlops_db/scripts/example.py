@@ -7,8 +7,7 @@ import pandas as pd
 import geopandas as gpd  # type: ignore
 from typing import Dict, List, Union, Tuple
 # TODO: Defer datasource loading
-
-# TODO: Get Matrix at end
+# TODO: How much to enforce dataframe indexing?
 # TODO: Register function signature with database
 #       This will require a preliminary run
 #       Should always double-check in the future that this hasn't changed
@@ -23,62 +22,55 @@ from typing import Dict, List, Union, Tuple
 
 # TODO: Handle missing data that becomes available
 
-
+# TODO: Allow init to override join behavior, manually return a gpd.GeoDataFrame
 @Load
-def init(datasource : DataSource, some_constant : int) -> Union[pd.DataFrame, gpd.GeoDataFrame]:
-  local = datasource.local([LocalType(type_name="nitrogen",
-                                      type_category="application",
-                                     ),
-                            LocalType(type_name="urea ammonium nitrate",
-                                      type_category="application",
-                                     ),
-
-                          ])
-  print("Local: ",local)
+def init(datasource : DataSource, some_constant : int) -> None:
+  datasource.local([LocalType(type_name="nitrogen",
+                              type_category="application",
+                             ),
+                    LocalType(type_name="urea ammonium nitrate",
+                              type_category="application",
+                             ),
+                  ])
 
   parameters = lambda k : {"field_id"   : k["field_id"],
                            "start_date" : k["start_date"],
                            "end_date"   : k["end_date"],
                           }
-  hp = datasource.http("foo_type", param_fn=parameters, response_fn = OneToManyResponseFunction)
-  print("HP: ",hp)
+  datasource.http("foo_type", param_fn=parameters, response_fn=OneToManyResponseFunction)
 
 
   request_body = lambda k : {"field_id"   : k["field_id"],
                              "start_date" : k["start_date"],
                              "end_date"   : k["end_date"]
                             }
-  hj = datasource.http("bar_type", json_fn=request_body)
-  print("HJ: ",hj)
+  bar_df = datasource.http("bar_type", json_fn=request_body)
 
-  s3_geo = datasource.s3("my_test_geo_type")
-  print("GEO: ",s3_geo)
+  datasource.s3("my_test_geo_type"),
 
-  s3_non_geo = datasource.s3("my_test_nongeo_type")
-  print("Non GEO: ",s3_non_geo)
+  datasource.s3("my_test_nongeo_type")
 
-  return (hp, hj, s3_geo, s3_non_geo)
+  datasource.join(datasource.GEOM, "my_test_geo_type", gpd.GeoDataFrame.sjoin, lsuffix = "primary", rsuffix = "my_test_geo_type")
+
+  #datasource.join("foo_type", "bar_type", pd.DataFrame.merge, on=["geom_id", "date"], how="outer")
+
 
 
 FUNCTION_NAME = "my_function"
 VERSION = 1
 
 # TODO: Pass init function as argument here
-@Function(FUNCTION_NAME, VERSION)
+@Function(FUNCTION_NAME, VERSION, init)
+#def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
 def example_transformation(datasource : DataSource, some_constant : int):
+  init(datasource, 5)
+
   print("Some constant: ",some_constant)
 
-  inputs = init(datasource, some_constant)
-  print("Inputs: ",inputs)
-
-  geoms = datasource.get_geometry()
-  print("\nGeoms: ",geoms)
-
-  m = datasource.getMatrix()
-
   # TODO: Record output and related keys
-  #return {"foo": "test_geojson_type"}
-  return {"foo": S3File("test_geojson_type", geoms, key_prefix="testing_geojson")}
+  import sys
+  sys.exit(1234)
+  #return {"foo": S3File("test_geojson_type", gdf, key_prefix="testing_geojson")}
 
 
 def main():

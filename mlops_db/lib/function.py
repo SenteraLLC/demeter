@@ -17,6 +17,22 @@ import geopandas as gpd # type: ignore
 from functools import wraps
 
 
+T = TypeVar('T')
+LoadFunction = Callable[[DataSource, Any], T]
+AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
+InputLoadFunction = LoadFunction[AnyDataFrame]
+OutputLoadFunction = LoadFunction[gpd.GeoDataFrame]
+
+
+# TODO: Add some deferral objects (like shared ptrs) that allow some modification of values in Load section
+
+def Load(fn : InputLoadFunction) -> OutputLoadFunction:
+  def wrapped(datasource : DataSource, *args, **kwargs) -> DataSource:
+    fn(datasource, *args, **kwargs)
+    return datasource.getMatrix()
+  return wrapped
+
+
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Local) -> (S3, Local)
 
@@ -36,6 +52,7 @@ class AddDataSourceWrapper(Protocol):
 
 def Function(name    : str,
              major   : int,
+             load_fn : Optional[OutputLoadFunction],
             ) -> Callable[[WrappableFunction], AddDataSourceWrapper]:
   def setup_datasource(fn : WrappableFunction) -> AddDataSourceWrapper:
 
@@ -51,7 +68,6 @@ def Function(name    : str,
     @wraps(fn)
     def add_datasource(**kwargs : Dict[str, Any]) -> None:
       outputs = fn(datasource, **kwargs)
-      print("Outputs is: ",outputs)
       for output_name, output in outputs.items():
         s3_type_id = schema_api.getS3TypeIdByName(cursor, output.type_name)
         s3_type, maybe_tagged_s3_sub_type = schema_api.getS3Type(cursor, s3_type_id)
@@ -67,18 +83,6 @@ def Function(name    : str,
 
   return setup_datasource
 
-
-T = TypeVar('T')
-LoadFunction = Callable[[DataSource, Any], T]
-AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
-InputLoadFunction = LoadFunction[AnyDataFrame]
-OutputLoadFunction = LoadFunction[gpd.GeoDataFrame]
-
-def Load(fn : InputLoadFunction) -> OutputLoadFunction:
-  def wrapped(datasource : DataSource, *args, **kwargs) -> DataSource:
-    fn(datasource, *args, **kwargs)
-    return datasource.getMatrix()
-  return wrapped
 
 
 

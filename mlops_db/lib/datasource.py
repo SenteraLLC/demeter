@@ -1,8 +1,9 @@
 import itertools
 
 from io import BytesIO
+from collections import ChainMap
 
-from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, BinaryIO, Iterator, Union
+from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, BinaryIO, Iterator, Union, Callable, Set
 from typing import cast
 
 import psycopg2
@@ -24,6 +25,8 @@ from .generators import generateInsertMany
 OneToOneResponseFunction : http.ResponseFunction = lambda r : [cast(Dict[str, Any], r.json())]
 OneToManyResponseFunction : http.ResponseFunction = lambda rs : [cast(Dict[str, Any], r) for r in rs.json()]
 
+AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
+
 # TODO: Memoize or throw error?
 
 class DataSource(object):
@@ -36,17 +39,35 @@ class DataSource(object):
     self.cursor = cursor
     self.keys = list(keys)
 
+    self.LOCAL = "__LOCAL"
+    self.GEOM = "__PRIMARY_GEOMETRY"
 
-  def local_raw(self, local_types : List[types.LocalType]) -> List[Tuple[types.LocalValue, types.UnitType]]:
+    self.dataframes : Dict[str, pd.DataFrame] = {}
+    self.geodataframes : Dict[str, gpd.GeoDataFrame] = {}
+    self.joins : Dict[Tuple[str, str], Tuple[Optional[Callable[..., AnyDataFrame]], Dict[str, Any]]] = {}
+
+
+  def _local_raw(self, local_types : List[types.LocalType]) -> List[Tuple[types.LocalValue, types.UnitType]]:
     return local.load(self.cursor, self.keys, local_types)
 
 
+  def _typesToDict(*tables   : types.AnyIdTable,
+                  ) -> Dict[str, Any]:
+    blacklist : Set[str] = {types.id_table_lookup[t] + "_id" for t in tables} # type: ignore
+    return {k : v for k , v in ChainMap(*tables).items() if k not in blacklist} # type: ignore
+
+
   def local(self, local_types : List[types.LocalType]) -> pd.DataFrame:
-    raw = self.local_raw(local_types)
+    if self.LOCAL in self.dataframes:
+      # TODO: Local data aquisitions should be deferred in the future
+      raise Exception("Local data can only be acquired once.")
+    raw = self._local_raw(local_types)
     rows = []
     for local_value, unit_type in raw:
       rows.append(dict(**local_value, **unit_type))
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    self.dataframes[self.LOCAL] = df
+    return df
 
 
   # TODO: Assuming JSON response for now
@@ -97,8 +118,9 @@ class DataSource(object):
     return http_result
 
 
+  # TODO: Support HTTP GeoDataFrames
   def http(self,
-           type_name : str,
+           type_name    : str,
            param_fn     : Optional[http.KeyToArgsFunction] = None,
            json_fn      : Optional[http.KeyToArgsFunction] = None,
            response_fn  : http.ResponseFunction = OneToOneResponseFunction,
@@ -108,7 +130,9 @@ class DataSource(object):
     results = []
     for key, row in raw_results:
       results.append(dict(**key, **row))
-    return pd.DataFrame(results)
+    df = pd.DataFrame(results)
+    self.dataframes[type_name] = df
+    return df
 
 
   def s3_raw(self,
@@ -137,14 +161,20 @@ class DataSource(object):
         driver = dataframe_subtype["driver"]
         has_geometry = dataframe_subtype["has_geometry"]
         if has_geometry:
-          return gpd.read_file(raw_results, driver=driver)
+          gdf = gpd.read_file(raw_results, driver=driver)
+          self.geodataframes[type_name] = gdf
+          return gdf
         else:
           pandas_file_type = ingest.toPandasFileType(driver)
           pandas_driver_fn = ingest.FILETYPE_TO_PANDAS_READ_FN[pandas_file_type]
-          return pandas_driver_fn(raw_results)
+          df = pandas_driver_fn(raw_results)
+          self.dataframes[type_name] = df
+          return df
 
-
-    return gpd.read_file(raw_results, driver=driver)
+    # TODO: This should be reading binary data, not geodataframes
+    gdf = gpd.read_file(raw_results, driver=driver)
+    self.geodataframes[type_name] = gdf
+    return gdf
 
 
   def upload(self,
@@ -180,7 +210,7 @@ class DataSource(object):
   def get_geometry(self) -> gpd.GeoDataFrame:
     geo_ids = [k["geom_id"] for k in self.keys]
     stmt = """
-             select G.geom_id, G.geom, G.container_geom_id, CONTAINER.geom as container_geom
+             select G.geom_id, G.geom, G.container_geom_id
              from geom G
              join geom CONTAINER
                on G.geom_id = CONTAINER.geom_id
@@ -189,8 +219,88 @@ class DataSource(object):
     result = gpd.read_postgis(stmt, self.cursor.connection, "geom", params = {"geo_ids": geo_ids})
     return result
 
+
+  def join(self,
+           left_type_name : str,
+           right_type_name : str,
+           join_fn : Optional[Callable[..., Any]] = None,
+           **kwargs : Any,
+          ) -> None:
+    dataframe_names = set(self.dataframes.keys()).union(self.geodataframes.keys())
+    dataframe_names.add(self.LOCAL)
+    dataframe_names.add(self.GEOM)
+
+    if left_type_name not in dataframe_names:
+      raise Exception(f"No typename {left_type_name} found.")
+    if right_type_name not in dataframe_names:
+      raise Exception(f"No typename {right_type_name} found.")
+
+    self.joins[(left_type_name, right_type_name)] = (join_fn, kwargs)
+
+
+  def popDataFrame(self, type_name : str) -> Optional[AnyDataFrame]:
+    maybe_gdf = self.geodataframes.get(type_name)
+    if maybe_gdf is not None:
+      del self.geodataframes[type_name]
+      gdf = maybe_gdf
+      return gdf
+    maybe_df = self.dataframes.get(type_name)
+    if maybe_df is not None:
+      del self.dataframes[type_name]
+      df = maybe_df
+      return df
+    return None
+
+
+  # TODO: Doesn't handle joins between non-geom geodataframes
   def getMatrix(self) -> gpd.GeoDataFrame:
-    return gpd.GeoDataFrame()
+    all_dataframe_names = set(self.dataframes.keys()).union(self.geodataframes.keys())
+    joined_dataframe_names : Set[str] = set()
+
+    out : gpd.GeoDataFrame = self.get_geometry()
+
+    # Do explicit joins first
+    for (left_type_name, right_type_name), (join_fn, kwargs) in self.joins.items():
+      left : Optional[AnyDataFrame] = None
+      right : Optional[AnyDataFrame] = None
+
+      maybe_left = self.popDataFrame(left_type_name)
+      maybe_right = self.popDataFrame(right_type_name)
+      if maybe_left is None and left_type_name == self.GEOM:
+        left = out
+        right = maybe_right
+      elif maybe_right is None and right_type_name == self.GEOM:
+        right = out
+        left = maybe_left
+      elif maybe_left is None and maybe_right is None:
+        raise Exception(f"Unknown join error on '{left_type_name}' and '{right_type_name}'")
+      elif maybe_left is None or maybe_right is None:
+        if maybe_left is None:
+          left = out
+          right = maybe_right
+        elif maybe_right is None:
+          left = maybe_left
+          right = out
+      else:
+        left = maybe_left
+        right = maybe_right
+
+      if join_fn is None:
+        if isinstance(left, gpd.GeoDataFrame) and isinstance(right, gpd.GeoDataFrame):
+          join_fn = gpd.GeoDataFrame.sjoin
+        else:
+          join_fn = pd.DataFrame.merge
+      result = join_fn(left, right, **kwargs)
+
+    for k, df in self.dataframes.items():
+      out = out.merge(df, on="geom_id", how="inner")
+
+    for k, gdf in self.geodataframes.items():
+      out = out.sjoin(df, **kwargs, rsuffix=k)
+
+    return out
+
+
 
 
 

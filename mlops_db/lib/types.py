@@ -222,6 +222,8 @@ class S3ObjectKey(Table):
   temporal_key_id   : int
 
 
+AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType, S3Type]
+
 type_table_lookup = {
   UnitType   : "unit_type",
   LocalType  : "local_type",
@@ -234,9 +236,8 @@ type_table_lookup = {
   S3TypeDataFrame : "s3_type_dataframe",
 }
 
-RequestType = Union[LocalType, HTTPType, S3Type]
-AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType, S3Type]
 
+AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, LocalParameter, GeoSpatialKey, TemporalKey, S3Output, S3Object]
 
 data_table_lookup = {
   Geom            : "geom",
@@ -251,11 +252,11 @@ data_table_lookup = {
   S3Object        : "s3_object",
 }
 
-AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, LocalParameter, GeoSpatialKey, TemporalKey, S3Output, S3Object]
 
+AnyIdTable = Union[AnyTypeTable, AnyDataTable, S3SubType]
 id_table_lookup = type_table_lookup.copy()
 id_table_lookup.update(data_table_lookup)
-AnyIdTable = Union[AnyTypeTable, AnyDataTable, S3SubType]
+
 
 key_table_lookup = {
   Planting     : ("planting", PlantingKey),

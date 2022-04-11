@@ -8,7 +8,7 @@ from . import temporary
 
 from .connections import getS3Connection
 
-from typing import List, TypedDict, Dict, Any, Callable, Tuple, Generator, Union, TypeVar, Protocol, Optional
+from typing import List, TypedDict, Dict, Any, Callable, Tuple, Generator, Union, TypeVar, Protocol, Optional, Mapping
 import psycopg2
 import pandas as pd
 # TODO: Write a stub for GeoDataFrame
@@ -18,44 +18,40 @@ from functools import wraps
 
 
 T = TypeVar('T')
-LoadFunction = Callable[[DataSource, Any], T]
 AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
-InputLoadFunction = LoadFunction[AnyDataFrame]
-OutputLoadFunction = LoadFunction[gpd.GeoDataFrame]
+OutputLoadFunction = Callable[[DataSource, Any], gpd.GeoDataFrame]
 
+WrappableFunctionOutputs = Mapping[str, Union[S3File, LocalFile]]
+
+WrappableFunction = Callable[..., WrappableFunctionOutputs]
+
+class AddDataSourceWrapper(Protocol):
+  def __call__(self, datasource : DataSource, **kwargs: Any) -> Mapping[str, Any]: ...
+
+class AddGeoDataFrameWrapper(Protocol):
+  def __call__(self, **kwargs: Any) -> Mapping[str, Any]: ...
 
 # TODO: Add some deferral objects (like shared ptrs) that allow some modification of values in Load section
 
-def Load(fn : InputLoadFunction) -> OutputLoadFunction:
-  def wrapped(datasource : DataSource, *args, **kwargs) -> DataSource:
-    fn(datasource, *args, **kwargs)
-    return datasource.getMatrix()
-  return wrapped
+def Load(load_fn : OutputLoadFunction) -> Callable[[WrappableFunction], AddDataSourceWrapper]:
+    def get_load_fn(fn : WrappableFunction) -> AddDataSourceWrapper:
+      @wraps(fn)
+      def add_dataframe(datasource : DataSource, **kwargs : Any) -> Mapping[str, Any]:
+        load_fn(datasource, **kwargs) # type: ignore
+        m = datasource.getMatrix()
+        outputs = fn(m, **kwargs)
+        return outputs
+      return add_dataframe
+    return get_load_fn
 
 
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Local) -> (S3, Local)
 
-#WrappableFunction = Callable[[DataSource, Any], Dict[str, Union[S3File, LocalFile]]]
-WrappableFunctionOutputs = Union[Dict[str, Union[S3File, LocalFile]]]
-#WrappableFunctionOutputs = Dict[str, S3File]
-#class WrappableFunction(Protocol):
-#  def __call__(self, datasource : DataSource, **kwargs : Dict[str, Any]) -> WrappableFunctionOutputs: ...
-
-WrappableFunction = Callable[..., WrappableFunctionOutputs]
-
-class AddDataSourceWrapper(Protocol):
-  def __call__(self, **kwargs: Dict[str, Any]) -> None: ...
-
-
-#WrappedFunction = Callable[[WrappableFunction], None]
-
 def Function(name    : str,
              major   : int,
-             load_fn : Optional[OutputLoadFunction],
-            ) -> Callable[[WrappableFunction], AddDataSourceWrapper]:
-  def setup_datasource(fn : WrappableFunction) -> AddDataSourceWrapper:
-
+            ) -> Callable[[WrappableFunction], AddGeoDataFrameWrapper]:
+  def setup_datasource(fn : WrappableFunction) -> AddGeoDataFrameWrapper:
     # TODO: How to handle aws credentials and role assuming?
     s3_connection : Any             = getS3Connection(temporary.S3_ROLE_ARN)
 
@@ -66,7 +62,7 @@ def Function(name    : str,
     # TODO: Warn if non-keyword arguments exist?
     # TODO: Only allow primitive values in kwargs?
     @wraps(fn)
-    def add_datasource(**kwargs : Dict[str, Any]) -> None:
+    def add_datasource(**kwargs : Any) -> Mapping[str, AnyDataFrame]:
       outputs = fn(datasource, **kwargs)
       for output_name, output in outputs.items():
         s3_type_id = schema_api.getS3TypeIdByName(cursor, output.type_name)
@@ -76,11 +72,10 @@ def Function(name    : str,
 
           s3_type_name = s3_type["type_name"]
           datasource.upload_file(s3_type_id, temporary.BUCKET_NAME, s3_file_meta)
-
       temporary.mlops_db_connection.commit()
+      return outputs
 
     return add_datasource
-
   return setup_datasource
 
 

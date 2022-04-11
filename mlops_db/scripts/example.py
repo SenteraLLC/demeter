@@ -23,7 +23,7 @@ from typing import Dict, List, Union, Tuple
 # TODO: Handle missing data that becomes available
 
 # TODO: Allow init to override join behavior, manually return a gpd.GeoDataFrame
-@Load
+#@Load
 def init(datasource : DataSource, some_constant : int) -> None:
   datasource.local([LocalType(type_name="nitrogen",
                               type_category="application",
@@ -60,17 +60,16 @@ FUNCTION_NAME = "my_function"
 VERSION = 1
 
 # TODO: Pass init function as argument here
-@Function(FUNCTION_NAME, VERSION, init)
-#def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
-def example_transformation(datasource : DataSource, some_constant : int):
-  init(datasource, 5)
-
+@Function(FUNCTION_NAME, VERSION)
+@Load(init)
+def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
+  print("GDF: ",gdf)
   print("Some constant: ",some_constant)
 
   # TODO: Record output and related keys
-  import sys
-  sys.exit(1234)
-  #return {"foo": S3File("test_geojson_type", gdf, key_prefix="testing_geojson")}
+  #import sys
+  #sys.exit(1234)
+  return {"foo": S3File("test_geojson_type", gdf, key_prefix="testing_geojson")}
 
 
 def main():

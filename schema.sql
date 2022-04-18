@@ -112,6 +112,9 @@ create table field (
   field_id bigserial
            primary key,
 
+  sentera_id text,
+  external_id text,
+
   owner_id bigint
            references owner(owner_id)
            not null,
@@ -520,16 +523,16 @@ create table s3_object (
 );
 
 
-create table test_mlops.s3_object_key (
+create table s3_object_key (
   s3_object_id      bigint,
   s3_type_id        bigint,
   foreign key (s3_object_id, s3_type_id)
-    references test_mlops.s3_object(s3_object_id, s3_type_id),
+    references s3_object(s3_object_id, s3_type_id),
 
   geospatial_key_id bigint
-                    references test_mlops.geospatial_key(geospatial_key_id),
+                    references geospatial_key(geospatial_key_id),
   temporal_key_id   bigint
-                    references test_mlops.temporal_key(temporal_key_id),
+                    references temporal_key(temporal_key_id),
 
   primary key(s3_object_id, geospatial_key_id, temporal_key_id),
 
@@ -542,62 +545,73 @@ create table test_mlops.s3_object_key (
 ----------------------
 
 create table local_parameter (
-  local_parameter_name text,
-  function_id          bigint
-                       references function(function_id),
+  function_id        bigint
+                     references function(function_id),
 
-  primary key(local_parameter_name, function_id),
+  local_type_id      bigserial
+                     not null
+                     references local_value(local_value_id),
 
-  local_value_id      bigserial
-                      not null
-                      references local_value(local_value_id)
+  primary key(function_id, local_type_id)
+
 );
 
 create table http_parameter (
-  http_parameter_name text unique,
   function_id         bigint
                       references function(function_id),
-  primary key(http_parameter_name, function_id),
-
   http_type_id bigint
                references http_type(http_type_id),
+  primary key(function_id, http_type_id),
+  last_updated  timestamp without time zone
+                not null
+                default now(),
   details      jsonb
                not null
                default '{}'::jsonb
 );
 
-create table s3_parameter (
-  s3_parameter_name text unique,
+create table s3_input_parameter (
   function_id   bigint
                 references function(function_id),
-  unique (s3_parameter_name, function_id),
-
   s3_type_id    bigint references s3_type(s3_type_id),
-  primary key   (s3_parameter_name, s3_type_id, function_id),
+  primary key   (function_id, s3_type_id),
 
-  s3_output_name     text,
-  output_function_id bigint,
-
+  last_updated  timestamp without time zone
+                not null
+                default now(),
   details       jsonb
                 not null
                 default '{}'::jsonb
 );
 
-create table s3_output (
-  s3_output_name text unique,
-  function_id    bigint
-                 references function(function_id),
+create table s3_output_parameter (
+  s3_output_parameter_name text unique,
+  function_id              bigint
+                           references function(function_id),
   unique (s3_output_name, function_id),
 
   s3_type_id     bigint references s3_type(s3_type_id),
   primary key    (s3_output_name, s3_type_id, function_id),
 
+  last_updated  timestamp without time zone
+                not null
+                default now(),
   details        jsonb
                  not null
                  default '{}'::jsonb
 );
 
-alter table s3_parameter add constraint s3_input_output foreign key (s3_output_name, s3_type_id, output_function_id) references s3_output(s3_output_name, s3_type_id, function_id);
+create type keyword_type as ENUM('STRING', 'INTEGER', 'FLOAT', 'JSON');
+
+create table keyword_parameter (
+  keyword_name text,
+  keyword_type keyword_type,
+  function_id bigint
+              references function(function_id),
+  primary key(keyword_name, keyword_type, function_id)
+);
+
+--alter table s3_parameter add constraint s3_input_output foreign key (s3_output_name, s3_type_id, output_function_id) references s3_output(s3_output_name, s3_type_id, function_id);
 
 
 

@@ -89,10 +89,12 @@ class Grower(Table):
 
 
 class Field(Table):
-  owner_id  : int
-  year      : int
-  geom_id   : int
-  grower_id : Optional[int]
+  owner_id    : int
+  year        : int
+  geom_id     : int
+  grower_id   : Optional[int]
+  sentera_id  : Optional[str]
+  external_id : Optional[str]
 
 
 class LocalValue(Detailed):
@@ -102,11 +104,6 @@ class LocalValue(Detailed):
   quantity       : float
   local_group_id : Optional[int]
   acquired       : date
-
-
-class LocalParameter(Table):
-  local_parameter_name : str
-  local_value_id       : int
 
 
 class GeoSpatialKey(Table):
@@ -222,7 +219,48 @@ class S3ObjectKey(Table):
   temporal_key_id   : int
 
 
-AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType, S3Type]
+# Function Signature Tables
+
+class FunctionType(TypeTable):
+  function_type_name    : str
+  function_subtype_name : Optional[str]
+
+class Function(Detailed):
+  function_name    : str
+  major            : int
+  minor            : int
+  function_type_id : int
+  created          : datetime
+
+
+class Parameter(Table):
+  function_id : int
+
+class LocalParameter(Parameter):
+  local_type_id       : int
+
+class HTTPParameter(Parameter, Detailed):
+  http_type_id        : int
+
+class S3InputParameter(Parameter, Detailed):
+  s3_type_id              : int
+
+class S3OutputParameter(Parameter, Detailed):
+  s3_output_parameter_name : str
+  s3_type_id               : str
+
+class KeywordType(Enum):
+  STRING  = 1
+  INTEGER = 2
+  FLOAT   = 3
+  JSON    = 4
+
+class KeywordParameter(Parameter):
+  keyword_name : str
+  keyword_type : KeywordType
+
+
+AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType, S3Type, FunctionType]
 
 type_table_lookup = {
   UnitType   : "unit_type",
@@ -234,22 +272,27 @@ type_table_lookup = {
   HTTPType   : "http_type",
   S3Type     : "s3_type",
   S3TypeDataFrame : "s3_type_dataframe",
+  FunctionType    : "function_type",
 }
 
 
-AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, LocalParameter, GeoSpatialKey, TemporalKey, S3Output, S3Object]
+AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, GeoSpatialKey, TemporalKey, S3Output, S3Object, LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter, Function]
 
 data_table_lookup = {
-  Geom            : "geom",
-  Owner           : "owner",
-  Grower          : "grower",
-  Field           : "field",
-  LocalValue      : "local_value",
-  LocalParameter  : "local_parameter",
-  GeoSpatialKey   : "geospatial_key",
-  TemporalKey     : "temporal_key",
-  S3Output        : "s3_output",
-  S3Object        : "s3_object",
+  Geom              : "geom",
+  Owner             : "owner",
+  Grower            : "grower",
+  Field             : "field",
+  LocalValue        : "local_value",
+  GeoSpatialKey     : "geospatial_key",
+  TemporalKey       : "temporal_key",
+  S3Output          : "s3_output",
+  S3Object          : "s3_object",
+  Function          : "function",
+  LocalParameter    : "local_parameter",
+  HTTPParameter     : "http_parameter",
+  S3InputParameter  : "s3_input_parameter",
+  S3OutputParameter : "s3_output_parameter",
 }
 
 
@@ -268,22 +311,23 @@ key_table_lookup = {
 AnyKeyTable = Union[Planting, Harvest, CropProgress, S3ObjectKey]
 
 
+
 # TODO: More complex selections
 # Full field queries with planted info
 # As planted objects with nested stages and crops etc
 
 # Model Run Tables
 
-class SampleSet(Table):
-  geom_id    : int
-  created    : datetime
-  start_date : date
-  end_date   : date
-
-
-class SampleSetRecord(Table):
-  sample_set_id : int
-  sample_id     : int
+#class SampleSet(Table):
+#  geom_id    : int
+#  created    : datetime
+#  start_date : date
+#  end_date   : date
+#
+#
+#class SampleSetRecord(Table):
+#  sample_set_id : int
+#  sample_id     : int
 
 
 class Model(Detailed):
@@ -304,3 +348,6 @@ class Report(Detailed):
   sample_id      : int
   report_type_id : int
   created        : datetime
+
+
+

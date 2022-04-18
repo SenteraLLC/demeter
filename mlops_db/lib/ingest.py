@@ -54,8 +54,8 @@ class S3FileMeta(TypedDict):
   filename_on_disk       : str
   key                    : str
 
-SupportedS3DataType = Union[gpd.GeoDataFrame, pd.DataFrame]
 
+SupportedS3DataType = Union[gpd.GeoDataFrame, pd.DataFrame]
 
 class PandasFileType(Enum):
   CSV = 1
@@ -107,20 +107,19 @@ def _write_s3_file_to_disk(value                   : SupportedS3DataType,
     raise Exception(f"Unhandled write for S3 file: {value}")
   return None
 
-# TODO: These should use type_ids instead of type_names
+
 
 class S3File(object):
   def __init__(self,
-               type_name  : str,
                value      : SupportedS3DataType,
                key_prefix : Optional[str] = None,
                delim      : str = "_",
               ):
+    self.value = value
     self.key = str(uuid.uuid4())
     if key_prefix is not None:
       self.key = delim.join([key_prefix, self.key])
-    self.type_name = type_name
-    self.value = value
+
 
   # NOTE: Driver comes from 'fiona.supported_drivers'
   # TODO: Support files other than dataframes

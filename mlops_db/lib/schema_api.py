@@ -19,7 +19,6 @@ T = TypeVar('T', bound=types.AnyIdTable)
 ReturnId = Callable[[Any, T], int]
 
 insertField          : ReturnId[types.Field]      = getInsertReturnIdFunction(types.Field)
-insertLocalParameter : ReturnId[types.LocalParameter]      = getInsertReturnIdFunction(types.LocalParameter)
 insertLocalValue     : ReturnId[types.LocalValue] = getInsertReturnIdFunction(types.LocalValue)
 insertOwner          : ReturnId[types.Owner]      = getInsertReturnIdFunction(types.Owner)
 insertGrower         : ReturnId[types.Grower]     = getInsertReturnIdFunction(types.Grower)
@@ -36,6 +35,12 @@ insertReportType : ReturnId[types.ReportType] = getInsertReturnIdFunction(types.
 insertLocalGroup : ReturnId[types.LocalGroup] = getInsertReturnIdFunction(types.LocalGroup)
 insertHTTPType : ReturnId[types.HTTPType] = getInsertReturnIdFunction(types.HTTPType)
 insertS3TypeBase   : ReturnId[types.S3Type] = getInsertReturnIdFunction(types.S3Type)
+insertLocalParameter : ReturnId[types.LocalParameter] = getInsertReturnIdFunction(types.LocalParameter)
+insertHTTPParameter : ReturnId[types.HTTPParameter]   = getInsertReturnIdFunction(types.HTTPParameter)
+insertS3InputParameter : ReturnId[types.S3InputParameter] = getInsertReturnIdFunction(types.S3InputParameter)
+insertS3OutputParameter : ReturnId[types.S3OutputParameter] = getInsertReturnIdFunction(types.S3OutputParameter)
+insertFunction : ReturnId[types.Function] = getInsertReturnIdFunction(types.Function)
+insertFunctionType : ReturnId[types.FunctionType] = getInsertReturnIdFunction(types.FunctionType)
 
 
 
@@ -327,6 +332,7 @@ def getS3Type(cursor : Any,
     if maybe_s3_sub_type is not None:
       s3_sub_type = maybe_s3_sub_type
       s3_subtype_value = types.TaggedS3SubType(
+                           # TODO: Why in the heck do I have to ignore this?
                            tag = s3_sub_type_tag,  # type: ignore
                            value = s3_sub_type,
                          )

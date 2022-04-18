@@ -27,9 +27,63 @@ OneToManyResponseFunction : http.ResponseFunction = lambda rs : [cast(Dict[str, 
 
 AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
 
+class DataSourceTypes(TypedDict):
+  s3_input_type_ids  : Set[int]
+  local_type_ids     : Set[int]
+  http_type_ids      : Set[int]
+  s3_output_type_ids : Dict[str, int]
+
+
+class DataSourceStub(object):
+  def __init__(self,
+               cursor : Any,
+              ):
+    self.cursor = cursor
+    self.types = DataSourceTypes(
+                   s3_input_type_ids  = set(),
+                   local_type_ids     = set(),
+                   http_type_ids      = set(),
+                   s3_output_type_ids = {},
+                 )
+
+
+  def s3(self,
+         type_name   : str,
+        ) -> ingest.SupportedS3DataType:
+    s3_type_id = schema_api.getS3TypeIdByName(self.cursor, type_name)
+    self.types["s3_input_type_ids"].add(s3_type_id)
+    return pd.DataFrame()
+
+  def local(self, local_types : List[types.LocalType]) -> pd.DataFrame:
+    for t in local_types:
+      maybe_local_type_id = schema_api.getMaybeLocalTypeId(self.cursor, t)
+      if maybe_local_type_id is None:
+        raise Exception(f"Local Type does not exist: {t}")
+      else:
+        local_type_id = maybe_local_type_id
+        self.types["local_type_ids"].add(local_type_id)
+    return pd.DataFrame()
+
+
+  def http(self,
+           type_name    : str,
+           param_fn     : Optional[http.KeyToArgsFunction] = None,
+           json_fn      : Optional[http.KeyToArgsFunction] = None,
+           response_fn  : http.ResponseFunction = OneToOneResponseFunction,
+           http_options : Dict[str, Any] = {}
+          ) -> pd.DataFrame:
+    http_type_id, http_type = schema_api.getHTTPByName(self.cursor, type_name)
+    self.types["http_type_ids"].add(http_type_id)
+    return pd.DataFrame()
+
+  def getMatrix(self) -> gpd.GeoDataFrame:
+    return pd.DataFrame()
+
+
+
 # TODO: Memoize or throw error?
 
-class DataSource(object):
+class DataSource(DataSourceStub):
   def __init__(self,
                keys            : types.KeyGenerator,
                cursor          : Any,
@@ -299,8 +353,6 @@ class DataSource(object):
       out = out.sjoin(df, **kwargs, rsuffix=k)
 
     return out
-
-
 
 
 

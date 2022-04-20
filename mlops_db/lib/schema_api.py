@@ -15,6 +15,9 @@ from .generators import *
 from . import types
 from psycopg2 import sql, extras
 
+psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
+
+
 T = TypeVar('T', bound=types.AnyIdTable)
 ReturnId = Callable[[Any, T], int]
 
@@ -35,24 +38,133 @@ insertReportType : ReturnId[types.ReportType] = getInsertReturnIdFunction(types.
 insertLocalGroup : ReturnId[types.LocalGroup] = getInsertReturnIdFunction(types.LocalGroup)
 insertHTTPType : ReturnId[types.HTTPType] = getInsertReturnIdFunction(types.HTTPType)
 insertS3TypeBase   : ReturnId[types.S3Type] = getInsertReturnIdFunction(types.S3Type)
-insertLocalParameter : ReturnId[types.LocalParameter] = getInsertReturnIdFunction(types.LocalParameter)
-insertHTTPParameter : ReturnId[types.HTTPParameter]   = getInsertReturnIdFunction(types.HTTPParameter)
-insertS3InputParameter : ReturnId[types.S3InputParameter] = getInsertReturnIdFunction(types.S3InputParameter)
-insertS3OutputParameter : ReturnId[types.S3OutputParameter] = getInsertReturnIdFunction(types.S3OutputParameter)
-insertFunction : ReturnId[types.Function] = getInsertReturnIdFunction(types.Function)
+insertFunctionWithMinor : ReturnId[types.Function] = getInsertReturnIdFunction(types.Function)
 insertFunctionType : ReturnId[types.FunctionType] = getInsertReturnIdFunction(types.FunctionType)
 
+def insertFunction(cursor : Any,
+                   function : types.Function,
+                  ) -> Tuple[int, int]:
+  stmt = """insert into function(function_name, major, function_type_id, created)
+            values(%(function_name)s, %(major)s, %(function_type_id)s, %(created)s)
+            returning function_id, minor"""
+  cursor.execute(stmt, function)
+  result = cursor.fetchone()
+  function_id = result["function_id"]
+  minor = result["minor"]
+  return function_id, minor
+
+
+def getLatestFunctionSignature(cursor : Any,
+                               function : types.Function
+                              ) -> Optional[types.FunctionSignature]:
+  stmt = """
+    with latest_function as (
+      select *
+      from function F
+      where F.function_name = %(function_name)s and F.major = %(major)s and F.function_type_id = %(function_type_id)s
+      order by minor desc
+      limit 1
+
+    ), local_inputs as (
+      select F.function_id,
+             jsonb_agg(
+               jsonb_build_object('type_name', LT.type_name,
+                                  'type_category', LT.type_category
+                                 )
+             ) as local_types
+      from latest_function F
+      join local_parameter LP on F.function_id = LP.function_id
+      join local_type LT on LP.local_type_id = LT.local_type_id
+      group by F.function_id
+
+    ), s3_inputs as (
+      select F.function_id,
+             jsonb_agg(
+               jsonb_build_object('type_name', S3T.type_name)
+             ) as s3_types,
+             jsonb_agg(
+               jsonb_build_object('driver', S3TD.driver,
+                                  'has_geometry', S3TD.has_geometry
+                                 )
+              ) as s3_dataframe_types
+      from latest_function F
+      join s3_input_parameter S3I on F.function_id = S3I.function_id
+      join s3_type S3T on S3I.s3_type_id = S3T.s3_type_id
+      left join s3_type_dataframe S3TD on S3T.s3_type_id = S3TD.s3_type_id
+      group by F.function_id
+
+    ), http_inputs as (
+      select F.function_id,
+             jsonb_agg(
+               jsonb_build_object('type_name', HT.type_name,
+                                  'verb', HT.verb,
+                                  'uri', HT.uri,
+                                  'uri_parameters', HT.uri_parameters,
+                                  'request_body_schema', HT.request_body_schema
+                                 )
+             ) as http_types
+      from latest_function F
+      join http_parameter HP on F.function_id = HP.function_id
+      join http_type HT on HP.http_type_id = HT.http_type_id
+      group by F.function_id
+
+    ), s3_outputs as (
+      select F.function_id,
+             jsonb_agg(
+               jsonb_build_object('type_name', S3T.type_name)
+             ) as s3_types,
+             jsonb_agg(
+               jsonb_build_object('driver', S3TD.driver,
+                                  'has_geometry', S3TD.has_geometry
+                                 )
+              ) as s3_dataframe_types
+      from latest_function F
+      join s3_output_parameter S3O on F.function_id = S3O.function_id
+      join s3_type S3T on S3O.s3_type_id = S3T.s3_type_id
+      left join s3_type_dataframe S3TD on S3T.s3_type_id = S3TD.s3_type_id
+      group by F.function_id
+
+    ) select coalesce(LI.local_types, '[]'::jsonb) as local_inputs,
+             coalesce(S3I.s3_types, '[]'::jsonb) as s3_inputs,
+             coalesce(S3I.s3_dataframe_types, '[]'::jsonb) as s3_dataframe_inputs,
+             coalesce(HI.http_types, '[]'::jsonb) as http_inputs,
+             coalesce(S3O.s3_types, '[]'::jsonb) as s3_outputs,
+             coalesce(S3I.s3_dataframe_types, '[]'::jsonb) as s3_dataframe_outputs
+      from latest_function F
+      left join local_inputs LI on F.function_id = LI.function_id
+      left join http_inputs HI on F.function_id = HI.function_id
+      left join s3_inputs S3I on F.function_id = S3I.function_id
+      left join s3_outputs S3O on F.function_id = S3O.function_id
+"""
+
+  cursor.execute(stmt, function)
+  result = cursor.fetchone()
+  if result is None:
+    return None
+
+  return types.FunctionSignature(
+           local_inputs = result["local_inputs"],
+           s3_inputs = list(zip(result["s3_inputs"], result["s3_dataframe_inputs"])),
+           http_inputs = result["http_inputs"],
+           s3_outputs = list(zip(result["s3_outputs"], result["s3_dataframe_outputs"])),
+         )
 
 
 # TODO: Fix typing issues here
 S = TypeVar('S', bound=types.AnyKeyTable)
 SK = TypeVar('SK', bound=types.Key)
 ReturnKey = Callable[[Any, S], SK]
+ReturnSameKey = Callable[[Any, S], S]
 
 insertPlanting     : ReturnKey[types.Planting, types.PlantingKey] = getInsertReturnKeyFunction(types.Planting) # type: ignore
 insertHarvest      : ReturnKey[types.Harvest, types.HarvestKey] = getInsertReturnKeyFunction(types.Harvest) # type: ignore
 insertCropProgress : ReturnKey[types.CropProgress, types.CropProgressKey] = getInsertReturnKeyFunction(types.CropProgress) # type: ignore
 insertS3ObjectKey : ReturnKey[types.S3ObjectKey, types.S3ObjectKey] = getInsertReturnKeyFunction(types.S3ObjectKey) # type: ignore
+insertLocalParameter : ReturnSameKey[types.LocalParameter] = getInsertReturnKeyFunction(types.LocalParameter) # type: ignore
+insertHTTPParameter : ReturnSameKey[types.HTTPParameter]   = getInsertReturnKeyFunction(types.HTTPParameter) # type: ignore
+insertS3InputParameter : ReturnSameKey[types.S3InputParameter] = getInsertReturnKeyFunction(types.S3InputParameter) # type: ignore
+insertS3OutputParameter : ReturnSameKey[types.S3OutputParameter] = getInsertReturnKeyFunction(types.S3OutputParameter) # type: ignore
+
 
 insertS3TypeDataFrame : ReturnKey[types.S3TypeDataFrame, types.S3TypeDataFrame] = getInsertReturnKeyFunction(types.S3TypeDataFrame) # type: ignore
 
@@ -87,12 +199,11 @@ U = TypeVar('U', bound=types.AnyIdTable)
 GetId = Callable[[Any, U], Optional[int]]
 
 getMaybeFieldId          : GetId[types.Field]      = getMaybeIdFunction(types.Field)
-getMaybeLocalParameterId : GetId[types.LocalParameter]      = getMaybeIdFunction(types.LocalParameter)
 getMaybeLocalValue       : GetId[types.LocalValue] = getMaybeIdFunction(types.LocalValue)
 getMaybeOwnerId          : GetId[types.Owner]      = getMaybeIdFunction(types.Owner)
 getMaybeGrowerId         : GetId[types.Grower]      = getMaybeIdFunction(types.Grower)
 getMaybeGeoSpatialKeyId  : GetId[types.GeoSpatialKey] = getMaybeIdFunction(types.GeoSpatialKey)
-getMaybeTemporalKeyId  : GetId[types.TemporalKey] = getMaybeIdFunction(types.TemporalKey)
+getMaybeTemporalKeyId    : GetId[types.TemporalKey] = getMaybeIdFunction(types.TemporalKey)
 
 
 getMaybeUnitTypeId   : GetId[types.UnitType]   = getMaybeIdFunction(types.UnitType)
@@ -103,6 +214,7 @@ getMaybeReportTypeId : GetId[types.ReportType] = getMaybeIdFunction(types.Report
 getMaybeLocalGroupId : GetId[types.LocalGroup] = getMaybeIdFunction(types.LocalGroup)
 getMaybeHTTPTypeId   : GetId[types.HTTPType]   = getMaybeIdFunction(types.HTTPType)
 getMaybeS3TypeId     : GetId[types.S3Type]     = getMaybeIdFunction(types.S3Type)
+getMaybeFunctionTypeId : GetId[types.FunctionType] = getMaybeIdFunction(types.FunctionType)
 
 
 V = TypeVar('V', bound=types.AnyIdTable)
@@ -113,8 +225,9 @@ getOwner      : GetTable[types.Owner]    = getTableFunction(types.Owner)
 getGeom       : GetTable[types.Geom]     = getTableFunction(types.Geom)
 getHTTPType   : GetTable[types.HTTPType] = getTableFunction(types.HTTPType)
 getS3Object   : GetTable[types.S3Object] = getTableFunction(types.S3Object)
+getLocalType  : GetTable[types.LocalType] = getTableFunction(types.LocalType)
 
-getS3TypeBase      : GetTable[types.S3Type]   = getTableFunction(types.S3Type)
+getS3TypeBase           : GetTable[types.S3Type]   = getTableFunction(types.S3Type)
 getMaybeS3TypeDataFrame : GetTable[types.S3TypeDataFrame] = getTableFunction(types.S3TypeDataFrame, "s3_type_id")
 
 s3_sub_type_get_lookup = {
@@ -165,7 +278,7 @@ def getS3ObjectByKey(cursor         : Any,
 def getS3ObjectByKeys(cursor    : Any,
                       keys      : List[types.Key],
                       type_name : str,
-                     ) -> Tuple[int, types.S3Object]:
+                     ) -> Optional[types.S3Object]:
   clauses = []
   args : List[Union[str, int]] = [type_name]
   for k in keys:
@@ -195,6 +308,7 @@ def getS3ObjectByKeys(cursor    : Any,
   results = cursor.fetchall()
   if len(results) <= 0:
     sys.stderr.write(f"No S3 object found for {type_name}")
+    return None
 
   most_recent = results[0]
   s3_object_id = most_recent["s3_object_id"]
@@ -207,7 +321,8 @@ def getS3ObjectByKeys(cursor    : Any,
                 bucket_name = most_recent["bucket_name"],
                 s3_type_id = most_recent["s3_type_id"],
               )
-  return s3_object_id, s3_object
+
+  return s3_object
 
 
 def getS3TypeIdByName(cursor : Any, type_name : str) -> int:

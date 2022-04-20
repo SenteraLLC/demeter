@@ -14,7 +14,6 @@ import sys
 from enum import Enum
 
 from .types import Key, TaggedS3SubType, S3SubType, S3TypeDataFrame
-from .schema_api import getS3ObjectByKey
 
 from typing import BinaryIO, Iterator, Generic, TypeVar, Any, Optional, TypedDict, Dict, Callable, Union
 from typing import cast

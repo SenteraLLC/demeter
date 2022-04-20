@@ -228,10 +228,17 @@ class FunctionType(TypeTable):
 class Function(Detailed):
   function_name    : str
   major            : int
-  minor            : int
+  #minor            : int
   function_type_id : int
   created          : datetime
 
+S3TypeSignature = Tuple[S3Type, Optional[S3TypeDataFrame]]
+
+class FunctionSignature(TypedDict):
+  local_inputs : List[LocalType]
+  s3_inputs    : List[S3TypeSignature]
+  http_inputs  : List[HTTPType]
+  s3_outputs   : List[S3TypeSignature]
 
 class Parameter(Table):
   function_id : int
@@ -247,7 +254,7 @@ class S3InputParameter(Parameter, Detailed):
 
 class S3OutputParameter(Parameter, Detailed):
   s3_output_parameter_name : str
-  s3_type_id               : str
+  s3_type_id               : int
 
 class KeywordType(Enum):
   STRING  = 1
@@ -276,7 +283,7 @@ type_table_lookup = {
 }
 
 
-AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, GeoSpatialKey, TemporalKey, S3Output, S3Object, LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter, Function]
+AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, GeoSpatialKey, TemporalKey, S3Output, S3Object, Function]
 
 data_table_lookup = {
   Geom              : "geom",
@@ -289,10 +296,6 @@ data_table_lookup = {
   S3Output          : "s3_output",
   S3Object          : "s3_object",
   Function          : "function",
-  LocalParameter    : "local_parameter",
-  HTTPParameter     : "http_parameter",
-  S3InputParameter  : "s3_input_parameter",
-  S3OutputParameter : "s3_output_parameter",
 }
 
 
@@ -306,9 +309,13 @@ key_table_lookup = {
   Harvest      : ("harvest",  HarvestKey),
   CropProgress : ("crop_progress", CropProgressKey),
   S3ObjectKey  : ("s3_object_key", S3ObjectKey),
-  S3TypeDataFrame : ("s3_type_dataframe", S3TypeDataFrame)
+  S3TypeDataFrame : ("s3_type_dataframe", S3TypeDataFrame),
+  LocalParameter : ("local_parameter", LocalParameter),
+  HTTPParameter     : ("http_parameter", HTTPParameter),
+  S3InputParameter  : ("s3_input_parameter", S3InputParameter),
+  S3OutputParameter : ("s3_output_parameter", S3OutputParameter),
 }
-AnyKeyTable = Union[Planting, Harvest, CropProgress, S3ObjectKey]
+AnyKeyTable = Union[Planting, Harvest, CropProgress, S3ObjectKey, LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter]
 
 
 

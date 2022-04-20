@@ -28,22 +28,23 @@ OneToManyResponseFunction : http.ResponseFunction = lambda rs : [cast(Dict[str, 
 AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
 
 class DataSourceTypes(TypedDict):
-  s3_input_type_ids  : Set[int]
+  s3_type_ids  : Set[int]
   local_type_ids     : Set[int]
   http_type_ids      : Set[int]
-  s3_output_type_ids : Dict[str, int]
 
 
 class DataSourceStub(object):
   def __init__(self,
                cursor : Any,
               ):
+    self.LOCAL = "__LOCAL"
+    self.GEOM = "__PRIMARY_GEOMETRY"
+
     self.cursor = cursor
     self.types = DataSourceTypes(
-                   s3_input_type_ids  = set(),
+                   s3_type_ids  = set(),
                    local_type_ids     = set(),
                    http_type_ids      = set(),
-                   s3_output_type_ids = {},
                  )
 
 
@@ -51,8 +52,9 @@ class DataSourceStub(object):
          type_name   : str,
         ) -> ingest.SupportedS3DataType:
     s3_type_id = schema_api.getS3TypeIdByName(self.cursor, type_name)
-    self.types["s3_input_type_ids"].add(s3_type_id)
+    self.types["s3_type_ids"].add(s3_type_id)
     return pd.DataFrame()
+
 
   def local(self, local_types : List[types.LocalType]) -> pd.DataFrame:
     for t in local_types:
@@ -79,22 +81,28 @@ class DataSourceStub(object):
   def getMatrix(self) -> gpd.GeoDataFrame:
     return pd.DataFrame()
 
+  def join(self,
+           left_type_name : str,
+           right_type_name : str,
+           join_fn : Optional[Callable[..., Any]] = None,
+           **kwargs : Any,
+          ) -> None:
+    return None
+
+
 
 
 # TODO: Memoize or throw error?
 
 class DataSource(DataSourceStub):
   def __init__(self,
-               keys            : types.KeyGenerator,
+               keys            : List[types.Key],
                cursor          : Any,
                s3_connection   : Any,
               ):
     self.s3_connection = s3_connection
     self.cursor = cursor
-    self.keys = list(keys)
-
-    self.LOCAL = "__LOCAL"
-    self.GEOM = "__PRIMARY_GEOMETRY"
+    self.keys = keys
 
     self.dataframes : Dict[str, pd.DataFrame] = {}
     self.geodataframes : Dict[str, gpd.GeoDataFrame] = {}
@@ -192,10 +200,11 @@ class DataSource(DataSourceStub):
   def s3_raw(self,
              type_name   : str,
             ) -> Tuple[BytesIO, Optional[types.TaggedS3SubType]]:
-    s3_object_id, s3_object = schema_api.getS3ObjectByKeys(self.cursor, self.keys, type_name)
-    s3_type, maybe_tagged_s3_subtype = schema_api.getS3Type(self.cursor, s3_object["s3_type_id"])
-    if s3_object is None:
+    maybe_s3_object = schema_api.getS3ObjectByKeys(self.cursor, self.keys, type_name)
+    if maybe_s3_object is None:
       raise Exception(f"Failed to find S3 object '{type_name}' associated with keys")
+    s3_object = maybe_s3_object
+    s3_type, maybe_tagged_s3_subtype = schema_api.getS3Type(self.cursor, s3_object["s3_type_id"])
     s3_key = s3_object["key"]
     bucket_name = s3_object["bucket_name"]
     f = ingest.download(self.s3_connection, bucket_name, s3_key)

@@ -14,6 +14,7 @@ boto3 = "^1.20.48"
 requests = "^2.27.1"
 scoping = "^0.1.2"
 Rtree = "^1.0.0"
+dictdiffer = "^0.9.0"
 
 [tool.poetry.dev-dependencies]
 types-jsonschema = "^4.4.1"

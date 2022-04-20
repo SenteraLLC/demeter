@@ -7,11 +7,9 @@ import pandas as pd
 import geopandas as gpd  # type: ignore
 from typing import Dict, List, Union, Tuple
 
-# TODO: Handle response vs feature using datasource api
-# TODO: Enforce indexing on dataframes?
-# TODO: Register function signature with database
-#       This will require a preliminary run
-#       Should always double-check in the future that this hasn't changed
+# Long Term
+# TODO: How to deal with dataframe indices?
+
 # TODO: Upload "init" file somewhere
 # TODO: Add functionality to reload input
 # TODO: Add functionality to reload subset of input
@@ -25,7 +23,7 @@ from typing import Dict, List, Union, Tuple
 # TODO: Handle missing data that becomes available
 
 # TODO: Allow init to override join behavior, manually return a gpd.GeoDataFrame
-def init(datasource : DataSource, some_constant : int) -> Union[None, Tuple[gpd.GeoDataFrame, pd.DataFrame]]:
+def init(datasource : DataSource, some_constant : int) -> None:
   datasource.local([LocalType(type_name="nitrogen",
                               type_category="application",
                              ),
@@ -55,8 +53,6 @@ def init(datasource : DataSource, some_constant : int) -> Union[None, Tuple[gpd.
   # How to join foo::start_date - foo::end_date with bar::date
   #datasource.join("foo_type", "bar_type", pd.DataFrame.merge, on=["geom_id", "date"], how="outer")
 
-  return None
-
 
 
 FUNCTION_NAME = "my_function"
@@ -72,7 +68,8 @@ def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
   return {"foo": S3File(gdf, "testing_geojson")}
 
 def cli(fn):
-  fn(mode = ExecutionMode.CLI)
+  #fn(mode = ExecutionMode.CLI)
+  fn(mode = ExecutionMode.DRY)
 
 
 if __name__ == "__main__":

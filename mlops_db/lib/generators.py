@@ -149,7 +149,7 @@ def getTableById(table_name    : str,
   maybe_table = getMaybeTableById(table_name, table_id_name, cursor, table_id)
   if maybe_table is None:
     raise Exception(f"No entry found for {table_id_name} = {table_id} in {table_name}")
-  table = maybe_table
+  table = dict(maybe_table)
   return cast(M, table)
 
 

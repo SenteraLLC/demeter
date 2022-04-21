@@ -232,14 +232,6 @@ class Function(Detailed):
   function_type_id : int
   created          : datetime
 
-S3TypeSignature = Tuple[S3Type, Optional[S3TypeDataFrame]]
-
-class FunctionSignature(TypedDict):
-  local_inputs : List[LocalType]
-  s3_inputs    : List[S3TypeSignature]
-  http_inputs  : List[HTTPType]
-  s3_outputs   : List[S3TypeSignature]
-
 class Parameter(Table):
   function_id : int
 
@@ -262,9 +254,23 @@ class KeywordType(Enum):
   FLOAT   = 3
   JSON    = 4
 
-class KeywordParameter(Parameter):
+class Keyword(TypedDict):
   keyword_name : str
   keyword_type : KeywordType
+
+class KeywordParameter(Keyword, Parameter):
+  pass
+
+
+S3TypeSignature = Tuple[S3Type, Optional[S3TypeDataFrame]]
+
+class FunctionSignature(TypedDict):
+  local_inputs : List[LocalType]
+  keyword_inputs : List[Keyword]
+  s3_inputs    : List[S3TypeSignature]
+  http_inputs  : List[HTTPType]
+  s3_outputs   : List[S3TypeSignature]
+
 
 
 AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType, S3Type, FunctionType]
@@ -314,6 +320,7 @@ key_table_lookup = {
   HTTPParameter     : ("http_parameter", HTTPParameter),
   S3InputParameter  : ("s3_input_parameter", S3InputParameter),
   S3OutputParameter : ("s3_output_parameter", S3OutputParameter),
+  KeywordParameter : ("keyword_parameter", KeywordParameter),
 }
 AnyKeyTable = Union[Planting, Harvest, CropProgress, S3ObjectKey, LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter]
 

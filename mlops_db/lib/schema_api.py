@@ -41,6 +41,7 @@ insertS3TypeBase   : ReturnId[types.S3Type] = getInsertReturnIdFunction(types.S3
 insertFunctionWithMinor : ReturnId[types.Function] = getInsertReturnIdFunction(types.Function)
 insertFunctionType : ReturnId[types.FunctionType] = getInsertReturnIdFunction(types.FunctionType)
 
+
 def insertFunction(cursor : Any,
                    function : types.Function,
                   ) -> Tuple[int, int]:
@@ -75,6 +76,17 @@ def getLatestFunctionSignature(cursor : Any,
       from latest_function F
       join local_parameter LP on F.function_id = LP.function_id
       join local_type LT on LP.local_type_id = LT.local_type_id
+      group by F.function_id
+
+    ), keyword_inputs as (
+      select F.function_id,
+             jsonb_agg(
+               jsonb_build_object('keyword_name', K.keyword_name,
+                                  'keyword_type', K.keyword_type
+                                 )
+             ) as keyword_types
+      from latest_function F
+      join keyword_parameter K on K.function_id = F.function_id
       group by F.function_id
 
     ), s3_inputs as (
@@ -125,6 +137,7 @@ def getLatestFunctionSignature(cursor : Any,
       group by F.function_id
 
     ) select coalesce(LI.local_types, '[]'::jsonb) as local_inputs,
+             coalesce(K.keyword_types, '[]'::jsonb) as keyword_inputs,
              coalesce(S3I.s3_types, '[]'::jsonb) as s3_inputs,
              coalesce(S3I.s3_dataframe_types, '[]'::jsonb) as s3_dataframe_inputs,
              coalesce(HI.http_types, '[]'::jsonb) as http_inputs,
@@ -132,6 +145,7 @@ def getLatestFunctionSignature(cursor : Any,
              coalesce(S3I.s3_dataframe_types, '[]'::jsonb) as s3_dataframe_outputs
       from latest_function F
       left join local_inputs LI on F.function_id = LI.function_id
+      left join keyword_inputs K on F.function_id = K.function_id
       left join http_inputs HI on F.function_id = HI.function_id
       left join s3_inputs S3I on F.function_id = S3I.function_id
       left join s3_outputs S3O on F.function_id = S3O.function_id
@@ -142,8 +156,15 @@ def getLatestFunctionSignature(cursor : Any,
   if result is None:
     return None
 
+  keyword_inputs = [types.Keyword(
+                      keyword_name = k["keyword_name"],
+                      keyword_type = types.KeywordType[k["keyword_type"]],
+                    ) for k in result["keyword_inputs"]
+                   ]
+
   return types.FunctionSignature(
            local_inputs = result["local_inputs"],
+           keyword_inputs = keyword_inputs,
            s3_inputs = list(zip(result["s3_inputs"], result["s3_dataframe_inputs"])),
            http_inputs = result["http_inputs"],
            s3_outputs = list(zip(result["s3_outputs"], result["s3_dataframe_outputs"])),
@@ -164,6 +185,7 @@ insertLocalParameter : ReturnSameKey[types.LocalParameter] = getInsertReturnKeyF
 insertHTTPParameter : ReturnSameKey[types.HTTPParameter]   = getInsertReturnKeyFunction(types.HTTPParameter) # type: ignore
 insertS3InputParameter : ReturnSameKey[types.S3InputParameter] = getInsertReturnKeyFunction(types.S3InputParameter) # type: ignore
 insertS3OutputParameter : ReturnSameKey[types.S3OutputParameter] = getInsertReturnKeyFunction(types.S3OutputParameter) # type: ignore
+insertKeywordParameter : ReturnSameKey[types.KeywordParameter] = getInsertReturnKeyFunction(types.KeywordParameter) # type: ignore
 
 
 insertS3TypeDataFrame : ReturnKey[types.S3TypeDataFrame, types.S3TypeDataFrame] = getInsertReturnKeyFunction(types.S3TypeDataFrame) # type: ignore

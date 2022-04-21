@@ -8,7 +8,7 @@ from . import temporary
 
 from .connections import getS3Connection
 
-from typing import List, TypedDict, Dict, Any, Callable, Tuple, Generator, Union, TypeVar, Protocol, Optional, Mapping
+from typing import List, TypedDict, Dict, Any, Callable, Tuple, Generator, Union, TypeVar, Protocol, Optional, Mapping, Type
 from typing import cast
 import psycopg2
 import pandas as pd
@@ -31,27 +31,34 @@ class ExecutionMode(Enum):
 class ExecutionOptions(TypedDict):
   mode : ExecutionMode
 
-def parseCLIArguments(fn, name, major) -> Dict[str, Any]:
-  # Always remove first argumnet
+WrappableFunctionOutputs = Mapping[str, Union[S3File, LocalFile]]
+
+WrappableFunction = Callable[..., WrappableFunctionOutputs]
+
+
+def getKeywordParameterTypes(fn : WrappableFunction) -> Dict[str, Type]:
   signature = inspect.signature(fn)
   first_argument = list(signature.parameters.keys())[0]
-  # TODO: Generically dispose of first argumenrgt
-  parser = argparse.ArgumentParser(f"CLI Arguments for '{name}' version {major}")
+  # Always remove first argumnet
   annotations = fn.__annotations__
   blacklist = ["return", first_argument]
-  for a, t in annotations.items():
-    if a not in blacklist:
-      parser.add_argument(f"--{a}", type=t, required=True)
+  keyword_types : Dict[str, Type] = {}
+  for parameter_name, _type in annotations.items():
+    if parameter_name not in blacklist:
+      keyword_types[parameter_name] = _type
+  return keyword_types
+
+
+def parseCLIArguments(name : str, major : int, keyword_types : Dict[str, Type]) -> Dict[str, Any]:
+  parser = argparse.ArgumentParser(f"CLI Arguments for '{name}' version {major}")
+  for parameter_name, _type in keyword_types.items():
+    parser.add_argument(f"--{parameter_name}", type=_type, required=True)
   return vars(parser.parse_args())
 
 
 T = TypeVar('T')
 AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
 OutputLoadFunction = Callable[[DataSource, Any], gpd.GeoDataFrame]
-
-WrappableFunctionOutputs = Mapping[str, Union[S3File, LocalFile]]
-
-WrappableFunction = Callable[..., WrappableFunctionOutputs]
 
 class AddDataSourceWrapper(Protocol):
   def __call__(self, datasource : DataSource, **kwargs: Any) -> Mapping[str, Any]: ...
@@ -73,24 +80,24 @@ def getMode(kwargs : Dict[str, Any]) -> ExecutionMode:
   return mode
 
 
-def makeDummyArguments(fn : WrappableFunction) -> Dict[str, Any]:
-  signature = inspect.signature(fn)
-  first_argument = list(signature.parameters.keys())[0]
-  # TODO: Generically dispose of first argumenrgt
-  annotations = fn.__annotations__
-  blacklist = ["return", first_argument]
+def makeDummyArguments(keyword_types : Dict[str, Type]) -> Dict[str, Any]:
   out : Dict[str, Any] = {}
-  for name, _type in annotations.items():
-    if name not in blacklist:
-      out[name] = {str : "",
-                   int : 0,
-                   float : 0.0,
-                  }.get(name, None) # type: ignore
+  for name, _type in keyword_types.items():
+    out[name] = {str : "",
+                 int : 0,
+                 float : 0.0,
+                }.get(_type, None) # type: ignore
   return out
 
+def keyword_type_to_enum(_type : Type) -> types.KeywordType:
+  return {str : types.KeywordType.STRING,
+          int : types.KeywordType.INTEGER,
+          float : types.KeywordType.FLOAT
+         }.get(_type, types.KeywordType.JSON)
 
 def getSignature(cursor : Any,
                  input_types : DataSourceTypes,
+                 keyword_types : Dict[str, Type],
                  output_types : Dict[str, int],
                 ) -> types.FunctionSignature:
   def unpackS3Type(s3_type_and_subtype : Tuple[types.S3Type, Optional[types.TaggedS3SubType]]) -> types.S3TypeSignature:
@@ -106,18 +113,30 @@ def getSignature(cursor : Any,
         raise Exception(f"Unhandled write for S3 sub-type: {tag} -> {s3_subtype}")
     return s3_type, None
 
+  keyword_inputs = [types.Keyword(
+                      keyword_name = keyword_name,
+                      keyword_type = keyword_type_to_enum(keyword_type),
+                    ) for keyword_name, keyword_type in keyword_types.items()
+                   ]
+  s3_inputs = [unpackS3Type(schema_api.getS3Type(cursor, i)) for i in input_types["s3_type_ids"]]
+  s3_outputs = [unpackS3Type(schema_api.getS3Type(cursor, i)) for i in output_types.values()]
+
   return types.FunctionSignature(
            local_inputs = [schema_api.getLocalType(cursor, i) for i in input_types["local_type_ids"]],
+           keyword_inputs = keyword_inputs,
            http_inputs = [schema_api.getHTTPType(cursor, i) for i in input_types["http_type_ids"]],
-           s3_inputs = [unpackS3Type(schema_api.getS3Type(cursor, i)) for i in input_types["s3_type_ids"]],
-           s3_outputs = [unpackS3Type(schema_api.getS3Type(cursor, i)) for i in output_types.values()],
+           s3_inputs = s3_inputs,
+           s3_outputs = s3_outputs,
          )
 
+# TODO: Move to argument related module
+psycopg2.extensions.register_adapter(types.KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
 
 def registerFunction(cursor : Any,
                      name : str,
                      major : int,
                      input_types : DataSourceTypes,
+                     keyword_types : Dict[str, Type],
                      output_types : Dict[str, int],
                     ) -> int:
   # TODO: Handle registering function types somewhere else
@@ -140,8 +159,9 @@ def registerFunction(cursor : Any,
         details = {},
       )
   latest_signature = schema_api.getLatestFunctionSignature(cursor, f)
+
   if latest_signature is not None:
-    signature = getSignature(cursor, input_types, output_types)
+    signature = getSignature(cursor, input_types, keyword_types, output_types)
 
     diff = list(dictdiffer.diff(signature, latest_signature))
     if len(diff) > 0:
@@ -181,6 +201,15 @@ def registerFunction(cursor : Any,
                                          details = {},
                                        ))
 
+  for keyword_name, keyword_type in keyword_types.items():
+    schema_api.insertKeywordParameter(cursor,
+                                      types.KeywordParameter(
+                                        function_id = function_id,
+                                        keyword_name = keyword_name,
+                                        keyword_type = keyword_type_to_enum(keyword_type),
+                                      )
+                                     )
+
   return minor
 
 
@@ -205,8 +234,10 @@ def Function(name                : str,
 
       mode = getMode(kwargs)
       outputs : Mapping[str, Union[S3File, LocalFile]]= {}
+      keyword_types = getKeywordParameterTypes(fn)
       if mode == ExecutionMode.DRY:
-        kwargs = makeDummyArguments(fn)
+
+        kwargs = makeDummyArguments(keyword_types)
         dummy_datasource = DataSourceStub(cursor)
         load_fn(dummy_datasource, **kwargs)  # type: ignore
 
@@ -215,11 +246,13 @@ def Function(name                : str,
           s3_type_id = schema_api.getS3TypeIdByName(cursor, output_type_name)
           output_types[output_type_name] = s3_type_id
 
-        minor_version = registerFunction(cursor, name, major, dummy_datasource.types, output_types)
+        minor = registerFunction(cursor, name, major, dummy_datasource.types, keyword_types, output_types)
+        print(f"Registered function: {name} {major}.{minor}")
 
       else:
         if mode == ExecutionMode.CLI:
-          kwargs = parseCLIArguments(fn, name, major)
+          keyword_types = getKeywordParameterTypes(fn)
+          kwargs = parseCLIArguments(name, major, keyword_types)
 
         load_fn(datasource, **kwargs) # type: ignore
         m = datasource.getMatrix()

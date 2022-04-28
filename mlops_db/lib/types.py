@@ -190,7 +190,10 @@ class S3TypeDataFrame(Table):
   driver       : str
   has_geometry : bool
 
-S3SubType = Union[S3TypeDataFrame]
+class S3TypeBinary(Table):
+  pass
+
+S3SubType = Union[S3TypeDataFrame, S3TypeBinary]
 
 class TaggedS3SubType(TypedDict):
   tag   : Type[S3SubType]

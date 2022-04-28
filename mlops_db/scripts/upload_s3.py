@@ -26,9 +26,9 @@ if __name__ == "__main__":
 
   s3_connection : Any = getS3Connection(temporary.S3_ROLE_ARN)
 
-  test_keys = temporary.load_keys(cursor)
+  test_keys = list(temporary.load_keys(cursor))
 
-  datasource = DataSource(test_keys, cursor, s3_connection)
+  datasource = DataSource(test_keys, 0, 0, cursor, s3_connection, {}, {})
 
   def newS3TypeDataFrame(type_name : str,
                          driver : str,
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                     ) -> None:
     s3_type_id, s3_type_data_frame = newS3TypeDataFrame(type_name, driver, has_geometry)
 
-    to_upload = S3File(type_name, value, test_file_prefix)
+    to_upload = S3File(value, test_file_prefix)
     s3_file_meta = to_upload.to_file(s3_type_data_frame)
     datasource.upload_file(s3_type_id, temporary.BUCKET_NAME, s3_file_meta)
 

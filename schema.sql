@@ -438,7 +438,7 @@ ALTER TABLE function
 
 
 ---------------------
--- Argument Tables --
+-- Value Tables --
 ---------------------
 
 create table geospatial_key (
@@ -511,33 +511,26 @@ update_last_updated_column();
 
 
 create table s3_object (
-  s3_object_id bigserial unique,
+  s3_object_id bigserial primary key,
   s3_type_id   bigint references s3_type(s3_type_id),
-
-  primary key(s3_object_id, s3_type_id),
 
   key          text not null,
   bucket_name  text not null,
 
   unique (s3_object_id, key, bucket_name)
-
 );
 
 
 create table s3_object_key (
-  s3_object_id      bigint,
-  s3_type_id        bigint,
-  foreign key (s3_object_id, s3_type_id)
-    references s3_object(s3_object_id, s3_type_id),
+  s3_object_id      bigint
+                    references s3_object (s3_object_id),
 
   geospatial_key_id bigint
                     references geospatial_key(geospatial_key_id),
   temporal_key_id   bigint
                     references temporal_key(temporal_key_id),
 
-  primary key(s3_object_id, geospatial_key_id, temporal_key_id),
-
-  unique (s3_type_id, geospatial_key_id, temporal_key_id)
+  primary key(s3_object_id, geospatial_key_id, temporal_key_id)
 );
 
 
@@ -558,8 +551,8 @@ create table local_parameter (
 );
 
 create table http_parameter (
-  function_id         bigint
-                      references function(function_id),
+  function_id  bigint
+               references function(function_id),
   http_type_id bigint
                references http_type(http_type_id),
   primary key(function_id, http_type_id),
@@ -591,6 +584,7 @@ create table s3_output_parameter (
                            references function(function_id),
   unique (s3_output_parameter_name, function_id),
 
+  -- TODO: 's3_type_id' shouldn't be a part of the pkey
   s3_type_id     bigint references s3_type(s3_type_id),
   primary key    (s3_output_parameter_name, s3_type_id, function_id),
 
@@ -609,11 +603,152 @@ create table keyword_parameter (
   keyword_type keyword_type,
   function_id bigint
               references function(function_id),
-  primary key(keyword_name, keyword_type, function_id)
+  primary key(keyword_name, function_id)
 );
 
---alter table s3_parameter add constraint s3_input_output foreign key (s3_output_name, s3_type_id, output_function_id) references s3_output(s3_output_name, s3_type_id, function_id);
 
+----------------------
+-- Argument Tables --
+----------------------
+
+-- TODO: Details?
+create table execution (
+  execution_id bigserial primary key,
+
+  function_id   bigint
+                not null
+                references function(function_id)
+);
+
+create table execution_key (
+  execution_id bigint not null references execution(execution_id),
+  geospatial_key_id bigint
+                    references geospatial_key(geospatial_key_id),
+  temporal_key_id   bigint
+                    references temporal_key(temporal_key_id),
+
+  primary key (execution_id, geospatial_key_id, temporal_key_id)
+);
+
+
+create table local_argument (
+  execution_id  bigint
+                not null
+                references execution(execution_id),
+
+  function_id   bigint
+                not null
+                references function(function_id),
+  local_type_id bigserial
+                not null
+                references local_type(local_type_id),
+  foreign key (function_id, local_type_id)
+    references local_parameter(function_id, local_type_id),
+
+  primary key (execution_id, function_id, local_type_id),
+
+  -- TODO: Is this heuristic good enough?
+  number_of_observations bigint
+                         not null
+);
+
+create table http_argument (
+  execution_id bigint
+               not null
+               references execution(execution_id),
+
+  function_id  bigint
+               not null
+               references function(function_id),
+  http_type_id bigint
+               not null
+               references http_type(http_type_id),
+
+  foreign key (function_id, http_type_id)
+    references http_parameter (function_id, http_type_id),
+
+  primary key (execution_id, function_id, http_type_id),
+
+  -- TODO: Is this heuristic good enough?
+  number_of_observations bigint
+                         not null
+);
+
+create table s3_input_argument (
+  execution_id bigint
+               not null
+               references execution(execution_id),
+
+  function_id bigint
+              not null
+              references function(function_id),
+  s3_type_id  bigint
+              not null
+              references s3_type(s3_type_id),
+
+  foreign key (function_id, s3_type_id)
+    references s3_input_parameter (function_id, s3_type_id),
+
+  primary key (execution_id, function_id, s3_type_id),
+
+  s3_object_id bigint
+               not null
+               references s3_object(s3_object_id)
+
+  --number_of_observations bigint
+);
+
+create table s3_output_argument (
+  execution_id bigint
+               not null
+               references execution(execution_id),
+
+  s3_output_parameter_name text
+                           not null,
+  function_id bigint
+              not null
+              references function(function_id),
+  s3_type_id  bigint
+              not null
+              references s3_type(s3_type_id),
+
+  foreign key (s3_output_parameter_name, function_id, s3_type_id)
+    references s3_output_parameter (s3_output_parameter_name, function_id, s3_type_id),
+
+  primary key (execution_id, function_id, s3_type_id),
+
+  s3_object_id bigint
+               not null
+               references s3_object(s3_object_id)
+);
+
+create table keyword_parameter (
+  keyword_name text,
+  keyword_type keyword_type,
+  function_id bigint
+              references function(function_id),
+  primary key(keyword_name, function_id)
+);
+
+
+create table keyword_argument (
+  execution_id bigint
+               not null
+               references execution(execution_id),
+
+  function_id bigint
+              references function(function_id),
+  keyword_name text,
+
+  foreign key (keyword_name, function_id)
+    references keyword_parameter(keyword_name, function_id),
+
+  primary key (execution_id, keyword_name),
+
+  value_number float,
+  value_string text
+  -- TODO: JSON
+);
 
 
 -- TODO: This should, by some (undecided) means, be a relation between a ML Ops Model Function and an Airflow DAG

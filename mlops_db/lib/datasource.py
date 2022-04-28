@@ -3,7 +3,7 @@ import itertools
 from io import BytesIO
 from collections import ChainMap
 
-from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, BinaryIO, Iterator, Union, Callable, Set
+from typing import List, Optional, TypedDict, Tuple, Generator, TypeVar, Generic, Any, Dict, BinaryIO, Iterator, Union, Callable, Set, Type
 from typing import cast
 
 import psycopg2
@@ -28,42 +28,79 @@ OneToManyResponseFunction : http.ResponseFunction = lambda rs : [cast(Dict[str, 
 AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
 
 class DataSourceTypes(TypedDict):
-  s3_type_ids  : Set[int]
-  local_type_ids     : Set[int]
-  http_type_ids      : Set[int]
+  s3_type_ids    : Dict[int, str]
+  local_type_ids : Dict[int, types.LocalType]
+  http_type_ids  : Dict[int, str]
 
-
-class DataSourceStub(object):
+class DataSourceBase(object):
   def __init__(self,
                cursor : Any,
+               function_id : int,
+               execution_id : int,
               ):
     self.LOCAL = "__LOCAL"
     self.GEOM = "__PRIMARY_GEOMETRY"
-
-    self.cursor = cursor
     self.types = DataSourceTypes(
-                   s3_type_ids  = set(),
-                   local_type_ids     = set(),
-                   http_type_ids      = set(),
+                   s3_type_ids    = {},
+                   local_type_ids = {},
+                   http_type_ids  = {},
                  )
+    self.cursor = cursor
 
+    self.execution_summary = types.ExecutionSummary(
+                               function_id = function_id,
+                               execution_id = execution_id,
+                               inputs = types.ExecutionArguments(
+                                          local = [],
+                                          keyword = [],
+                                          http = [],
+                                          s3 = [],
+                                          keys = [],
+                                        ),
+                              outputs = {"s3": []},
+                            )
 
-  def s3(self,
-         type_name   : str,
-        ) -> ingest.SupportedS3DataType:
+  def _track_s3(self,
+                type_name   : str,
+               ) -> None:
     s3_type_id = schema_api.getS3TypeIdByName(self.cursor, type_name)
-    self.types["s3_type_ids"].add(s3_type_id)
-    return pd.DataFrame()
+    self.types["s3_type_ids"][s3_type_id] = type_name
 
-
-  def local(self, local_types : List[types.LocalType]) -> pd.DataFrame:
+  def _track_local(self,
+                   local_types : List[types.LocalType],
+                  ) -> None:
     for t in local_types:
       maybe_local_type_id = schema_api.getMaybeLocalTypeId(self.cursor, t)
       if maybe_local_type_id is None:
         raise Exception(f"Local Type does not exist: {t}")
       else:
         local_type_id = maybe_local_type_id
-        self.types["local_type_ids"].add(local_type_id)
+        self.types["local_type_ids"][local_type_id] = t
+
+  def _track_http(self,
+                  type_name : str,
+                 ) -> None:
+    http_type_id, http_type = schema_api.getHTTPByName(self.cursor, type_name)
+    self.types["http_type_ids"][http_type_id] = type_name
+
+
+class DataSourceStub(DataSourceBase):
+  def __init__(self,
+               cursor : Any,
+               function_id : int = 0,
+               execution_id : int = 0,
+              ):
+    super().__init__(cursor, function_id, execution_id)
+
+  def s3(self,
+         type_name   : str,
+        ) -> ingest.SupportedS3DataType:
+    super()._track_s3(type_name)
+    return pd.DataFrame()
+
+
+  def local(self, local_types : List[types.LocalType]) -> pd.DataFrame:
+    super()._track_local(local_types)
     return pd.DataFrame()
 
 
@@ -74,8 +111,7 @@ class DataSourceStub(object):
            response_fn  : http.ResponseFunction = OneToOneResponseFunction,
            http_options : Dict[str, Any] = {}
           ) -> pd.DataFrame:
-    http_type_id, http_type = schema_api.getHTTPByName(self.cursor, type_name)
-    self.types["http_type_ids"].add(http_type_id)
+    super()._track_http(type_name)
     return pd.DataFrame()
 
   def getMatrix(self) -> gpd.GeoDataFrame:
@@ -90,27 +126,86 @@ class DataSourceStub(object):
     return None
 
 
+def createKeywordArguments(keyword_arguments : Dict[str, Any],
+                           keyword_types     : Dict[str, Type],
+                           execution_id      : int,
+                           function_id       : int,
+                          ) -> List[types.KeywordArgument]:
+  out : List[types.KeywordArgument] = []
+  for name, value in keyword_arguments.items():
+    value_string : Optional[str] = None
+    value_number : Optional[float] = None
+
+    def set_string( v : str) -> None:
+      nonlocal value_string
+      value_string = v
+
+    def set_number( v : Union[float, int]) -> None:
+      nonlocal value_number
+      value_number = float(v)
+
+    typ = keyword_types[name]
+    {str   : set_string,
+     int   : set_number,
+     float : set_number,
+    }.get(typ, set_string)(value) # type: ignore
+    ka = types.KeywordArgument(
+           execution_id = execution_id,
+           function_id = function_id,
+           keyword_name = name,
+           value_number = value_number,
+           value_string = value_string,
+         )
+    out.append(ka)
+  return out
 
 
 # TODO: Memoize or throw error?
 
-class DataSource(DataSourceStub):
+class DataSource(DataSourceBase):
   def __init__(self,
-               keys            : List[types.Key],
-               cursor          : Any,
-               s3_connection   : Any,
+               keys               : List[types.Key],
+               function_id        : int,
+               execution_id       : int,
+               cursor             : Any,
+               s3_connection      : Any,
+               keyword_arguments  : Dict[str, Any],
+               keyword_types      : Dict[str, Type],
               ):
+    super().__init__(cursor, function_id, execution_id)
+
+
     self.s3_connection = s3_connection
     self.cursor = cursor
-    self.keys = keys
+    self.keys = self.execution_summary["inputs"]["keys"] = keys
+    self.execution_summary["inputs"]["keyword"] = createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
 
     self.dataframes : Dict[str, pd.DataFrame] = {}
     self.geodataframes : Dict[str, gpd.GeoDataFrame] = {}
     self.joins : Dict[Tuple[str, str], Tuple[Optional[Callable[..., AnyDataFrame]], Dict[str, Any]]] = {}
 
 
+
+
   def _local_raw(self, local_types : List[types.LocalType]) -> List[Tuple[types.LocalValue, types.UnitType]]:
-    return local.load(self.cursor, self.keys, local_types)
+    results : List[Tuple[types.LocalValue, types.UnitType]] = []
+    for local_type in local_types:
+      maybe_local_type_id = schema_api.getMaybeLocalTypeId(self.cursor, local_type)
+      if maybe_local_type_id is None:
+        raise Exception(f"Failed to find ID for local type: {local_type}")
+      local_type_id = maybe_local_type_id
+      results_for_type = local.load(self.cursor, self.keys, local_type_id)
+
+      l = types.LocalArgument(
+            function_id = self.execution_summary["function_id"],
+            execution_id = self.execution_summary["execution_id"],
+            local_type_id = local_type_id,
+            number_of_observations = len(results_for_type),
+          )
+      self.execution_summary["inputs"]["local"].append(l)
+
+      results.extend(results_for_type)
+    return results
 
 
   def _typesToDict(*tables   : types.AnyIdTable,
@@ -120,13 +215,24 @@ class DataSource(DataSourceStub):
 
 
   def local(self, local_types : List[types.LocalType]) -> pd.DataFrame:
+    super()._track_local(local_types)
     if self.LOCAL in self.dataframes:
       # TODO: Local data aquisitions should be deferred in the future
       raise Exception("Local data can only be acquired once.")
+
+    rows : List[Any] = []
+    for t in local_types:
+      maybe_local_type_id = schema_api.getMaybeLocalTypeId(self.cursor, t)
+      if maybe_local_type_id is None:
+        raise Exception(f"Local Type does not exist: {t}")
+      else:
+        local_type_id = maybe_local_type_id
+
     raw = self._local_raw(local_types)
-    rows = []
     for local_value, unit_type in raw:
       rows.append(dict(**local_value, **unit_type))
+
+
     df = pd.DataFrame(rows)
     self.dataframes[self.LOCAL] = df
     return df
@@ -177,6 +283,14 @@ class DataSource(DataSourceStub):
               ) -> List[Tuple[types.Key, Dict[str, Any]]]:
     http_type_id, http_type = schema_api.getHTTPByName(self.cursor, type_name)
     http_result = self._http(http_type, param_fn, json_fn, response_fn, http_options)
+    h = types.HTTPArgument(
+          function_id = self.execution_summary["function_id"],
+          execution_id = self.execution_summary["execution_id"],
+          http_type_id = http_type_id,
+          number_of_observations = len(http_result),
+        )
+    self.execution_summary["inputs"]["http"].append(h)
+
     return http_result
 
 
@@ -188,10 +302,12 @@ class DataSource(DataSourceStub):
            response_fn  : http.ResponseFunction = OneToOneResponseFunction,
            http_options : Dict[str, Any] = {}
           ) -> pd.DataFrame:
+    super()._track_http(type_name)
     raw_results = self.http_raw(type_name, param_fn, json_fn, response_fn, http_options)
     results = []
     for key, row in raw_results:
       results.append(dict(**key, **row))
+
     df = pd.DataFrame(results)
     self.dataframes[type_name] = df
     return df
@@ -200,20 +316,31 @@ class DataSource(DataSourceStub):
   def s3_raw(self,
              type_name   : str,
             ) -> Tuple[BytesIO, Optional[types.TaggedS3SubType]]:
-    maybe_s3_object = schema_api.getS3ObjectByKeys(self.cursor, self.keys, type_name)
-    if maybe_s3_object is None:
+    maybe_id_and_object = schema_api.getS3ObjectByKeys(self.cursor, self.keys, type_name)
+    if maybe_id_and_object is None:
       raise Exception(f"Failed to find S3 object '{type_name}' associated with keys")
-    s3_object = maybe_s3_object
-    s3_type, maybe_tagged_s3_subtype = schema_api.getS3Type(self.cursor, s3_object["s3_type_id"])
+    s3_object_id, s3_object = maybe_id_and_object
+    s3_type_id = s3_object["s3_type_id"]
+    s3_type, maybe_tagged_s3_subtype = schema_api.getS3Type(self.cursor, s3_type_id)
     s3_key = s3_object["key"]
     bucket_name = s3_object["bucket_name"]
     f = ingest.download(self.s3_connection, bucket_name, s3_key)
+
+    s = types.S3InputArgument(
+          function_id = self.execution_summary["function_id"],
+          execution_id = self.execution_summary["execution_id"],
+          s3_type_id = s3_type_id,
+          s3_object_id = s3_object_id,
+        )
+    self.execution_summary["inputs"]["s3"].append(s)
+
     return f, maybe_tagged_s3_subtype
 
 
   def s3(self,
          type_name   : str,
         ) -> ingest.SupportedS3DataType:
+    super()._track_s3(type_name)
     raw_results, maybe_tagged_s3_subtype = self.s3_raw(type_name)
     if maybe_tagged_s3_subtype is not None:
       tagged_s3_subtype = maybe_tagged_s3_subtype
@@ -245,7 +372,7 @@ class DataSource(DataSourceStub):
              bucket_name : str,
              s3_key      : str,
              blob        : BytesIO,
-            ) -> bool:
+            ) -> int:
     ingest.upload(self.s3_connection, bucket_name, s3_key, blob)
     s3_object = types.S3Object(
                   s3_type_id = s3_type_id,
@@ -254,14 +381,14 @@ class DataSource(DataSourceStub):
                 )
     s3_object_id = schema_api.insertS3Object(self.cursor, s3_object)
     schema_api.insertS3ObjectKeys(self.cursor, s3_object_id, self.keys, s3_type_id)
-    return True
+    return s3_object_id
 
 
   def upload_file(self,
                   s3_type_id   : int,
                   bucket_name  : str,
                   s3_file_meta : ingest.S3FileMeta,
-                 ) -> bool:
+                 ) -> int:
     s3_filename_on_disk = s3_file_meta["filename_on_disk"]
     f = open(s3_filename_on_disk, "rb")
     as_bytes = BytesIO(f.read())

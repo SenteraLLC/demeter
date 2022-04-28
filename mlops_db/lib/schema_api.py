@@ -8,7 +8,7 @@ from shapely.geometry import LineString # type: ignore
 from functools import partial
 from collections import OrderedDict
 
-from typing import TypedDict, Any, List, Tuple, Dict, Callable, Optional, Type, TypeVar, Set, Union
+from typing import TypedDict, Any, List, Tuple, Dict, Callable, Optional, Type, TypeVar, Set, Union, Sequence, Literal
 from typing import cast
 
 from .generators import *
@@ -40,6 +40,7 @@ insertHTTPType : ReturnId[types.HTTPType] = getInsertReturnIdFunction(types.HTTP
 insertS3TypeBase   : ReturnId[types.S3Type] = getInsertReturnIdFunction(types.S3Type)
 insertFunctionWithMinor : ReturnId[types.Function] = getInsertReturnIdFunction(types.Function)
 insertFunctionType : ReturnId[types.FunctionType] = getInsertReturnIdFunction(types.FunctionType)
+insertExecution : ReturnId[types.Execution] = getInsertReturnIdFunction(types.Execution)
 
 
 def insertFunction(cursor : Any,
@@ -57,7 +58,7 @@ def insertFunction(cursor : Any,
 
 def getLatestFunctionSignature(cursor : Any,
                                function : types.Function
-                              ) -> Optional[types.FunctionSignature]:
+                              ) -> Optional[Tuple[int, types.FunctionSignature]]:
   stmt = """
     with latest_function as (
       select *
@@ -136,7 +137,8 @@ def getLatestFunctionSignature(cursor : Any,
       left join s3_type_dataframe S3TD on S3T.s3_type_id = S3TD.s3_type_id
       group by F.function_id
 
-    ) select coalesce(LI.local_types, '[]'::jsonb) as local_inputs,
+    ) select F.function_id, F.function_name, F.major, F.minor,
+             coalesce(LI.local_types, '[]'::jsonb) as local_inputs,
              coalesce(K.keyword_types, '[]'::jsonb) as keyword_inputs,
              coalesce(S3I.s3_types, '[]'::jsonb) as s3_inputs,
              coalesce(S3I.s3_dataframe_types, '[]'::jsonb) as s3_dataframe_inputs,
@@ -162,13 +164,44 @@ def getLatestFunctionSignature(cursor : Any,
                     ) for k in result["keyword_inputs"]
                    ]
 
-  return types.FunctionSignature(
-           local_inputs = result["local_inputs"],
-           keyword_inputs = keyword_inputs,
-           s3_inputs = list(zip(result["s3_inputs"], result["s3_dataframe_inputs"])),
-           http_inputs = result["http_inputs"],
-           s3_outputs = list(zip(result["s3_outputs"], result["s3_dataframe_outputs"])),
-         )
+  function_id = result["function_id"]
+  return (function_id,
+          types.FunctionSignature(
+            name = result["function_name"],
+            major = result["major"],
+            local_inputs = result["local_inputs"],
+            keyword_inputs = keyword_inputs,
+            s3_inputs = list(zip(result["s3_inputs"], result["s3_dataframe_inputs"])),
+            http_inputs = result["http_inputs"],
+            s3_outputs = list(zip(result["s3_outputs"], result["s3_dataframe_outputs"])),
+          )
+        )
+
+
+def getExecutionSummaries(cursor : Any,
+                          function_id : int,
+                          execution_id : int,
+                         ) -> List[types.ExecutionSummary]:
+  stmt = """
+         select json_agg(K.*) as execution_keys,
+                json_agg(L.*) as local_arguments,
+                json_agg(H.*) as http_arguments,
+                json_agg(SI.*) as s3_input_arguments,
+                json_agg(SO.*) as s3_output_arguments
+         from execution E
+         join execution_key K on E.execution_id = K.execution_id
+         join local_argument L on E.execution_id = L.execution_id
+         join http_argument H on E.execution_id = H.execution_id
+         join s3_input_argument SI on E.execution_id = SI.execution_id
+         join s3_output_argument SO on E.execution_id = SO.execution_id
+         where E.function_id = %(function_id)s
+         group by E.execution_id
+         """
+
+  cursor.execute(stmt, function_id)
+  result = cursor.fetchall()
+
+  return [cast(types.ExecutionSummary, dict(r)) for r in result]
 
 
 # TODO: Fix typing issues here
@@ -186,6 +219,12 @@ insertHTTPParameter : ReturnSameKey[types.HTTPParameter]   = getInsertReturnKeyF
 insertS3InputParameter : ReturnSameKey[types.S3InputParameter] = getInsertReturnKeyFunction(types.S3InputParameter) # type: ignore
 insertS3OutputParameter : ReturnSameKey[types.S3OutputParameter] = getInsertReturnKeyFunction(types.S3OutputParameter) # type: ignore
 insertKeywordParameter : ReturnSameKey[types.KeywordParameter] = getInsertReturnKeyFunction(types.KeywordParameter) # type: ignore
+insertLocalArgument    : ReturnSameKey[types.LocalArgument] = getInsertReturnKeyFunction(types.LocalArgument) # type: ignore
+insertHTTPArgument     : ReturnSameKey[types.HTTPArgument]   = getInsertReturnKeyFunction(types.HTTPArgument) # type: ignore
+insertKeywordArgument     : ReturnSameKey[types.KeywordArgument]   = getInsertReturnKeyFunction(types.KeywordArgument) # type: ignore
+insertS3InputArgument  : ReturnSameKey[types.S3InputArgument] = getInsertReturnKeyFunction(types.S3InputArgument) # type: ignore
+insertS3OutputArgument : ReturnSameKey[types.S3OutputArgument] = getInsertReturnKeyFunction(types.S3OutputArgument) # type: ignore
+insertExecutionKey : ReturnSameKey[types.ExecutionKey] = getInsertReturnKeyFunction(types.ExecutionKey) # type: ignore
 
 
 insertS3TypeDataFrame : ReturnKey[types.S3TypeDataFrame, types.S3TypeDataFrame] = getInsertReturnKeyFunction(types.S3TypeDataFrame) # type: ignore
@@ -207,7 +246,6 @@ def insertS3ObjectKeys(cursor       : Any,
   for k in keys:
     s3_object_key = types.S3ObjectKey(
                       s3_object_id      = s3_object_id,
-                      s3_type_id        = s3_type_id,
                       geospatial_key_id = k["geospatial_key_id"],
                       temporal_key_id   = k["temporal_key_id"],
                     )
@@ -277,7 +315,7 @@ def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, types.HTTPTy
 # TODO: Implement complex caching behavior using S3
 def getS3ObjectByKey(cursor         : Any,
                      k              : types.Key,
-                    ) -> types.S3Object:
+                    ) -> Optional[Tuple[int, types.S3Object]]:
   stmt = """select *
             from s3_object O, s3_object_key K
             where O.s3_object_id = K.s3_object_id and
@@ -291,16 +329,16 @@ def getS3ObjectByKey(cursor         : Any,
     raise Exception("No S3 object exists for: ",k)
 
   result_with_id = results[0]
-  del result_with_id["s3_object_id"]
+  s3_object_id = result_with_id.pop("s3_object_id")
   s3_object = result_with_id
 
-  return cast(types.S3Object, s3_object)
+  return s3_object_id, cast(types.S3Object, s3_object)
 
 
 def getS3ObjectByKeys(cursor    : Any,
                       keys      : List[types.Key],
                       type_name : str,
-                     ) -> Optional[types.S3Object]:
+                     ) -> Optional[Tuple[int, types.S3Object]]:
   clauses = []
   args : List[Union[str, int]] = [type_name]
   for k in keys:
@@ -344,7 +382,7 @@ def getS3ObjectByKeys(cursor    : Any,
                 s3_type_id = most_recent["s3_type_id"],
               )
 
-  return s3_object
+  return s3_object_id, s3_object
 
 
 def getS3TypeIdByName(cursor : Any, type_name : str) -> int:
@@ -477,4 +515,105 @@ def getS3Type(cursor : Any,
 
   return s3_type, None
 
+
+
+def getExistingExecutions(cursor : Any,
+                          function_id : int,
+                         ) -> Sequence[types.ExecutionSummary]:
+  stmt = """
+    with local_arguments as (
+      select execution_id,
+             coalesce(
+               jsonb_agg(A),
+               '[]'::jsonb
+             ) as arguments
+      from local_argument A
+      join local_type T on T.local_type_id = A.local_type_id
+      where A.function_id = %(function_id)s
+      group by A.execution_id
+
+    ), keyword_arguments as (
+      select execution_id,
+             coalesce(
+               jsonb_agg(A),
+               '[]'::jsonb
+             ) as arguments
+      from keyword_argument A
+      join keyword_parameter P on P.keyword_name = A.keyword_name and P.function_id = A.function_id
+      where A.function_id = %(function_id)s
+      group by A.execution_id
+
+    ), s3_arguments as (
+      select execution_id,
+             coalesce(
+               jsonb_agg(A),
+               '[]'::jsonb
+             ) as arguments
+      from s3_input_argument A
+      join s3_type T on T.s3_type_id = A.s3_type_id
+      where A.function_id = %(function_id)s
+      group by A.execution_id
+
+    ), http_arguments as (
+      select execution_id,
+             coalesce(
+               jsonb_agg(A),
+               '[]'::jsonb
+             ) as arguments
+      from http_argument A
+      join http_type T on T.http_type_id = A.http_type_id
+      where A.function_id = %(function_id)s
+      group by A.execution_id
+
+    ), s3_outputs as (
+      select execution_id,
+             coalesce(
+               jsonb_agg(A),
+               '[]'::jsonb
+             ) as outputs
+      from s3_output_argument A
+      join s3_type T on T.s3_type_id = A.s3_type_id
+      where A.function_id = %(function_id)s
+      group by A.execution_id
+
+    ), keys as (
+       select EK.execution_id,
+              E.function_id,
+              jsonb_agg(
+                jsonb_build_object('geospatial_key_id', GK.geospatial_key_id,
+                                   'temporal_key_id', TK.temporal_key_id,
+                                   'geom_id', GK.geom_id,
+                                   'field_id', GK.field_id,
+                                   'start_date', TK.start_date,
+                                   'end_date', TK.end_date
+                                  )
+              ) as keys
+      from execution_key EK
+      join (select distinct execution_id from s3_outputs) D on D.execution_id = EK.execution_id
+      join execution E on E.execution_id = EK.execution_id
+      join geospatial_key GK on GK.geospatial_key_id = EK.geospatial_key_id
+      join temporal_key TK on TK.temporal_key_id = EK.temporal_key_id
+      group by EK.execution_id, E.function_id
+
+    ) select K.execution_id,
+             K.function_id,
+             jsonb_build_object('local',   coalesce(L.arguments, '[]'::jsonb),
+                                'keyword', coalesce(KW.arguments, '[]'::jsonb),
+                                's3',      coalesce(S3I.arguments, '[]'::jsonb),
+                                'http',    coalesce(H.arguments, '[]'::jsonb),
+                                'keys',    K.keys
+                               ) as inputs,
+             jsonb_build_object('s3', S3O.outputs) as outputs
+      from s3_outputs S3O
+      left join local_arguments L on S3O.execution_id = L.execution_id
+      left join keyword_arguments KW on S3O.execution_id = KW.execution_id
+      left join http_arguments H on S3O.execution_id = H.execution_id
+      left join s3_arguments S3I on S3O.execution_id = S3I.execution_id
+      join keys K on S3O.execution_id = K.execution_id
+      order by L.execution_id desc
+    """
+
+  cursor.execute(stmt, {"function_id": function_id})
+  results = cursor.fetchall()
+  return cast(Sequence[types.ExecutionSummary], results)
 

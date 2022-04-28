@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import TypedDict, Literal, Dict, List, Any, Optional, Tuple, Union, Type, Generator, Set
+from typing import TypedDict, Literal, Dict, List, Any, Optional, Tuple, Union, Type, Generator, Set, Sequence
 
 import json
 import jsonschema
@@ -214,7 +214,6 @@ class S3Object(Table):
 
 class S3ObjectKey(Table):
   s3_object_id      : int
-  s3_type_id        : int
   geospatial_key_id : int
   temporal_key_id   : int
 
@@ -232,8 +231,11 @@ class Function(Detailed):
   function_type_id : int
   created          : datetime
 
-class Parameter(Table):
+class FunctionId(Table):
   function_id : int
+
+class Parameter(FunctionId):
+  pass
 
 class LocalParameter(Parameter):
   local_type_id       : int
@@ -265,12 +267,61 @@ class KeywordParameter(Keyword, Parameter):
 S3TypeSignature = Tuple[S3Type, Optional[S3TypeDataFrame]]
 
 class FunctionSignature(TypedDict):
-  local_inputs : List[LocalType]
+  name           : str
+  major          : int
+  local_inputs   : List[LocalType]
   keyword_inputs : List[Keyword]
-  s3_inputs    : List[S3TypeSignature]
-  http_inputs  : List[HTTPType]
-  s3_outputs   : List[S3TypeSignature]
+  s3_inputs      : List[S3TypeSignature]
+  http_inputs    : List[HTTPType]
+  s3_outputs     : List[S3TypeSignature]
 
+class Execution(Table):
+  function_id  : int
+
+class ExecutionKey(TypedDict):
+  execution_id      : int
+  geospatial_key_id : int
+  temporal_key_id   : int
+
+class Argument(FunctionId):
+  execution_id      : int
+
+class LocalArgument(Argument):
+  local_type_id : int
+  number_of_observations : int
+
+class HTTPArgument(Argument):
+  http_type_id : int
+  number_of_observations : int
+
+class S3InputArgument(Argument):
+  s3_type_id   : int
+  s3_object_id : int
+
+class S3OutputArgument(Argument):
+  s3_output_parameter_name : str
+  s3_type_id               : int
+  s3_object_id             : int
+
+class KeywordArgument(Argument):
+  keyword_name : str
+  value_number : Optional[float]
+  value_string : Optional[str]
+
+class ExecutionArguments(TypedDict):
+  local : List[LocalArgument]
+  keyword : List[KeywordArgument]
+  http : List[HTTPArgument]
+  s3 : List[S3InputArgument]
+  keys : List[Key]
+
+ExecutionOutputs = Dict[Literal['s3'], List[S3OutputArgument]]
+
+class ExecutionSummary(TypedDict):
+  inputs  : ExecutionArguments
+  outputs : ExecutionOutputs
+  function_id         : int
+  execution_id        : int
 
 
 AnyTypeTable = Union[UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup, HTTPType, S3Type, FunctionType]
@@ -289,7 +340,7 @@ type_table_lookup = {
 }
 
 
-AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, GeoSpatialKey, TemporalKey, S3Output, S3Object, Function]
+AnyDataTable = Union[Geom, Owner, Grower, Field, LocalValue, GeoSpatialKey, TemporalKey, S3Output, S3Object, Function, Execution]
 
 data_table_lookup = {
   Geom              : "geom",
@@ -302,6 +353,7 @@ data_table_lookup = {
   S3Output          : "s3_output",
   S3Object          : "s3_object",
   Function          : "function",
+  Execution         : "execution",
 }
 
 
@@ -321,6 +373,12 @@ key_table_lookup = {
   S3InputParameter  : ("s3_input_parameter", S3InputParameter),
   S3OutputParameter : ("s3_output_parameter", S3OutputParameter),
   KeywordParameter : ("keyword_parameter", KeywordParameter),
+  ExecutionKey     : ("execution_key", ExecutionKey),
+  LocalArgument    : ("local_argument", LocalArgument),
+  HTTPArgument     : ("http_argument", HTTPArgument),
+  KeywordArgument  : ("keyword_argument", KeywordArgument),
+  S3InputArgument  : ("s3_input_argument", S3InputArgument),
+  S3OutputArgument : ("s3_output_argument", S3OutputArgument),
 }
 AnyKeyTable = Union[Planting, Harvest, CropProgress, S3ObjectKey, LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter]
 

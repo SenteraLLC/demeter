@@ -9,8 +9,10 @@ from typing import Dict, List, Union, Tuple
 
 # Long Term
 # TODO: How to deal with dataframe indices?
-
 # TODO: Upload "init" file somewhere
+# TODO: Allow init to override join behavior, manually return a gpd.GeoDataFrame
+
+# ASAP
 # TODO: Add functionality to reload input
 # TODO: Add functionality to reload subset of input
 # TODO: Add functionality to reload multiple subsets of input
@@ -22,7 +24,6 @@ from typing import Dict, List, Union, Tuple
 
 # TODO: Handle missing data that becomes available
 
-# TODO: Allow init to override join behavior, manually return a gpd.GeoDataFrame
 def init(datasource : DataSource, some_constant : int) -> None:
   datasource.local([LocalType(type_name="nitrogen",
                               type_category="application",
@@ -56,7 +57,7 @@ def init(datasource : DataSource, some_constant : int) -> None:
 
 
 FUNCTION_NAME = "my_function"
-VERSION = 1
+VERSION = 2
 OUTPUTS = {"foo": "test_geojson_type"}
 
 @Function(FUNCTION_NAME, VERSION, OUTPUTS, init)
@@ -68,8 +69,8 @@ def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
   return {"foo": S3File(gdf, "testing_geojson")}
 
 def cli(fn):
-  #fn(mode = ExecutionMode.CLI)
-  fn(mode = ExecutionMode.DRY)
+  fn(mode = ExecutionMode.CLI)
+  #fn(mode = ExecutionMode.DRY)
 
 
 if __name__ == "__main__":

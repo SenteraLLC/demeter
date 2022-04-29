@@ -300,8 +300,8 @@ def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, types.HTTPTy
   cursor.execute(stmt, { 'name' : http_type_name })
 
   results = cursor.fetchall()
-  # TODO: Better exceptions
-  assert(len(results) == 1)
+  if len(results) != 1:
+    raise Exception(f"HTTP Type does exist for {http_type_name}")
   result_with_id = results[0]
 
   http_type_id = result_with_id["http_type_id"]
@@ -312,7 +312,6 @@ def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, types.HTTPTy
   return http_type_id, http_type
 
 
-# TODO: Implement complex caching behavior using S3
 def getS3ObjectByKey(cursor         : Any,
                      k              : types.Key,
                     ) -> Optional[Tuple[int, types.S3Object]]:
@@ -406,11 +405,6 @@ def insertOrGetType(get_id    : GetId[W],
     return maybe_type_id
   return return_id(cursor, some_type)
 
-
-# TODO: These probably shouldn't be allowed in practice
-#       There should be a separate setup script(s) for establishing types
-# TODO: Build a python enum for crop stages?
-# API
 insertOrGetUnitType = partial(insertOrGetType, getMaybeUnitTypeId, insertUnitType)
 insertOrGetLocalType = partial(insertOrGetType, getMaybeLocalTypeId, insertLocalType)
 insertOrGetCropType = partial(insertOrGetType, getMaybeCropTypeId, insertCropType)
@@ -429,8 +423,6 @@ def makeInsertable(geom : types.Geom) -> types.InsertableGeom:
          )
 
 
-# TODO: Combine this with insertInsertableGeo
-# TODO: The ST_Equals check is also done on insert, worth resolving?
 def getMaybeDuplicateGeom(cursor : Any,
                           geom   : types.Geom,
                          ) -> Optional[int]:
@@ -507,7 +499,6 @@ def getS3Type(cursor : Any,
     if maybe_s3_sub_type is not None:
       s3_sub_type = maybe_s3_sub_type
       s3_subtype_value = types.TaggedS3SubType(
-                           # TODO: Why in the heck do I have to ignore this?
                            tag = s3_sub_type_tag,  # type: ignore
                            value = s3_sub_type,
                          )

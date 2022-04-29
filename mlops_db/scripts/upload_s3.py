@@ -1,5 +1,6 @@
 import json
 import uuid
+import os
 
 import pandas as pd
 import geopandas as gpd # type: ignore
@@ -12,7 +13,6 @@ from typing import Any, Tuple, Union
 from ..lib.connections import getS3Connection
 from ..lib.datasource import DataSource
 
-from ..lib import temporary
 from ..lib import schema_api
 from ..lib import types
 from ..lib.ingest import S3File
@@ -24,7 +24,15 @@ if __name__ == "__main__":
   connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
   cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-  s3_connection : Any = getS3Connection(temporary.S3_ROLE_ARN)
+  s3_role_arn = os.environ['S3_ROLE_ARN']
+
+  bucket_name = os.environ['BUCKET_NAME']
+
+  s3_connection : Any = getS3Connection()
+
+  my_path = os.path.dirname(os.path.realpath(__file__))
+  GEO_KEYS = json.load(open(os.path.join(my_path, "../scripts/test_data/geospatial.json")))
+  TEMPORAL_KEYS = json.load(open(os.path.join(my_path, "../scripts/test_data/temporal.json")))
 
   test_keys = list(temporary.load_keys(cursor))
 
@@ -69,7 +77,7 @@ if __name__ == "__main__":
 
     to_upload = S3File(value, test_file_prefix)
     s3_file_meta = to_upload.to_file(s3_type_data_frame)
-    datasource.upload_file(s3_type_id, temporary.BUCKET_NAME, s3_file_meta)
+    datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
 
 
   # Geometric type

@@ -1,30 +1,27 @@
 from .datasource import DataSource, DataSourceStub, DataSourceTypes
 from .ingest import S3File, LocalFile
+from .constants import NOW
 
 from . import schema_api
 from . import types
-
 from . import temporary
 
-from .connections import getS3Connection
+from .connections import getS3Connection, getPgConnection
 
 from typing import List, TypedDict, Dict, Any, Callable, Tuple, Generator, Union, TypeVar, Protocol, Optional, Mapping, Type, Sequence
 from typing import cast
 import psycopg2
 import pandas as pd
-# TODO: Write a stub for GeoDataFrame
 import geopandas as gpd # type: ignore
 import dictdiffer # type: ignore
 
 import argparse
 from enum import Enum
 import inspect
-from datetime import datetime
+import json
 
 from functools import wraps
 
-# TODO: Move to constants file
-NOW = datetime.now()
 
 class ExecutionMode(Enum):
   DRY = 1
@@ -52,11 +49,22 @@ def getKeywordParameterTypes(fn : WrappableFunction) -> Dict[str, Type]:
   return keyword_types
 
 
-def parseCLIArguments(name : str, major : int, keyword_types : Dict[str, Type]) -> Dict[str, Any]:
+def parseCLIArguments(name : str, major : int, keyword_types : Dict[str, Type]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+  default_cli_types : Dict[str, Any] = {
+    "geospatial_key_file": lambda f : cast(List[types.GeoSpatialKey], json.load(open(f))),
+     "temporal_key_file": lambda f : cast(List[types.TemporalKey], json.load(open(f))),
+  }
+  keyword_types.update(default_cli_types)
+
   parser = argparse.ArgumentParser(f"CLI Arguments for '{name}' version {major}")
   for parameter_name, _type in keyword_types.items():
     parser.add_argument(f"--{parameter_name}", type=_type, required=True)
-  return vars(parser.parse_args())
+
+  all_args = vars(parser.parse_args())
+  default_cli_args = { k : all_args.pop(k) for k in default_cli_types }
+  args = all_args
+
+  return args, default_cli_args
 
 
 T = TypeVar('T')
@@ -69,7 +77,6 @@ class AddDataSourceWrapper(Protocol):
 class AddGeoDataFrameWrapper(Protocol):
     def __call__(self, **kwargs: Any) -> types.ExecutionOutputs: ...
 
-# TODO: Add some deferral objects (like shared ptrs) that allow some modification of values in Load section
 
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Local) -> (S3, Local)
@@ -135,14 +142,13 @@ def getSignature(cursor : Any,
            s3_outputs = s3_outputs,
          )
 
-# TODO: Move to argument related module
+
 psycopg2.extensions.register_adapter(types.KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
 
 def createFunction(cursor : Any,
                    name   : str,
                    major  : int,
                   ) -> types.Function:
-  # TODO: Handle registering function types somewhere else
   function_type = types.FunctionType(
                     function_type_name = "transformation",
                     function_subtype_name = None,
@@ -233,9 +239,7 @@ def registerFunction(cursor : Any,
 def insertExecutionArguments(cursor : Any,
                              keys                : List[types.Key],
                              execution_summary   : types.ExecutionSummary,
-                             output_name_to_type : Dict[str, Tuple[int, int]],
                             ) -> None:
-  import json
   execution_id = execution_summary["execution_id"]
   function_id = execution_summary["function_id"]
   for l in execution_summary["inputs"]["local"]:
@@ -253,6 +257,8 @@ def insertExecutionArguments(cursor : Any,
           temporal_key_id = k["temporal_key_id"],
         )
     schema_api.insertExecutionKey(cursor, e)
+  for o in execution_summary["outputs"]["s3"]:
+    schema_api.insertS3OutputArgument(cursor, o)
 
   print("Wrote for: ",execution_summary["execution_id"])
 
@@ -306,10 +312,11 @@ def Function(name                : str,
             ) -> Callable[[WrappableFunction], AddGeoDataFrameWrapper]:
   def setup_datasource(fn : WrappableFunction) -> AddGeoDataFrameWrapper:
     # TODO: How to handle aws credentials and role assuming?
-    s3_connection : Any             = getS3Connection(temporary.S3_ROLE_ARN)
+    (s3_connection, bucket_name) = getS3Connection()
 
-    cursor = temporary.mlops_db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    keys : List[types.Key]  = list(temporary.load_keys(cursor))
+    mlops_db_connection = getPgConnection()
+    cursor = mlops_db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
     function = createFunction(cursor, name, major)
 
     maybe_latest_signature = schema_api.getLatestFunctionSignature(cursor, function)
@@ -318,6 +325,9 @@ def Function(name                : str,
       function_id, latest_signature = maybe_latest_signature
       maybe_function_id = function_id
 
+    # TODO: Use Airflow XCOM with 'render_template_as_native_obj=True' here
+
+
     # TODO: Only allow primitive values in kwargs?
     @wraps(fn)
     def add_datasource(*args : Any, **kwargs : Any) -> types.ExecutionOutputs:
@@ -325,7 +335,9 @@ def Function(name                : str,
         raise Exception(f"All arguments must be named. Found unnamed arguments: {args}")
 
       mode = getMode(kwargs)
-      outputs : types.ExecutionOutputs = {}
+      outputs = types.ExecutionOutputs(
+                  s3 = [],
+                )
       keyword_types = getKeywordParameterTypes(fn)
 
       output_types : Dict[str, Tuple[str, int]] = {}
@@ -362,8 +374,10 @@ def Function(name                : str,
 
         if mode == ExecutionMode.CLI:
           keyword_types = getKeywordParameterTypes(fn)
-          kwargs = parseCLIArguments(name, major, keyword_types)
-
+          kwargs, default_cli_kwargs = parseCLIArguments(name, major, keyword_types)
+        geospatial_key_file = default_cli_kwargs["geospatial_key_file"]
+        temporal_key_file = default_cli_kwargs["temporal_key_file"]
+        keys : List[types.Key]  = list(temporary.load_keys(cursor, geospatial_key_file, temporal_key_file))
         datasource : DataSource = DataSource(keys, function_id, execution_id, cursor, s3_connection, kwargs, keyword_types)
 
         load_fn(datasource, **kwargs) # type: ignore
@@ -378,7 +392,6 @@ def Function(name                : str,
           outputs = duplicate_execution["outputs"]
         else:
           raw_outputs = fn(m, **kwargs)
-          output_name_to_type : Dict[str, Tuple[int, int]] = {}
           for output_name, output in raw_outputs.items():
             output_type = output_to_type_name[output_name]
             s3_type_id = schema_api.getS3TypeIdByName(cursor, output_type)
@@ -388,8 +401,7 @@ def Function(name                : str,
               s3_file_meta = output.to_file(tagged_s3_sub_type)
 
               s3_type_name = s3_type["type_name"]
-              s3_object_id = datasource.upload_file(s3_type_id, temporary.BUCKET_NAME, s3_file_meta)
-              output_name_to_type[output_name] = (s3_object_id, s3_type_id)
+              s3_object_id = datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
             else:
               raise Exception(f"Bad output provided: {output_name}")
             a = types.S3OutputArgument(
@@ -401,9 +413,10 @@ def Function(name                : str,
                  )
             outputs["s3"].append(a)
 
-          insertExecutionArguments(cursor, keys, datasource.execution_summary, output_name_to_type)
+          datasource.execution_summary["outputs"] = outputs
+          insertExecutionArguments(cursor, keys, datasource.execution_summary)
 
-      temporary.mlops_db_connection.commit()
+      mlops_db_connection.commit()
       return outputs
 
     return add_datasource

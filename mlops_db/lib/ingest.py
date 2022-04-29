@@ -18,6 +18,7 @@ from .types import Key, TaggedS3SubType, S3SubType, S3TypeDataFrame
 from typing import BinaryIO, Iterator, Generic, TypeVar, Any, Optional, TypedDict, Dict, Callable, Union
 from typing import cast
 
+AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
 
 # TODO: S3 Namespace?
 # TODO: How to track keys?
@@ -25,7 +26,6 @@ def download(s3_connection : Any,
              s3_bucket_name : str,
              s3_key      : str,
             ) -> BytesIO:
-
   dst = BytesIO()
   try:
     s3_connection.Bucket(s3_bucket_name).download_fileobj(Key=s3_key, Fileobj=dst)
@@ -54,7 +54,7 @@ class S3FileMeta(TypedDict):
   key                    : str
 
 
-SupportedS3DataType = Union[gpd.GeoDataFrame, pd.DataFrame]
+SupportedS3DataType = Union[gpd.GeoDataFrame, pd.DataFrame, BytesIO]
 
 class PandasFileType(Enum):
   CSV = 1
@@ -85,11 +85,12 @@ def _write_s3_file_to_disk(value                   : SupportedS3DataType,
                            converter_args          : Dict[str, Any],
                           ) -> None:
   if maybe_tagged_s3_subtype is not None:
-    tagged_s3_subtype = maybe_tagged_s3_subtype
+    tagged_s3_subtype = cast(AnyDataFrame, maybe_tagged_s3_subtype)
     tag = tagged_s3_subtype["tag"]
     s3_subtype = tagged_s3_subtype["value"]
     if (tag == S3TypeDataFrame):
       s3_type_dataframe = cast(S3TypeDataFrame, s3_subtype)
+      value = cast(AnyDataFrame, value)
       has_geometry = s3_type_dataframe["has_geometry"]
       driver = s3_type_dataframe["driver"]
       if has_geometry:

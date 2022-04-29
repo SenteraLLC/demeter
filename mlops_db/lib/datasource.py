@@ -25,7 +25,6 @@ from .generators import generateInsertMany
 OneToOneResponseFunction : http.ResponseFunction = lambda r : [cast(Dict[str, Any], r.json())]
 OneToManyResponseFunction : http.ResponseFunction = lambda rs : [cast(Dict[str, Any], r) for r in rs.json()]
 
-AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
 
 class DataSourceTypes(TypedDict):
   s3_type_ids    : Dict[int, str]
@@ -160,8 +159,7 @@ def createKeywordArguments(keyword_arguments : Dict[str, Any],
   return out
 
 
-# TODO: Memoize or throw error?
-
+# TODO: Defer S3 downloads until joining or manually altered
 class DataSource(DataSourceBase):
   def __init__(self,
                keys               : List[types.Key],
@@ -174,7 +172,6 @@ class DataSource(DataSourceBase):
               ):
     super().__init__(cursor, function_id, execution_id)
 
-
     self.s3_connection = s3_connection
     self.cursor = cursor
     self.keys = self.execution_summary["inputs"]["keys"] = keys
@@ -182,9 +179,7 @@ class DataSource(DataSourceBase):
 
     self.dataframes : Dict[str, pd.DataFrame] = {}
     self.geodataframes : Dict[str, gpd.GeoDataFrame] = {}
-    self.joins : Dict[Tuple[str, str], Tuple[Optional[Callable[..., AnyDataFrame]], Dict[str, Any]]] = {}
-
-
+    self.joins : Dict[Tuple[str, str], Tuple[Optional[Callable[..., ingest.AnyDataFrame]], Dict[str, Any]]] = {}
 
 
   def _local_raw(self, local_types : List[types.LocalType]) -> List[Tuple[types.LocalValue, types.UnitType]]:
@@ -217,7 +212,6 @@ class DataSource(DataSourceBase):
   def local(self, local_types : List[types.LocalType]) -> pd.DataFrame:
     super()._track_local(local_types)
     if self.LOCAL in self.dataframes:
-      # TODO: Local data aquisitions should be deferred in the future
       raise Exception("Local data can only be acquired once.")
 
     rows : List[Any] = []
@@ -238,7 +232,7 @@ class DataSource(DataSourceBase):
     return df
 
 
-  # TODO: Assuming JSON response for now
+  # TODO: Handle responses besides JSON
   def _http(self,
             http_type    : types.HTTPType,
             param_fn     : Optional[http.KeyToArgsFunction],
@@ -294,7 +288,7 @@ class DataSource(DataSourceBase):
     return http_result
 
 
-  # TODO: Support HTTP GeoDataFrames
+  # Does not support GeoDataFrames via http
   def http(self,
            type_name    : str,
            param_fn     : Optional[http.KeyToArgsFunction] = None,
@@ -347,6 +341,7 @@ class DataSource(DataSourceBase):
       tag = tagged_s3_subtype["tag"]
       subtype = tagged_s3_subtype["value"]
       if tag == types.S3TypeDataFrame:
+        subtype = cast(types.S3TypeDataFrame, subtype)
         dataframe_subtype = subtype
         driver = dataframe_subtype["driver"]
         has_geometry = dataframe_subtype["has_geometry"]
@@ -361,10 +356,7 @@ class DataSource(DataSourceBase):
           self.dataframes[type_name] = df
           return df
 
-    # TODO: This should be reading binary data, not geodataframes
-    gdf = gpd.read_file(raw_results, driver=driver)
-    self.geodataframes[type_name] = gdf
-    return gdf
+    return raw_results
 
 
   def upload(self,
@@ -428,7 +420,7 @@ class DataSource(DataSourceBase):
     self.joins[(left_type_name, right_type_name)] = (join_fn, kwargs)
 
 
-  def popDataFrame(self, type_name : str) -> Optional[AnyDataFrame]:
+  def popDataFrame(self, type_name : str) -> Optional[ingest.AnyDataFrame]:
     maybe_gdf = self.geodataframes.get(type_name)
     if maybe_gdf is not None:
       del self.geodataframes[type_name]
@@ -451,8 +443,8 @@ class DataSource(DataSourceBase):
 
     # Do explicit joins first
     for (left_type_name, right_type_name), (join_fn, kwargs) in self.joins.items():
-      left : Optional[AnyDataFrame] = None
-      right : Optional[AnyDataFrame] = None
+      left : Optional[ingest.AnyDataFrame] = None
+      right : Optional[ingest.AnyDataFrame] = None
 
       maybe_left = self.popDataFrame(left_type_name)
       maybe_right = self.popDataFrame(right_type_name)

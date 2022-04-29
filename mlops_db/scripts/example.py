@@ -8,12 +8,11 @@ import geopandas as gpd  # type: ignore
 from typing import Dict, List, Union, Tuple
 
 # Long Term
-# TODO: How to deal with dataframe indices?
+# TODO: How to deal with dataframe indexes?
 # TODO: Upload "init" file somewhere
 # TODO: Allow init to override join behavior, manually return a gpd.GeoDataFrame
 
 # ASAP
-# TODO: Add functionality to reload input
 # TODO: Add functionality to reload subset of input
 # TODO: Add functionality to reload multiple subsets of input
 # TODO: Add functionality to skip function execution altogether
@@ -21,8 +20,6 @@ from typing import Dict, List, Union, Tuple
 # TODO: Add 'idempotent' boolean property? And/or 'mapping' property?
 #       There could be different types of 'Function' decorators
 # TODO: ???? Add meta-functionality to toggle the above options?
-
-# TODO: Handle missing data that becomes available
 
 def init(datasource : DataSource, some_constant : int) -> None:
   datasource.local([LocalType(type_name="nitrogen",
@@ -62,19 +59,16 @@ OUTPUTS = {"foo": "test_geojson_type"}
 
 @Function(FUNCTION_NAME, VERSION, OUTPUTS, init)
 def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
-  # TODO: Record output and related keys
-  #import sys
-  #sys.exit(1234)
-  #return {"foo": S3File("test_geojson_type", gdf, key_prefix="testing_geojson")}
   return {"foo": S3File(gdf, "testing_geojson")}
+
 
 def cli(fn):
   fn(mode = ExecutionMode.CLI)
   #fn(mode = ExecutionMode.DRY)
 
 
+
 if __name__ == "__main__":
-  #example_transformation(some_constant = 5)
   cli(example_transformation)
 
   #geom_binary = schema_api.getGeom(cursor, g["geom_id"])

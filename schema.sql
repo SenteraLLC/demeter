@@ -26,7 +26,6 @@ $$ language 'plpgsql';
 
 -- Geometry Tables
 
--- TODO: Unique geometry?
 create table geom (
   geom_id bigserial primary key,
   container_geom_id bigint
@@ -73,7 +72,6 @@ alter table geom add constraint fk_container_geom foreign key (container_geom_id
 --       for each row execute procedure geom_container_must_contain_geom();
 
 
--- TODO: Is this true?
 create function geom_must_be_unique() RETURNS trigger
   LANGUAGE plpgsql AS
 $$BEGIN
@@ -118,9 +116,7 @@ create table field (
   owner_id bigint
            references owner(owner_id)
            not null,
-  -- TODO: I think that this may be made redundant by the 'acquired' fields in the 'input' table.
-  year     smallint
-           not null,
+  year     smallint,
   geom_id   bigint
            not null
            references geom(geom_id),
@@ -136,7 +132,6 @@ create table field (
 
 
   -- TODO: Is this constraint true?
-  -- CHECK (container_geom_id IS null),
   -- CHECK fields cannot overlap?
 );
 
@@ -171,11 +166,14 @@ create table crop_type (
 
   unique (species, cultivar),
 
-  -- TODO: Check not equal
   parent_id_1  bigint,
   parent_id_2  bigint,
   unique (parent_id_1, parent_id_2),
-  check (parent_id_1 <> parent_id_2),
+  check (parent_id_1 > parent_id_2),
+
+  details     jsonb
+              not null
+              default '{}'::jsonb,
 
   last_updated  timestamp without time zone
                 not null
@@ -205,8 +203,6 @@ CREATE UNIQUE INDEX crop_variety_null_unique_idx
 alter table crop_type add constraint fk_parent1_crop_type foreign key (parent_id_1) references crop_type(crop_type_id);
 alter table crop_type add constraint fk_parent2_crop_type foreign key (parent_id_2) references crop_type(crop_type_id);
 
-
--- TODO: Input data and field data should be fully contained by a field
 
 -- Note: A planting geometry must intersect one-and-only-one field
 create table planting (
@@ -329,8 +325,6 @@ ALTER TABLE unit_type
 
 -- S3 Type
 --   Matrix, Raster, etc
-
--- TODO: Versioning?
 create table s3_type (
   s3_type_id   bigserial primary key,
   type_name    text not null unique
@@ -362,19 +356,6 @@ create table http_type (
   uri_parameters      text[],
   request_body_schema jsonb
 );
-
--- TODO: Model Type
---create table model (
---  model_id   uuid primary key,
---
---  output_id  bigint
---             references output(output_id),
---
---  model_name text not null
---);
---ALTER TABLE model
---  ADD CONSTRAINT model_name_lowercase_ck
---  CHECK (model_name = lower(model_name));
 
 
 -----------------------
@@ -764,6 +745,9 @@ create table published_workflow (
   major       int    not null,
   minor       serial not null,
   unique (workflow_name, major, minor),
+  last_updated  timestamp without time zone
+                not null
+                default now(),
   details     jsonb
               not null
               default '{}'::jsonb

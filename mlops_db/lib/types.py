@@ -35,13 +35,11 @@ class LocalType(TypeTable):
   type_category  : Optional[str]
 
 
-# TODO: NHA Rate?
-# TODO: Cultivar vs Variety?
-class CropType(TypeTable):
+class CropType(TypeTable, Detailed):
   species     : str
   cultivar    : Optional[str]
-  #parent_id_1 : Optional[int]
-  #parent_id_2 : Optional[int]
+  parent_id_1 : Optional[int]
+  parent_id_2 : Optional[int]
 
 class CropStage(TypeTable):
   crop_stage : str
@@ -90,8 +88,8 @@ class Grower(Table):
 
 class Field(Table):
   owner_id    : int
-  year        : int
   geom_id     : int
+  year        : Optional[int]
   grower_id   : Optional[int]
   sentera_id  : Optional[str]
   external_id : Optional[str]
@@ -131,7 +129,6 @@ class PlantHarvestKey(TableKey):
 
 class PlantingKey(PlantHarvestKey):
   pass
-
 
 class HarvestKey(PlantHarvestKey):
   pass
@@ -176,13 +173,9 @@ class HTTPType(TypeTable):
   type_name           : str
   verb                : HTTPVerb
   uri                 : str
-  # TODO: Required vs optional?
   uri_parameters      : Optional[List[str]]
   request_body_schema : Optional[RequestBodySchema]
 
-
-
-# TODO: Type Versions?
 class S3Type(TypeTable):
   type_name : str
 
@@ -190,10 +183,7 @@ class S3TypeDataFrame(Table):
   driver       : str
   has_geometry : bool
 
-class S3TypeBinary(Table):
-  pass
-
-S3SubType = Union[S3TypeDataFrame, S3TypeBinary]
+S3SubType = Union[S3TypeDataFrame]
 
 class TaggedS3SubType(TypedDict):
   tag   : Type[S3SubType]
@@ -318,7 +308,8 @@ class ExecutionArguments(TypedDict):
   s3 : List[S3InputArgument]
   keys : List[Key]
 
-ExecutionOutputs = Dict[Literal['s3'], List[S3OutputArgument]]
+class ExecutionOutputs(TypedDict):
+  s3 : List[S3OutputArgument]
 
 class ExecutionSummary(TypedDict):
   inputs  : ExecutionArguments
@@ -386,25 +377,6 @@ key_table_lookup = {
 AnyKeyTable = Union[Planting, Harvest, CropProgress, S3ObjectKey, LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter]
 
 
-
-# TODO: More complex selections
-# Full field queries with planted info
-# As planted objects with nested stages and crops etc
-
-# Model Run Tables
-
-#class SampleSet(Table):
-#  geom_id    : int
-#  created    : datetime
-#  start_date : date
-#  end_date   : date
-#
-#
-#class SampleSetRecord(Table):
-#  sample_set_id : int
-#  sample_id     : int
-
-
 class Model(Detailed):
   model_name    : str
   major         : int
@@ -418,11 +390,8 @@ class ModelFeature(Table):
   model_id        : int
   feature_type_id : int
 
-
 class Report(Detailed):
   sample_id      : int
   report_type_id : int
   created        : datetime
-
-
 

@@ -1,4 +1,4 @@
-from ..lib import schema_api as db
+from ..lib import schema_api
 from ..lib import types
 
 import psycopg2
@@ -15,10 +15,6 @@ from typing import List, Optional, Dict, Any, Set, TypedDict, Callable, TextIO, 
 
 NO_DETAILS : types.Details = {}
 NOW = datetime.now()
-
-# TODO: What is date harvest_tuber vs harvest_vine
-# TODO: Test the duplicate GEO detection function
-# TODO: How to handle weather derived?
 
 def pickFilenames(path : str, filenames : List[str], name : str) -> List[str]:
   picked : List[str] = []
@@ -68,19 +64,19 @@ def loadField(cursor  : Any,
   owner = types.Owner(
             owner = getProperty(f, "owner"),
           )
-  owner_id = db.getMaybeOwnerId(cursor, owner)
+  owner_id = schema_api.getMaybeOwnerId(cursor, owner)
   if owner_id is None:
-    owner_id = db.insertOwner(cursor, owner)
+    owner_id = schema_api.insertOwner(cursor, owner)
 
   grower = types.Grower(
              farm  = getProperty(f, "farm"),
            )
-  grower_id = db.getMaybeGrowerId(cursor, grower)
+  grower_id = schema_api.getMaybeGrowerId(cursor, grower)
   if grower_id is None:
-    grower_id = db.insertGrower(cursor, grower)
+    grower_id = schema_api.insertGrower(cursor, grower)
 
   geom = loadGeometry(crs, f)
-  geom_id = db.insertGeom(cursor, geom)
+  geom_id = schema_api.insertGeom(cursor, geom)
 
   year = getProperty(f, "year")
   field = types.Field(
@@ -88,11 +84,13 @@ def loadField(cursor  : Any,
             year = int(year),
             geom_id = geom_id,
             grower_id = grower_id,
+            sentera_id = None,
+            external_id = None,
           )
-  maybe_field_id = db.getMaybeFieldId(cursor, field)
+  maybe_field_id = schema_api.getMaybeFieldId(cursor, field)
   if maybe_field_id is not None:
     return maybe_field_id
-  return db.insertField(cursor, field)
+  return schema_api.insertField(cursor, field)
 
 
 def loadFieldFile(cursor, filename : str) -> Dict[str, int]:
@@ -173,7 +171,6 @@ def yieldCSVRow(file                : TextIO,
     yield required, optional, None
 
 
-# TODO: Type for GeoJson file
 def yieldGeoJsonRow(file : TextIO,
                     cursor              : Any,
                     required_properties : Set[str],
@@ -187,7 +184,7 @@ def yieldGeoJsonRow(file : TextIO,
     if maybeGetProperty(f, "geometry") is not None:
       crs = contents["crs"]
       geom   = loadGeometry(crs, f)
-      geom_id = db.insertGeom(cursor, geom)
+      geom_id = schema_api.insertGeom(cursor, geom)
 
     required : Dict[str, str] = {"field_tag" : getProperty(f, "field_id")}
     for p in required_properties:
@@ -220,15 +217,19 @@ def loadPlantingFile(parse_meta : ParseMeta,
     for required, optional, geom_id in yield_fn(f, cursor, required_properties, optional_properties):
       field_tag = required["field_tag"]
       field_id  = field_id_map[field_tag]
-      field = db.getField(cursor, field_id)
+      field = schema_api.getField(cursor, field_id)
 
       if geom_id is None:
         geom_id = field["geom_id"]
 
       crop_type = types.CropType(species  = required["crop"],
                                  cultivar = optional["variety"],
+                                 parent_id_1 = None,
+                                 parent_id_2 = None,
+                                 last_updated = NOW,
+                                 details      = NO_DETAILS,
                                 )
-      crop_type_id = db.insertOrGetCropType(cursor, crop_type)
+      crop_type_id = schema_api.insertOrGetCropType(cursor, crop_type)
 
       date_planted = maybeParseDate(optional["date_plant"])
 
@@ -240,11 +241,11 @@ def loadPlantingFile(parse_meta : ParseMeta,
                    last_updated = NOW,
                    details      = NO_DETAILS,
                  )
-      planting_key = db.insertPlanting(cursor, planting)
+      planting_key = schema_api.insertPlanting(cursor, planting)
       planting_keys.append(planting_key)
 
       crop_stage = types.CropStage(crop_stage = "emergence")
-      crop_stage_id = db.insertOrGetCropStage(cursor, crop_stage)
+      crop_stage_id = schema_api.insertOrGetCropStage(cursor, crop_stage)
 
       date_emerged = maybeParseDate(optional["date_emerge"])
       planting_geom_id = planting_key["geom_id"]
@@ -256,7 +257,7 @@ def loadPlantingFile(parse_meta : ParseMeta,
                         crop_stage_id = crop_stage_id,
                         day = date_emerged,
                       )
-      crop_progress_key = db.insertCropProgress(cursor, crop_progress)
+      crop_progress_key = schema_api.insertCropProgress(cursor, crop_progress)
 
   return planting_keys
 
@@ -270,8 +271,6 @@ def insertLocalValue(cursor         : Any,
                      acquired       : datetime,
                     ) -> int:
 
-  # TODO: Test details
-  # TODO: Test loading a geometry back into python
   local_value = types.LocalValue(
                   geom_id        = geom_id,
                   field_id       = field_id,
@@ -282,7 +281,7 @@ def insertLocalValue(cursor         : Any,
                   acquired       = acquired,
                   details        = NO_DETAILS,
                 )
-  local_value_id = db.insertLocalValue(cursor, local_value)
+  local_value_id = schema_api.insertLocalValue(cursor, local_value)
 
   return local_value_id
 
@@ -303,7 +302,7 @@ def loadAppliedFile(parse_meta : ParseMeta,
     for required, optional, geom_id in yield_fn(f, cursor, required_properties, optional_properties):
       field_tag = required["field_tag"]
       field_id  = field_id_map[field_tag]
-      field = db.getField(cursor, field_id)
+      field = schema_api.getField(cursor, field_id)
 
       if geom_id is None:
         geom_id = field["geom_id"]
@@ -315,14 +314,14 @@ def loadAppliedFile(parse_meta : ParseMeta,
       applied = source_keys[required["source_n"]]
 
       local_type = types.LocalType(type_name=applied, type_category="application")
-      local_type_id = db.insertOrGetLocalType(cursor, local_type)
+      local_type_id = schema_api.insertOrGetLocalType(cursor, local_type)
 
       TYPE_KEY = "rate_n_kgha"
       supported_units = {"rate_n_kgha": "kg/ha"}
       unit = supported_units[TYPE_KEY]
 
       unit_type = types.UnitType(unit=unit, local_type_id=local_type_id)
-      unit_type_id = db.insertOrGetUnitType(cursor, unit_type)
+      unit_type_id = schema_api.insertOrGetUnitType(cursor, unit_type)
 
       acquired = parseDate(required["date_applied"])
       quantity = float(required[TYPE_KEY])
@@ -349,10 +348,10 @@ def loadSentinelFile(parse_meta : ParseMeta,
     for f in features:
       field_tag = getProperty(f, "field_id")
       field_id = field_id_map[field_tag]
-      field = db.getField(cursor, field_id)
+      field = schema_api.getField(cursor, field_id)
 
       geom = loadGeometry(crs, f)
-      geom_id = db.insertGeom(cursor, geom)
+      geom_id = schema_api.insertGeom(cursor, geom)
 
       date = getProperty(f, "acquisition_time")
       acquired = parseDate(date)
@@ -363,7 +362,7 @@ def loadSentinelFile(parse_meta : ParseMeta,
                       group_name     = sensor_name,
                       group_category = "sentinel"
                     )
-      local_group_id = db.insertOrGetLocalGroup(cursor, local_group)
+      local_group_id = schema_api.insertOrGetLocalGroup(cursor, local_group)
 
       prefix = "wl_"
 
@@ -373,10 +372,10 @@ def loadSentinelFile(parse_meta : ParseMeta,
       type_category = "wavelength"
       for wavelength, quantity in wavelengths.items():
         local_type = types.LocalType(type_name=wavelength, type_category=type_category)
-        local_type_id = db.insertOrGetLocalType(cursor, local_type)
+        local_type_id = schema_api.insertOrGetLocalType(cursor, local_type)
 
         unit = "reflectance"
-        unit_type_id = db.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
+        unit_type_id = schema_api.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
 
         local_id = insertLocalValue(cursor, quantity, unit_type_id, geom_id, field_id, local_group_id, acquired)
 
@@ -439,7 +438,7 @@ def loadWeatherDerivedFile(parse_meta : ParseMeta,
     for row in reader:
       field_tag = row["field_id"]
       field_id = field_id_map[field_tag]
-      field = db.getField(cursor, field_id)
+      field = schema_api.getField(cursor, field_id)
       geom_id = field["geom_id"]
 
       date = row["date"]
@@ -456,17 +455,17 @@ def loadWeatherDerivedFile(parse_meta : ParseMeta,
                       group_name="weather_derived",
                       group_category=None,
                     )
-      local_group_id = db.insertOrGetLocalGroup(cursor, local_group)
+      local_group_id = schema_api.insertOrGetLocalGroup(cursor, local_group)
 
       local_ids : Set[int] = set()
       for field_name in data_fields:
         quantity = float(row[field_name])
 
         local_type = types.LocalType(type_name=field_name, type_category=None)
-        local_type_id = db.insertOrGetLocalType(cursor, local_type)
+        local_type_id = schema_api.insertOrGetLocalType(cursor, local_type)
 
         unit = abbr_to_unit[getUnitAbbreviation(field_name)]
-        unit_type_id = db.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
+        unit_type_id = schema_api.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
 
         local_id = insertLocalValue(cursor, quantity, unit_type_id, geom_id, field_id, local_group_id, acquired)
 
@@ -503,20 +502,20 @@ def loadSampleFile(parse_meta : ParseMeta,
     for required, optional, geom_id in yield_fn(f, cursor, required_properties, optional_properties):
       field_tag = required["field_tag"]
       field_id  = field_id_map[field_tag]
-      field = db.getField(cursor, field_id)
+      field = schema_api.getField(cursor, field_id)
 
       if geom_id is None:
         geom_id = field["geom_id"]
 
       if key is not None:
         local_type = required[key]
-        local_type_id = db.insertOrGetLocalType(cursor, types.LocalType(type_name=local_type, type_category=key))
+        local_type_id = schema_api.insertOrGetLocalType(cursor, types.LocalType(type_name=local_type, type_category=key))
 
         date = required["date"]
         acquired = parseDate(date)
 
         unit = required["measure"]
-        unit_type_id = db.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
+        unit_type_id = schema_api.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
 
         quantity = float(required["value"])
 
@@ -548,13 +547,12 @@ def loadDataFolder(hostname : str, data_path : str, field_id_map : Dict[str, int
 
   print("Loading Data Directory: ",data_path)
 
-  # TODO: Do something with return values?
   to_parse : Dict[str, Callable[[ParseMeta, YieldFn], Any]] = {
     "as_planted"     : loadPlantingFile,
     "n_applications" : loadAppliedFile,
     "rs_sentinel"    : loadSentinelFile,
      OBS_PREFIX      : loadSampleFile,
-    #"weather\."       : loadWeatherFile,  # TODO: How/if to assign this to a field?
+    #"weather\."       : loadWeatherFile,
     "weather_derived" : loadWeatherDerivedFile,
   }
 
@@ -606,7 +604,7 @@ def loadData(hostname  : str,
 
 
 def main(hostname : str, data_path : str, field_id_path : str):
-  # TODO: This field_map is kind of a hack but some files reference fields from other directories
+  # The field map is a hacky cache for storing field keys
   field_id_map = loadFieldIdMap(field_id_path)
   loadData(hostname, data_path, field_id_map)
   with open(field_id_path, "w") as f:

@@ -1,11 +1,10 @@
+from typing import Any, Tuple, Optional
+
 import boto3
 import os
 import psycopg2
 from psycopg2.extensions import connection as PGConnection
 import getpass
-
-
-from typing import Any, Tuple, Optional
 
 
 def getEnv(name : str, default : Optional[str] = None):

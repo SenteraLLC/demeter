@@ -2,9 +2,8 @@ from typing import Callable
 
 import psycopg2
 
-from ..lib.types import HTTPType, HTTPVerb, RequestBodySchema
-
-from ..lib.schema_api import insertHTTPType
+from ..lib.inputs.types import HTTPType, HTTPVerb, RequestBodySchema
+from ..lib.inputs.api import insertHTTPType
 
 
 http_verb_to_string : Callable[[HTTPVerb], str] = lambda v : v.name.lower()

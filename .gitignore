@@ -1,3 +1,4 @@
 *.pyc
 *.swp
+*.data.json
 .mypy_cache/

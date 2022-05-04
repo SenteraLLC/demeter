@@ -2,7 +2,7 @@ from datetime import time, date
 
 from typing import TypedDict, Sequence, Dict, Optional, Any, List
 
-from schema_types import Geometry, Owner
+from ..lib.core.types import Geometry, Owner
 
 class HarvestPlanting(TypedDict):
   geo_id    : int
@@ -187,7 +187,7 @@ def get_field(cursor : Any, field_id : int) -> DataField:
   return result["field_output"]
 
 
-import geopandas
+import geopandas # type: ignore
 
 # TODO: Add more filter support
 def getInputsByField(cursor : Any,

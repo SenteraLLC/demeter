@@ -393,8 +393,8 @@ create table function (
                 not null,
 
   -- These are development versions which are distinct from published versions
-  major            int    not null,
-  minor            serial not null,
+  major            int not null,
+  minor            int not null,
   unique(function_name, major, minor),
 
   function_type_id bigint

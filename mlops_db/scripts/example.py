@@ -1,9 +1,9 @@
-from ..lib.datasource import DataSource, OneToManyResponseFunction
-from ..lib.ingest import S3File
-from ..lib.function import Function, ExecutionMode
-from ..lib.types import LocalType
+from ..lib.datasource.datasource import DataSource
+from ..lib.datasource.types import OneToManyResponseFunction
+from ..lib.datasource.s3_file import S3File
+from ..functions.transformation import Transformation
+from ..lib.local.types import LocalType
 
-import pandas as pd
 import geopandas as gpd  # type: ignore
 from typing import Dict, List, Union, Tuple
 
@@ -20,6 +20,18 @@ from typing import Dict, List, Union, Tuple
 # TODO: Add 'idempotent' boolean property? And/or 'mapping' property?
 #       There could be different types of 'Function' decorators
 # TODO: ???? Add meta-functionality to toggle the above options?
+# TODO: Show how to access other 'local' meta data like: owner, field
+# TODO:   How to access quasi-local data like "harvest" and "planting"?
+
+# TODO: How to deal with models that change from one spatial resolution to another
+#       Post processing
+#       E.G. Field level data -> Org level responses
+#       E.G. How to get region level data when a field is searched
+#       E.G. Multiple regions in field to scaler for a field
+
+# TODO: Model metric functions?
+# TODO: Model seletion function?
+# TODO: Function for taking rasters and generating summary data
 
 def init(datasource : DataSource, some_constant : int) -> None:
   datasource.local([LocalType(type_name="nitrogen",
@@ -54,23 +66,19 @@ def init(datasource : DataSource, some_constant : int) -> None:
 
 
 FUNCTION_NAME = "my_function"
-VERSION = 2
+VERSION = 4
 OUTPUTS = {"foo": "test_geojson_type"}
 
-@Function(FUNCTION_NAME, VERSION, OUTPUTS, init)
+@Transformation(FUNCTION_NAME, VERSION, OUTPUTS, init)
 def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
   return {"foo": S3File(gdf, "testing_geojson")}
 
 
 def cli(fn):
+  from ..functions.util.mode import ExecutionMode
   fn(mode = ExecutionMode.CLI)
-  #fn(mode = ExecutionMode.DRY)
-
-
+  #fn(mode = ExecutionMode.REGISTER)
 
 if __name__ == "__main__":
   cli(example_transformation)
-
-  #geom_binary = schema_api.getGeom(cursor, g["geom_id"])
-  #geom = wkb.loads(geom_binary, hex=True)
 

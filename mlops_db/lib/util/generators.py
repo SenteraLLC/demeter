@@ -1,7 +1,3 @@
-# TODO: Memoize
-# TODO: Deal with the type invariance problem
-# TODO: Custom exceptions?
-
 from typing import TypedDict, Any, Literal, List, Tuple, Dict, Callable, Optional, Sequence, Type, TypeVar
 from psycopg2 import sql, extras
 
@@ -10,10 +6,14 @@ from collections import OrderedDict
 from typing import cast
 from functools import partial
 
-from . import types
+from ..core.types import Key
+from ..util.api_protocols import GetId, ReturnId
+from .type_lookups import AnyIdTable, AnyKeyTable, AnyTypeTable
+from .type_lookups import id_table_lookup, key_table_lookup
+
 
 def _generateInsertStmt(table_name : str,
-                        table      : types.AnyIdTable,
+                        table      : AnyIdTable,
                         return_key : Optional[Sequence[str]],
                        ) -> sql.SQL:
   stmt_template = "insert into {table} ({fields}) values({places})"
@@ -34,7 +34,6 @@ def _generateInsertStmt(table_name : str,
   return stmt
 
 
-# TODO: Combine with _generateInsertStmt ?
 def generateInsertMany(table_name     : str,
                        field_names    : List[str],
                        number_inserts : int,
@@ -59,7 +58,7 @@ def generateInsertMany(table_name     : str,
 
 def _insertAndReturnId(table_name : str,
                        cursor     : Any,
-                       table      : types.AnyIdTable,
+                       table      : AnyIdTable,
                       ) -> int:
   table_id = table_name + "_id"
   return_key = [table_id]
@@ -69,31 +68,31 @@ def _insertAndReturnId(table_name : str,
   return int(result[table_id])
 
 
-def getInsertReturnIdFunction(table : Type[Any]) -> Callable[[Any, types.AnyIdTable], int]:
-  table_name = types.id_table_lookup[table]
+def getInsertReturnIdFunction(table : Type[Any]) -> Callable[[Any, AnyIdTable], int]:
+  table_name = id_table_lookup[table]
   return partial(_insertAndReturnId, table_name)
 
 
 def _insertAndReturnKey(table_name : str,
-                        key        : types.Key,
+                        key        : Key,
                         cursor     : Any,
-                        table      : types.AnyIdTable,
-                       ) -> types.Key:
+                        table      : AnyIdTable,
+                       ) -> Key:
   return_key = list(key.__annotations__)
   stmt = _generateInsertStmt(table_name, table, return_key)
   cursor.execute(stmt, table)
-  result = cast(types.Key, cursor.fetchone())
+  result = cast(Key, cursor.fetchone())
   return result
 
 
-def getInsertReturnKeyFunction(table : Type[Any]) -> Callable[[Any, types.AnyKeyTable], types.Key]:
-  table_name, key = types.key_table_lookup[table]
+def getInsertReturnKeyFunction(table : Type[Any]) -> Callable[[Any, AnyKeyTable], Key]:
+  table_name, key = key_table_lookup[table]
   return partial(_insertAndReturnKey, table_name, key)
 
 
 def getMaybeId(table_name : str,
                cursor     : Any,
-               table      : types.AnyIdTable,
+               table      : AnyIdTable,
               ) -> Optional[int]:
   field_names = cast(Sequence[str], table.keys()) # type: ignore
   names_to_fields = OrderedDict({name: sql.Identifier(name) for name in field_names})
@@ -116,12 +115,12 @@ def getMaybeId(table_name : str,
   return None
 
 
-def getMaybeIdFunction(table : Type[Any]) -> Callable[[Any, types.AnyIdTable], Optional[int]]:
-  table_name = types.id_table_lookup[table]
+def getMaybeIdFunction(table : Type[Any]) -> Callable[[Any, AnyIdTable], Optional[int]]:
+  table_name = id_table_lookup[table]
   return partial(getMaybeId, table_name)
 
 
-M = TypeVar('M', bound=types.AnyIdTable)
+M = TypeVar('M', bound=AnyIdTable)
 
 def getMaybeTableById(table_name    : str,
                       table_id_name : str,
@@ -156,13 +155,13 @@ def getTableById(table_name    : str,
 def getTableFunction(table : Type[Any],
                      table_id_name : Optional[str] = None
                     ) -> Callable[[Any, int], M]:
-  table_name = types.id_table_lookup[table]
+  table_name = id_table_lookup[table]
   if table_id_name is None:
     table_id_name = "_".join([table_name, "id"])
   return partial(getTableById, table_name, table_id_name)
 
 
-N = TypeVar('N', bound=types.AnyKeyTable)
+N = TypeVar('N', bound=AnyKeyTable)
 
 def getTableByKey(table_name : str,
                   key        : Sequence[str],
@@ -181,9 +180,20 @@ def getTableByKey(table_name : str,
 
 
 def getTableKeyFunction(table : Type[Any]) -> Callable[[Any, int], N]:
-  table_name, key = types.key_table_lookup[table]
+  table_name, key = key_table_lookup[table]
   return partial(getTableByKey, table_name, key)
 
-### Data ###
+
+W = TypeVar('W', bound=AnyTypeTable)
+
+def insertOrGetType(get_id    : GetId[W],
+                    return_id : ReturnId[W],
+                    cursor    : Any,
+                    some_type : W,
+                   ) -> int:
+  maybe_type_id = get_id(cursor, some_type)
+  if maybe_type_id is not None:
+    return maybe_type_id
+  return return_id(cursor, some_type)
 
 

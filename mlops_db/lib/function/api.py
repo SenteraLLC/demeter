@@ -26,7 +26,7 @@ def insertFunction(cursor : Any,
                    function : Function,
                   ) -> Tuple[int, int]:
   stmt = """with minor as (
-              select coalesce(max(minor), 0) + 1 as version
+              select coalesce(max(minor), -1) + 1 as version
               from function
               where function_name = %(function_name)s and
                     major = %(major)s and

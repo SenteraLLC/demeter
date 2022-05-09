@@ -103,11 +103,10 @@ class DataSource(DataSourceBase):
   def upload(self,
              s3_type_id  : int,
              bucket_name : str,
-             s3_key      : str,
              blob        : BytesIO,
-             key         : str = str(uuid.uuid4()),
+             s3_key      : str = str(uuid.uuid4()),
             ) -> int:
-    self.s3_connection.Bucket(bucket_name).upload_fileobj(Key=key, Fileobj=blob)
+    self.s3_connection.Bucket(bucket_name).upload_fileobj(Key=s3_key, Fileobj=blob)
     s3_object = S3Object(
                   s3_type_id = s3_type_id,
                   key = s3_key,
@@ -128,7 +127,7 @@ class DataSource(DataSourceBase):
     as_bytes = BytesIO(f.read())
 
     s3_key = s3_file_meta["key"]
-    return self.upload(s3_type_id, bucket_name, s3_key, as_bytes)
+    return self.upload(s3_type_id, bucket_name, as_bytes, s3_key)
 
 
   def get_geometry(self) -> gpd.GeoDataFrame:
@@ -219,7 +218,12 @@ class DataSource(DataSourceBase):
       out = out.merge(df, on="geom_id", how="inner")
 
     for k, gdf in self.geodataframes.items():
-      out = out.sjoin(df, **kwargs, rsuffix=k)
+      left_suffix = str(uuid.uuid4())
+      out = out.sjoin(gdf, lsuffix=left_suffix, rsuffix=k)
+
+      ljoin = lambda s : "_".join([s, left_suffix])
+      to_rename = {"geom_id", "container_geom_id"}
+      out.rename(columns={ljoin(s) : s for s in to_rename}, inplace=True)
 
     return out
 

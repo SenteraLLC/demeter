@@ -11,8 +11,10 @@ from typing import Dict, List, Union, Tuple
 # TODO: How to deal with dataframe indexes?
 # TODO: Upload "init" file somewhere
 # TODO: Allow init to override join behavior, manually return a gpd.GeoDataFrame
+# TODO: Compare the headers of S3 outputs between function minor versions
 
 # ASAP
+# TODO: Should duplicate runs look a the major version of the function that outputs them? Should probably be considered
 # TODO: Add functionality to reload subset of input
 # TODO: Add functionality to reload multiple subsets of input
 # TODO: Add functionality to skip function execution altogether
@@ -32,6 +34,7 @@ from typing import Dict, List, Union, Tuple
 # TODO: Model metric functions?
 # TODO: Model seletion function?
 # TODO: Function for taking rasters and generating summary data
+# TODO: How to do queries that use different geometries, for example, a transformation function that maps geometries to different geometries. E.G. field -> county -> county level data -> field
 
 def init(datasource : DataSource, some_constant : int) -> None:
   datasource.local([LocalType(type_name="nitrogen",

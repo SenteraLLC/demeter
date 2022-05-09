@@ -22,7 +22,7 @@ if __name__ == "__main__":
   cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
   http_get = HTTPType(
-               type_name           = "foo_type",
+               type_name           = "http_uri_params_test_type",
                verb                = HTTPVerb.GET,
                uri                 = "http://localhost:8080",
                uri_parameters      = ["field_id", "start_date", "end_date"],
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
 
   http_post = HTTPType(
-                type_name           = "bar_type",
+                type_name           = "http_request_body_test_type",
                 verb                = HTTPVerb.POST,
                 uri                 = "http://localhost:8080",
                 uri_parameters      = None,

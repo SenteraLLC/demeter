@@ -101,7 +101,16 @@ create table owner (
 
 create table grower (
   grower_id bigserial primary key,
-  farm text not null unique
+  owner_id  bigint not null,
+  external_id text,
+  unique (owner_id, external_id),
+  farm text not null,
+  details  jsonb
+           not null
+           default '{}'::jsonb,
+  last_updated  timestamp without time zone
+                not null
+                default now()
 );
 
 
@@ -113,6 +122,7 @@ create table field (
   sentera_id text,
   external_id text,
 
+  -- TODO: Constraint with grower_id and owner_id
   owner_id bigint
            references owner(owner_id)
            not null,

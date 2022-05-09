@@ -1,7 +1,7 @@
 from typing import TypedDict, Optional, Union, Dict, Literal, List, Tuple, Generator
 from datetime import date
 
-from ..util.types_protocols import Table, Updateable
+from ..util.types_protocols import Table, Updateable, Detailed
 
 
 class CRS(TypedDict):
@@ -21,15 +21,13 @@ class Geom(Updateable):
   container_geom_id : Optional[int]
   geom              : Geometry
 
-class InsertableGeom(Table):
-  container_geom_id : Optional[int]
-  geom              : str
-
 class Owner(Table):
   owner : str
 
-class Grower(Table):
-  farm  : str
+class Grower(Detailed):
+  owner_id    : int
+  farm        : str
+  external_id : Optional[str]
 
 class Field(Table):
   owner_id    : int

@@ -1,10 +1,13 @@
 from typing import Any, List, Mapping, Optional
 
+import geopandas as gpd # type: ignore
+
 from ...lib.core.types import Key
 from ...lib.execution.types import ExecutionSummary, ExecutionKey, S3OutputArgument
 from ...lib.execution.api import insertLocalArgument, insertHTTPArgument, insertS3InputArgument, insertKeywordArgument, insertExecutionKey, insertS3OutputArgument
 from ...lib.datasource.datasource import DataSource
 from ...lib.datasource.s3_file import S3File
+from ...lib.inputs.types import S3Type
 from ...lib.inputs.api import getS3TypeIdByName, getS3Type
 
 from .wrapper_types import RawFunctionOutputs
@@ -34,6 +37,24 @@ def insertExecutionArguments(cursor : Any,
     insertS3OutputArgument(cursor, o)
 
   print("Wrote for: ",execution_summary["execution_id"])
+
+
+def insertInitFile(cursor : Any,
+                   datasource : DataSource,
+                   input_matrix : gpd.GeoDataFrame,
+                   bucket_name  : str,
+                  ) -> None:
+  s3_type_id = getS3TypeIdByName(cursor, "input_geodataframe_type")
+  s3_type, maybe_tagged_s3_sub_type = getS3Type(cursor, s3_type_id)
+  input_s3 = S3File(input_matrix, "input")
+  if isinstance(input_s3, S3File):
+    tagged_s3_sub_type = maybe_tagged_s3_sub_type
+    s3_file_meta = input_s3.to_file(tagged_s3_sub_type)
+
+    s3_type_name = s3_type["type_name"]
+    s3_object_id = datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
+  else:
+    raise Exception("Init file must be an S3 File")
 
 
 def insertRawOutputs(cursor : Any,

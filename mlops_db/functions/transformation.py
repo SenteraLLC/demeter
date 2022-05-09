@@ -26,7 +26,7 @@ from .util.mode import getModeFromKwargs
 from .util.mode import ExecutionMode
 from .util.setup import getOutputTypes, getKeywordParameterTypes, createFunction
 from .util.wrapper_types import OutputLoadFunction, WrappableFunction, AddGeoDataFrameWrapper
-from .util.teardown import insertExecutionArguments, insertRawOutputs
+from .util.teardown import insertExecutionArguments, insertRawOutputs, insertInitFile
 from .util.existing import getExistingDuplicate
 
 
@@ -123,6 +123,7 @@ def Transformation(name                : str,
 
         else:
           m = datasource.getMatrix()
+          insertInitFile(cursor, datasource, m, bucket_name)
           raw_outputs = fn(m, **kwargs)
 
           maybe_execution_id = insertRawOutputs(cursor, datasource, raw_outputs, output_to_type_name, bucket_name)

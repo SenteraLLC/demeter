@@ -68,6 +68,7 @@ def getSignature(cursor : Any,
            s3_outputs = s3_outputs,
          )
 
+
 def insertFunctionTypes(cursor : Any,
                         function : Function,
                         input_types : DataSourceTypes,
@@ -75,8 +76,6 @@ def insertFunctionTypes(cursor : Any,
                         output_types : Dict[str, Tuple[str, int]],
                        ) -> Tuple[int, int]:
   function_id, minor = insertFunction(cursor, function)
-  print("Got ID: ",function_id)
-  print(" Got minor: ",minor)
 
   for i in input_types["local_type_ids"]:
     insertLocalParameter(cursor,

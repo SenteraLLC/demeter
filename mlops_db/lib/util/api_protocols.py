@@ -1,6 +1,6 @@
 from typing import Optional, Callable, TypeVar, Any
 
-from .type_lookups import AnyIdTable, AnyIdTable, AnyKeyTable
+from .type_lookups import AnyIdTable, AnyKeyTable
 from .types_protocols import TableKey
 
 

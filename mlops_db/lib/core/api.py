@@ -8,7 +8,7 @@ from ..util.generators import getMaybeIdFunction, getInsertReturnIdFunction, get
 from ..util.type_lookups import AnyIdTable, AnyIdTable, AnyKeyTable
 from ..util.types_protocols import Table
 
-from .types import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom
+from .types import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, InsertableGeom
 
 
 getMaybeFieldId          : GetId[Field]      = getMaybeIdFunction(Field)
@@ -33,15 +33,10 @@ insertOrGetOwner = partial(insertOrGetType, getMaybeOwnerId, insertOwner)
 insertOrGetGrower = partial(insertOrGetType, getMaybeGrowerId, insertGrower)
 
 
-class InsertableGeom(Table):
-  container_geom_id : Optional[int]
-  geom              : str
-
-
 def makeInsertable(geom : Geom) -> InsertableGeom:
   return InsertableGeom(
-           geom = json.dumps(geom["geom"]),
-           container_geom_id = geom["container_geom_id"],
+           geom = json.dumps(geom.geom),
+           container_geom_id = geom.container_geom_id,
          )
 
 
@@ -55,7 +50,7 @@ def getMaybeDuplicateGeom(cursor : Any,
               FROM geom G
               where ST_Equals(ST_MakeValid(G.geom), ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)))
          """
-  args = {"geom" : igeo["geom"]}
+  args = {"geom" : igeo.geom}
   cursor.execute(stmt, args)
   result = cursor.fetchall()
   if len(result) >= 1:
@@ -74,14 +69,15 @@ def insertInsertableGeom(cursor : Any,
   return result["geom_id"]
 
 
+# TODO: Should be called insertOrGetGeom
 def insertGeom(cursor   : Any,
                geom     : Geom,
               ) -> int:
   maybe_geom_id = getMaybeDuplicateGeom(cursor, geom)
-  print("DUPLCIATE?: ",maybe_geom_id)
   if maybe_geom_id is not None:
     return maybe_geom_id
   igeo = makeInsertable(geom)
   return insertInsertableGeom(cursor, igeo) # type: ignore
 
+insertOrGetGeom = insertGeom
 

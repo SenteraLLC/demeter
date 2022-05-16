@@ -75,4 +75,5 @@ AnyKeyTable = Union[local.AnyKeyTable,
 
 assert(set(AnyKeyTable.__args__) == set(key_table_lookup.keys())) # type: ignore
 
+AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
 

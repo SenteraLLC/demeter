@@ -16,27 +16,27 @@ def insertExecutionArguments(cursor : Any,
                              keys                : List[Key],
                              execution_summary   : ExecutionSummary,
                             ) -> None:
-  execution_id = execution_summary["execution_id"]
-  function_id = execution_summary["function_id"]
-  for l in execution_summary["inputs"]["local"]:
+  execution_id = execution_summary.execution_id
+  function_id = execution_summary.function_id
+  for l in execution_summary.inputs.local:
     insertLocalArgument(cursor, l)
-  for h in execution_summary["inputs"]["http"]:
+  for h in execution_summary.inputs.http:
     insertHTTPArgument(cursor, h)
-  for s in execution_summary["inputs"]["s3"]:
+  for s in execution_summary.inputs.s3:
     insertS3InputArgument(cursor, s)
-  for ka in execution_summary["inputs"]["keyword"]:
+  for ka in execution_summary.inputs.keyword:
     insertKeywordArgument(cursor, ka)
   for k in keys:
     e = ExecutionKey(
           execution_id = execution_id,
-          geospatial_key_id = k["geospatial_key_id"],
-          temporal_key_id = k["temporal_key_id"],
+          geospatial_key_id = k.geospatial_key_id,
+          temporal_key_id = k.temporal_key_id,
         )
     insertExecutionKey(cursor, e)
-  for o in execution_summary["outputs"]["s3"]:
+  for o in execution_summary.outputs.s3:
     insertS3OutputArgument(cursor, o)
 
-  print("Wrote for: ",execution_summary["execution_id"])
+  print("Wrote for: ",execution_summary.execution_id)
 
 
 def insertInitFile(cursor : Any,
@@ -51,7 +51,7 @@ def insertInitFile(cursor : Any,
     tagged_s3_sub_type = maybe_tagged_s3_sub_type
     s3_file_meta = input_s3.to_file(tagged_s3_sub_type)
 
-    s3_type_name = s3_type["type_name"]
+    s3_type_name = s3_type.type_name
     s3_object_id = datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
   else:
     raise Exception("Init file must be an S3 File")
@@ -64,8 +64,8 @@ def insertRawOutputs(cursor : Any,
                      bucket_name : str,
                     ) -> Optional[int]:
   execution_summary = datasource.execution_summary
-  function_id = execution_summary["function_id"]
-  execution_id = execution_summary["execution_id"]
+  function_id = execution_summary.function_id
+  execution_id = execution_summary.execution_id
   for output_name, output in raw_outputs.items():
     output_type = output_to_type_name[output_name]
     s3_type_id = getS3TypeIdByName(cursor, output_type)
@@ -74,7 +74,7 @@ def insertRawOutputs(cursor : Any,
       tagged_s3_sub_type = maybe_tagged_s3_sub_type
       s3_file_meta = output.to_file(tagged_s3_sub_type)
 
-      s3_type_name = s3_type["type_name"]
+      s3_type_name = s3_type.type_name
       s3_object_id = datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
     else:
       raise Exception(f"Bad output provided: {output_name}")
@@ -85,7 +85,7 @@ def insertRawOutputs(cursor : Any,
           s3_type_id = s3_type_id,
           s3_object_id = s3_object_id,
          )
-    execution_summary["outputs"]["s3"].append(a)
+    execution_summary.outputs.s3.append(a)
 
   insertExecutionArguments(cursor, datasource.keys, datasource.execution_summary)
 

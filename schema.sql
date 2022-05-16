@@ -100,8 +100,11 @@ create table owner (
 );
 
 create table grower (
-  grower_id bigserial primary key,
+  grower_id bigserial not null,
   owner_id  bigint not null,
+  -- TODO: Pretty sure this is a good idea
+  primary key (grower_id, owner_id),
+
   external_id text,
   unique (owner_id, external_id),
   farm text not null,
@@ -126,6 +129,7 @@ create table field (
   owner_id bigint
            references owner(owner_id)
            not null,
+  unique (owner_id, external_id),
   year     smallint,
   geom_id   bigint
            not null
@@ -133,8 +137,9 @@ create table field (
 
   unique (geom_id, owner_id, year),
 
-  grower_id bigint
-           references grower(grower_id),
+  grower_id bigint,
+  foreign key (owner_id, grower_id)
+    references grower (owner_id, grower_id),
 
   created  timestamp without time zone
               not null
@@ -712,15 +717,6 @@ create table s3_output_argument (
                not null
                references s3_object(s3_object_id)
 );
-
-create table keyword_parameter (
-  keyword_name text,
-  keyword_type keyword_type,
-  function_id bigint
-              references function(function_id),
-  primary key(keyword_name, function_id)
-);
-
 
 create table keyword_argument (
   execution_id bigint

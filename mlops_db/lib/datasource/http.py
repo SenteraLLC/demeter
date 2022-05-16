@@ -75,21 +75,21 @@ def _getHTTPRows(cursor       : Any,
                  response_fn  : ResponseFunction,
                  http_options : Dict[str, Any] = {},
                 ) -> List[Tuple[Key, Dict[str, Any]]]:
-  verb = http_type["verb"]
+  verb = http_type.verb
   func = {HTTPVerb.GET    : requests.get,
           HTTPVerb.POST   : requests.post,
           HTTPVerb.PUT    : requests.put,
           HTTPVerb.DELETE : requests.delete,
          }[verb]
-  uri = http_type["uri"]
+  uri = http_type.uri
 
   responses : List[Tuple[Key, Dict[str, Any]]] = []
   for k in keys:
-    expected_params = http_type["uri_parameters"]
+    expected_params = http_type.uri_parameters
     if expected_params is not None:
       http_options["params"] = parseHTTPParams(expected_params, param_fn, k)
 
-    request_body_schema = http_type["request_body_schema"]
+    request_body_schema = http_type.request_body_schema
     if request_body_schema is not None:
       http_options["json"] = parseRequestSchema(request_body_schema, json_fn, k)
 
@@ -115,12 +115,12 @@ def getHTTPRows(cursor       : Any,
   http_type_id, http_type = getHTTPByName(cursor, type_name)
   http_result = _getHTTPRows(cursor, keys, http_type, param_fn, json_fn, response_fn, http_options)
   h = HTTPArgument(
-        function_id = execution_summary["function_id"],
-        execution_id = execution_summary["execution_id"],
+        function_id = execution_summary.function_id,
+        execution_id = execution_summary.execution_id,
         http_type_id = http_type_id,
         number_of_observations = len(http_result),
       )
-  execution_summary["inputs"]["http"].append(h)
+  execution_summary.inputs.http.append(h)
 
   return http_result
 

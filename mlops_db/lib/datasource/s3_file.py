@@ -99,8 +99,8 @@ def writeS3FileToDisk(value                   : SupportedS3DataType,
     if (tag == S3TypeDataFrame):
       s3_type_dataframe = cast(S3TypeDataFrame, s3_subtype)
       value = cast(AnyDataFrame, value)
-      has_geometry = s3_type_dataframe["has_geometry"]
-      driver = s3_type_dataframe["driver"]
+      has_geometry = s3_type_dataframe.has_geometry
+      driver = s3_type_dataframe.driver
       if has_geometry:
         value.to_file(tmp_filename, driver=driver, **converter_args)
       else:

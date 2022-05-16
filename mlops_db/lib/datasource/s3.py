@@ -41,19 +41,19 @@ def getRawS3(cursor     : Any,
     if maybe_id_and_object is None:
       raise Exception(f"Failed to find S3 object '{type_name}' associated with keys")
     s3_object_id, s3_object = maybe_id_and_object
-    s3_type_id = s3_object["s3_type_id"]
+    s3_type_id = s3_object.s3_type_id
     s3_type, maybe_tagged_s3_subtype = getS3Type(cursor, s3_type_id)
-    s3_key = s3_object["key"]
-    bucket_name = s3_object["bucket_name"]
+    s3_key = s3_object.key
+    bucket_name = s3_object.bucket_name
     f = download(s3_connection, bucket_name, s3_key)
 
     s = S3InputArgument(
-          function_id = execution_summary["function_id"],
-          execution_id = execution_summary["execution_id"],
+          function_id = execution_summary.function_id,
+          execution_id = execution_summary.execution_id,
           s3_type_id = s3_type_id,
           s3_object_id = s3_object_id,
         )
-    execution_summary["inputs"]["s3"].append(s)
+    execution_summary.inputs.s3.append(s)
 
     return f, maybe_tagged_s3_subtype
 
@@ -61,8 +61,8 @@ def getRawS3(cursor     : Any,
 def rawToDataFrame(raw_results : BytesIO,
                    dataframe_subtype : S3TypeDataFrame,
                   ) -> Tuple[Optional[pd.DataFrame], Optional[gpd.GeoDataFrame]]:
-  driver = dataframe_subtype["driver"]
-  has_geometry = dataframe_subtype["has_geometry"]
+  driver = dataframe_subtype.driver
+  has_geometry = dataframe_subtype.has_geometry
   if has_geometry:
     gdf = gpd.read_file(raw_results, driver=driver)
     return None, gdf
@@ -71,6 +71,5 @@ def rawToDataFrame(raw_results : BytesIO,
     pandas_driver_fn = FILETYPE_TO_PANDAS_READ_FN[pandas_file_type]
     df = pandas_driver_fn(raw_results)
     return df, None
-
 
 

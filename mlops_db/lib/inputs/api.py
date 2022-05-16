@@ -73,8 +73,8 @@ def insertS3ObjectKeys(cursor       : Any,
   for k in keys:
     s3_object_key = S3ObjectKey(
                       s3_object_id      = s3_object_id,
-                      geospatial_key_id = k["geospatial_key_id"],
-                      temporal_key_id   = k["temporal_key_id"],
+                      geospatial_key_id = k.geospatial_key_id,
+                      temporal_key_id   = k.temporal_key_id,
                     )
     for key_name in s3_key_names:
       args.append(s3_object_key[key_name])  # type: ignore
@@ -119,8 +119,8 @@ def getS3ObjectByKeys(cursor    : Any,
                      sql.SQL(")")
                     ],
                   ))
-    args.append(k["geospatial_key_id"])
-    args.append(k["temporal_key_id"])
+    args.append(k.geospatial_key_id)
+    args.append(k.temporal_key_id)
 
   filters = sql.SQL(" or ").join(clauses)
 

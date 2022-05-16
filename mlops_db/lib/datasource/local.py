@@ -25,10 +25,10 @@ def queryLocalByKey(cursor     : Any,
               V.geom_id = %s and V.field_id = %s and V.acquired > %s and V.acquired < %s
           """
 
-  geom_id    = key["geom_id"]
-  field_id   = key["field_id"]
-  start_date = key["start_date"]
-  end_date   = key["end_date"]
+  geom_id    = key.geom_id
+  field_id   = key.field_id
+  start_date = key.start_date
+  end_date   = key.end_date
 
   args = (local_type_id, geom_id, field_id, start_date, end_date)
 
@@ -67,12 +67,12 @@ def loadLocalRaw(cursor : Any,
     results_for_type = loadType(cursor, keys, local_type_id)
 
     l = LocalArgument(
-          function_id = execution_summary["function_id"],
-          execution_id = execution_summary["execution_id"],
+          function_id = execution_summary.function_id,
+          execution_id = execution_summary.execution_id,
           local_type_id = local_type_id,
           number_of_observations = len(results_for_type),
         )
-    execution_summary["inputs"]["local"].append(l)
+    execution_summary.inputs.local.append(l)
 
     results.extend(results_for_type)
   return results

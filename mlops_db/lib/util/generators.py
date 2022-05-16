@@ -63,7 +63,7 @@ def _insertAndReturnId(table_name : str,
   table_id = table_name + "_id"
   return_key = [table_id]
   stmt = _generateInsertStmt(table_name, table, return_key)
-  cursor.execute(stmt, table)
+  cursor.execute(stmt, table.args())
   result = cursor.fetchone()
   return int(result[table_id])
 
@@ -80,7 +80,7 @@ def _insertAndReturnKey(table_name : str,
                        ) -> Key:
   return_key = list(key.__annotations__)
   stmt = _generateInsertStmt(table_name, table, return_key)
-  cursor.execute(stmt, table)
+  cursor.execute(stmt, table.args())
   result = cast(Key, cursor.fetchone())
   return result
 
@@ -94,11 +94,12 @@ def getMaybeId(table_name : str,
                cursor     : Any,
                table      : AnyIdTable,
               ) -> Optional[int]:
-  field_names = cast(Sequence[str], table.keys()) # type: ignore
+  field_names = cast(Sequence[str], table.keys())
   names_to_fields = OrderedDict({name: sql.Identifier(name) for name in field_names})
-  def is_none(key : str):
+  def is_none(key : str) -> bool:
     args = cast(Dict[str, Any], table)
-    return args[key] is None
+    return getattr(args, key) is None
+
   conditions = [sql.SQL(' = ').join([sql.Identifier(n), sql.Placeholder(n)]) for n in names_to_fields if not is_none(n)]
   conditions.extend([sql.SQL('').join([sql.Identifier(n), sql.SQL(" is null")]) for n in names_to_fields if is_none(n)])
 
@@ -108,7 +109,7 @@ def getMaybeId(table_name : str,
     sql.Identifier(table_name),
     sql.SQL(' and ').join(conditions),
   )
-  cursor.execute(stmt, table)
+  cursor.execute(stmt, table.args())
   result = cursor.fetchone()
   if result is not None:
     return result[table_id]

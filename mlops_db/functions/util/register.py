@@ -41,8 +41,8 @@ def getSignature(cursor : Any,
     s3_type, maybe_tagged_s3_subtype = s3_type_and_subtype
     if maybe_tagged_s3_subtype is not None:
       tagged_s3_subtype = maybe_tagged_s3_subtype
-      tag = tagged_s3_subtype["tag"]
-      s3_subtype = tagged_s3_subtype["value"]
+      tag = tagged_s3_subtype.tag
+      s3_subtype = tagged_s3_subtype.value
       if (tag == S3TypeDataFrame):
         s3_type_dataframe = cast(S3TypeDataFrame, s3_subtype)
         return s3_type, s3_type_dataframe
@@ -59,8 +59,8 @@ def getSignature(cursor : Any,
   s3_outputs = [unpackS3Type(getS3Type(cursor, s3_type_id)) for (_, s3_type_id) in output_types.values()]
 
   return FunctionSignature(
-           name = function["function_name"],
-           major = function["major"],
+           name = function.function_name,
+           major = function.major,
            local_inputs = [getLocalType(cursor, i) for i in input_types["local_type_ids"]],
            keyword_inputs = keyword_inputs,
            http_inputs = [getHTTPType(cursor, i) for i in input_types["http_type_ids"]],
@@ -131,8 +131,8 @@ def diffSignatures(cursor : Any,
 
     diff = list(dictdiffer.diff(candidate_signature, latest_signature))
     if len(diff) > 0:
-      name = function["function_name"]
-      major = function["major"]
+      name = function.function_name
+      major = function.major
       raise Exception(f"Cannot register function '{name}' with major {major}:\n Diff: {diff}")
   return True
 

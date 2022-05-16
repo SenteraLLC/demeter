@@ -1,4 +1,5 @@
 from typing import List, Optional, Tuple, Any, Dict, Callable, Set, Type
+
 from typing import cast
 
 from io import BytesIO
@@ -40,8 +41,8 @@ class DataSource(DataSourceBase):
 
     self.s3_connection = s3_connection
     self.cursor = cursor
-    self.keys = self.execution_summary["inputs"]["keys"] = keys
-    self.execution_summary["inputs"]["keyword"] = createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
+    self.keys = self.execution_summary.inputs.keys = keys
+    self.execution_summary.inputs.keyword = createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
 
     self.dataframes : Dict[str, pd.DataFrame] = {}
     self.geodataframes : Dict[str, gpd.GeoDataFrame] = {}
@@ -68,7 +69,7 @@ class DataSource(DataSourceBase):
             http_options : Dict[str, Any] = {}
            ) -> pd.DataFrame:
     raw_results = getHTTPRows(self.cursor, self.keys, self.execution_summary, type_name, param_fn, json_fn, response_fn, http_options)
-    results = []
+    results : List[Dict[str, Any]] = []
     for key, row in raw_results:
       results.append(dict(**key, **row))
 
@@ -83,8 +84,8 @@ class DataSource(DataSourceBase):
     raw_results, maybe_tagged_s3_subtype = getRawS3(self.cursor, self.s3_connection, self.keys, type_name, self.execution_summary)
     if maybe_tagged_s3_subtype is not None:
       tagged_s3_subtype = maybe_tagged_s3_subtype
-      tag = tagged_s3_subtype["tag"]
-      subtype = tagged_s3_subtype["value"]
+      tag = tagged_s3_subtype.tag
+      subtype = tagged_s3_subtype.value
       if tag == S3TypeDataFrame:
         dataframe_subtype = cast(S3TypeDataFrame, subtype)
         maybe_df, maybe_gdf = rawToDataFrame(raw_results, dataframe_subtype)
@@ -131,7 +132,7 @@ class DataSource(DataSourceBase):
 
 
   def get_geometry(self) -> gpd.GeoDataFrame:
-    geo_ids = [k["geom_id"] for k in self.keys]
+    geo_ids = [k.geom_id for k in self.keys]
     stmt = """
              select G.geom_id, G.geom, G.container_geom_id
              from geom G

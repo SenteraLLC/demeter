@@ -4,7 +4,7 @@ from typing import Dict, Any, TypedDict, List, Optional
 
 import pandas as pd
 
-from ..execution.types import ExecutionSummary, ExecutionArguments
+from ..execution.types import ExecutionSummary, ExecutionArguments, ExecutionOutputs
 from ..local.api import getMaybeLocalTypeId
 from ..local.types import LocalType
 from ..inputs.api import getS3TypeIdByName, getHTTPByName
@@ -38,7 +38,9 @@ class DataSourceBase(ABC):
                                           s3 = [],
                                           keys = [],
                                         ),
-                              outputs = {"s3": []},
+                               outputs = ExecutionOutputs(
+                                           s3 = [],
+                                         ),
                             )
 
   def _track_s3(self,

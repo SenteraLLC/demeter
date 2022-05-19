@@ -3,19 +3,7 @@ from typing import cast
 
 from dataclasses import dataclass
 
-# TODO: Need to replace this with a proper library
-#       This is a super sneaky hack to make dicts look like protocols
-class Import(Protocol):
-  def __getattr__(self, attr : str): ...
-
-class DictWrapper(dict):
-  def __getattr__(self, attr : str):
-    return self.get(attr)
-
-I = TypeVar('I', bound=Import)
-
-def WrapImport(i : I) -> I:
-  return cast(I, DictWrapper(cast(Any, i)))
+from ..lib.stdlib.imports import Import
 
 
 class Grower(Import):
@@ -151,19 +139,26 @@ class ReviewQuality(Import):
   LastUpdate     : str
   CreationUserId : str
 
+  # Details
+  IsExternalData: Optional[bool]
+  # This always exists with Plump && Thins
+  #  This almost always exists with GerminationCapacity
+  PostHarvestMethodData: Optional[str]
+  PostHarvestMethodDataDicId: Optional[int]
+
+  # Germination
   GerminationCapacityMethodOther   : Optional[str]
-  GerminationCapaticityMethodDicId : Optional[int]
   GerminationCapacityMethod        : Optional[str]
   GerminationCapacity              : Optional[int]
 
-  ThinsSieveDictId : Optional[int]
+  # Thin Sieve
   ThinsSieve       : Optional[str]
   ThinsSieveOther  : Optional[int]
   Thins            : Optional[float]
 
+  # Plump
   Plump            : Optional[float]
   PlumpSieve       : Optional[str]
-  PlumpSieveDicId  : Optional[int]
 
   # Toxin protein, specific toxin
   DON: Optional[float]
@@ -174,17 +169,12 @@ class ReviewQuality(Import):
 
   TestWeight: Optional[int]
   TestWeightMeasureUnitId: Optional[int]
-  IsExternalData: Optional[bool]
 
   Sprout: Optional[int]
   SproutMethod: Optional[str]
   SproutMethodOther: Optional[str]
+  SproutSecondsMeasureUnitId : Optional[int]
   SproutMethodDicId : Optional[int]
-
-  # This always exists with Plump && Thins
-  #  This almost always exists with GerminationCapacity
-  PostHarvestMethodData: Optional[str]
-  PostHarvestMethodDataDicId: Optional[int]
 
 
 #Import = Union[Grower, Region, Country, GrowerField, MeasureUnit, IrrigationApplied, MeasureUnitConversion, FieldIrrigation, Review, ReviewHarvest, ReviewQuality]

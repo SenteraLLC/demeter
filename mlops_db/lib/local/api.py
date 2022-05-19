@@ -10,6 +10,7 @@ from .types import  Planting, Harvest, CropProgress, PlantingKey, HarvestKey, Cr
 getMaybeLocalValue   : GetId[LocalValue] = getMaybeIdFunction(LocalValue)
 getMaybeUnitTypeId   : GetId[UnitType]   = getMaybeIdFunction(UnitType)
 getMaybeLocalTypeId  : GetId[LocalType]  = getMaybeIdFunction(LocalType)
+getMaybeLocalValueId  : GetId[LocalValue]  = getMaybeIdFunction(LocalValue)
 getMaybeCropTypeId   : GetId[CropType]   = getMaybeIdFunction(CropType)
 getMaybeCropStageId  : GetId[CropStage]  = getMaybeIdFunction(CropStage)
 getMaybeReportTypeId : GetId[ReportType] = getMaybeIdFunction(ReportType)
@@ -31,6 +32,7 @@ insertCropProgress : ReturnKey[CropProgress, CropProgressKey] = getInsertReturnK
 
 insertOrGetUnitType = partial(insertOrGetType, getMaybeUnitTypeId, insertUnitType)
 insertOrGetLocalType = partial(insertOrGetType, getMaybeLocalTypeId, insertLocalType)
+insertOrGetLocalValue = partial(insertOrGetType, getMaybeLocalValueId, insertLocalValue)
 insertOrGetCropType = partial(insertOrGetType, getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = partial(insertOrGetType, getMaybeCropStageId, insertCropStage)
 insertOrGetLocalGroup = partial(insertOrGetType, getMaybeLocalGroupId, insertLocalGroup)

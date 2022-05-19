@@ -1,4 +1,4 @@
-from typing import Optional, Union, Dict, Literal, List, Tuple, Generator
+from typing import Optional, Union, Dict, Literal, List, Tuple, Generator, TypedDict
 from datetime import date
 
 from ..util.types_protocols import Table, Updateable, Detailed
@@ -6,8 +6,7 @@ from ..util.types_protocols import Table, Updateable, Detailed
 from dataclasses import dataclass
 from abc import ABC
 
-@dataclass
-class CRS():
+class CRS(TypedDict):
   type       : Literal["name"]
   properties : Dict[Literal["name"], str]
 
@@ -15,8 +14,8 @@ TwoDimensionalPolygon = List[List[Tuple[float, float]]]
 # TODO: Add other coordinate types
 Coordinates = Union[TwoDimensionalPolygon]
 
-@dataclass
-class Geometry(Table):
+
+class Geometry(TypedDict):
   type        : str
   coordinates : Coordinates
   crs         : CRS

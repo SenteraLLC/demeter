@@ -31,6 +31,7 @@ insertOrGetGeoSpatialKey = partial(insertOrGetType, getMaybeGeoSpatialKeyId, ins
 insertOrGetTemporalKey = partial(insertOrGetType, getMaybeTemporalKeyId, insertTemporalKey)
 insertOrGetOwner = partial(insertOrGetType, getMaybeOwnerId, insertOwner)
 insertOrGetGrower = partial(insertOrGetType, getMaybeGrowerId, insertGrower)
+insertOrGetField = partial(insertOrGetType, getMaybeFieldId, insertField)
 
 
 def makeInsertable(geom : Geom) -> InsertableGeom:

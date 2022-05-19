@@ -1,12 +1,8 @@
-from typing import Optional, Dict, Any, Union
-
+from typing import Optional, Dict, Any, Union, Set, Iterator, Tuple
 
 from datetime import datetime
 
 from dataclasses import dataclass
-
-from typing import Set, Iterator, Tuple
-
 
 class Table():
   def keys(self) -> Set[str]:
@@ -19,8 +15,12 @@ class Table():
   def args(self) -> Dict[str, Any]:
     return dict(self.items())
 
-  #def __getitem__(self, k : str) -> Any:
-  #  return getattr(self, k)
+  # TODO: Allows bad attributes to get None back
+  def __getitem__(self, k : str) -> Any:
+    return getattr(self, k)
+
+  def __iter__(self):
+    raise TypeError
 
 
 @dataclass

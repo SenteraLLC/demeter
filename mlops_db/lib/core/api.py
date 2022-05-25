@@ -6,7 +6,7 @@ import json
 from ..util.api_protocols import GetId, GetTable, ReturnId
 from ..util.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, insertOrGetType
 from ..util.type_lookups import AnyIdTable, AnyIdTable, AnyKeyTable
-from ..util.types_protocols import Table
+from ..util.types_protocols import Table, TableEncoder
 
 from .types import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, InsertableGeom
 
@@ -36,7 +36,7 @@ insertOrGetField = partial(insertOrGetType, getMaybeFieldId, insertField)
 
 def makeInsertable(geom : Geom) -> InsertableGeom:
   return InsertableGeom(
-           geom = json.dumps(geom.geom),
+           geom = json.dumps(geom.geom, cls=TableEncoder),
            container_geom_id = geom.container_geom_id,
          )
 

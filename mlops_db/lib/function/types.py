@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple, Union, Protocol
+from typing import Optional, Sequence, Tuple, Union, Protocol
 
 from enum import Enum
 from datetime import datetime
@@ -9,12 +9,12 @@ from ..local.types import LocalType
 
 from dataclasses import dataclass
 
-@dataclass
+@dataclass(frozen=True)
 class FunctionType(TypeTable):
   function_type_name    : str
   function_subtype_name : Optional[str]
 
-@dataclass
+@dataclass(frozen=True)
 class Function(Detailed):
   function_name    : str
   major            : int
@@ -22,47 +22,47 @@ class Function(Detailed):
   created          : datetime
 
 
-@dataclass
+@dataclass(frozen=True)
 class FunctionId(Table):
   function_id : int
 
-@dataclass
+@dataclass(frozen=True)
 class Parameter(FunctionId):
   pass
 
-@dataclass
+@dataclass(frozen=True)
 class LocalParameter(Parameter):
   local_type_id       : int
 
-@dataclass
+@dataclass(frozen=True)
 class HTTPParameter(Parameter, Detailed):
   http_type_id        : int
 
-@dataclass
+@dataclass(frozen=True)
 class S3InputParameter(Parameter, Detailed):
   s3_type_id              : int
 
-@dataclass
+@dataclass(frozen=True)
 class S3OutputParameter(Parameter, Detailed):
   s3_output_parameter_name : str
   s3_type_id               : int
 
-@dataclass
+@dataclass(frozen=True)
 class KeywordParameter(Keyword, Parameter):
   pass
 
 
 S3TypeSignature = Tuple[S3Type, Optional[S3TypeDataFrame]]
 
-@dataclass
+@dataclass(frozen=True)
 class FunctionSignature(object):
   name           : str
   major          : int
-  local_inputs   : List[LocalType]
-  keyword_inputs : List[Keyword]
-  s3_inputs      : List[S3TypeSignature]
-  http_inputs    : List[HTTPType]
-  s3_outputs     : List[S3TypeSignature]
+  local_inputs   : Sequence[LocalType]
+  keyword_inputs : Sequence[Keyword]
+  s3_inputs      : Sequence[S3TypeSignature]
+  http_inputs    : Sequence[HTTPType]
+  s3_outputs     : Sequence[S3TypeSignature]
 
 
 AnyKeyTable = Union[LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter, KeywordParameter]

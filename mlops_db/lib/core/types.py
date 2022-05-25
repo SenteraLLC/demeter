@@ -1,46 +1,58 @@
-from typing import Optional, Union, Dict, Literal, List, Tuple, Generator, TypedDict
+from typing import Optional, Union, Mapping, Literal, Sequence, Tuple, Generator
 from datetime import date
 
 from ..util.types_protocols import Table, Updateable, Detailed
+from ..util.details import Details
 
 from dataclasses import dataclass
 from abc import ABC
 
-class CRS(TypedDict):
+class Properties(Details):
+  def __init__(self, properties : Mapping[Literal["name"], str]):
+    super().__init__(properties) # type: ignore
+
+
+@dataclass(frozen=True)
+class CRS(Table):
   type       : Literal["name"]
-  properties : Dict[Literal["name"], str]
-
-TwoDimensionalPolygon = List[List[Tuple[float, float]]]
-# TODO: Add other coordinate types
-Coordinates = Union[TwoDimensionalPolygon]
+  properties : Properties
 
 
-class Geometry(TypedDict):
+Point = Tuple[float, float]
+Line = Tuple[Point, ...]
+# Postgis only wants MultiPolygon, not Polygon
+Polygon = Line
+MultiPolygon = Tuple[Polygon, ...]
+Coordinates = Union[Point, Line, MultiPolygon]
+
+
+@dataclass(frozen=True)
+class Geometry(Table):
   type        : str
   coordinates : Coordinates
   crs         : CRS
 
-@dataclass
+@dataclass(frozen=True)
 class Geom(Updateable):
   container_geom_id : Optional[int]
   geom              : Geometry
 
-@dataclass
+@dataclass(frozen=True)
 class InsertableGeom(Table):
   container_geom_id : Optional[int]
   geom              : str
 
-@dataclass
+@dataclass(frozen=True)
 class Owner(Table):
   owner : str
 
-@dataclass
+@dataclass(frozen=True)
 class Grower(Detailed):
   owner_id    : int
   farm        : str
   external_id : Optional[str]
 
-@dataclass
+@dataclass(frozen=True)
 class Field(Table):
   owner_id    : int
   geom_id     : int
@@ -49,19 +61,19 @@ class Field(Table):
   sentera_id  : Optional[str]
   external_id : Optional[str]
 
-@dataclass
+@dataclass(frozen=True)
 class GeoSpatialKey(Table):
   geom_id  : int
   field_id : Optional[int]
 
-@dataclass
+@dataclass(frozen=True)
 class TemporalKey(Table):
   start_date : date
   end_date   : date
 
 from typing import Protocol
 
-@dataclass
+@dataclass(frozen=True)
 class Key(GeoSpatialKey, TemporalKey):
   geospatial_key_id : int
   temporal_key_id   : int

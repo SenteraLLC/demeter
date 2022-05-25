@@ -1,12 +1,13 @@
-from typing import TypedDict, Optional, Union, Dict, Literal, List, Tuple, Generator
+from typing import TypedDict, Optional, Union, Dict, Literal, Tuple, Generator
 from datetime import date
 
 from ..util.types_protocols import Detailed, TypeTable, TableKey
 
+
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(frozen=True)
 class LocalValue(Detailed):
   geom_id        : int
   field_id       : Optional[int]
@@ -17,33 +18,33 @@ class LocalValue(Detailed):
 
 AnyDataTable = Union[LocalValue]
 
-@dataclass
+@dataclass(frozen=True)
 class LocalType(TypeTable):
   type_name      : str
   type_category  : Optional[str]
 
-@dataclass
+@dataclass(frozen=True)
 class UnitType(TypeTable):
   unit          : str
   local_type_id : int
 
-@dataclass
+@dataclass(frozen=True)
 class ReportType(TypeTable):
   report : str
 
-@dataclass
+@dataclass(frozen=True)
 class LocalGroup(TypeTable):
   group_name     : str
   group_category : Optional[str]
 
-@dataclass
+@dataclass(frozen=True)
 class CropType(TypeTable, Detailed):
   species     : str
   cultivar    : Optional[str]
   parent_id_1 : Optional[int]
   parent_id_2 : Optional[int]
 
-@dataclass
+@dataclass(frozen=True)
 class CropStage(TypeTable):
   crop_stage : str
 
@@ -55,27 +56,27 @@ class PlantHarvestKey(TableKey):
   crop_type_id  : int
   geom_id       : int
 
-@dataclass
+@dataclass(frozen=True)
 class PlantingKey(PlantHarvestKey):
   pass
 
-@dataclass
+@dataclass(frozen=True)
 class HarvestKey(PlantHarvestKey):
   pass
 
-@dataclass
+@dataclass(frozen=True)
 class PlantHarvest(Detailed):
   completed : Optional[date]
 
-@dataclass
+@dataclass(frozen=True)
 class Planting(PlantingKey, PlantHarvest):
   pass
 
-@dataclass
+@dataclass(frozen=True)
 class Harvest(HarvestKey, PlantHarvest):
   pass
 
-@dataclass
+@dataclass(frozen=True)
 class CropProgressKey(TableKey):
   field_id         : int
   crop_type_id     : int
@@ -83,7 +84,7 @@ class CropProgressKey(TableKey):
   geom_id          : Optional[int]
   crop_stage_id    : int
 
-@dataclass
+@dataclass(frozen=True)
 class CropProgress(CropProgressKey):
   day             : Optional[date]
 

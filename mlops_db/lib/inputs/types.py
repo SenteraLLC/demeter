@@ -1,4 +1,4 @@
-from typing import Union, Any, Optional, Type, List
+from typing import Union, Any, Optional, Type, Sequence
 
 from enum import Enum
 
@@ -20,12 +20,12 @@ class RequestBodySchema(object):
     jsonschema.Draft7Validator.check_schema(schema)
     self.schema = schema
 
-@dataclass
+@dataclass(frozen=True)
 class HTTPType(TypeTable):
   type_name           : str
   verb                : HTTPVerb
   uri                 : str
-  uri_parameters      : Optional[List[str]]
+  uri_parameters      : Optional[Sequence[str]]
   request_body_schema : Optional[RequestBodySchema]
 
 
@@ -35,24 +35,24 @@ class KeywordType(Enum):
   FLOAT   = 3
   JSON    = 4
 
-@dataclass
+@dataclass(frozen=True)
 class Keyword(object):
   keyword_name : str
   keyword_type : KeywordType
 
 
-@dataclass
+@dataclass(frozen=True)
 class S3Type(TypeTable):
   type_name : str
 
-@dataclass
+@dataclass(frozen=True)
 class S3TypeDataFrame(Table):
   driver       : str
   has_geometry : bool
 
 S3SubType = Union[S3TypeDataFrame]
 
-@dataclass
+@dataclass(frozen=True)
 class TaggedS3SubType(object):
   tag   : Type[S3SubType]
   value : S3SubType
@@ -62,18 +62,18 @@ s3_subtype_table_lookup = {
 }
 
 
-@dataclass
+@dataclass(frozen=True)
 class S3Output(Table):
   function_id : int
   s3_type_id  : int
 
-@dataclass
+@dataclass(frozen=True)
 class S3Object(Table):
   key         : str
   bucket_name : str
   s3_type_id  : int
 
-@dataclass
+@dataclass(frozen=True)
 class S3ObjectKey(Table):
   s3_object_id      : int
   geospatial_key_id : int

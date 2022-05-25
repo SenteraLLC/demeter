@@ -1,9 +1,12 @@
-from typing import Optional, Union, Type, Any, Sequence, Iterator, Mapping, Dict, Callable, TextIO, List
+from typing import Optional, Union, Type, Any, Sequence, Iterator, Mapping, Dict, Callable, TextIO, List, Awaitable
 from typing import cast
 
 import psycopg2
 
+import inspect
 import sys
+
+from collections import OrderedDict
 
 # TODO: json_stream
 
@@ -15,11 +18,12 @@ from ..lib.local import api as local_api
 from ..lib.stdlib.imports import I, WrapImport
 
 from ..lib.stdlib.next_fn import NextFn, TypeToIterator
-from ..lib.stdlib.write_fn import WriteFn
+from ..lib.stdlib.write_fn import WriteFn, Task, TypeToDeferred
 from ..lib.stdlib.find_fn import FindFn
-from ..lib.stdlib.import_plan import FourArgs, ImportPlan
+from ..lib.stdlib.get_fn import GetFn, TypeToTaskToDeferred
+from ..lib.stdlib.import_plan import FiveArgs, ImportPlan
 # TODO: TO REMOVE
-from ..lib.stdlib.future import UnsetFutureException, Deferred, Future
+from ..lib.stdlib.future import UnsetFutureException, T
 from ..lib.stdlib.exceptions import NotNullViolationException, BadGeometryException
 
 from .imports import *
@@ -82,14 +86,10 @@ def getTypeIterator(typ : Type[Import]) -> Iterator[Import]:
   return it
 
 
-
-
-psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
-
 from ..lib.util.api_protocols import ReturnId, ReturnKey
 
 # TODO: Memoize these?
-TABLE_TO_INSERT_FN : Dict[Type, Union[ReturnId, ReturnKey]] = {
+TABLE_TO_INSERT_FN : Mapping[Type, Union[ReturnId, ReturnKey]] = {
   demeter_types.Grower : demeter_api.insertOrGetGrower,
   demeter_types.Field : demeter_api.insertOrGetField,
   demeter_types.Geom : demeter_api.insertOrGetGeom,
@@ -98,12 +98,18 @@ TABLE_TO_INSERT_FN : Dict[Type, Union[ReturnId, ReturnKey]] = {
   local_types.LocalValue : local_api.insertOrGetLocalValue,
   local_types.LocalValue : local_api.insertOrGetLocalValue,
 }
+#reveal_type(TABLE_TO_INSERT_FN[demeter_types.Grower])
 
 
 from ..lib.util.types_protocols import Table, AnyKey
 
-if __name__ == '__main__':
+import asyncio
 
+
+
+
+async def main() -> None:
+  print("Start main.")
   # TODO: argparse
   options = "-c search_path=test_mlops,public"
   connection = psycopg2.connect(host="localhost", dbname="postgres", options=options)
@@ -116,67 +122,129 @@ if __name__ == '__main__':
 
   migrate_args = MigrateArgs(owner_id = owner_id, cursor = cursor)
 
+  # TODO: Support indexes?
   plan = ImportPlan(
     # TODO: Joins?
     get_type_iterator = getTypeIterator,
     args = migrate_args,
     steps = [
+      # TODO: Do we want growers without fields?
       #makeGrowers,
-      #makeGeomAndField,
-      makeIrrigation,
-      makeReviewHarvest,
-      makeReviewQuality,
+      # TODO: Do we want fields without any data?
+      makeGeomAndField,
+      #makeIrrigation,
+      #makeReviewHarvest,
+      #makeReviewQuality,
     ]
   )
+  print("Plan setup.")
 
   primary_type_to_iterator = getTypeToIterators()
 
-  type_to_deferred : Dict[Type, List[Deferred]] = {k : [] for k in TABLE_TO_INSERT_FN}
+  find_fn = FindFn(getTypeIterator)
   for fn in plan.steps:
-    print("\n\n\nFN: ",fn)
-    fn = cast(FourArgs, fn)
+    print("START STEP: ",fn)
+    type_to_results : Dict[Type, Dict[Table, AnyKey]] = {}
+    type_to_task_to_deferred : TypeToTaskToDeferred = OrderedDict()
+
+    # TODO: User shouldn't get this iterator
     next_fn = NextFn(primary_type_to_iterator)
-    find_fn = FindFn(getTypeIterator)
-    write_fn = WriteFn()
 
+    count = 0
     #while True:
-    for i in range(0, 1000):
+    for i in range(0, 10):
+      fn = cast(FiveArgs, fn)
+      write_fn = WriteFn()
+      get_fn = GetFn(type_to_results, type_to_task_to_deferred, write_fn)
+
       try:
-        fn(next_fn, find_fn, write_fn, migrate_args)
+        count += 1
+        print("COUNT IS: ",count)
+        fn(next_fn, find_fn, write_fn, get_fn, migrate_args)
+        sys.stdout.flush()
       except StopIteration:
-        sys.stderr.write("Stopping iteration\n")
+        print("Done with step: ",fn)
+        print("   Took: ",count)
+        break
       except NotNullViolationException as e:
-        #sys.stderr.write(f"Not null violation: {e}\n")
-        sys.stderr.write(f"Null\n")
+        print(f"Outputs Null\n")
       except BadGeometryException as e:
-        #sys.stderr.write(f"Bad geo: {e}\n")
-        sys.stderr.write(f"Geo\n")
+        print(f"Outputs Bad Geo\n")
       else:
-        sys.stderr.write(f"Success\n")
+        #print(f"Outputs Success\n")
+        pass
 
+    # Can at least start writing outputs
     for typ, outputs in write_fn.type_to_outputs.items():
-      print("\nOutput: ",typ)
-      insert_fn = TABLE_TO_INSERT_FN[typ]
-      outputs.iterables.append(outputs.lone)
-      # TODO: Mass inserts
-      for it in outputs.iterables:
-        for x in it:
-          result = insert_fn(cursor, x)
-          if isinstance(x, Future):
-            x.set(result)
-          #print("     Result: ",result)
+      try:
+        type_to_results[typ]
+      except KeyError:
+        type_to_results[typ] = {}
 
-    for typ, deferred in write_fn.type_to_deferred.items():
-      print("Deferred: ",typ)
       insert_fn = TABLE_TO_INSERT_FN[typ]
-      deferred.iterables.append(deferred.lone)
-      deferred_further = type_to_deferred[typ]
-      for dit in deferred.iterables:
-        for d in dit:
-          try:
-            output = d()
-          except UnsetFutureException:
-            deferred_further.append(d)
+      # TODO: Mass inserts
+      for output_group in outputs:
+        for o in output_group:
+          result = insert_fn(cursor, o)
+          type_to_results[typ][o] = result
+          print("REGULAR RESULT:\n",o,"\n",result)
+
+    def getDeferred(type_to_deferred : TypeToDeferred) -> TypeToDeferred:
+      out : TypeToDeferred = {}
+      for typ, deferred_groups in type_to_deferred.items():
+        try:
+          type_to_results[typ]
+        except KeyError:
+          type_to_results[typ] = {}
+
+        try:
+          type_to_task_to_deferred[typ]
+        except KeyError:
+          type_to_task_to_deferred[typ] = OrderedDict()
+
+        insert_fn = TABLE_TO_INSERT_FN[typ]
+        still_deferred : List[Task] = []
+        for deferred_group in deferred_groups:
+          for task in deferred_group:
+            #print("CHECKING TASK: ",task)
+            if task.done():
+              #print("  DONE.")
+              try:
+                o = task.result()
+                result = insert_fn(cursor, o)
+                print("DEFERRED RESULT: ",typ,"\n",result,"\n",task)
+                type_to_results[typ][o] = result
+                type_to_task_to_deferred[typ][task] = o
+                #print("ALL TTR: ",type_to_task_to_deferred)
+              except StopIteration:
+                print("DEFF Stopping iteration\n")
+              except NotNullViolationException as e:
+                #sys.stderr.write(f"Not null violation: {e}\n")
+                print(f"DEFF Null\n ",e)
+              except BadGeometryException as e:
+                #sys.stderr.write(f"Bad geo: {e}\n")
+                print(f"DEFF Geo\n")
+              else:
+                print(f"Success\n")
+              #print("DEFERRED RESULT: ",o)
+            else:
+              #print("KEEP GOING.")
+              still_deferred.append(task)
+
+        if len(still_deferred):
+          out[typ] = [still_deferred]
+        else:
+          print("Completed: ",typ)
+          s = set(type_to_deferred.keys()) - {typ}
+          print("   Remaining: ",s)
+      return out
+
+    type_to_still_deferred : TypeToDeferred = write_fn.getLatest()
+    while len(type_to_still_deferred):
+      type_to_still_deferred = getDeferred(type_to_still_deferred)
+      await asyncio.sleep(1)
+      type_to_still_deferred = write_fn.getLatest(type_to_still_deferred)
+
 
   sys.exit(1)
 
@@ -184,4 +252,7 @@ if __name__ == '__main__':
   # TODO: COMMIT
   # TODO: COMMIT
 
+
+if __name__ == '__main__':
+  asyncio.run(main())
 

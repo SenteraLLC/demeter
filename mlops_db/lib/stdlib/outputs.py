@@ -1,22 +1,8 @@
-from typing import Union, Generic, Iterable, Any
+from typing import Union, Iterable, Awaitable
 
-from .future import Deferred, T, Future
+from .future import T
 
-# TODO: Remove
-from typing import TypeVar
-
-LoneArg = Union[T, Deferred[T]]
-IterableArg = Union[Iterable[T], Iterable[Deferred[T]]]
-Arg = Union[LoneArg[T], IterableArg[T], Future[T,Any]]
-
-# TODO: TypeVar
-A = TypeVar('A', bound=Arg)
-
-from dataclasses import dataclass
-
-class Outputs(Generic[A]):
-  def __init__(self):
-    self.lone : List[A] = []
-    self.iterables : List[Iterable[A]] = []
-
+LoneArg = Union[T, Awaitable[T]]
+IterableArg = Union[Iterable[T], Iterable[Awaitable[T]]]
+Arg = Union[LoneArg[T], IterableArg[T]]
 

@@ -5,82 +5,22 @@ class UnsetFutureException(Exception):
   pass
 
 
-# TODO: Should be a generic container
-#class Futureable():
-#  def __init__(self):
-#    self.maybe_future : Optional['Future'] = None
-#    self.is_active = False
-#
-#  def hasFuture(self) -> bool:
-#    return self.is_active
-#
-#  def getFuture(self) -> 'Future':
-#    if not self.is_active:
-#      raise Exception
-#    return cast('Future', self.maybe_future)
-#
-#  def getMaybeFuture(self) -> Optional['Future']:
-#    return self.maybe_future
-#
-#  def setFuture(self, future : 'Future'):
-#    self.maybe_future = future
-#    self.is_active = True
+from ..util.types_protocols import Table
 
 
-#T = TypeVar('T', bound=Futureable)
-T = TypeVar('T')
-K = TypeVar('K')  # TODO: Union[TableKey, int]
+from typing import Awaitable, Generator, AsyncIterator
 
+T = TypeVar('T', bound=Table)
+R = TypeVar('R')
+from .exceptions import NotNullViolationException
 
-# TODO: Can probably be turned into Awaitable type
-class Deferred(Generic[T]):
-  def __init__(self, fn : Callable[[], T]):
-    self.fn = fn
-    self.maybe_result : Optional[T] = None
+from functools import wraps
 
-  def __call__(self) -> T:
-    r = self.maybe_result
-    if r is not None:
-      return r
-    r = self.fn()
-    self.maybe_result = r
-    return r
+InsertFn = Callable[[Any, T], R]
 
-  def toFuture(self):
-    pass
-
-
-class Future(Generic[K, T], Deferred[K]):
-  def __init__(self, v : k):
-    # TODO: Hack
-    super().__init__(lambda : None) # type: ignore
-    self.key = k
-    #self.value.setFuture(self)
-    self.was_set = False
-
-  def set(self, result : T) -> None:
-    self.maybe_result = result
-    self.was_set = True
-
-  def get(self) -> Optional[T]:
-    if not self.was_set:
-      raise UnsetFutureException()
-    result = self.maybe_result
-    if isinstance(result, Deferred):
-      return result()
-    return result
-
-  def __call__(self) -> T:
-    if self.maybe_result is None:
-      raise UnsetFutureException()
-    return cast(K, self.get())
-
-
-class FutureRequired(Future[T, K]):
-  def get(self) -> K:
-    if self.maybe_result is None:
-      raise UnsetFutureException
-    return cast(K, super().get())
-
-
+def FutureInsert(t : T) -> Callable[[Any, InsertFn[T, R]], Awaitable[R] ]:
+  #@wraps(future_result)
+  async def doInsert(cursor : Any, insert_fn : InsertFn[T, R]) -> R:
+    return insert_fn(cursor, t)
+  return doInsert
 

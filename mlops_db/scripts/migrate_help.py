@@ -7,7 +7,9 @@ from ..lib.stdlib.exceptions import InvalidRowException, BadGeometryException, N
 from ..lib.stdlib.next_fn import NextFn
 from ..lib.stdlib.find_fn import FindFn
 from ..lib.stdlib.write_fn import WriteFn
-from ..lib.stdlib.future import Future, FutureRequired, Deferred
+from ..lib.stdlib.get_fn import GetFn
+from ..lib.util.details import Details
+from ..lib.util.types_protocols import TableEncoder
 
 from .imports import *
 
@@ -35,27 +37,32 @@ def getFarmName(grower : Grower) -> str:
   farm_city = grower.FarmCity or ""
   return "-testing-".join([farm_name, farm_city])
 
+
 def getGeom(grower_field : GrowerField) -> Optional[demeter_types.Geom]:
   location_shape : str = grower_field.LocationShape
   shape = "Polygon"
+  out : Optional[demeter_types.Coordinates] = None
   if location_shape is None:
     if ((latitude := grower_field.Latitude) and (longitude := grower_field.Longitude)):
       shape = "Point"
-      location_shape = f'[ {{ "Latitude": {latitude}, "Longitude": {longitude} }} ]'
+      p = demeter_types.Point = (latitude, longitude)
+      out = p
     else:
-      print("BAD: ",grower_field)
       return None
-
-
-  parsed_location = json.loads(location_shape)
-  postgis_format  = [(p["Latitude"], p["Longitude"]) for p in parsed_location]
+  else:
+    parsed_location = json.loads(location_shape)
+    def getCoord(p : Dict[str, Any]) -> Tuple[float, float]:
+      return (p["Latitude"], p["Longitude"])
+    polygon : demeter_types.Polygon = tuple(getCoord(p) for p in parsed_location)
+    multipolygon : demeter_types.MultiPolygon = (polygon, )
+    out = multipolygon
 
   g = demeter_types.Geometry(
         type = shape,
-        coordinates = [postgis_format],
+        coordinates = out,
         crs = demeter_types.CRS(
                 type = "name",
-                properties = {"name": "urn:ogc:def:crs:EPSG::4326"}
+                properties = demeter_types.Properties({"name": "urn:ogc:def:crs:EPSG::4326"})
               )
       )
   geom = demeter_types.Geom(
@@ -80,19 +87,20 @@ def makeGrower(input_grower : Grower,
         owner_id    = owner_id,
         external_id = str(input_grower.GrowerId),
         farm        = getFarmName(input_grower),
-        details     = {
+        details     = Details({
           "country_name" : maybe_country.Name if maybe_country else None,
           "region_name"  : maybe_region.Name if maybe_region else None,
-        },
+        }),
         last_updated = NOW,
       )
   return g
 
 
-def makeGrowers(next_fn : NextFn,
-                find_fn : FindFn,
+def makeGrowers(next_fn  : NextFn,
+                find_fn  : FindFn,
                 write_fn : WriteFn,
-                args    : MigrateArgs,
+                get_fn   : GetFn,
+                args     : MigrateArgs,
                ):
   input_grower = next_fn(Grower)
   owner_id = args["owner_id"]
@@ -111,14 +119,6 @@ def getMaxUnit(measure_unit : MeasureUnit) -> str:
   unit = max(unit_counts, key=unit_counts.get) # type: ignore
   return unit
 
-
-def getUnitType(measure_unit : MeasureUnit, local_type_id : int) -> local_types.UnitType:
-  unit = getMaxUnit(measure_unit)
-  u = local_types.UnitType(
-        unit = unit,
-        local_type_id = local_type_id,
-      )
-  return u
 
 
 def getFieldId(cursor : Any, grower_field : GrowerField, owner_id : int) -> int:
@@ -153,9 +153,9 @@ def getField(next_fn  : NextFn,
 
 
 def findGrower(find_fn : FindFn,
-              grower_field : GrowerField,
-              owner_id : int,
-             ) -> demeter_types.Grower:
+               grower_field : GrowerField,
+               owner_id : int,
+              ) -> demeter_types.Grower:
   match_grower = lambda g : g.GrowerId == grower_field.GrowerId
   maybe_input_grower = find_fn(Grower, match_grower)
   input_grower = NotNull(maybe_input_grower)
@@ -166,58 +166,82 @@ def findGrower(find_fn : FindFn,
 A = TypeVar('A')
 B = TypeVar('B')
 
+from typing import Awaitable
 
-GGF = Tuple[Future[demeter_types.Geom, int],
-            Future[demeter_types.Grower, int],
-            Deferred[demeter_types.Field],
+GGF = Tuple[demeter_types.Geom,
+            demeter_types.Grower,
+            Awaitable[demeter_types.Field],
            ]
 def getGeomGrowerField(find_fn : FindFn,
                        next_fn : NextFn,
+                       get_fn   : GetFn,
                        owner_id : int,
                        grower_field : GrowerField,
                       ) -> GGF:
-  g = getGeom(grower_field)
-  if g is None:
+  maybe_geom = getGeom(grower_field)
+  if maybe_geom is None:
     raise BadGeometryException
-
-  future_geom = FutureRequired[demeter_types.Geom, int](g)
+  geom = maybe_geom
 
   grower = findGrower(find_fn, grower_field, owner_id)
-  future_grower = FutureRequired[demeter_types.Grower, int](grower)
 
-  df = Deferred(
-        lambda : getField(next_fn,
-                          owner_id,
-                          geom_id   = future_geom.get(),
-                          grower_id = future_grower.get()
-                         )
-        )
-  return (future_geom, future_grower, df)
+  async def deferField() -> demeter_types.Field:
+     geom_id : int = NotNull(await get_fn(demeter_types.Geom, geom))
+     grower_id : int = NotNull(await get_fn(demeter_types.Grower, grower))
+     return getField(next_fn,
+                     owner_id,
+                     geom_id   = geom_id,
+                     grower_id = grower_id,
+                    )
+
+  return (geom, grower, deferField())
 
 
 def makeGeomAndField(next_fn  : NextFn,
                      find_fn  : FindFn,
                      write_fn : WriteFn,
+                     get_fn   : GetFn,
                      args     : MigrateArgs,
                     ):
   grower_field = next_fn(GrowerField)
 
-  ggf = getGeomGrowerField(find_fn, next_fn, args["owner_id"], grower_field)
-  future_geom, future_grower, df = ggf
+  ggf = getGeomGrowerField(find_fn, next_fn, get_fn, args["owner_id"], grower_field)
+  geom, grower, deferred_field = ggf
 
-  geom = future_geom.key
-  grower = future_grower.key
-
-  write_fn(demeter_types.Geom, future_geom)
-  write_fn(demeter_types.Field, df)
+  write_fn(demeter_types.Geom, geom)
+  write_fn(demeter_types.Field, deferred_field)
   write_fn(demeter_types.Grower, grower)
 
+
+async def deferUnitType(get_fn     : GetFn,
+                        unit       : str,
+                        local_type : local_types.LocalType,
+                       ) -> local_types.UnitType:
+  local_type_id : int = NotNull(await get_fn(local_types.LocalType, local_type))
+  u = local_types.UnitType(
+        unit = unit,
+        local_type_id = local_type_id,
+      )
+  return u
+
+
+async def deferMeasureUnitType(get_fn     : GetFn,
+                               measure_unit : MeasureUnit,
+                               local_type : local_types.LocalType,
+                              ) -> local_types.UnitType:
+  unit = getMaxUnit(measure_unit)
+  return await deferUnitType(get_fn, unit, local_type)
+
+import time
 
 def makeIrrigation(next_fn  : NextFn,
                    find_fn  : FindFn,
                    write_fn : WriteFn,
+                   get_fn   : GetFn,
                    args     : MigrateArgs,
                   ):
+  last = time.time()
+
   irrigation_applied = next_fn(IrrigationApplied)
   i = irrigation_applied
 
@@ -230,59 +254,54 @@ def makeIrrigation(next_fn  : NextFn,
   maybe_measure_unit = find_fn(MeasureUnit, measure_match)
   measure_unit = NotNull(maybe_measure_unit)
 
-  future_local_type_id = FutureRequired[local_types.LocalType, int](irrigation_local_type)
-
-  unit_type = Deferred(
-    lambda : getUnitType(measure_unit, future_local_type_id.get())
-  )
-
   k = "IrrigationAppliedId"
   review_match = lambda r : r[k] == i.IrrigationAppliedId
+  # TODO: 2nd Costly
   maybe_review = find_fn(Review, review_match)
   review = NotNull(maybe_review)
 
   k = "GrowerFieldId"
   grower_field_match = lambda gf : gf[k] == review.GrowerFieldId
+  # TODO: 3rd Costly
   maybe_grower_field = find_fn(GrowerField, grower_field_match)
   grower_field = NotNull(maybe_grower_field)
 
   owner_id = args["owner_id"]
-  ggf = getGeomGrowerField(find_fn, next_fn, owner_id, grower_field)
-  future_geom_id, future_grower_id, df = ggf
+  ggf = getGeomGrowerField(find_fn, next_fn, get_fn, owner_id, grower_field)
+  geom, grower, deferred_field = ggf
 
-  future_geom_id = FutureRequired[demeter_types.Geom, int](future_geom_id.key)
-
-  future_unit_type_id = FutureRequired[Deferred[local_types.UnitType], int](unit_type)
-  future_field_id = FutureRequired[Deferred[demeter_types.Field], int](df)
-
+  # TODO: 1st Costly
   grower = findGrower(find_fn, grower_field, owner_id)
-  future_grower_id = FutureRequired[demeter_types.Grower, int](grower)
 
-  def makeLocalValue() -> local_types.LocalValue:
-    geom_id = NotNull(future_geom_id.get())
+  deferred_unit_type = deferMeasureUnitType(get_fn, measure_unit, irrigation_local_type)
+
+  async def makeLocalValue() -> local_types.LocalValue:
+    geom_id : int = NotNull(await get_fn(demeter_types.Geom, geom))
+    # TODO: Warning function for missing field id?
+    field_id : Optional[int] = await get_fn(demeter_types.Field, deferred_field)
+    unit_id : int = NotNull(await get_fn(local_types.UnitType, deferred_unit_type))
     return local_types.LocalValue(
              geom_id        = geom_id,
-             field_id       = future_field_id.get(),
-             unit_type_id   = future_unit_type_id.get(),
+             field_id       = field_id,
+             unit_type_id   = unit_id,
              quantity       = i.TotalNumberIrrigation,
              local_group_id = None,
              acquired       = NOW,
-             details        = {},
+             details        = None,
              last_updated   = NOW,
            )
-  l = Deferred(makeLocalValue)
-
-  write_fn(demeter_types.Geom,     future_geom_id)
-  write_fn(demeter_types.Grower,   future_grower_id)
-  write_fn(demeter_types.Field,    future_field_id)
-  write_fn(local_types.UnitType,   unit_type)
+  write_fn(demeter_types.Geom,     geom)
+  write_fn(demeter_types.Grower,   grower)
+  write_fn(demeter_types.Field,    deferred_field)
+  write_fn(local_types.UnitType,   deferred_unit_type)
   write_fn(local_types.LocalType,  irrigation_local_type)
-  write_fn(local_types.LocalValue, l)
+  write_fn(local_types.LocalValue, makeLocalValue())
 
 
 def makeReviewHarvest(next_fn  : NextFn,
                       find_fn  : FindFn,
                       write_fn : WriteFn,
+                      get_fn   : GetFn,
                       args     : MigrateArgs,
                      ):
   owner_id = args["owner_id"]
@@ -301,25 +320,27 @@ def makeReviewHarvest(next_fn  : NextFn,
   grower_field = NotNull(maybe_grower_field)
 
   owner_id = args["owner_id"]
-  ggf = getGeomGrowerField(find_fn, next_fn, owner_id, grower_field)
-  future_geom_id, future_grower_id, df = ggf
+  ggf = getGeomGrowerField(find_fn, next_fn, get_fn, owner_id, grower_field)
+  geom, grower, deferred_field = ggf
 
-  future_geom_id = FutureRequired[demeter_types.Geom, int](future_geom_id.key)
+  write_fn(demeter_types.Geom,     geom)
+  write_fn(demeter_types.Grower,   grower)
+  write_fn(demeter_types.Field, deferred_field)
 
-  future_field_id = FutureRequired[Deferred[demeter_types.Field], int](df)
-
-  grower = findGrower(find_fn, grower_field, owner_id)
-  future_grower_id = FutureRequired[demeter_types.Grower, int](grower)
-
-  def makeLocalValue(unit_type_id : int, quantity : float) -> local_types.LocalValue:
+  async def deferLocalValue(
+              unit_type_id : int,
+              quantity : float
+             ) -> local_types.LocalValue:
+    geom_id : int = NotNull(await get_fn(demeter_types.Geom, geom))
+    field_id : int = NotNull(await get_fn(demeter_types.Field, deferred_field))
     return local_types.LocalValue(
-             geom_id        = NotNull(future_geom_id.get()),
-             field_id       = future_field_id.get(),
+             geom_id        = geom_id,
+             field_id       = field_id,
              unit_type_id   = unit_type_id,
              quantity       = quantity,
              local_group_id = None,
              acquired       = NOW,
-             details        = {},
+             details        = None,
              last_updated   = NOW,
            )
   mk = "MeasureUnitId"
@@ -333,18 +354,17 @@ def makeReviewHarvest(next_fn  : NextFn,
     )
 
     measure_match = lambda m : m[mk] == malt_unit_id
-    maybe_measure_unit = find_fn(MeasureUnit, measure_match)
-    measure_unit = NotNull(maybe_measure_unit)
+    if (measure_unit := find_fn(MeasureUnit, measure_match)):
+      deferred_unit_type = deferMeasureUnitType(get_fn, measure_unit, malt_local_type)
 
-    future_local_type_id = FutureRequired[local_types.LocalType, int](malt_local_type)
+      async def deferMaltValue() -> local_types.LocalValue:
+        unit_type : int = NotNull(await get_fn(local_types.UnitType, deferred_unit_type))
+        return await deferLocalValue(unit_type, malt_yield)
 
-    unit_type = Deferred(
-      lambda : getUnitType(measure_unit, future_local_type_id.get())
-    )
-
-    future_unit_type_id = FutureRequired[Deferred[local_types.UnitType], int](unit_type)
-    l = Deferred(lambda : makeLocalValue(future_unit_type_id(), malt_yield))
-    write_fn(local_types.LocalValue, l)
+      write_fn(local_types.LocalType, malt_local_type)
+      write_fn(local_types.UnitType, deferred_unit_type)
+      deferred_malt_value = deferMaltValue()
+      write_fn(local_types.LocalValue, deferred_malt_value)
 
 
   agronomic_unit_id = review_harvest.AgronomicYieldMeasureUnitId
@@ -356,33 +376,32 @@ def makeReviewHarvest(next_fn  : NextFn,
     )
 
     measure_match = lambda m : m[mk] == agronomic_unit_id
-    maybe_measure_unit = find_fn(MeasureUnit, measure_match)
-    measure_unit = NotNull(maybe_measure_unit)
+    if (measure_unit := find_fn(MeasureUnit, measure_match)):
+      deferred_unit_type = deferMeasureUnitType(get_fn, measure_unit, agronomic_local_type)
 
-    future_local_type_id = FutureRequired[local_types.LocalType, int](agronomic_local_type)
+      async def deferAgronomicValue() -> local_types.LocalValue:
+        unit_type_id : int = NotNull(await get_fn(local_types.UnitType, deferred_unit_type))
+        return await deferLocalValue(unit_type_id, agronomic_yield)
 
-    unit_type = Deferred(
-      lambda : getUnitType(measure_unit, future_local_type_id.get())
-    )
-
-    future_unit_type_id = FutureRequired[Deferred[local_types.UnitType], int](unit_type)
-    l = Deferred(lambda : makeLocalValue(future_unit_type_id(), malt_yield))
-    write_fn(local_types.LocalValue, l)
-
-  write_fn(demeter_types.Geom,     future_geom_id)
-  write_fn(demeter_types.Grower,   grower)
+      write_fn(local_types.LocalType, agronomic_local_type)
+      write_fn(local_types.UnitType, deferred_unit_type)
+      deferred_agronomic_value = deferAgronomicValue()
+      write_fn(local_types.LocalValue, deferred_agronomic_value)
 
 
+import uuid
 
 def makeReviewQuality(next_fn  : NextFn,
                       find_fn  : FindFn,
                       write_fn : WriteFn,
+                      get_fn   : GetFn,
                       args     : MigrateArgs,
                      ):
   review = next_fn(Review)
 
+
   k = "ReviewQualityId"
-  review_quality_match = lambda r : r[k] == review.ReviewQualityPreId
+  review_quality_match = lambda r : r[k] == review.ReviewQualityPostId
   maybe_review_quality = find_fn(ReviewQuality, review_quality_match)
   review_quality = NotNull(maybe_review_quality)
 
@@ -392,20 +411,19 @@ def makeReviewQuality(next_fn  : NextFn,
   grower_field = NotNull(maybe_grower_field)
 
   owner_id = args["owner_id"]
-  ggf = getGeomGrowerField(find_fn, next_fn, owner_id, grower_field)
-  future_geom_id, future_grower_id, df = ggf
+  ggf = getGeomGrowerField(find_fn, next_fn, get_fn, owner_id, grower_field)
+  geom, grower, deferred_field = ggf
 
-  future_geom_id = FutureRequired[demeter_types.Geom, int](future_geom_id.key)
-
-  future_field_id = FutureRequired[Deferred[demeter_types.Field], int](df)
-
-  grower = findGrower(find_fn, grower_field, owner_id)
-  future_grower_id = FutureRequired[demeter_types.Grower, int](grower)
-
-  def makeLocalValue(unit_type_id : int, quantity : float, details : Dict[str, Any] = {}) -> local_types.LocalValue:
+  async def deferLocalValueBase(unit_type_id : int,
+                                quantity : float,
+                                details : Optional[Details] = None,
+                               ) -> local_types.LocalValue:
+    k = str(uuid.uuid4())
+    geom_id : int = NotNull(await get_fn(demeter_types.Geom, geom))
+    field_id : int = NotNull(await get_fn(demeter_types.Field, deferred_field))
     return local_types.LocalValue(
-             geom_id        = NotNull(future_geom_id.get()),
-             field_id       = future_field_id.get(),
+             geom_id        = geom_id,
+             field_id       = field_id,
              unit_type_id   = unit_type_id,
              quantity       = quantity,
              local_group_id = None,
@@ -415,132 +433,110 @@ def makeReviewQuality(next_fn  : NextFn,
            )
 
 
-  def findUnitType(measure_unit_id : int,
-                   local_type : local_types.LocalType,
-                  ) -> Deferred[local_types.UnitType]:
-    mk = "MeasureUnitId"
-    measure_match = lambda m : m[mk] == measure_unit_id
-    maybe_measure_unit = find_fn(MeasureUnit, measure_match)
-    measure_unit = NotNull(maybe_measure_unit)
-
-    future_local_type_id = FutureRequired[local_types.LocalType, int](local_type)
-
-    unit_type = Deferred(
-      lambda : getUnitType(measure_unit, future_local_type_id.get())
-    )
-
-    return unit_type
-
-
-  def findLocalValue(local_type : local_types.LocalType,
-                     measure_unit_id : int,
-                     quantity : float,
-                    ) -> Tuple[Deferred[local_types.UnitType],
-                               Deferred[local_types.LocalValue]
-                              ]:
-    unit_type = findUnitType(measure_unit_id, local_type)
-
-    future_unit_type_id = FutureRequired[Deferred[local_types.UnitType], int](unit_type)
-    local_value = Deferred(lambda : makeLocalValue(future_unit_type_id(), quantity, details))
-    return unit_type, local_value
-
+#  def findMeasureUnitType(measure_unit_id : int,
+#                          local_type : local_types.LocalType,
+#                         ) -> Awaitable[local_types.UnitType]:
+#    mk = "MeasureUnitId"
+#    measure_match = lambda m : m[mk] == measure_unit_id
+#    maybe_measure_unit = find_fn(MeasureUnit, measure_match)
+#    measure_unit = NotNull(maybe_measure_unit)
+#
+#    deferred_unit_type = deferMeasureUnitType(get_fn, measure_unit, local_type)
+#    return deferred_unit_type
 
   details = {
     "is_external_data" : review_quality.IsExternalData
   }
 
-  Value = Tuple[local_types.LocalType, Optional[int], Optional[float]]
+  Value = Tuple[local_types.LocalType,
+                Optional[float],
+                Optional[int],
+                Optional[str]
+               ]
   values : Sequence[Value] = [
     (local_types.LocalType(
        type_name = "test weight",
        type_category = "abi test data",
      ),
-     review_quality.TestWeightMeasureUnitId,
      review_quality.TestWeight,
+     review_quality.TestWeightMeasureUnitId,
+     None,
     ),
     (local_types.LocalType(
        type_name = "sprout",
        type_category = "abi test data",
      ),
-     review_quality.SproutSecondsMeasureUnitId,
      review_quality.Sprout,
+     review_quality.SproutSecondsMeasureUnitId,
+     None,
     ),
     (local_types.LocalType(
        type_name = "don",
        type_category = "abi test data",
      ),
-     review_quality.DONMeasureUnitId,
      review_quality.DON,
+     review_quality.DONMeasureUnitId,
+     None,
     ),
-  ]
 
-  for (local_type, maybe_measure_unit_id, maybe_quantity) in values:
-    local_type
-    measure_unit_id = NotNull(maybe_measure_unit_id)
-    quantity = NotNull(maybe_quantity)
-
-    u, l = findLocalValue(local_type, measure_unit_id, quantity)
-    write_fn(local_types.UnitType, u)
-    write_fn(local_types.LocalValue, l)
-
-
-  def getLocalValue(local_type : local_types.LocalType,
-                    unit : str,
-                    quantity : float,
-                   ) -> Tuple[Deferred[local_types.UnitType],
-                              Deferred[local_types.LocalValue],
-                             ]:
-    future_local_type_id = FutureRequired[local_types.LocalType, int](local_type)
-
-    unit_type = Deferred(
-          lambda : local_types.UnitType(
-                      unit = unit,
-                      local_type_id = future_local_type_id.get(),
-                    )
-        )
-
-    future_unit_type_id = FutureRequired[Deferred[local_types.UnitType], int](unit_type)
-    l = Deferred(lambda : makeLocalValue(future_unit_type_id(), quantity, details))
-    return u, l
-
-  Value2 = Tuple[local_types.LocalType, Optional[str], Optional[float]]
-  values2 : Sequence[Value2] = [
     (local_types.LocalType(
        type_name = "thins",
        type_category = "abi test data",
      ),
-     review_quality.ThinsSieve,
      review_quality.Thins,
+     None,
+     review_quality.ThinsSieve,
     ),
 
     (local_types.LocalType(
        type_name = "plump",
        type_category = "abi test data",
      ),
-     review_quality.PlumpSieve,
      review_quality.Plump,
+     None,
+     review_quality.PlumpSieve,
     ),
 
     (local_types.LocalType(
        type_name = "protein",
        type_category = "abi test data",
      ),
-     "Unknown",
      review_quality.Protein,
+     None,
+     "Unknown",
     ),
+
   ]
 
-  for (local_type, maybe_unit, maybe_quantity) in values2:
-    try:
-      unit = NotNull(maybe_unit)
-      quatity = NotNull(maybe_quantity)
-      u, l = getLocalValue(local_type, unit, quantity)
-      write_fn(local_types.UnitType, u)
-      write_fn(local_types.LocalValue, l)
-    except NotNullViolationException:
-      pass
+  for (local_type, maybe_quantity, maybe_measure_unit_id, maybe_unit) in values:
 
-  write_fn(demeter_types.Geom,   future_geom_id)
+    if (quantity := maybe_quantity) is not None:
+
+      maybe_u : Optional[Awaitable[local_types.UnitType]] = None
+      if ( measure_unit_id := maybe_measure_unit_id ) is not None:
+        measure_match = lambda m : m["MeasureUnitId"] == measure_unit_id
+        maybe_measure_unit = find_fn(MeasureUnit, measure_match)
+        if ( measure_unit := maybe_measure_unit) is not None:
+          maybe_u = deferMeasureUnitType(get_fn, measure_unit, local_type)
+        else:
+          continue
+      elif (unit := maybe_unit) is not None:
+        maybe_u = deferUnitType(get_fn, unit, local_type)
+      else:
+        continue
+
+      u = maybe_u
+      async def deferLocalValue(quantity : float) -> local_types.LocalValue:
+        unit_type_id : int = NotNull(await get_fn(local_types.UnitType, u))
+        b = await deferLocalValueBase(unit_type_id, quantity)
+        return b
+
+      write_fn(local_types.LocalType, local_type)
+      write_fn(local_types.UnitType, u)
+      l = deferLocalValue(quantity)
+      write_fn(local_types.LocalValue, l)
+
+  write_fn(demeter_types.Geom,   geom)
   write_fn(demeter_types.Grower, grower)
-  write_fn(demeter_types.Field, future_field_id)
+  write_fn(demeter_types.Field,  deferred_field)
 

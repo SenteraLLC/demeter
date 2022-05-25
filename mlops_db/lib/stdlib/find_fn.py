@@ -3,7 +3,7 @@ from typing import cast
 
 # from functools import lru_cache as memo
 
-from .imports import I
+from .imports import I, WrapImport
 
 
 # TODO: Remove when we can show this works
@@ -26,7 +26,7 @@ class FindFn(object):
     other_it : Iterator[I] = cast(Iterator[I], it)
     for row in other_it:
       if match_fn(row):
-        return cast(Optional[I], row)
+        return cast(Optional[I], WrapImport(row))
     return cast(Optional[I], None)
 
 

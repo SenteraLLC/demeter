@@ -2,7 +2,7 @@
 name = "mlops-db"
 version = "1.0.0"
 description = ""
-authors = ["Joel Larson <joel.larson@sentera.com"]
+authors = ["Joel Larson <JoelLarson@sentera.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9.10"
@@ -22,7 +22,7 @@ types-psycopg2 = "^2.9.7"
 types-requests = "^2.27.10"
 types-urllib3 = "^1.26.9"
 types-boto3 = "^1.0.1"
-pandas-stubs = "^1.2.0.50"
+pandas-stubs = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

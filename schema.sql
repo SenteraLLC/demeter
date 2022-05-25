@@ -332,9 +332,7 @@ create table unit_type (
 );
 ALTER TABLE unit_type
   ADD CONSTRAINT unit_type_start_end_w_alphanumeric_ck
-  CHECK (unit ~ '^[A-Za-z].+[A-Za-z0-9]$');
-
-
+  CHECK (unit ~ '^[A-Za-z](.*[A-Za-z0-9])?$');
 
 
 

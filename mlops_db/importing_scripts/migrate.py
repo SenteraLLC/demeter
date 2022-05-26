@@ -19,9 +19,12 @@ from ..importing.import_plan import ImportPlan
 
 from .imports import *
 
-from .migrate_help import makeGrowers, makeGeomAndField, makeIrrigation, makeReviewHarvest, makeReviewQuality
-
-from .migrate_help import MigrateArgs
+from .growers import makeGrowers
+from .geom_and_field import makeGeomAndField
+from .irrigation import makeIrrigation
+from .review_harvest import makeReviewHarvest
+from .review_quality import makeReviewQuality
+from .util import MigrateArgs
 
 
 # TODO: CONFIG

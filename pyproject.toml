@@ -5,7 +5,7 @@ description = ""
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9.10"
+python = "^3.10.4"
 psycopg2 = "^2.9.3"
 typing_extensions = "^4.0.1"
 jsonschema = "^4.4.0"
@@ -13,7 +13,6 @@ geopandas = "^0.10.2"
 boto3 = "^1.20.48"
 requests = "^2.27.1"
 scoping = "^0.1.2"
-Rtree = "^1.0.0"
 dictdiffer = "^0.9.0"
 
 [tool.poetry.dev-dependencies]

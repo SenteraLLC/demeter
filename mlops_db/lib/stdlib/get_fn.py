@@ -45,7 +45,7 @@ class GetFn():
          ):
             maybe_output = deferred
       else:
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
     return maybe_output
 
 
@@ -78,7 +78,7 @@ class GetFn():
       if not ((results := maybe_results) and
               (maybe_result := results.get(resolved_source))
              ):
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
     result = maybe_result
     return cast(R, result)

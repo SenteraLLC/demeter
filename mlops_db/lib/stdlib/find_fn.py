@@ -6,13 +6,14 @@ from typing import cast
 from .imports import I, WrapImport
 
 
-# TODO: Remove when we can show this works
-#GetTypeIterator = Callable[[Type[Import]], Iterator[Import] ]
 GetTypeIterator = Callable[[Type[I]], Iterator[I] ]
 
 MatchFn = Callable[[I], bool]
 
-
+# TODO: Find Function should take:
+#         A key function
+#         An optional key on which to match
+#           If this key doesn't exist, should be a way to search an index
 class FindFn(object):
   def __init__(self, get_type_iterator : GetTypeIterator):
     self.get_type_iterator = get_type_iterator

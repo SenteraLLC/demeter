@@ -29,18 +29,17 @@ def isDeferred(value : LoneArg):
     return True
   return False
 
-import itertools
 
 class WriteFn():
   def __init__(self) -> None:
-    self.type_to_outputs : TypeToOutputs = OrderedDict()
-    self._type_to_deferred : TypeToDeferred = OrderedDict()
-    self.latest_type_to_deferred : TypeToDeferred = OrderedDict()
-
+    #self.type_to_outputs : TypeToOutputs = OrderedDict()
     self.type_to_deferred_to_task : TypeToDeferredToTask = {}
 
-  def _addToLatest(self, existing : TypeToDeferred):
-    latest = self.latest_type_to_deferred
+    self.latest_type_to_deferred : TypeToDeferred = OrderedDict()
+    self.latest_type_to_outputs : TypeToOutputs = OrderedDict()
+
+
+  def _addToLatest(self, latest : TypeToDeferred, existing : TypeToDeferred):
     if len(latest) <= 0:
       return existing
     for existing_typ, existing_deferred in existing.items():
@@ -51,11 +50,17 @@ class WriteFn():
     return latest
 
 
-  def getLatest(self, existing : Optional[TypeToDeferred] = None) -> TypeToDeferred:
+  def getDeferred(self, existing : Optional[TypeToDeferred] = None) -> TypeToDeferred:
     latest = self.latest_type_to_deferred
     if existing is not None:
-      latest = self._addToLatest(existing)
+      latest = self._addToLatest(latest, existing)
     self.latest_type_to_deferred = OrderedDict()
+    return latest
+
+
+  def getOutputs(self) -> TypeToDeferred:
+    latest = self.latest_type_to_outputs
+    self.latest_type_to_outputs = OrderedDict()
     return latest
 
 
@@ -63,8 +68,8 @@ class WriteFn():
                     t : Type[T],
                     arg : Iterable[Awaitable[T]],
                    ):
-    if t not in self._type_to_deferred:
-      self._type_to_deferred[t] = []
+    #if t not in self._type_to_deferred:
+    #  self._type_to_deferred[t] = []
     if t not in self.latest_type_to_deferred:
       self.latest_type_to_deferred[t] = []
 
@@ -81,7 +86,7 @@ class WriteFn():
         self.type_to_deferred_to_task[t][d] = task
         task_list.append(task)
 
-    self._type_to_deferred[t].append(task_list)
+    #self._type_to_deferred[t].append(task_list)
     self.latest_type_to_deferred[t].append(task_list)
 
 
@@ -89,10 +94,10 @@ class WriteFn():
                    t : Type[T],
                    arg : IterableArg[T],
                   ) -> None:
-    if t not in self.type_to_outputs:
-      self.type_to_outputs[t] = [[]]
+    if t not in self.latest_type_to_outputs:
+      self.latest_type_to_outputs[t] = [[]]
 
-    outputs = self.type_to_outputs[t]
+    outputs = self.latest_type_to_outputs[t]
     outputs_list = cast(List[T], arg)
     outputs.append(outputs_list)
 

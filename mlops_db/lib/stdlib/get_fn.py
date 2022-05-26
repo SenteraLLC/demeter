@@ -4,7 +4,6 @@ from typing import cast
 from .future import T, R
 
 from ..util.api_protocols import ReturnId, ReturnKey
-#from ..lib.util.exceptions impo
 from .write_fn import WriteFn, TypeToOutputs
 from .exceptions import NotNullViolationException
 from collections import OrderedDict as Dict

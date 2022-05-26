@@ -84,7 +84,6 @@ TYPE_TO_INSERT_FN : TypeToInsert = {
 
 
 async def main() -> None:
-  print("Start main.")
   # TODO: argparse
   options = "-c search_path=test_mlops,public"
   connection = psycopg2.connect(host="localhost", dbname="postgres", options=options)
@@ -103,26 +102,20 @@ async def main() -> None:
     get_type_iterator = getTypeIterator,
     args = migrate_args,
     steps = [
-      # TODO: Do we want growers without fields?
-      (Grower, makeGrowers),
-      # TODO: Do we want fields without any data?
-      (GrowerField, makeGeomAndField),
+      # TODO: Do we want growers or fields without data?
+      #(Grower, makeGrowers),
+      #(GrowerField, makeGeomAndField),
       (IrrigationApplied, makeIrrigation),
       (ReviewHarvest, makeReviewHarvest),
       (Review, makeReviewQuality),
     ]
   )
-  print("Plan setup.")
 
   from .execute import executePlan
 
   await executePlan(cursor, plan, TYPE_TO_INSERT_FN)
 
   connection.commit()
-  sys.exit(1)
-
-  # TODO: COMMIT
-  # TODO: COMMIT
 
 
 import asyncio

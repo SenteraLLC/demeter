@@ -89,19 +89,27 @@ def getInsertReturnKeyFunction(table : Type[Any]) -> Callable[[Any, AnyKeyTable]
   table_name, key = key_table_lookup[table]
   return partial(_insertAndReturnKey, table_name, key)
 
+from typing import get_origin, get_args, Union
+
+def is_optional(table, key):
+    field = table.__annotations__[key]
+    return get_origin(field) is Union and \
+           type(None) in get_args(field)
+
 
 def getMaybeId(table_name : str,
                cursor     : Any,
                table      : AnyIdTable,
               ) -> Optional[int]:
   field_names = cast(Sequence[str], table.keys())
-  names_to_fields = OrderedDict({name: sql.Identifier(name) for name in field_names})
+  names_to_fields = OrderedDict({name: sql.Identifier(name) for name in field_names })
   def is_none(key : str) -> bool:
     args = cast(Dict[str, Any], table)
     return getattr(args, key) is None
 
-  conditions = [sql.SQL(' = ').join([sql.Identifier(n), sql.Placeholder(n)]) for n in names_to_fields if not is_none(n)]
-  conditions.extend([sql.SQL('').join([sql.Identifier(n), sql.SQL(" is null")]) for n in names_to_fields if is_none(n)])
+  # TODO: This 'is_optional' filter might be a bad idea...
+  conditions = [sql.SQL(' = ').join([sql.Identifier(n), sql.Placeholder(n)]) for n in names_to_fields if not is_none(n) and not is_optional(table, n) ]
+  conditions.extend([sql.SQL('').join([sql.Identifier(n), sql.SQL(" is null")]) for n in names_to_fields if is_none(n) ])
 
   table_id = "_".join([table_name, "id"])
   stmt = sql.SQL("select {0} from {1} where {2}").format(

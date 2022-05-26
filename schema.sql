@@ -475,19 +475,19 @@ create table local_value (
                  references geom(geom_id),
   field_id       bigint
                  references field(field_id),
-
   unit_type_id   bigint
                  references unit_type(unit_type_id)
                  not null,
+
+  acquired       timestamp without time zone,
+
+  unique (geom_id, field_id, unit_type_id, acquired),
+
   quantity       float
                  not null,
 
   local_group_id bigint
                  references local_group(local_group_id),
-
-  acquired       timestamp without time zone
-                 not null
-                 default now(),
 
   last_updated   timestamp without time zone
                  not null

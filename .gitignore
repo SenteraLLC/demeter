@@ -2,3 +2,4 @@
 *.swp
 *.data.json
 .mypy_cache/
+.python-version

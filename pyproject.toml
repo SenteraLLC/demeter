@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mlops-db"
+name = "demeter"
 version = "1.0.0"
 description = ""
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
@@ -28,4 +28,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-example = "mlops_db.scripts.example:main"
+example = "demeter.scripts.example:main"

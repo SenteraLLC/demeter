@@ -1,6 +1,6 @@
 from typing import Union, Iterable, Awaitable
 
-from .future import T
+from ..lib.util.types_protocols import T
 
 LoneArg = Union[T, Awaitable[T]]
 IterableArg = Union[Iterable[T], Iterable[Awaitable[T]]]

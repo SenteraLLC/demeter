@@ -3,9 +3,7 @@ from typing import cast
 
 from collections import OrderedDict
 
-from ..util.types_protocols import Table
-
-from .future import T, R
+from ..lib.util.types_protocols import Table, T
 
 from .outputs import LoneArg, Arg, IterableArg
 

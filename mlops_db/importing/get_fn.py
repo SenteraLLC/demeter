@@ -1,9 +1,8 @@
-from typing import Type, Any, Mapping, Union, Awaitable, Optional, Set, List, Coroutine, Tuple, AsyncGenerator
+from typing import Type, Any, Mapping, Union, Awaitable, Optional, Set, List, Coroutine, Tuple, AsyncGenerator, TypeVar
 from typing import cast
 
-from .future import T, R
-
-from ..util.api_protocols import ReturnId, ReturnKey
+from ..lib.util.api_protocols import ReturnId, ReturnKey
+from ..lib.util.types_protocols import Table, T
 from .write_fn import WriteFn, TypeToOutputs
 from .exceptions import NotNullViolationException
 from collections import OrderedDict as Dict
@@ -16,6 +15,7 @@ from asyncio import Task
 import inspect
 
 TypeToTaskToDeferred = Dict[Type[T], Dict[Task[T], Any]]
+R = TypeVar('R')
 
 class GetFn():
   def __init__(self,

@@ -1,4 +1,4 @@
-from typing import Optional, Mapping, Any, Union, Set, Iterator, Tuple
+from typing import Optional, Mapping, Any, Union, Set, Iterator, Tuple, TypeVar
 
 from datetime import datetime
 from dataclasses import dataclass
@@ -27,6 +27,7 @@ class Table():
   def __iter__(self):
     raise TypeError
 
+T = TypeVar('T', bound=Table)
 
 class TableEncoder(json.JSONEncoder):
 

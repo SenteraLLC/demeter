@@ -2,12 +2,11 @@ from typing import Optional, Type, Sequence, Iterator, TypedDict, Any, Tuple, Di
 
 import json
 
-from ..lib.stdlib.imports import I
-from ..lib.stdlib.exceptions import InvalidRowException, BadGeometryException, NotNullViolationException
-from ..lib.stdlib.next_fn import NextFn
-from ..lib.stdlib.find_fn import FindFn
-from ..lib.stdlib.write_fn import WriteFn
-from ..lib.stdlib.get_fn import GetFn
+from ..importing.imports import I
+from ..importing.exceptions import InvalidRowException, BadGeometryException, NotNullViolationException
+from ..importing.find_fn import FindFn
+from ..importing.write_fn import WriteFn
+from ..importing.get_fn import GetFn
 from ..lib.util.details import Details
 from ..lib.util.types_protocols import TableEncoder
 
@@ -96,13 +95,13 @@ def makeGrower(input_grower : Grower,
   return g
 
 
-def makeGrowers(next_fn  : NextFn,
-                find_fn  : FindFn,
-                write_fn : WriteFn,
-                get_fn   : GetFn,
-                args     : MigrateArgs,
+def makeGrowers(grower_iter : Iterator[Grower],
+                find_fn     : FindFn,
+                write_fn    : WriteFn,
+                get_fn      : GetFn,
+                args        : MigrateArgs,
                ):
-  input_grower = next_fn()
+  input_grower = next(grower_iter)
   owner_id = args["owner_id"]
   g = makeGrower(input_grower, find_fn, owner_id)
   gs : Sequence[demeter_types.Grower] = [] if g is None else [g]
@@ -193,13 +192,13 @@ def getGeomGrowerField(find_fn : FindFn,
   return (geom, grower, deferField())
 
 
-def makeGeomAndField(next_fn  : NextFn,
+def makeGeomAndField(field_it : Iterator[GrowerField],
                      find_fn  : FindFn,
                      write_fn : WriteFn,
                      get_fn   : GetFn,
                      args     : MigrateArgs,
                     ):
-  grower_field = next_fn()
+  grower_field = next(field_it)
 
   ggf = getGeomGrowerField(find_fn, get_fn, args["owner_id"], grower_field)
   geom, grower, deferred_field = ggf
@@ -230,7 +229,7 @@ async def deferMeasureUnitType(get_fn     : GetFn,
 
 import time
 
-def makeIrrigation(next_fn  : NextFn,
+def makeIrrigation(irrigation_it : Iterator[IrrigationApplied],
                    find_fn  : FindFn,
                    write_fn : WriteFn,
                    get_fn   : GetFn,
@@ -238,7 +237,7 @@ def makeIrrigation(next_fn  : NextFn,
                   ):
   last = time.time()
 
-  irrigation_applied = next_fn()
+  irrigation_applied = next(irrigation_it)
   i = irrigation_applied
 
   irrigation_local_type = local_types.LocalType(
@@ -294,7 +293,7 @@ def makeIrrigation(next_fn  : NextFn,
   write_fn(local_types.LocalValue, makeLocalValue())
 
 
-def makeReviewHarvest(next_fn  : NextFn,
+def makeReviewHarvest(review_it : Iterator[ReviewHarvest],
                       find_fn  : FindFn,
                       write_fn : WriteFn,
                       get_fn   : GetFn,
@@ -303,7 +302,7 @@ def makeReviewHarvest(next_fn  : NextFn,
   owner_id = args["owner_id"]
   cursor = args["cursor"]
 
-  review_harvest = next_fn()
+  review_harvest = next(review_it)
 
   k = "ReviewHarvestId"
   review_match = lambda r : r[k] == review_harvest.ReviewHarvestId
@@ -387,13 +386,13 @@ def makeReviewHarvest(next_fn  : NextFn,
 
 
 
-def makeReviewQuality(next_fn  : NextFn,
+def makeReviewQuality(review_it  : Iterator[Review],
                       find_fn  : FindFn,
                       write_fn : WriteFn,
                       get_fn   : GetFn,
                       args     : MigrateArgs,
                      ):
-  review = next_fn()
+  review = next(review_it)
 
   k = "ReviewQualityId"
   review_quality_match = lambda r : r[k] == review.ReviewQualityPostId

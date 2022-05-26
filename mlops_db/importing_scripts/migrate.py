@@ -1,12 +1,8 @@
-from typing import Optional, Union, Type, Any, Sequence, Iterator, Mapping, Dict, Callable, TextIO, List, Awaitable
-from typing import cast
+from typing import Type, Sequence, Iterator, Mapping, Dict
 
 import psycopg2
-
-import inspect
-import sys
-
-from collections import OrderedDict
+import asyncio
+import json
 
 # TODO: json_stream
 
@@ -14,17 +10,12 @@ from ..lib.core import types as demeter_types
 from ..lib.core import api as demeter_api
 from ..lib.local import types as local_types
 from ..lib.local import api as local_api
+from ..lib.util.api_protocols import ReturnId, ReturnKey
 
-from ..lib.stdlib.imports import I, WrapImport
-
-from ..lib.stdlib.next_fn import NextFn
-from ..lib.stdlib.write_fn import WriteFn, Task, TypeToDeferred
-#from ..lib.stdlib.find_fn import FindFn
-from ..lib.stdlib.get_fn import GetFn, TypeToTaskToDeferred
-from ..lib.stdlib.import_plan import FiveArgs, ImportPlan
-# TODO: TO REMOVE
-from ..lib.stdlib.future import UnsetFutureException, T
-from ..lib.stdlib.exceptions import NotNullViolationException, BadGeometryException
+from ..importing.execute import TypeToInsert
+from ..importing.execute import executePlan
+from ..importing.imports import I, WrapImport
+from ..importing.import_plan import ImportPlan
 
 from .imports import *
 
@@ -49,10 +40,7 @@ SOURCE_TO_PATH : Mapping[Type[Import], str] = {
 }
 
 
-from functools import lru_cache as memo
-import json
 
-#@memo(maxsize=4)
 def getSource(s : Type[I]) -> Sequence[I]:
   p = SOURCE_TO_PATH[s]
   f = open(p)
@@ -69,10 +57,6 @@ def getTypeIterator(typ : Type[I]) -> Iterator[I]:
   return it
 
 
-from ..lib.util.api_protocols import ReturnId, ReturnKey
-from .execute import TypeToInsert
-
-# TODO: Memoize these?
 TYPE_TO_INSERT_FN : TypeToInsert = {
   demeter_types.Grower : demeter_api.insertOrGetGrower,
   demeter_types.Field : demeter_api.insertOrGetField,
@@ -84,7 +68,7 @@ TYPE_TO_INSERT_FN : TypeToInsert = {
 
 
 async def main() -> None:
-  # TODO: argparse
+  # TODO: argparse or config
   options = "-c search_path=test_mlops,public"
   connection = psycopg2.connect(host="localhost", dbname="postgres", options=options)
 
@@ -96,9 +80,8 @@ async def main() -> None:
 
   migrate_args = MigrateArgs(owner_id = owner_id, cursor = cursor)
 
-  # TODO: Support indexes?
+  # TODO: Support indexes and maybe joins
   plan = ImportPlan(
-    # TODO: Joins?
     get_type_iterator = getTypeIterator,
     args = migrate_args,
     steps = [
@@ -111,14 +94,12 @@ async def main() -> None:
     ]
   )
 
-  from .execute import executePlan
 
   await executePlan(cursor, plan, TYPE_TO_INSERT_FN)
 
   connection.commit()
 
 
-import asyncio
 
 if __name__ == '__main__':
   asyncio.run(main())

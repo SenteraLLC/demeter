@@ -3,7 +3,7 @@ from typing import cast
 
 from dataclasses import dataclass
 
-from ..lib.stdlib.imports import Import
+from ..importing.imports import Import
 
 
 class Grower(Import):

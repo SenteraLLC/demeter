@@ -4,12 +4,12 @@ from typing import cast
 from collections import OrderedDict
 import asyncio
 
-from ..lib.stdlib.import_plan import ImportPlan, FiveArgs
-from ..lib.stdlib.find_fn import FindFn
-from ..lib.stdlib.write_fn import WriteFn, TypeToOutputs, TypeToDeferred, TypeToDeferredToTask
-from ..lib.stdlib.get_fn import GetFn, TypeToTaskToDeferred
-from ..lib.stdlib.next_fn import NextFn
-from ..lib.stdlib.exceptions import NotNullViolationException, BadGeometryException
+from .import_plan import ImportPlan, FiveArgs
+from .find_fn import FindFn
+from .write_fn import WriteFn, TypeToOutputs, TypeToDeferred, TypeToDeferredToTask
+from .get_fn import GetFn, TypeToTaskToDeferred
+from .exceptions import NotNullViolationException, BadGeometryException
+
 from ..lib.util.types_protocols import Table, AnyKey
 
 
@@ -96,7 +96,7 @@ async def executePlan(cursor : Any,
     type_to_output_to_result : TypeToOutputToResult = {}
     type_to_task_to_deferred : TypeToTaskToDeferred = OrderedDict()
 
-    next_fn = NextFn(get_type_iterator(next_typ))
+    it = get_type_iterator(next_typ)
 
     write_fn = WriteFn()
     KeepGoing = True
@@ -107,7 +107,7 @@ async def executePlan(cursor : Any,
         get_fn = GetFn(type_to_output_to_result, type_to_task_to_deferred, write_fn)
 
         try:
-          fn(next_fn, find_fn, write_fn, get_fn, plan.args)
+          fn(it, find_fn, write_fn, get_fn, plan.args)
           sys.stdout.flush()
         except StopIteration:
           KeepGoing = False

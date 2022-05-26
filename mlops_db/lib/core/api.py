@@ -49,7 +49,7 @@ def getMaybeDuplicateGeom(cursor : Any,
   igeo = makeInsertable(geom)
   stmt = """select G.geom_id
               FROM geom G
-              where ST_Equals(ST_MakeValid(G.geom), ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)))
+              where ST_Equals(G.geom, ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)))
          """
   args = {"geom" : igeo.geom}
   cursor.execute(stmt, args)

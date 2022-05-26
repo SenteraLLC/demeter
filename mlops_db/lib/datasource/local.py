@@ -22,7 +22,7 @@ def queryLocalByKey(cursor     : Any,
   stmt = """select *
             from local_value V, unit_type U
             where V.unit_type_id = U.unit_type_id and U.local_type_id = %s and
-              V.geom_id = %s and V.field_id = %s and V.acquired > %s and V.acquired < %s
+              V.geom_id = %s and V.field_id = %s and (V.acquired is null or (V.acquired > %s and V.acquired < %s))
           """
 
   geom_id    = key.geom_id

@@ -1,5 +1,7 @@
 *.pyc
 *.swp
+*.swo
 *.data.json
 .mypy_cache/
 .python-version
+__pycache__

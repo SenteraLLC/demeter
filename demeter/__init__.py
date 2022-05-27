@@ -12,6 +12,8 @@ from .database.details import Details
 from .transformation import Transformation
 
 __all__ = [
+  'datasource',
+  'database',
   'CropProgress',
   'CropProgressKey',
   'CropStage',

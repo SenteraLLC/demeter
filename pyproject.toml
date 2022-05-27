@@ -1,8 +1,12 @@
 [tool.poetry]
 name = "demeter"
-version = "1.0.13"
+version = "1.0.14"
 description = ""
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
+packages = [
+  {include = "demeter"},
+  {include = "demeter/py.typed"},
+]
 
 [tool.poetry.dependencies]
 python = "^3.10.4"
@@ -30,7 +34,3 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 example = "demeter.scripts.example:main"
 
-packages = [
-  {include = "demeter"},
-  {include = "demeter/py.typed"},
-]

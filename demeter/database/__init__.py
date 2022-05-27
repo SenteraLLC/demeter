@@ -1,3 +1,5 @@
+from . import api_protocols
+from . import type_lookups
 
 assert(set(api_protocols.AnyTypeTable.__args__) == set(type_lookups.type_table_lookup.keys())) # type: ignore
 

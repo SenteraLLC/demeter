@@ -9,8 +9,8 @@ from .core import insertOrGetGeoSpatialKey, insertOrGetTemporalKey
 # TODO: Use xcom or environment variables
 
 my_path = os.path.dirname(os.path.realpath(__file__))
-GEO_KEYS = json.load(open(os.path.join(my_path, "../scripts/test_data/geospatial.json")))
-TEMPORAL_KEYS = json.load(open(os.path.join(my_path, "../scripts/test_data/temporal.json")))
+GEO_KEYS = json.load(open(os.path.join(my_path, "./temp_data/geospatial.json")))
+TEMPORAL_KEYS = json.load(open(os.path.join(my_path, "./temp_data/temporal.json")))
 
 def load_keys(cursor : Any,
               geo_keys : List[GeoSpatialKey] = GEO_KEYS,

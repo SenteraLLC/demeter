@@ -1,10 +1,15 @@
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple, Optional, Callable
 
 import boto3
 import os
-import psycopg2
-from psycopg2.extensions import connection as PGConnection
 import getpass
+
+import psycopg2
+import psycopg2.extras
+from psycopg2.extensions import connection as PGConnection
+from psycopg2.extensions import register_adapter, adapt
+
+from .types.inputs import HTTPVerb, RequestBodySchema, KeywordType
 
 
 def getEnv(name : str, default : Optional[str] = None):
@@ -12,7 +17,6 @@ def getEnv(name : str, default : Optional[str] = None):
   if v is None:
     raise Exception(f"Environment variable for '{name}' not set")
   return v
-
 
 def getS3Connection() -> Tuple[Any, str]:
   s3_role_arn = getEnv("S3_ROLE_ARN")
@@ -40,8 +44,24 @@ def getS3Connection() -> Tuple[Any, str]:
   )
   return s3_resource, bucket_name
 
+def register():
+  http_verb_to_string : Callable[[HTTPVerb], str] = lambda v : v.name.lower()
+
+  verb_to_sql = lambda v : psycopg2.extensions.AsIs("".join(["'", http_verb_to_string(v), "'"]))
+
+  register_adapter(HTTPVerb, verb_to_sql)
+
+  register_adapter(RequestBodySchema, lambda s : psycopg2.extras.Json(s.schema))
+
+  register_adapter(set, lambda s : adapt(list(s)))
+
+  register_adapter(dict, psycopg2.extras.Json)
+
+  register_adapter(KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
+
 
 def getPgConnection() -> PGConnection:
+  register()
   host = getEnv("DemeterPGHOST", "localhost")
   user = getEnv("DemeterPGUSER", getpass.getuser())
   options = getEnv("DemeterPGOPTIONS", "")

@@ -1,6 +1,6 @@
 from typing import Optional, Sequence, Any
 
-from ..execution.types import ExecutionSummary
+from ..types.execution import ExecutionSummary
 
 # TODO: Add more ways to tune "matching"
 #         There could be some keyword meta-arguments for tuning

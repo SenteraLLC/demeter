@@ -4,10 +4,10 @@ from typing import Dict, Any, TypedDict, List, Optional
 
 import pandas as pd
 
-from ..execution.types import ExecutionSummary, ExecutionArguments, ExecutionOutputs
-from ..local.api import getMaybeLocalTypeId
-from ..local.types import LocalType
-from ..inputs.api import getS3TypeIdByName, getHTTPByName
+from ..types.execution import ExecutionSummary, ExecutionArguments, ExecutionOutputs
+from ..local import getMaybeLocalTypeId
+from ..types.local import LocalType
+from ..inputs import getS3TypeIdByName, getHTTPByName
 
 from .types import DataSourceTypes, KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 from .s3_file import SupportedS3DataType

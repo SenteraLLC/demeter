@@ -1,11 +1,10 @@
-from functools import partial
+from functools import partial as __partial
 
-from ..database.api_protocols import GetId, GetTable, ReturnId, ReturnKey
-from ..database.generators import getMaybeIdFunction, getTableFunction, getInsertReturnIdFunction, getInsertReturnKeyFunction, insertOrGetType
+from .database.api_protocols import GetId, GetTable, ReturnId, ReturnKey
+from .database.generators import getMaybeIdFunction, getTableFunction, getInsertReturnIdFunction, getInsertReturnKeyFunction, insertOrGetType
 
-from .types import LocalValue, UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup
-from .types import  Planting, Harvest, CropProgress, PlantingKey, HarvestKey, CropProgressKey
-
+from .types.local import LocalValue, UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup
+from .types.local import  Planting, Harvest, CropProgress, PlantingKey, HarvestKey, CropProgressKey
 
 getMaybeLocalValue   : GetId[LocalValue] = getMaybeIdFunction(LocalValue)
 getMaybeUnitTypeId   : GetId[UnitType]   = getMaybeIdFunction(UnitType)
@@ -30,10 +29,11 @@ insertPlanting     : ReturnKey[Planting, PlantingKey] = getInsertReturnKeyFuncti
 insertHarvest      : ReturnKey[Harvest, HarvestKey] = getInsertReturnKeyFunction(Harvest) # type: ignore
 insertCropProgress : ReturnKey[CropProgress, CropProgressKey] = getInsertReturnKeyFunction(CropProgress) # type: ignore
 
-insertOrGetUnitType = partial(insertOrGetType, getMaybeUnitTypeId, insertUnitType)
-insertOrGetLocalType = partial(insertOrGetType, getMaybeLocalTypeId, insertLocalType)
-insertOrGetLocalValue = partial(insertOrGetType, getMaybeLocalValueId, insertLocalValue)
-insertOrGetCropType = partial(insertOrGetType, getMaybeCropTypeId, insertCropType)
-insertOrGetCropStage = partial(insertOrGetType, getMaybeCropStageId, insertCropStage)
-insertOrGetLocalGroup = partial(insertOrGetType, getMaybeLocalGroupId, insertLocalGroup)
+insertOrGetUnitType = __partial(insertOrGetType, getMaybeUnitTypeId, insertUnitType)
+insertOrGetLocalType = __partial(insertOrGetType, getMaybeLocalTypeId, insertLocalType)
+insertOrGetLocalValue = __partial(insertOrGetType, getMaybeLocalValueId, insertLocalValue)
+insertOrGetCropType = __partial(insertOrGetType, getMaybeCropTypeId, insertCropType)
+insertOrGetCropStage = __partial(insertOrGetType, getMaybeCropStageId, insertCropStage)
+insertOrGetLocalGroup = __partial(insertOrGetType, getMaybeLocalGroupId, insertLocalGroup)
+
 

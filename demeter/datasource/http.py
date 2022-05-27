@@ -6,10 +6,10 @@ from functools import wraps
 
 from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 
-from ..inputs.types import HTTPType, HTTPVerb, RequestBodySchema
-from ..inputs.api import getHTTPByName
-from ..core.types import Key
-from ..execution.types import ExecutionSummary, HTTPArgument
+from ..types.inputs import HTTPType, HTTPVerb, RequestBodySchema
+from ..inputs import getHTTPByName
+from ..types.core import Key
+from ..types.execution import ExecutionSummary, HTTPArgument
 
 
 def checkHTTPParams(params : Dict[str, Any],

@@ -2,8 +2,8 @@ from typing import Sequence, Union, Optional, List
 
 from ..database.types_protocols import Table
 
-from ..function.types import FunctionId
-from ..core.types import Key
+from .function import FunctionId
+from .core import Key
 
 from dataclasses import dataclass
 

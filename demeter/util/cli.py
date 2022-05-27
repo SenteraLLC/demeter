@@ -4,7 +4,7 @@ from typing import cast
 import json
 import argparse
 
-from ..core.types import GeoSpatialKey, TemporalKey
+from ..types.core import GeoSpatialKey, TemporalKey
 
 def parseCLIArguments(name : str, major : int, keyword_types : Dict[str, Type]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
   default_cli_types : Dict[str, Any] = {

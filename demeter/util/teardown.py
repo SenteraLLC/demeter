@@ -2,13 +2,13 @@ from typing import Any, List, Mapping, Optional
 
 import geopandas as gpd # type: ignore
 
-from ..core.types import Key
-from ..execution.types import ExecutionSummary, ExecutionKey, S3OutputArgument
-from ..execution.api import insertLocalArgument, insertHTTPArgument, insertS3InputArgument, insertKeywordArgument, insertExecutionKey, insertS3OutputArgument
+from ..types.core import Key
+from ..types.execution import ExecutionSummary, ExecutionKey, S3OutputArgument
+from ..execution import insertLocalArgument, insertHTTPArgument, insertS3InputArgument, insertKeywordArgument, insertExecutionKey, insertS3OutputArgument
 from ..datasource.datasource import DataSource
 from ..datasource.s3_file import S3File
-from ..inputs.types import S3Type
-from ..inputs.api import getS3TypeIdByName, getS3Type
+from ..types.inputs import S3Type
+from ..inputs import getS3TypeIdByName, getS3Type
 
 from .wrapper_types import RawFunctionOutputs
 

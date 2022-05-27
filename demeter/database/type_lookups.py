@@ -1,13 +1,6 @@
 from typing import Union, Dict
 
-from ..local import types as local
-from ..inputs import types as inputs
-from ..function import types as function
-from ..execution import types as execution
-from ..core import types as core
-
-
-AnyTypeTable = Union[local.AnyTypeTable, inputs.AnyTypeTable, function.FunctionType]
+from ..types import local, inputs, function, execution, core
 
 type_table_lookup = {
   local.UnitType   : "unit_type",
@@ -22,10 +15,6 @@ type_table_lookup = {
   function.FunctionType  : "function_type",
 }
 
-assert(set(AnyTypeTable.__args__) == set(type_table_lookup.keys())) # type: ignore
-
-
-AnyDataTable = Union[local.AnyDataTable, inputs.S3Object, function.Function, execution.Execution, core.AnyDataTable]
 
 data_table_lookup = {
   core.Geom          : "geom",
@@ -41,10 +30,6 @@ data_table_lookup = {
   execution.Execution : "execution",
 }
 
-assert(set(AnyDataTable.__args__) == set(data_table_lookup.keys())) # type: ignore
-
-
-AnyIdTable = Union[AnyTypeTable, AnyDataTable, inputs.S3SubType]
 id_table_lookup = type_table_lookup.copy()
 id_table_lookup.update(data_table_lookup) # type: ignore
 
@@ -66,14 +51,4 @@ key_table_lookup = {
   execution.S3InputArgument  : ("s3_input_argument", execution.S3InputArgument),
   execution.S3OutputArgument : ("s3_output_argument", execution.S3OutputArgument),
 }
-AnyKeyTable = Union[local.AnyKeyTable,
-                    inputs.S3ObjectKey,
-                    inputs.S3TypeDataFrame,
-                    function.AnyKeyTable,
-                    execution.AnyKeyTable,
-                   ]
-
-assert(set(AnyKeyTable.__args__) == set(key_table_lookup.keys())) # type: ignore
-
-AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
 

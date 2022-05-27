@@ -5,10 +5,10 @@ from typing import cast
 from io import BytesIO
 import uuid
 
-from ..core.types import Key
-from ..inputs.types import S3TypeDataFrame, S3Object
-from ..inputs.api import insertS3Object, insertS3ObjectKeys
-from ..local.types import LocalType
+from ..types.core import Key
+from ..types.inputs import S3TypeDataFrame, S3Object
+from ..inputs import insertS3Object, insertS3ObjectKeys
+from ..types.local import LocalType
 
 
 from .base import DataSourceBase
@@ -19,8 +19,6 @@ from .s3 import getRawS3, rawToDataFrame
 from .s3_file import SupportedS3DataType, AnyDataFrame, S3FileMeta
 from .types import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 
-import psycopg2
-import requests
 import pandas as pd
 import geopandas as gpd # type: ignore
 

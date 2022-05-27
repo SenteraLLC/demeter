@@ -4,8 +4,8 @@ from enum import Enum
 from datetime import datetime
 
 from ..database.types_protocols import TypeTable, Table, Detailed
-from ..inputs.types import S3Type, S3TypeDataFrame, HTTPType, Keyword
-from ..local.types import LocalType
+from ..types.inputs import S3Type, S3TypeDataFrame, HTTPType, Keyword
+from ..types.local import LocalType
 
 from dataclasses import dataclass
 

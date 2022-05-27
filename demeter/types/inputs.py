@@ -4,7 +4,7 @@ from enum import Enum
 
 import jsonschema
 
-from ..local.types import LocalType
+from ..types.local import LocalType
 from ..database.types_protocols import TypeTable, Table
 
 from dataclasses import dataclass

@@ -2,7 +2,7 @@ from ..demeter.datasource.datasource import DataSource
 from ..demeter.datasource.types import OneToManyResponseFunction
 from ..demeter.datasource.s3_file import S3File
 from ..demeter.transformation import Transformation
-from ..demeter.local.types import LocalType
+from ..demeter.types.local import LocalType
 
 import geopandas as gpd  # type: ignore
 from typing import Dict, List, Union, Tuple

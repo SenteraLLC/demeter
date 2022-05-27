@@ -4,7 +4,7 @@ import geopandas as gpd # type: ignore
 
 from ..datasource.s3_file import S3File, LocalFile
 from ..datasource.datasource import DataSource
-from ..execution.types import ExecutionOutputs
+from ..types.execution import ExecutionOutputs
 
 SupportedOutputFile = Union[S3File, LocalFile]
 

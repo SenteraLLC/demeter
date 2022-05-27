@@ -10,7 +10,7 @@ import tarfile
 import geopandas as gpd  # type: ignore
 import pandas as pd
 
-from ..inputs.types import TaggedS3SubType, S3TypeDataFrame
+from ..types.inputs import TaggedS3SubType, S3TypeDataFrame
 
 
 AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]

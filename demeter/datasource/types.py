@@ -3,8 +3,8 @@ from typing import cast
 
 import requests
 
-from ..local.types import LocalType
-from ..core.types import Key
+from ..types.local import LocalType
+from ..types.core import Key
 
 
 class DataSourceTypes(TypedDict):

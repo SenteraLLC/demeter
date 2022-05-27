@@ -1,6 +1,6 @@
 from typing import Dict, Optional, List, Any, Type, Union
 
-from ..execution.types import KeywordArgument
+from ..types.execution import KeywordArgument
 
 
 def createKeywordArguments(keyword_arguments : Dict[str, Any],

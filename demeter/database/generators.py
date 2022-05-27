@@ -6,10 +6,9 @@ from collections import OrderedDict
 from typing import cast
 from functools import partial
 
-from ..core.types import Key
+from ..types.core import Key
 
-from .api_protocols import GetId, ReturnId
-from .type_lookups import AnyIdTable, AnyKeyTable, AnyTypeTable
+from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable
 from .type_lookups import id_table_lookup, key_table_lookup
 
 

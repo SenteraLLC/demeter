@@ -3,15 +3,15 @@ from typing import cast
 
 import dictdiffer # type: ignore
 
-from ..inputs.types import KeywordType, S3TypeDataFrame, TaggedS3SubType, S3Type, Keyword
-from ..inputs.api import getS3Type, getHTTPType, getLocalType
-from ..function.types import S3InputParameter, HTTPParameter, S3OutputParameter
-from ..function.api import insertLocalParameter, insertS3InputParameter, insertHTTPParameter, insertS3OutputParameter, insertKeywordParameter, insertFunction
+from ..types.inputs import KeywordType, S3TypeDataFrame, TaggedS3SubType, S3Type, Keyword
+from ..inputs import getS3Type, getHTTPType, getLocalType
+from ..types.function import S3InputParameter, HTTPParameter, S3OutputParameter
+from ..function import insertLocalParameter, insertS3InputParameter, insertHTTPParameter, insertS3OutputParameter, insertKeywordParameter, insertFunction
 
 from ..datasource.types import DataSourceTypes
 from ..datasource.register import DataSourceRegister
 
-from ..function.types import Function, FunctionSignature, S3TypeSignature, LocalParameter, KeywordParameter
+from ..types.function import Function, FunctionSignature, S3TypeSignature, LocalParameter, KeywordParameter
 from ..constants import NOW
 
 

@@ -3,7 +3,7 @@ from typing import Any, Optional, Callable, List, Dict
 import pandas as pd
 import geopandas as gpd # type: ignore
 
-from ..inputs.types import LocalType
+from ..types.inputs import LocalType
 
 from .base import DataSourceBase
 from .s3_file import SupportedS3DataType

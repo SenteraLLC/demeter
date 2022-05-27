@@ -10,12 +10,14 @@ from scoping import scoping # type: ignore
 
 from typing import Any, Tuple, Union
 
-from ..lib.connections import getS3Connection
-from ..lib.datasource import DataSource
+from ..demeter.connections import getS3Connection
+from ..demeter.datasource.datasource import DataSource
+from ..demeter import temporary
 
-from ..lib import schema_api
-from ..lib import types
-from ..lib.ingest import S3File
+from ..demeter.datasource.s3_file import S3File
+
+from ..demeter import S3Type, TaggedS3SubType, S3TypeDataFrame
+from ..demeter import insertOrGetS3TypeDataFrame
 
 
 if __name__ == "__main__":
@@ -30,10 +32,6 @@ if __name__ == "__main__":
 
   s3_connection : Any = getS3Connection()
 
-  my_path = os.path.dirname(os.path.realpath(__file__))
-  GEO_KEYS = json.load(open(os.path.join(my_path, "../scripts/test_data/geospatial.json")))
-  TEMPORAL_KEYS = json.load(open(os.path.join(my_path, "../scripts/test_data/temporal.json")))
-
   test_keys = list(temporary.load_keys(cursor))
 
   datasource = DataSource(test_keys, 0, 0, cursor, s3_connection, {}, {})
@@ -41,17 +39,17 @@ if __name__ == "__main__":
   def newS3TypeDataFrame(type_name : str,
                          driver : str,
                          has_geometry : bool
-                        ) -> Tuple[int, types.TaggedS3SubType]:
-    s3_type = types.S3Type(
+                        ) -> Tuple[int, TaggedS3SubType]:
+    s3_type = S3Type(
                 type_name = type_name,
               )
-    s3_type_data_frame = types.S3TypeDataFrame(
+    s3_type_data_frame = S3TypeDataFrame(
                            driver = driver,
                            has_geometry = has_geometry,
                          )
-    s3_type_id = schema_api.insertOrGetS3TypeDataFrame(cursor, s3_type, driver, has_geometry)
+    s3_type_id = insertOrGetS3TypeDataFrame(cursor, s3_type, driver, has_geometry)
 
-    tagged_s3_subtype = types.TaggedS3SubType(
+    tagged_s3_subtype = TaggedS3SubType(
                           tag = types.S3TypeDataFrame,  # type: ignore
                           value = s3_type_data_frame,
                         )

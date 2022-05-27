@@ -1,15 +1,13 @@
-from typing import Callable, TypeVar, Optional, Any
+from typing import Optional, Any
 
 from functools import partial
 import json
 
-from ..database.api_protocols import GetId, GetTable, ReturnId
-from ..database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, insertOrGetType
-from ..database.type_lookups import AnyIdTable, AnyIdTable, AnyKeyTable
-from ..database.types_protocols import Table, TableEncoder
+from .database.api_protocols import GetId, GetTable, ReturnId
+from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, insertOrGetType
+from .database.types_protocols import TableEncoder
 
-from .types import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, InsertableGeom
-
+from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, InsertableGeom
 
 getMaybeFieldId          : GetId[Field]      = getMaybeIdFunction(Field)
 getMaybeOwnerId          : GetId[Owner]      = getMaybeIdFunction(Owner)

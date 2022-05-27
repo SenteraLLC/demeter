@@ -1,11 +1,11 @@
 from typing import List, Tuple, Any, Type, TypeVar, Iterable
 from typing import cast
 
-from ..inputs.types import LocalType
-from ..local.types import UnitType, LocalValue
-from ..local.api import getMaybeLocalTypeId
-from ..execution.types import ExecutionSummary, LocalArgument
-from ..core.types import Key
+from ..types.inputs import LocalType
+from ..types.local import UnitType, LocalValue
+from ..local import getMaybeLocalTypeId
+from ..types.execution import ExecutionSummary, LocalArgument
+from ..types.core import Key
 
 T = TypeVar('T')
 

@@ -4,11 +4,11 @@ import inspect
 
 from ..constants import NOW
 
-from ..core.types import Key
-from ..function.api import getMaybeFunctionTypeId
-from ..function.types import Function, FunctionType
-from ..inputs.api import getS3TypeIdByName
-from ..execution.types import ExecutionSummary, ExecutionKey
+from ..types.core import Key
+from ..function import getMaybeFunctionTypeId
+from ..types.function import Function, FunctionType
+from ..inputs import getS3TypeIdByName
+from ..types.execution import ExecutionSummary, ExecutionKey
 from ..database.details import Details
 
 from .wrapper_types import WrappableFunction

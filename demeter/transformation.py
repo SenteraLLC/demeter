@@ -8,14 +8,13 @@ from . import temporary
 from .datasource.datasource import DataSource
 from .datasource.register import DataSourceRegister
 from .datasource.s3_file import S3File, LocalFile
-from .core.types import Key
-from .constants import NOW
-from .function.types import Function, FunctionType, FunctionSignature
-from .function.api import getLatestFunctionSignature
-from .inputs.api import getS3Type, getS3TypeIdByName
+from .types.core import Key
+from .types.function import Function, FunctionType, FunctionSignature
+from .function import getLatestFunctionSignature
+from .inputs import getS3Type, getS3TypeIdByName
 
-from .execution.api import insertExecution, getExistingExecutions
-from .execution.types import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument
+from .execution import insertExecution, getExistingExecutions
+from .types.execution import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument
 
 from .connections import getS3Connection, getPgConnection
 

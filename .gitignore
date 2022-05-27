@@ -5,3 +5,4 @@
 .mypy_cache/
 .python-version
 __pycache__
+poetry.lock

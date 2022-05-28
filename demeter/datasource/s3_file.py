@@ -15,9 +15,6 @@ from ..types.inputs import TaggedS3SubType, S3TypeDataFrame
 
 AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
 
-# TODO: How to handle different drivers?
-#       Maybe an S3 File heirarchy?
-
 SupportedS3DataType = Union[gpd.GeoDataFrame, pd.DataFrame, BytesIO]
 
 class S3FileMeta(TypedDict):
@@ -37,17 +34,14 @@ class S3File(object):
       self.key = delim.join([key_prefix, self.key])
 
 
-  # NOTE: Driver comes from 'fiona.supported_drivers'
-  # TODO: Support files other than dataframes
-  #       Make 'driver' optional
   def to_file(self,
               maybe_tagged_s3_subtype : Optional[TaggedS3SubType],
               converter_args   : Dict[str, Any] = {},
              ) -> S3FileMeta:
-    # TODO: Serialize S3 file in memory?
     tmp_filename = "/tmp/"+str(uuid.uuid4())
     dataframe_has_geometry : Optional[bool] = None
 
+    # TODO: Serialize S3 file in memory?
     writeS3FileToDisk(self.value, tmp_filename, maybe_tagged_s3_subtype, converter_args)
 
     if os.path.isdir(tmp_filename):
@@ -94,8 +88,8 @@ def writeS3FileToDisk(value                   : SupportedS3DataType,
                      ) -> None:
   if maybe_tagged_s3_subtype is not None:
     tagged_s3_subtype = cast(AnyDataFrame, maybe_tagged_s3_subtype)
-    tag = tagged_s3_subtype["tag"]
-    s3_subtype = tagged_s3_subtype["value"]
+    tag = tagged_s3_subtype.tag
+    s3_subtype = tagged_s3_subtype.value
     if (tag == S3TypeDataFrame):
       s3_type_dataframe = cast(S3TypeDataFrame, s3_subtype)
       value = cast(AnyDataFrame, value)

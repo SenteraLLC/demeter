@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
   bucket_name = os.environ['BUCKET_NAME']
 
-  s3_connection : Any = getS3Connection()
+  (s3_connection, bucket_name) = getS3Connection()
 
   test_keys = list(temporary.load_keys(cursor))
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     s3_type_id = insertOrGetS3TypeDataFrame(cursor, s3_type, driver, has_geometry)
 
     tagged_s3_subtype = TaggedS3SubType(
-                          tag = types.S3TypeDataFrame,  # type: ignore
+                          tag = S3TypeDataFrame,
                           value = s3_type_data_frame,
                         )
 

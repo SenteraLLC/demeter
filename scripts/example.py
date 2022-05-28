@@ -72,7 +72,7 @@ FUNCTION_NAME = "my_function"
 VERSION = 4
 OUTPUTS = {"foo": "test_geojson_type"}
 
-@Transformation(FUNCTION_NAME, VERSION, OUTPUTS, init)
+@Transformation(FUNCTION_NAME, VERSION, OUTPUTS, init) # type: ignore
 def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
   return {"foo": S3File(gdf, "testing_geojson")}
 

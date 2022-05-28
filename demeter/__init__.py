@@ -1,6 +1,5 @@
 
 from .core import *
-#from .types.core import Geometry, Geom, Owner, Grower, Field, GeoSpatialKey, TemporalKey, Key
 from .inputs import *
 from .function import *
 from .execution import *
@@ -15,6 +14,7 @@ from .transformation import Transformation
 __all__ = [
   'datasource',
   'database',
+  'Coordinates',
   'CropProgress',
   'CropProgressKey',
   'CropStage',
@@ -47,9 +47,12 @@ __all__ = [
   'LocalParameter',
   'LocalType',
   'LocalValue',
+  'MultiPolygon',
   'Owner',
   'Planting',
   'PlantingKey',
+  'Polygon',
+  'Properties',
   'ReportType',
   'RequestBodySchema',
   'S3InputArgument',

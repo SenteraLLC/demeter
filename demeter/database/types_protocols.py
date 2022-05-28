@@ -1,4 +1,4 @@
-from typing import Optional, Mapping, Any, Union, Set, Iterator, Tuple, TypeVar
+from typing import Optional, Mapping, Any, Union, Set, Iterator, Tuple, TypeVar, Type
 
 from datetime import datetime
 from dataclasses import dataclass
@@ -9,13 +9,13 @@ from .details import Details
 
 class Table():
   def keys(self) -> Set[str]:
-    return set(self.__annotations__.keys())
+    # TODO: Need a protocol
+    return set(self.__dataclass_fields__.keys()) # type: ignore
 
   def items(self) -> Iterator[Tuple[str, Any]]:
     keys = self.keys()
     return ((k, self[k]) for k in keys)
 
-  # TODO: Memo
   def args(self) -> Mapping[str, Any]:
     return dict(self.items())
 
@@ -28,7 +28,7 @@ class Table():
     raise TypeError
 
 
-T = TypeVar('T', bound=Table)
+T = TypeVar('T', bound=Table, covariant=True)
 
 class TableEncoder(json.JSONEncoder):
 
@@ -63,6 +63,9 @@ class TypeTable(Table):
 class TableKey(Table):
   pass
 
+@dataclass(frozen=True)
+class SelfKey(TableKey):
+  pass
 
 # TODO: Consider using typing.NewType for serial keys
 AnyKey = Union[TableKey, int]

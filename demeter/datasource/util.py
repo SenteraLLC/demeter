@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Any, Type, Union
+from typing import Dict, Optional, List, Any, Type, Union, Mapping, Callable
 
 from ..types.execution import KeywordArgument
 
@@ -22,10 +22,12 @@ def createKeywordArguments(keyword_arguments : Dict[str, Any],
       value_number = float(v)
 
     typ = keyword_types[name]
-    {str   : set_string,
-     int   : set_number,
-     float : set_number,
-    }.get(typ, set_string)(value) # type: ignore
+    type_to_cast : Mapping[Type, Callable[[Any], Any]] = {
+      str   : set_string,
+      int   : set_number,
+      float : set_number,
+    }
+    type_to_cast.get(typ, set_string)(value)
     ka = KeywordArgument(
            execution_id = execution_id,
            function_id = function_id,

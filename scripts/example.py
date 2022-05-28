@@ -1,8 +1,8 @@
-from ..demeter.datasource.datasource import DataSource
-from ..demeter.datasource.types import OneToManyResponseFunction
-from ..demeter.datasource.s3_file import S3File
-from ..demeter.transformation import Transformation
-from ..demeter.types.local import LocalType
+from demeter.datasource.datasource import DataSource
+from demeter.datasource.types import OneToManyResponseFunction
+from demeter.datasource.s3_file import S3File
+from demeter.transformation import Transformation
+from demeter.types.local import LocalType
 
 import geopandas as gpd  # type: ignore
 from typing import Dict, List, Union, Tuple
@@ -78,7 +78,7 @@ def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
 
 
 def cli(fn):
-  from ..demeter.util.mode import ExecutionMode
+  from demeter.util.mode import ExecutionMode
   fn(mode = ExecutionMode.CLI)
   #fn(mode = ExecutionMode.REGISTER)
 

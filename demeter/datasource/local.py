@@ -4,8 +4,7 @@ from typing import cast
 from ..types.inputs import LocalType
 from ..types.local import UnitType, LocalValue
 from ..local import getMaybeLocalTypeId
-from ..types.execution import ExecutionSummary, LocalArgument
-from ..types.core import Key
+from ..types.execution import ExecutionSummary, LocalArgument, Key
 
 T = TypeVar('T')
 

@@ -49,7 +49,7 @@ class CropStage(TypeTable):
 
 AnyTypeTable = Union[UnitType, CropType, CropStage, ReportType, LocalGroup]
 
-
+@dataclass(frozen=True)
 class PlantHarvestKey(TableKey):
   field_id      : int
   crop_type_id  : int

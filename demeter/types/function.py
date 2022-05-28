@@ -3,7 +3,7 @@ from typing import Optional, Sequence, Tuple, Union, Protocol
 from enum import Enum
 from datetime import datetime
 
-from ..database.types_protocols import TypeTable, Table, Detailed
+from ..database.types_protocols import TypeTable, Table, Detailed, SelfKey
 from ..types.inputs import S3Type, S3TypeDataFrame, HTTPType, Keyword
 from ..types.local import LocalType
 
@@ -31,24 +31,24 @@ class Parameter(FunctionId):
   pass
 
 @dataclass(frozen=True)
-class LocalParameter(Parameter):
+class LocalParameter(Parameter, SelfKey):
   local_type_id       : int
 
 @dataclass(frozen=True)
-class HTTPParameter(Parameter, Detailed):
+class HTTPParameter(Parameter, SelfKey, Detailed):
   http_type_id        : int
 
 @dataclass(frozen=True)
-class S3InputParameter(Parameter, Detailed):
+class S3InputParameter(Parameter, SelfKey, Detailed):
   s3_type_id              : int
 
 @dataclass(frozen=True)
-class S3OutputParameter(Parameter, Detailed):
+class S3OutputParameter(Parameter, SelfKey, Detailed):
   s3_output_parameter_name : str
   s3_type_id               : int
 
 @dataclass(frozen=True)
-class KeywordParameter(Keyword, Parameter):
+class KeywordParameter(Keyword, Parameter, SelfKey):
   pass
 
 

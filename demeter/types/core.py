@@ -1,4 +1,4 @@
-from typing import Optional, Union, Mapping, Literal, Sequence, Tuple, Generator
+from typing import Optional, Union, Mapping, Literal, Sequence, Tuple
 from datetime import date
 
 from ..database.types_protocols import Table, Updateable, Detailed
@@ -7,9 +7,10 @@ from ..database.details import Details
 from dataclasses import dataclass
 from abc import ABC
 
+@dataclass(frozen=True)
 class Properties(Details):
-  def __init__(self, properties : Mapping[Literal["name"], str]):
-    super().__init__(properties) # type: ignore
+  def __init__(self, name : str):
+    super().__init__({"name": name})
 
 
 @dataclass(frozen=True)
@@ -27,7 +28,7 @@ Coordinates = Union[Point, Line, MultiPolygon]
 
 
 @dataclass(frozen=True)
-class Geometry(Table):
+class GeomImpl(Table):
   type        : str
   coordinates : Coordinates
   crs         : CRS
@@ -35,7 +36,7 @@ class Geometry(Table):
 @dataclass(frozen=True)
 class Geom(Updateable):
   container_geom_id : Optional[int]
-  geom              : Geometry
+  geom              : GeomImpl
 
 @dataclass(frozen=True)
 class InsertableGeom(Table):
@@ -71,18 +72,6 @@ class TemporalKey(Table):
   start_date : date
   end_date   : date
 
-from typing import Protocol
-
-@dataclass(frozen=True)
-class Key(GeoSpatialKey, TemporalKey):
-  geospatial_key_id : int
-  temporal_key_id   : int
-
-def foo(k : Key) -> int:
-  x = k.geom_id
-  return 1
-
-KeyGenerator = Generator[Key, None, None]
 
 AnyDataTable = Union[Geom, Owner, Grower, Field, GeoSpatialKey, TemporalKey]
 

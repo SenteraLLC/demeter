@@ -4,7 +4,7 @@ from typing import cast
 import requests
 
 from ..types.local import LocalType
-from ..types.core import Key
+from ..types.execution import Key
 
 
 class DataSourceTypes(TypedDict):

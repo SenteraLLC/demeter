@@ -1,4 +1,4 @@
-from typing import Type, Any, Dict, Tuple, Optional, Any
+from typing import Type, Any, Dict, Tuple, Optional, Any, Mapping
 from typing import cast
 
 import dictdiffer # type: ignore
@@ -17,11 +17,13 @@ from ..constants import NOW
 
 def makeDummyArguments(keyword_types : Dict[str, Type]) -> Dict[str, Any]:
   out : Dict[str, Any] = {}
-  for name, _type in keyword_types.items():
-    out[name] = {str : "",
-                 int : 0,
-                 float : 0.0,
-                }.get(_type, None) # type: ignore
+  for name, typ in keyword_types.items():
+    type_to_dummy : Mapping[Type, Any] = {
+      str : "",
+      int : 0,
+      float : 0.0,
+    }
+    out[name] = type_to_dummy.get(typ, None)
   return out
 
 

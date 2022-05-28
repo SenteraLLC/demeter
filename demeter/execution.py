@@ -8,11 +8,10 @@ from .execution_custom import getExecutionSummaries, \
 
 insertExecution : ReturnId[Execution] = getInsertReturnIdFunction(Execution)
 
-insertLocalArgument    : ReturnSameKey[LocalArgument] = getInsertReturnKeyFunction(LocalArgument) # type: ignore
-insertHTTPArgument     : ReturnSameKey[HTTPArgument]   = getInsertReturnKeyFunction(HTTPArgument) # type: ignore
-insertKeywordArgument     : ReturnSameKey[KeywordArgument]   = getInsertReturnKeyFunction(KeywordArgument) # type: ignore
-insertS3InputArgument  : ReturnSameKey[S3InputArgument] = getInsertReturnKeyFunction(S3InputArgument) # type: ignore
-insertS3OutputArgument : ReturnSameKey[S3OutputArgument] = getInsertReturnKeyFunction(S3OutputArgument) # type: ignore
-insertExecutionKey : ReturnSameKey[ExecutionKey] = getInsertReturnKeyFunction(ExecutionKey) # type: ignore
-
+insertLocalArgument    : ReturnSameKey[LocalArgument] = getInsertReturnKeyFunction(LocalArgument)
+insertHTTPArgument     : ReturnSameKey[HTTPArgument]   = getInsertReturnKeyFunction(HTTPArgument)
+insertKeywordArgument     : ReturnSameKey[KeywordArgument]   = getInsertReturnKeyFunction(KeywordArgument)
+insertS3InputArgument  : ReturnSameKey[S3InputArgument] = getInsertReturnKeyFunction(S3InputArgument)
+insertS3OutputArgument : ReturnSameKey[S3OutputArgument] = getInsertReturnKeyFunction(S3OutputArgument)
+insertExecutionKey : ReturnSameKey[ExecutionKey] = getInsertReturnKeyFunction(ExecutionKey)
 

@@ -4,7 +4,7 @@ from .database.api_protocols import GetId, GetTable, ReturnId, ReturnKey
 from .database.generators import getMaybeIdFunction, getTableFunction, getInsertReturnIdFunction, getInsertReturnKeyFunction, insertOrGetType
 
 from .types.local import LocalValue, UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup
-from .types.local import  Planting, Harvest, CropProgress, PlantingKey, HarvestKey, CropProgressKey
+from .types.local import Planting, Harvest, CropProgress, PlantingKey, HarvestKey, CropProgressKey
 
 getMaybeLocalValue   : GetId[LocalValue] = getMaybeIdFunction(LocalValue)
 getMaybeUnitTypeId   : GetId[UnitType]   = getMaybeIdFunction(UnitType)
@@ -25,9 +25,9 @@ insertCropStage  : ReturnId[CropStage]  = getInsertReturnIdFunction(CropStage)
 insertReportType : ReturnId[ReportType] = getInsertReturnIdFunction(ReportType)
 insertLocalGroup : ReturnId[LocalGroup] = getInsertReturnIdFunction(LocalGroup)
 
-insertPlanting     : ReturnKey[Planting, PlantingKey] = getInsertReturnKeyFunction(Planting) # type: ignore
-insertHarvest      : ReturnKey[Harvest, HarvestKey] = getInsertReturnKeyFunction(Harvest) # type: ignore
-insertCropProgress : ReturnKey[CropProgress, CropProgressKey] = getInsertReturnKeyFunction(CropProgress) # type: ignore
+insertPlanting     : ReturnKey[Planting, PlantingKey] = getInsertReturnKeyFunction(Planting)
+insertHarvest      : ReturnKey[Harvest, HarvestKey] = getInsertReturnKeyFunction(Harvest)
+insertCropProgress : ReturnKey[CropProgress, CropProgressKey] = getInsertReturnKeyFunction(CropProgress)
 
 insertOrGetUnitType = __partial(insertOrGetType, getMaybeUnitTypeId, insertUnitType)
 insertOrGetLocalType = __partial(insertOrGetType, getMaybeLocalTypeId, insertLocalType)

@@ -5,7 +5,7 @@ from enum import Enum
 import jsonschema
 
 from ..types.local import LocalType
-from ..database.types_protocols import TypeTable, Table
+from ..database.types_protocols import TypeTable, Table, SelfKey
 
 from dataclasses import dataclass
 
@@ -46,7 +46,7 @@ class S3Type(TypeTable):
   type_name : str
 
 @dataclass(frozen=True)
-class S3TypeDataFrame(Table):
+class S3TypeDataFrame(TypeTable, SelfKey):
   driver       : str
   has_geometry : bool
 
@@ -74,7 +74,7 @@ class S3Object(Table):
   s3_type_id  : int
 
 @dataclass(frozen=True)
-class S3ObjectKey(Table):
+class S3ObjectKey(SelfKey):
   s3_object_id      : int
   geospatial_key_id : int
   temporal_key_id   : int

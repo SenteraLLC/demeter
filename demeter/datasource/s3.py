@@ -7,10 +7,9 @@ import botocore.exceptions
 import pandas as pd
 import geopandas as gpd # type: ignore
 
-from ..types.execution import S3InputArgument
+from ..types.execution import S3InputArgument, Key
 from ..types.inputs import TaggedS3SubType, S3TypeDataFrame
 from ..inputs import getS3ObjectByKeys, getS3Type
-from ..types.core import Key
 from ..types.execution import ExecutionSummary
 
 from .s3_file import AnyDataFrame

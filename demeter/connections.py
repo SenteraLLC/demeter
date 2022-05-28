@@ -10,6 +10,7 @@ from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import register_adapter, adapt
 
 from .types.inputs import HTTPVerb, RequestBodySchema, KeywordType
+from .database.details import Details
 
 
 def getEnv(name : str, default : Optional[str] = None):
@@ -44,7 +45,7 @@ def getS3Connection() -> Tuple[Any, str]:
   )
   return s3_resource, bucket_name
 
-def register():
+def register() -> None:
   http_verb_to_string : Callable[[HTTPVerb], str] = lambda v : v.name.lower()
 
   verb_to_sql = lambda v : psycopg2.extensions.AsIs("".join(["'", http_verb_to_string(v), "'"]))
@@ -56,6 +57,7 @@ def register():
   register_adapter(set, lambda s : adapt(list(s)))
 
   register_adapter(dict, psycopg2.extras.Json)
+  register_adapter(Details, psycopg2.extras.Json)
 
   register_adapter(KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
 

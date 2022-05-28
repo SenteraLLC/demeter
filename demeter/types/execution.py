@@ -1,9 +1,9 @@
-from typing import Sequence, Union, Optional, List
+from typing import Sequence, Union, Optional, List, Generator
 
-from ..database.types_protocols import Table
+from ..database.types_protocols import Table, SelfKey
 
 from .function import FunctionId
-from .core import Key
+from .core import GeoSpatialKey, TemporalKey
 
 from dataclasses import dataclass
 
@@ -13,42 +13,51 @@ class Argument(FunctionId):
   execution_id      : int
 
 @dataclass(frozen=True)
-class LocalArgument(Argument):
+class LocalArgument(Argument, SelfKey):
   local_type_id : int
   number_of_observations : int
 
 @dataclass(frozen=True)
-class HTTPArgument(Argument):
+class HTTPArgument(Argument, SelfKey):
   http_type_id : int
   number_of_observations : int
 
 @dataclass(frozen=True)
-class S3InputArgument(Argument):
+class S3InputArgument(Argument, SelfKey):
   s3_type_id   : int
   s3_object_id : int
 
 @dataclass(frozen=True)
-class S3OutputArgument(Argument):
+class S3OutputArgument(Argument, SelfKey):
   s3_output_parameter_name : str
   s3_type_id               : int
   s3_object_id             : int
 
 @dataclass(frozen=True)
-class KeywordArgument(Argument):
+class KeywordArgument(Argument, SelfKey):
   keyword_name : str
   value_number : Optional[float]
   value_string : Optional[str]
+
+@dataclass(frozen=True)
+class _KeyIds(Table):
+  geospatial_key_id : int
+  temporal_key_id   : int
+
+@dataclass(frozen=True)
+class Key(_KeyIds, GeoSpatialKey, TemporalKey):
+  pass
+
+KeyGenerator = Generator[Key, None, None]
 
 
 @dataclass
 class Execution(Table):
   function_id  : int
 
-@dataclass
-class ExecutionKey():
+@dataclass(frozen=True)
+class ExecutionKey(_KeyIds, SelfKey):
   execution_id      : int
-  geospatial_key_id : int
-  temporal_key_id   : int
 
 @dataclass
 class ExecutionArguments():

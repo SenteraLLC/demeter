@@ -9,7 +9,7 @@ import psycopg2.extras
 
 from .database.generators import generateInsertMany
 
-from .types.core import Key
+from .types.execution import Key
 
 from .types.inputs import *
 
@@ -48,7 +48,7 @@ def insertS3ObjectKeys(cursor       : Any,
                       temporal_key_id   = k.temporal_key_id,
                     )
     for key_name in s3_key_names:
-      args.append(s3_object_key[key_name])  # type: ignore
+      args.append(s3_object_key[key_name])
   results = cursor.execute(stmt, args)
   return True
 

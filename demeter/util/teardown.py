@@ -2,8 +2,7 @@ from typing import Any, List, Mapping, Optional
 
 import geopandas as gpd # type: ignore
 
-from ..types.core import Key
-from ..types.execution import ExecutionSummary, ExecutionKey, S3OutputArgument
+from ..types.execution import ExecutionSummary, ExecutionKey, S3OutputArgument, Key
 from ..execution import insertLocalArgument, insertHTTPArgument, insertS3InputArgument, insertKeywordArgument, insertExecutionKey, insertS3OutputArgument
 from ..datasource.datasource import DataSource
 from ..datasource.s3_file import S3File

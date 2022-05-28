@@ -1,13 +1,14 @@
-from typing import Optional, Any
+from typing import Optional, Any, Mapping
 
 from functools import partial
 import json
+import datetime
 
 from .database.api_protocols import GetId, GetTable, ReturnId
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, insertOrGetType
 from .database.types_protocols import TableEncoder
 
-from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, InsertableGeom
+from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, GeomImpl, InsertableGeom, CRS
 
 getMaybeFieldId          : GetId[Field]      = getMaybeIdFunction(Field)
 getMaybeOwnerId          : GetId[Owner]      = getMaybeIdFunction(Owner)
@@ -76,7 +77,8 @@ def insertGeom(cursor   : Any,
   if maybe_geom_id is not None:
     return maybe_geom_id
   igeo = makeInsertable(geom)
-  return insertInsertableGeom(cursor, igeo) # type: ignore
+  return insertInsertableGeom(cursor, igeo)
 
 insertOrGetGeom = insertGeom
+
 

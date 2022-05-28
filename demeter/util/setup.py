@@ -4,7 +4,6 @@ import inspect
 
 from ..constants import NOW
 
-from ..types.core import Key
 from ..function import getMaybeFunctionTypeId
 from ..types.function import Function, FunctionType
 from ..inputs import getS3TypeIdByName

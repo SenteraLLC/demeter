@@ -8,13 +8,12 @@ from . import temporary
 from .datasource.datasource import DataSource
 from .datasource.register import DataSourceRegister
 from .datasource.s3_file import S3File, LocalFile
-from .types.core import Key
 from .types.function import Function, FunctionType, FunctionSignature
 from .function import getLatestFunctionSignature
 from .inputs import getS3Type, getS3TypeIdByName
 
 from .execution import insertExecution, getExistingExecutions
-from .types.execution import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument
+from .types.execution import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument, Key
 
 from .connections import getS3Connection, getPgConnection
 
@@ -30,7 +29,6 @@ from .util.existing import getExistingDuplicate
 
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Local) -> (S3, Local)
-
 
 def Transformation(name                : str,
                    major               : int,
@@ -52,8 +50,6 @@ def Transformation(name                : str,
     if maybe_latest is not None:
       maybe_function_id, maybe_latest_signature = maybe_latest
 
-    # TODO: Use Airflow XCOM with 'render_template_as_native_obj=True' here
-
     # TODO: Only allow primitive values in kwargs?
     @wraps(fn)
     def add_datasource(*args : Any, **kwargs : Any) -> ExecutionOutputs:
@@ -71,7 +67,7 @@ def Transformation(name                : str,
       if mode == ExecutionMode.REGISTER:
         kwargs = makeDummyArguments(keyword_types)
         dummy_datasource = DataSourceRegister(cursor)
-        load_fn(dummy_datasource, **kwargs)  # type: ignore
+        load_fn(dummy_datasource, **kwargs)
 
         input_types = dummy_datasource.types
         maybe_new_minor = registerFunction(cursor, input_types, keyword_types, function, output_types, maybe_latest_signature)
@@ -103,7 +99,7 @@ def Transformation(name                : str,
 
         datasource : DataSource = DataSource(keys, function_id, execution_id, cursor, s3_connection, kwargs, keyword_types)
 
-        load_fn(datasource, **kwargs) # type: ignore
+        load_fn(datasource, **kwargs)
 
         function_id = datasource.execution_summary.function_id
         existing_executions = getExistingExecutions(cursor, function_id)

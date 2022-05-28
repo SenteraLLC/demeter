@@ -5,7 +5,7 @@ from typing import cast
 from io import BytesIO
 import uuid
 
-from ..types.core import Key
+from ..types.execution import Key
 from ..types.inputs import S3TypeDataFrame, S3Object
 from ..inputs import insertS3Object, insertS3ObjectKeys
 from ..types.local import LocalType

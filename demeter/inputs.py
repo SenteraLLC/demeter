@@ -2,8 +2,8 @@ from typing import Tuple, Any
 
 from functools import partial as __partial
 
-from .database.api_protocols import GetId, GetTable, ReturnId, ReturnKey
-from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getInsertReturnKeyFunction, getTableFunction, insertOrGetType
+from .database.api_protocols import GetId, GetTable, ReturnId, ReturnSameKey
+from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getInsertReturnSameKeyFunction, getTableFunction, insertOrGetType
 
 from .types.inputs import *
 
@@ -27,9 +27,9 @@ insertS3Object   : ReturnId[S3Object] = getInsertReturnIdFunction(S3Object)
 insertHTTPType   : ReturnId[HTTPType] = getInsertReturnIdFunction(HTTPType)
 insertS3TypeBase : ReturnId[S3Type]   = getInsertReturnIdFunction(S3Type)
 
-insertS3ObjectKey : ReturnKey[S3ObjectKey, S3ObjectKey] = getInsertReturnKeyFunction(S3ObjectKey) # type: ignore
+insertS3ObjectKey : ReturnSameKey[S3ObjectKey] = getInsertReturnSameKeyFunction(S3ObjectKey)
 
-insertS3TypeDataFrame : ReturnKey[S3TypeDataFrame, S3TypeDataFrame] = getInsertReturnKeyFunction(S3TypeDataFrame) # type: ignore
+insertS3TypeDataFrame : ReturnSameKey[S3TypeDataFrame] = getInsertReturnSameKeyFunction(S3TypeDataFrame)
 
 insertOrGetS3Type = __partial(insertOrGetType, getMaybeS3TypeId, insertS3TypeBase)
 
@@ -81,7 +81,7 @@ def getS3Type(cursor : Any,
     if maybe_s3_sub_type is not None:
       s3_sub_type = maybe_s3_sub_type
       s3_subtype_value = TaggedS3SubType(
-                           tag = s3_sub_type_tag,  # type: ignore
+                           tag = s3_sub_type_tag,
                            value = s3_sub_type,
                          )
       return s3_type, s3_subtype_value

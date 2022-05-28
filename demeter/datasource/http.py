@@ -8,8 +8,7 @@ from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 
 from ..types.inputs import HTTPType, HTTPVerb, RequestBodySchema
 from ..inputs import getHTTPByName
-from ..types.core import Key
-from ..types.execution import ExecutionSummary, HTTPArgument
+from ..types.execution import ExecutionSummary, HTTPArgument, Key
 
 
 def checkHTTPParams(params : Dict[str, Any],

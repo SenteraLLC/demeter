@@ -2,7 +2,7 @@ from datetime import time, date
 
 from typing import TypedDict, Sequence, Dict, Optional, Any, List
 
-from ..lib.core.types import Geometry, Owner
+from demeter import Owner
 
 class HarvestPlanting(TypedDict):
   geo_id    : int

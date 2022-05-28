@@ -3,8 +3,8 @@ from typing import Callable
 import psycopg2
 import psycopg2.extras
 
-from ..demeter.types.inputs import HTTPType, HTTPVerb, RequestBodySchema
-from ..demeter.inputs import insertHTTPType
+from demeter.types.inputs import HTTPType, HTTPVerb, RequestBodySchema
+from demeter.inputs import insertHTTPType
 
 http_verb_to_string : Callable[[HTTPVerb], str] = lambda v : v.name.lower()
 

@@ -1,5 +1,4 @@
-from ..lib import schema_api
-from ..lib import types
+import demeter
 
 import psycopg2
 import psycopg2.extras
@@ -11,9 +10,8 @@ import os
 import json
 from datetime import datetime, date
 
-from typing import List, Optional, Dict, Any, Set, TypedDict, Callable, TextIO, Tuple, Iterator
+from typing import List, Optional, Dict, Any, Set, TypedDict, Callable, TextIO, Tuple, Iterator, Mapping
 
-NO_DETAILS : types.Details = {}
 NOW = datetime.now()
 
 def pickFilenames(path : str, filenames : List[str], name : str) -> List[str]:
@@ -36,12 +34,12 @@ def maybeGetProperty(feature : Dict[str, Any], name : str) -> Optional[str]:
   return None
 
 
-def loadGeometry(crs               : types.CRS,
+def loadGeometry(crs               : demeter.CRS,
                  feature           : Dict[str, Any],
                  container_geom_id : int = None,
-                ) -> types.Geom:
+                ) -> demeter.Geom:
   geometry = feature["geometry"]
-  g = types.Geometry(
+  g = demeter.GeomImpl(
         type        = geometry["type"],
         coordinates = geometry["coordinates"],
         crs         = crs,
@@ -49,7 +47,7 @@ def loadGeometry(crs               : types.CRS,
   # TODO: How to deal with these projections? Not technically correct?
   if crs["properties"]["name"] == "urn:ogc:def:crs:OGC:1.3:CRS84":
     crs["properties"]["name"] = "urn:ogc:def:crs:EPSG::4326"
-  return types.Geom(
+  return demeter.Geom(
             container_geom_id = container_geom_id,
             geom              = g,
             last_updated      = datetime.now(),
@@ -58,28 +56,32 @@ def loadGeometry(crs               : types.CRS,
 
 def loadField(cursor  : Any,
               feature : Dict[str, Any],
-              crs     : types.CRS,
+              crs     : demeter.CRS,
              ) -> int:
   f = feature
-  owner = types.Owner(
+  owner = demeter.Owner(
             owner = getProperty(f, "owner"),
           )
-  owner_id = schema_api.getMaybeOwnerId(cursor, owner)
+  owner_id = demeter.getMaybeOwnerId(cursor, owner)
   if owner_id is None:
-    owner_id = schema_api.insertOwner(cursor, owner)
+    owner_id = demeter.insertOwner(cursor, owner)
 
-  grower = types.Grower(
+  grower = demeter.Grower(
+             owner_id = owner_id,
              farm  = getProperty(f, "farm"),
+             external_id = None,
+             last_updated = NOW,
+             details      = None,
            )
-  grower_id = schema_api.getMaybeGrowerId(cursor, grower)
+  grower_id = demeter.getMaybeGrowerId(cursor, grower)
   if grower_id is None:
-    grower_id = schema_api.insertGrower(cursor, grower)
+    grower_id = demeter.insertGrower(cursor, grower)
 
   geom = loadGeometry(crs, f)
-  geom_id = schema_api.insertGeom(cursor, geom)
+  geom_id = demeter.insertGeom(cursor, geom)
 
   year = getProperty(f, "year")
-  field = types.Field(
+  field = demeter.Field(
             owner_id = owner_id,
             year = int(year),
             geom_id = geom_id,
@@ -87,16 +89,16 @@ def loadField(cursor  : Any,
             sentera_id = None,
             external_id = None,
           )
-  maybe_field_id = schema_api.getMaybeFieldId(cursor, field)
+  maybe_field_id = demeter.getMaybeFieldId(cursor, field)
   if maybe_field_id is not None:
     return maybe_field_id
-  return schema_api.insertField(cursor, field)
+  return demeter.insertField(cursor, field)
 
 
 def loadFieldFile(cursor, filename : str) -> Dict[str, int]:
   with open(filename) as geojson_file:
     contents        = json.load(geojson_file)
-    crs : types.CRS = contents["crs"]
+    crs : demeter.CRS = contents["crs"]
     field_id_map = {}
     for f in contents["features"]:
       field_tag = getProperty(f, "field_id")
@@ -184,7 +186,7 @@ def yieldGeoJsonRow(file : TextIO,
     if maybeGetProperty(f, "geometry") is not None:
       crs = contents["crs"]
       geom   = loadGeometry(crs, f)
-      geom_id = schema_api.insertGeom(cursor, geom)
+      geom_id = demeter.insertGeom(cursor, geom)
 
     required : Dict[str, str] = {"field_tag" : getProperty(f, "field_id")}
     for p in required_properties:
@@ -204,7 +206,7 @@ YieldFn = Callable[[TextIO, Any, Set[str], Set[str]], Iterator[RowAndMaybeGeomId
 
 def loadPlantingFile(parse_meta : ParseMeta,
                      yield_fn   : YieldFn,
-                    ) -> List[types.PlantingKey]:
+                    ) -> List[demeter.PlantingKey]:
   cursor       = parse_meta["cursor"]
   filename     = parse_meta["filename"]
   field_id_map = parse_meta["field_id_map"]
@@ -212,44 +214,44 @@ def loadPlantingFile(parse_meta : ParseMeta,
   required_properties = set(["crop"])
   optional_properties = set(["variety", "date_plant", "date_emerge"])
 
-  planting_keys : List[types.PlantingKey] = []
+  planting_keys : List[demeter.PlantingKey] = []
   with open(filename) as f:
     for required, optional, geom_id in yield_fn(f, cursor, required_properties, optional_properties):
       field_tag = required["field_tag"]
       field_id  = field_id_map[field_tag]
-      field = schema_api.getField(cursor, field_id)
+      field = demeter.getField(cursor, field_id)
 
       if geom_id is None:
         geom_id = field["geom_id"]
 
-      crop_type = types.CropType(species  = required["crop"],
+      crop_type = demeter.CropType(species  = required["crop"],
                                  cultivar = optional["variety"],
                                  parent_id_1 = None,
                                  parent_id_2 = None,
                                  last_updated = NOW,
-                                 details      = NO_DETAILS,
+                                 details      = None,
                                 )
-      crop_type_id = schema_api.insertOrGetCropType(cursor, crop_type)
+      crop_type_id = demeter.insertOrGetCropType(cursor, crop_type)
 
       date_planted = maybeParseDate(optional["date_plant"])
 
-      planting = types.Planting(
+      planting = demeter.Planting(
                    field_id     = field_id,
                    crop_type_id = crop_type_id,
                    geom_id      = geom_id,
                    completed    = date_planted,
                    last_updated = NOW,
-                   details      = NO_DETAILS,
+                   details      = None,
                  )
-      planting_key = schema_api.insertPlanting(cursor, planting)
+      planting_key = demeter.insertPlanting(cursor, planting)
       planting_keys.append(planting_key)
 
-      crop_stage = types.CropStage(crop_stage = "emergence")
-      crop_stage_id = schema_api.insertOrGetCropStage(cursor, crop_stage)
+      crop_stage = demeter.CropStage(crop_stage = "emergence")
+      crop_stage_id = demeter.insertOrGetCropStage(cursor, crop_stage)
 
       date_emerged = maybeParseDate(optional["date_emerge"])
       planting_geom_id = planting_key["geom_id"]
-      crop_progress = types.CropProgress(
+      crop_progress = demeter.CropProgress(
                         field_id = field_id,
                         crop_type_id = crop_type_id,
                         planting_geom_id = planting_geom_id,
@@ -257,7 +259,7 @@ def loadPlantingFile(parse_meta : ParseMeta,
                         crop_stage_id = crop_stage_id,
                         day = date_emerged,
                       )
-      crop_progress_key = schema_api.insertCropProgress(cursor, crop_progress)
+      crop_progress_key = demeter.insertCropProgress(cursor, crop_progress)
 
   return planting_keys
 
@@ -271,7 +273,7 @@ def insertLocalValue(cursor         : Any,
                      acquired       : datetime,
                     ) -> int:
 
-  local_value = types.LocalValue(
+  local_value = demeter.LocalValue(
                   geom_id        = geom_id,
                   field_id       = field_id,
                   quantity       = quantity,
@@ -279,9 +281,9 @@ def insertLocalValue(cursor         : Any,
                   unit_type_id   = unit_type_id,
                   local_group_id = local_group_id,
                   acquired       = acquired,
-                  details        = NO_DETAILS,
+                  details        = None,
                 )
-  local_value_id = schema_api.insertLocalValue(cursor, local_value)
+  local_value_id = demeter.insertLocalValue(cursor, local_value)
 
   return local_value_id
 
@@ -302,7 +304,7 @@ def loadAppliedFile(parse_meta : ParseMeta,
     for required, optional, geom_id in yield_fn(f, cursor, required_properties, optional_properties):
       field_tag = required["field_tag"]
       field_id  = field_id_map[field_tag]
-      field = schema_api.getField(cursor, field_id)
+      field = demeter.getField(cursor, field_id)
 
       if geom_id is None:
         geom_id = field["geom_id"]
@@ -313,15 +315,15 @@ def loadAppliedFile(parse_meta : ParseMeta,
       }
       applied = source_keys[required["source_n"]]
 
-      local_type = types.LocalType(type_name=applied, type_category="application")
-      local_type_id = schema_api.insertOrGetLocalType(cursor, local_type)
+      local_type = demeter.LocalType(type_name=applied, type_category="application")
+      local_type_id = demeter.insertOrGetLocalType(cursor, local_type)
 
       TYPE_KEY = "rate_n_kgha"
       supported_units = {"rate_n_kgha": "kg/ha"}
       unit = supported_units[TYPE_KEY]
 
-      unit_type = types.UnitType(unit=unit, local_type_id=local_type_id)
-      unit_type_id = schema_api.insertOrGetUnitType(cursor, unit_type)
+      unit_type = demeter.UnitType(unit=unit, local_type_id=local_type_id)
+      unit_type_id = demeter.insertOrGetUnitType(cursor, unit_type)
 
       acquired = parseDate(required["date_applied"])
       quantity = float(required[TYPE_KEY])
@@ -343,26 +345,26 @@ def loadSentinelFile(parse_meta : ParseMeta,
   local_groups : Dict[int, Set[int]] = {}
   with open(filename) as geojson_file:
     contents        = json.load(geojson_file)
-    crs : types.CRS = contents["crs"]
+    crs : demeter.CRS = contents["crs"]
     features = contents["features"]
     for f in features:
       field_tag = getProperty(f, "field_id")
       field_id = field_id_map[field_tag]
-      field = schema_api.getField(cursor, field_id)
+      field = demeter.getField(cursor, field_id)
 
       geom = loadGeometry(crs, f)
-      geom_id = schema_api.insertGeom(cursor, geom)
+      geom_id = demeter.insertGeom(cursor, geom)
 
       date = getProperty(f, "acquisition_time")
       acquired = parseDate(date)
 
       simplify_sensor_type = lambda s : s.split()[0].lower()
       sensor_name = simplify_sensor_type(getProperty(f, "sensor_type"))
-      local_group = types.LocalGroup(
+      local_group = demeter.LocalGroup(
                       group_name     = sensor_name,
                       group_category = "sentinel"
                     )
-      local_group_id = schema_api.insertOrGetLocalGroup(cursor, local_group)
+      local_group_id = demeter.insertOrGetLocalGroup(cursor, local_group)
 
       prefix = "wl_"
 
@@ -371,11 +373,11 @@ def loadSentinelFile(parse_meta : ParseMeta,
       local_ids : Set[int] = set()
       type_category = "wavelength"
       for wavelength, quantity in wavelengths.items():
-        local_type = types.LocalType(type_name=wavelength, type_category=type_category)
-        local_type_id = schema_api.insertOrGetLocalType(cursor, local_type)
+        local_type = demeter.LocalType(type_name=wavelength, type_category=type_category)
+        local_type_id = demeter.insertOrGetLocalType(cursor, local_type)
 
         unit = "reflectance"
-        unit_type_id = schema_api.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
+        unit_type_id = demeter.insertOrGetUnitType(cursor, demeter.UnitType(unit=unit, local_type_id=local_type_id))
 
         local_id = insertLocalValue(cursor, quantity, unit_type_id, geom_id, field_id, local_group_id, acquired)
 
@@ -397,11 +399,11 @@ def loadWeatherFile(parse_meta : ParseMeta,
   with open(filename) as geojson_file:
     print(filename)
     contents        = json.load(geojson_file)
-    crs : types.CRS = contents["crs"]
+    crs : demeter.CRS = contents["crs"]
     features = contents["features"]
     for f in features:
       geom = f["geometry"]
-      some_point = types.Geometry(
+      some_point = demeter.GeomImpl(
                       type = geom["type"],
                       coordinates = geom["coordinates"],
                       crs = crs
@@ -434,11 +436,11 @@ def loadWeatherDerivedFile(parse_meta : ParseMeta,
 
     getUnitAbbreviation = lambda f : f.split("_")[1]
 
-    planting_keys : List[types.PlantingKey] = []
+    planting_keys : List[demeter.PlantingKey] = []
     for row in reader:
       field_tag = row["field_id"]
       field_id = field_id_map[field_tag]
-      field = schema_api.getField(cursor, field_id)
+      field = demeter.getField(cursor, field_id)
       geom_id = field["geom_id"]
 
       date = row["date"]
@@ -451,21 +453,21 @@ def loadWeatherDerivedFile(parse_meta : ParseMeta,
                       "mjm2" : "mj/m2",
                      }
 
-      local_group = types.LocalGroup(
+      local_group = demeter.LocalGroup(
                       group_name="weather_derived",
                       group_category=None,
                     )
-      local_group_id = schema_api.insertOrGetLocalGroup(cursor, local_group)
+      local_group_id = demeter.insertOrGetLocalGroup(cursor, local_group)
 
       local_ids : Set[int] = set()
       for field_name in data_fields:
         quantity = float(row[field_name])
 
-        local_type = types.LocalType(type_name=field_name, type_category=None)
-        local_type_id = schema_api.insertOrGetLocalType(cursor, local_type)
+        local_type = demeter.LocalType(type_name=field_name, type_category=None)
+        local_type_id = demeter.insertOrGetLocalType(cursor, local_type)
 
         unit = abbr_to_unit[getUnitAbbreviation(field_name)]
-        unit_type_id = schema_api.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
+        unit_type_id = demeter.insertOrGetUnitType(cursor, demeter.UnitType(unit=unit, local_type_id=local_type_id))
 
         local_id = insertLocalValue(cursor, quantity, unit_type_id, geom_id, field_id, local_group_id, acquired)
 
@@ -502,20 +504,20 @@ def loadSampleFile(parse_meta : ParseMeta,
     for required, optional, geom_id in yield_fn(f, cursor, required_properties, optional_properties):
       field_tag = required["field_tag"]
       field_id  = field_id_map[field_tag]
-      field = schema_api.getField(cursor, field_id)
+      field = demeter.getField(cursor, field_id)
 
       if geom_id is None:
         geom_id = field["geom_id"]
 
       if key is not None:
         local_type = required[key]
-        local_type_id = schema_api.insertOrGetLocalType(cursor, types.LocalType(type_name=local_type, type_category=key))
+        local_type_id = demeter.insertOrGetLocalType(cursor, demeter.LocalType(type_name=local_type, type_category=key))
 
         date = required["date"]
         acquired = parseDate(date)
 
         unit = required["measure"]
-        unit_type_id = schema_api.insertOrGetUnitType(cursor, types.UnitType(unit=unit, local_type_id=local_type_id))
+        unit_type_id = demeter.insertOrGetUnitType(cursor, demeter.UnitType(unit=unit, local_type_id=local_type_id))
 
         quantity = float(required["value"])
 
@@ -537,12 +539,14 @@ def loadFieldIdMap(filename : str) -> Dict[str, int]:
   with open(filename) as f:
     return json.load(f)
 
+import demeter.connections
 
 def loadDataFolder(hostname : str, data_path : str, field_id_map : Dict[str, int]):
-  psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
+  connection = demeter.connections.getPgConnection()
+  #psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
 
-  options = "-c search_path=test_mlops,public"
-  connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
+  #options = "-c search_path=test_mlops,public"
+  #connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
   cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
   print("Loading Data Directory: ",data_path)

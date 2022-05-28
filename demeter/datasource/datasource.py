@@ -23,7 +23,6 @@ import pandas as pd
 import geopandas as gpd # type: ignore
 
 
-
 # TODO: Defer S3 downloads until joining or manually altered
 class DataSource(DataSourceBase):
   def __init__(self,
@@ -173,7 +172,6 @@ class DataSource(DataSourceBase):
       return df
     return None
 
-
   def getMatrix(self) -> gpd.GeoDataFrame:
     all_dataframe_names = set(self.dataframes.keys()).union(self.geodataframes.keys())
     joined_dataframe_names : Set[str] = set()
@@ -211,7 +209,7 @@ class DataSource(DataSourceBase):
           join_fn = gpd.GeoDataFrame.sjoin
         else:
           join_fn = pd.DataFrame.merge
-      result = join_fn(left, right, **kwargs)
+      out = join_fn(left, right, **kwargs)
 
     for k, df in self.dataframes.items():
       out = out.merge(df, on="geom_id", how="inner")

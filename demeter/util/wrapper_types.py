@@ -13,6 +13,7 @@ RawFunctionOutputs = Mapping[str, SupportedOutputFile]
 WrappableFunction = Callable[..., RawFunctionOutputs]
 
 T = TypeVar('T')
+# TODO: Wait for mypy Support for Callable[[Foo, ...], Bar]
 OutputLoadFunction = Callable[[DataSourceBase], gpd.GeoDataFrame]
 
 class AddGeoDataFrameWrapper(Protocol):

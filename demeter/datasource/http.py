@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List, Tuple, Set, Callable, Sequence
+from typing import Optional, Dict, Any, List, Tuple, Set, Callable, Sequence, Mapping
 
 import requests
 import jsonschema
@@ -6,7 +6,7 @@ from functools import wraps
 
 from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 
-from ..types.inputs import HTTPType, HTTPVerb, RequestBodySchema
+from ..types.inputs import HTTPType, HTTPVerb
 from ..inputs import getHTTPByName
 from ..types.execution import ExecutionSummary, HTTPArgument, Key
 
@@ -39,7 +39,7 @@ def parseHTTPParams(expected_params : Sequence[str],
     raise Exception("Expecting URL params but no param function provided")
 
 
-def parseRequestSchema(request_body_schema : Optional[RequestBodySchema],
+def parseRequestSchema(request_body_schema : Mapping,
                        json_fn             : Optional[KeyToArgsFunction],
                        k                   : Key,
                       ) -> Dict[str, Any]:
@@ -75,11 +75,13 @@ def _getHTTPRows(cursor       : Any,
                  http_options : Dict[str, Any] = {},
                 ) -> List[Tuple[Key, Dict[str, Any]]]:
   verb = http_type.verb
-  func = {HTTPVerb.GET    : requests.get,
-          HTTPVerb.POST   : requests.post,
-          HTTPVerb.PUT    : requests.put,
-          HTTPVerb.DELETE : requests.delete,
-         }[verb]
+  verb_to_fn : Mapping[HTTPVerb, Callable[..., requests.Response]] = {
+    HTTPVerb.GET    : requests.get,
+    HTTPVerb.POST   : requests.post,
+    HTTPVerb.PUT    : requests.put,
+    HTTPVerb.DELETE : requests.delete,
+  }
+  func = verb_to_fn[verb]
   uri = http_type.uri
 
   responses : List[Tuple[Key, Dict[str, Any]]] = []

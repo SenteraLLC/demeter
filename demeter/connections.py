@@ -9,7 +9,7 @@ import psycopg2.extras
 from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import register_adapter, adapt
 
-from .types.inputs import HTTPVerb, RequestBodySchema, KeywordType
+from .types.inputs import HTTPVerb, KeywordType
 from .database.details import Details
 
 
@@ -51,8 +51,6 @@ def register() -> None:
   verb_to_sql = lambda v : psycopg2.extensions.AsIs("".join(["'", http_verb_to_string(v), "'"]))
 
   register_adapter(HTTPVerb, verb_to_sql)
-
-  register_adapter(RequestBodySchema, lambda s : psycopg2.extras.Json(s.schema))
 
   register_adapter(set, lambda s : adapt(list(s)))
 

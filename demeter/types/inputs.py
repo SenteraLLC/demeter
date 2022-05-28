@@ -1,4 +1,4 @@
-from typing import Union, Any, Optional, Type, Sequence
+from typing import Union, Any, Optional, Type, Sequence, Mapping
 
 from enum import Enum
 
@@ -15,18 +15,13 @@ class HTTPVerb(Enum):
   POST   = 3
   DELETE = 4
 
-class RequestBodySchema(object):
-  def __init__(self : Any, schema : Any):
-    jsonschema.Draft7Validator.check_schema(schema)
-    self.schema = schema
-
 @dataclass(frozen=True)
 class HTTPType(TypeTable):
   type_name           : str
   verb                : HTTPVerb
   uri                 : str
   uri_parameters      : Optional[Sequence[str]]
-  request_body_schema : Optional[RequestBodySchema]
+  request_body_schema : Optional[Mapping]
 
 
 class KeywordType(Enum):

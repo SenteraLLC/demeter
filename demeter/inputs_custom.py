@@ -1,5 +1,4 @@
 from typing import Tuple, List
-from typing import cast
 
 import sys
 
@@ -28,7 +27,8 @@ def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, HTTPType]:
   http_type_id = result_with_id["http_type_id"]
   result_with_id["verb"] = stringToHTTPVerb(result_with_id["verb"])
   del result_with_id["http_type_id"]
-  http_type = cast(HTTPType, result_with_id)
+  result = result_with_id
+  http_type = HTTPType(**result)
 
   return http_type_id, http_type
 
@@ -71,8 +71,9 @@ def getS3ObjectByKey(cursor         : Any,
   result_with_id = results[0]
   s3_object_id = result_with_id.pop("s3_object_id")
   s3_object = result_with_id
+  s = S3Object(**result_with_id)
 
-  return s3_object_id, cast(S3Object, s3_object)
+  return s3_object_id, s
 
 
 def getS3ObjectByKeys(cursor    : Any,
@@ -130,7 +131,7 @@ def getS3TypeIdByName(cursor : Any, type_name : str) -> int:
   cursor.execute(stmt, {"type_name": type_name})
   results = cursor.fetchall()
   if len(results) <= 0:
-    raise Exception("No type exists '%(type_name)s'",type_name)
+    raise Exception(f"No type exists '%(type_name)s'",type_name)
   return results[0]["s3_type_id"]
 
 

@@ -36,16 +36,15 @@ insertOrGetS3Type = __partial(insertOrGetType, getMaybeS3TypeId, insertS3TypeBas
 
 def insertOrGetS3TypeDataFrame(cursor : Any,
                                s3_type : S3Type,
-                               driver : str,
-                               has_geometry : bool,
+                               s3_type_dataframe : S3TypeDataFrame,
                               ) -> int:
   s3_type_id = insertOrGetS3Type(cursor, s3_type)
   stmt = """insert into s3_type_dataframe(s3_type_id, driver, has_geometry)
             values(%(s3_type_id)s, %(driver)s, %(has_geometry)s)
             on conflict do nothing"""
   args = {"s3_type_id"   : s3_type_id,
-          "driver"       : driver,
-          "has_geometry" : has_geometry,
+          "driver"       : s3_type_dataframe["driver"],
+          "has_geometry" : s3_type_dataframe["has_geometry"],
          }
   cursor.execute(stmt, args)
 

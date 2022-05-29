@@ -11,7 +11,7 @@ from ..inputs import getHTTPByName
 from ..types.execution import ExecutionSummary, HTTPArgument, Key
 
 
-def checkHTTPParams(params : Dict[str, Any],
+def checkHTTPParams(params : Mapping[str, Any],
                     expected_params :  Set[str]
                    ) -> None:
   try:
@@ -30,7 +30,7 @@ def checkHTTPParams(params : Dict[str, Any],
 def parseHTTPParams(expected_params : Sequence[str],
                     param_fn        : Optional[KeyToArgsFunction],
                     k               : Key,
-                   ) -> Dict[str, Any]:
+                   ) -> Mapping[str, Any]:
   if param_fn is not None:
     params = param_fn(k)
     checkHTTPParams(params, set(expected_params))
@@ -42,7 +42,7 @@ def parseHTTPParams(expected_params : Sequence[str],
 def parseRequestSchema(request_body_schema : Mapping,
                        json_fn             : Optional[KeyToArgsFunction],
                        k                   : Key,
-                      ) -> Dict[str, Any]:
+                      ) -> Mapping[str, Any]:
   if json_fn is not None:
     request_body = json_fn(k)
     validator = jsonschema.Draft7Validator(request_body_schema)
@@ -73,7 +73,7 @@ def _getHTTPRows(cursor       : Any,
                  json_fn      : Optional[KeyToArgsFunction],
                  response_fn  : ResponseFunction,
                  http_options : Dict[str, Any] = {},
-                ) -> List[Tuple[Key, Dict[str, Any]]]:
+                ) -> List[Tuple[Key, Mapping[str, Any]]]:
   verb = http_type.verb
   verb_to_fn : Mapping[HTTPVerb, Callable[..., requests.Response]] = {
     HTTPVerb.GET    : requests.get,
@@ -84,7 +84,7 @@ def _getHTTPRows(cursor       : Any,
   func = verb_to_fn[verb]
   uri = http_type.uri
 
-  responses : List[Tuple[Key, Dict[str, Any]]] = []
+  responses : List[Tuple[Key, Mapping[str, Any]]] = []
   for k in keys:
     expected_params = http_type.uri_parameters
     if expected_params is not None:
@@ -112,7 +112,7 @@ def getHTTPRows(cursor       : Any,
                 json_fn      : Optional[KeyToArgsFunction] = None,
                 response_fn  : ResponseFunction = OneToOneResponseFunction,
                 http_options : Dict[str, Any] = {}
-               ) -> List[Tuple[Key, Dict[str, Any]]]:
+               ) -> List[Tuple[Key, Mapping[str, Any]]]:
   http_type_id, http_type = getHTTPByName(cursor, type_name)
   http_result = _getHTTPRows(cursor, keys, http_type, param_fn, json_fn, response_fn, http_options)
   h = HTTPArgument(

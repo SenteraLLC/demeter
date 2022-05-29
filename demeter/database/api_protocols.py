@@ -20,14 +20,10 @@ AnyKeyTable = Union[local.AnyKeyTable,
 AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
 
 
-U = TypeVar('U', bound=AnyIdTable)
-GetId = Callable[[Any, U], Optional[int]]
-
-V = TypeVar('V', bound=AnyIdTable)
-GetTable = Callable[[Any, int], V]
-
-T = TypeVar('T', bound=AnyIdTable)
-ReturnId = Callable[[Any, T], int]
+I = TypeVar('I', bound=AnyIdTable)
+GetId = Callable[[Any, I], Optional[int]]
+GetTable = Callable[[Any, int], I]
+ReturnId = Callable[[Any, I], int]
 
 # TODO: Fix typing issues here
 S = TypeVar('S', bound=AnyKeyTable)

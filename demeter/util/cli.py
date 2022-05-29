@@ -7,9 +7,23 @@ import argparse
 from ..types.core import GeoSpatialKey, TemporalKey
 
 def parseCLIArguments(name : str, major : int, keyword_types : Dict[str, Type]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+
+  def toGeoSpatialKeys(filename :str) -> List[GeoSpatialKey]:
+    f = open(filename)
+    return [GeoSpatialKey(geom_id=g["geom_id"], field_id=g["field_id"])
+            for g in json.load(f)
+           ]
+
+  def toTemporalKeys(filename :str) -> List[TemporalKey]:
+    f = open(filename)
+    return [TemporalKey(start_date=d["start_date"], end_date=d["end_date"])
+            for d in json.load(f)
+           ]
+
+
   default_cli_types : Dict[str, Any] = {
-    "geospatial_key_file": lambda f : cast(List[GeoSpatialKey], json.load(open(f))),
-     "temporal_key_file": lambda f : cast(List[TemporalKey], json.load(open(f))),
+    "geospatial_key_file": toGeoSpatialKeys,
+     "temporal_key_file": toTemporalKeys,
   }
   keyword_types.update(default_cli_types)
 

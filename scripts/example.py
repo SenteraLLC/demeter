@@ -49,13 +49,13 @@ def init(datasource : DataSource, some_constant : int) -> None:
                            "start_date" : k["start_date"],
                            "end_date"   : k["end_date"],
                           }
-  datasource.http("foo_type", param_fn=parameters, response_fn=OneToManyResponseFunction)
+  datasource.http("http_uri_params_test_type", param_fn=parameters, response_fn=OneToManyResponseFunction)
 
   request_body = lambda k : {"field_id"   : k["field_id"],
                              "start_date" : k["start_date"],
                              "end_date"   : k["end_date"]
                             }
-  datasource.http("bar_type", json_fn=request_body)
+  datasource.http("http_request_body_test_type", json_fn=request_body)
 
   datasource.s3("my_test_geo_type"),
 

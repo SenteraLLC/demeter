@@ -6,10 +6,8 @@ from collections import OrderedDict
 from typing import cast
 from functools import partial
 
-#from ..types.core import Key
-
 from .types_protocols import TableKey
-from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable, ReturnKey, ReturnSameKey, S, SK, AnyTable
+from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable, ReturnKey, ReturnSameKey, S, SK, AnyTable, I, S
 from .type_lookups import id_table_lookup, key_table_lookup
 
 from typing import get_origin, get_args, Union
@@ -17,8 +15,7 @@ from typing import get_origin, get_args, Union
 
 # TODO: This 'is_optional' filter might be a bad idea...
 def is_none(table : AnyTable, key : str) -> bool:
-  args = cast(Dict[str, Any], table)
-  return getattr(args, key) is None
+  return getattr(table, key) is None
 
 def is_optional(table : AnyTable, key : str):
   field = table.__dataclass_fields__[key].type
@@ -147,13 +144,12 @@ def getMaybeIdFunction(table : Type[Any]) -> Callable[[Any, AnyIdTable], Optiona
   return partial(getMaybeId, table_name)
 
 
-M = TypeVar('M', bound=AnyIdTable)
-
-def getMaybeTableById(table_name    : str,
+def getMaybeTableById(table_type    : Type[I],
                       table_id_name : str,
                       cursor        : Any,
                       table_id      : int,
-                     ) -> Optional[M]:
+                     ) -> Optional[I]:
+  table_name = id_table_lookup[table_type]
   condition = sql.SQL(' = ').join([sql.Identifier(table_id_name), sql.Placeholder(table_id_name)])
   stmt = sql.SQL("select * from {0} where {1}").format(
     sql.Identifier(table_name),
@@ -164,37 +160,36 @@ def getMaybeTableById(table_name    : str,
   if result is None:
     return None
   del result[table_id_name]
-  return cast(M, result)
+  return cast(I, table_type(**result))
 
 
-def getTableById(table_name    : str,
+def getTableById(table_type    : Type[I],
                  table_id_name : str,
                  cursor        : Any,
                  table_id      : int,
-                ) -> M:
-  maybe_table = getMaybeTableById(table_name, table_id_name, cursor, table_id)
+                ) -> I:
+  table_name = id_table_lookup[table_type]
+  maybe_table = getMaybeTableById(table_type, table_id_name, cursor, table_id)
   if maybe_table is None:
     raise Exception(f"No entry found for {table_id_name} = {table_id} in {table_name}")
-  table = dict(maybe_table)
-  return cast(M, table)
+  table = maybe_table
+  return table
 
 
 def getTableFunction(table : Type[Any],
                      table_id_name : Optional[str] = None
-                    ) -> Callable[[Any, int], M]:
+                    ) -> Callable[[Any, int], I]:
   table_name = id_table_lookup[table]
   if table_id_name is None:
     table_id_name = "_".join([table_name, "id"])
-  return partial(getTableById, table_name, table_id_name)
+  return partial(getTableById, table, table_id_name)
 
-
-N = TypeVar('N', bound=AnyKeyTable)
 
 def getTableByKey(table_name : str,
                   key        : Sequence[str],
                   cursor     : Any,
                   table_id   : int,
-                 ) -> N:
+                 ) -> S:
   table_id_name = "_".join([table_name, "id"])
   conditions = [sql.SQL(' = ').join([sql.Identifier(k), sql.Placeholder(k)]) for k in key]
   stmt = sql.SQL("select * from {0} where {1}").format(
@@ -203,10 +198,10 @@ def getTableByKey(table_name : str,
   )
   cursor.execute(stmt, {table_id_name : table_id})
   result = cursor.fetchone()
-  return cast(N, result)
+  return cast(S, result)
 
 
-def getTableKeyFunction(table : Type[Any]) -> Callable[[Any, int], N]:
+def getTableKeyFunction(table : Type[Any]) -> Callable[[Any, int], S]:
   table_name, key = key_table_lookup[table]
   return partial(getTableByKey, table_name, key)
 

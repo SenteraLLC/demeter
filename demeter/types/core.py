@@ -12,6 +12,10 @@ class Properties(Details):
   def __init__(self, name : str):
     super().__init__({"name": name})
 
+  # TODO: Inheritance/hashing/dataclass is messy
+  def __hash__(self) -> int:
+    return super().__hash__()
+
 
 @dataclass(frozen=True)
 class CRS(Table):

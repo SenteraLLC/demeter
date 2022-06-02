@@ -8,7 +8,7 @@ from .database.api_protocols import GetId, GetTable, ReturnId
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, insertOrGetType
 from .database.types_protocols import TableEncoder
 
-from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, GeomImpl, InsertableGeom, CRS, Coordinates, Polygon, MultiPolygon, Properties
+from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, GeomImpl, InsertableGeom, CRS, Coordinates, Polygon, MultiPolygon, Properties, Point, Line
 
 getMaybeFieldId          : GetId[Field]      = getMaybeIdFunction(Field)
 getMaybeOwnerId          : GetId[Owner]      = getMaybeIdFunction(Owner)

@@ -72,8 +72,6 @@ __all__ = [
   'TaggedS3SubType',
   'TemporalKey',
   'Transformation',
-  'getExecutionSummaries',
-  'getExistingExecutions',
   'getField',
   'getGeom',
   'getHTTPByName',

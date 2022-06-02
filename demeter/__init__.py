@@ -4,6 +4,7 @@ from .inputs import *
 from .function import *
 from .execution import *
 from .local import *
+from .connections import getPgConnection
 
 from . import datasource
 from . import database
@@ -101,6 +102,7 @@ __all__ = [
   'getMaybeTemporalKeyId',
   'getMaybeUnitTypeId',
   'getOwner',
+  'getPgConnection',
   'getS3Object',
   'getS3ObjectByKey',
   'getS3ObjectByKeys',

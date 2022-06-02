@@ -39,8 +39,8 @@ def getExistingDuplicate(existing_executions : Sequence[ExecutionSummary],
     return True
 
   for e in existing_executions:
-    inputs = e.inputs
-    if eq(inputs, execution_summary.inputs):
+    inputs = e["inputs"]
+    if eq(inputs, execution_summary["inputs"]):
       return e
   return None
 

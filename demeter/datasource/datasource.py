@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Any, Dict, Callable, Set, Type
+from typing import List, Optional, Tuple, Any, Dict, Callable, Set, Type, Mapping
 
 from typing import cast
 
@@ -10,6 +10,7 @@ from ..types.inputs import S3TypeDataFrame, S3Object
 from ..inputs import insertS3Object, insertS3ObjectKeys
 from ..types.local import LocalType
 
+from collections import OrderedDict
 
 from .base import DataSourceBase
 from .util import createKeywordArguments
@@ -22,6 +23,7 @@ from .types import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 import pandas as pd
 import geopandas as gpd # type: ignore
 
+JoinResults = Dict[frozenset[str], AnyDataFrame]
 
 # TODO: Defer S3 downloads until joining or manually altered
 class DataSource(DataSourceBase):
@@ -38,13 +40,12 @@ class DataSource(DataSourceBase):
 
     self.s3_connection = s3_connection
     self.cursor = cursor
-    self.keys = self.execution_summary.inputs.keys = keys
-    self.execution_summary.inputs.keyword = createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
+    self.keys = self.execution_summary["inputs"]["keys"] = keys
+    self.execution_summary["inputs"]["keyword"] = createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
 
-    self.dataframes : Dict[str, pd.DataFrame] = {}
-    self.geodataframes : Dict[str, gpd.GeoDataFrame] = {}
-    self.joins : Dict[Tuple[str, str], Tuple[Optional[Callable[..., AnyDataFrame]], Dict[str, Any]]] = {}
-
+    self.dataframes : Dict[str, pd.DataFrame] = OrderedDict()
+    self.geodataframes : Dict[str, gpd.GeoDataFrame] = OrderedDict()
+    self.explicit_joins : Dict[Tuple[str, str], Tuple[Optional[Callable[..., AnyDataFrame]], Dict[str, Any]]] = {}
 
 
   def _local(self, local_types : List[LocalType]) -> pd.DataFrame:
@@ -84,7 +85,7 @@ class DataSource(DataSourceBase):
       tag = tagged_s3_subtype.tag
       subtype = tagged_s3_subtype.value
       if tag == S3TypeDataFrame:
-        dataframe_subtype = cast(S3TypeDataFrame, subtype)
+        dataframe_subtype = S3TypeDataFrame(**subtype.args())
         maybe_df, maybe_gdf = rawToDataFrame(raw_results, dataframe_subtype)
         if maybe_df is not None:
           df = self.dataframes[type_name] = maybe_df
@@ -128,7 +129,7 @@ class DataSource(DataSourceBase):
     return self.upload(s3_type_id, bucket_name, as_bytes, s3_key)
 
 
-  def get_geometry(self) -> gpd.GeoDataFrame:
+  def getGeometry(self) -> gpd.GeoDataFrame:
     geo_ids = [k.geom_id for k in self.keys]
     stmt = """
              select G.geom_id, G.geom, G.container_geom_id
@@ -156,60 +157,86 @@ class DataSource(DataSourceBase):
     if right_type_name not in dataframe_names:
       raise Exception(f"No typename {right_type_name} found.")
 
-    self.joins[(left_type_name, right_type_name)] = (join_fn, kwargs)
+    self.explicit_joins[(left_type_name, right_type_name)] = (join_fn, kwargs)
+
 
 
   def popDataFrame(self, type_name : str) -> Optional[AnyDataFrame]:
-    maybe_gdf = self.geodataframes.get(type_name)
-    if maybe_gdf is not None:
-      del self.geodataframes[type_name]
-      gdf = maybe_gdf
-      return gdf
-    maybe_df = self.dataframes.get(type_name)
-    if maybe_df is not None:
-      del self.dataframes[type_name]
-      df = maybe_df
-      return df
+    if type_name == self.GEOM:
+      return self.getGeometry()
+    return geo if (geo := self.geodataframes.pop(type_name, None)) is not None else self.dataframes.pop(type_name)
+
+  def _findExisting(self, type_name : str, explicit_join_results) -> Optional[frozenset[str]]:
+    for type_names, existing_result in explicit_join_results.items():
+      if type_name in type_names:
+        return type_names
     return None
 
-  def getMatrix(self) -> gpd.GeoDataFrame:
-    all_dataframe_names = set(self.dataframes.keys()).union(self.geodataframes.keys())
-    joined_dataframe_names : Set[str] = set()
 
-    out : gpd.GeoDataFrame = self.get_geometry()
+  def getDataFrame(self, type_name : str, explicit_join_results : JoinResults) -> AnyDataFrame:
+    maybe_df = self.popDataFrame(type_name)
+    if (df := maybe_df) is not None:
+      return df
+    for types, df in explicit_join_results.items():
+      if type_name in types:
+        return df
+    if type_name == self.GEOM:
+      return self.getGeometry()
+    raise Exception(f"Can't find data type {type_name}.")
 
-    # Do explicit joins first
-    for (left_type_name, right_type_name), (join_fn, kwargs) in self.joins.items():
-      left : Optional[AnyDataFrame] = None
-      right : Optional[AnyDataFrame] = None
 
-      maybe_left = self.popDataFrame(left_type_name)
-      maybe_right = self.popDataFrame(right_type_name)
-      if maybe_left is None and left_type_name == self.GEOM:
-        left = out
-        right = maybe_right
-      elif maybe_right is None and right_type_name == self.GEOM:
-        right = out
-        left = maybe_left
-      elif maybe_left is None and maybe_right is None:
-        raise Exception(f"Unknown join error on '{left_type_name}' and '{right_type_name}'")
-      elif maybe_left is None or maybe_right is None:
-        if maybe_left is None:
-          left = out
-          right = maybe_right
-        elif maybe_right is None:
-          left = maybe_left
-          right = out
-      else:
-        left = maybe_left
-        right = maybe_right
+  def doExplicitJoins(self) -> JoinResults:
+    explicit_join_results : JoinResults = {}
+
+    def addExplicitJoin(left_type_name : str,
+                        right_type_name : str,
+                        result : AnyDataFrame,
+                       ) -> bool:
+      left_existing = self._findExisting(left_type_name, explicit_join_results)
+      right_existing = self._findExisting(right_type_name, explicit_join_results)
+
+      k = {left_type_name, right_type_name}
+      if right_existing is not None:
+        del explicit_join_results[right_existing]
+        k.update(right_existing)
+      if left_existing is not None:
+        del explicit_join_results[left_existing]
+        k.update(left_existing)
+      explicit_join_results[frozenset(k)] = result
+      return True
+
+    for (left_type_name, right_type_name), (join_fn, kwargs) in self.explicit_joins.items():
+      left = self.getDataFrame(left_type_name, explicit_join_results)
+      right = self.getDataFrame(right_type_name, explicit_join_results)
 
       if join_fn is None:
         if isinstance(left, gpd.GeoDataFrame) and isinstance(right, gpd.GeoDataFrame):
           join_fn = gpd.GeoDataFrame.sjoin
         else:
           join_fn = pd.DataFrame.merge
-      out = join_fn(left, right, **kwargs)
+      result = join_fn(left, right, **kwargs)
+      addExplicitJoin(left_type_name, right_type_name, result)
+
+    # TODO: Need to do something smarter,
+    #       This should take into consideration the placement of the join
+    #       in the script
+    for types, compound_df in explicit_join_results.items():
+      k = "_".join(types)
+      if isinstance(compound_df, gpd.GeoDataFrame):
+        self.geodataframes[k] = compound_df
+      elif isinstance(compound_df, pd.DataFrame):
+        self.dataframes[k] = compound_df
+
+    return explicit_join_results
+
+
+  def getMatrix(self) -> gpd.GeoDataFrame:
+    all_dataframe_names = set(self.dataframes.keys()).union(self.geodataframes.keys())
+    joined_dataframe_names : Set[str] = set()
+
+    explicit_join_results = self.doExplicitJoins()
+
+    out : gpd.GeoDataFrame = self.getGeometry()
 
     for k, df in self.dataframes.items():
       out = out.merge(df, on="geom_id", how="inner")

@@ -47,12 +47,12 @@ def getRawS3(cursor     : Any,
     f = download(s3_connection, bucket_name, s3_key)
 
     s = S3InputArgument(
-          function_id = execution_summary.function_id,
-          execution_id = execution_summary.execution_id,
+          function_id = execution_summary["function_id"],
+          execution_id = execution_summary["execution_id"],
           s3_type_id = s3_type_id,
           s3_object_id = s3_object_id,
         )
-    execution_summary.inputs.s3.append(s)
+    execution_summary["inputs"]["s3"].append(s)
 
     return f, maybe_tagged_s3_subtype
 

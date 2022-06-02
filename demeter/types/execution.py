@@ -51,7 +51,9 @@ class Key(_KeyIds, GeoSpatialKey, TemporalKey):
 KeyGenerator = Generator[Key, None, None]
 
 
-@dataclass
+from typing import TypedDict
+
+@dataclass(frozen=True)
 class Execution(Table):
   function_id  : int
 
@@ -59,20 +61,10 @@ class Execution(Table):
 class ExecutionKey(_KeyIds, SelfKey):
   execution_id      : int
 
-@dataclass
-class ExecutionArguments():
-  local   : List[LocalArgument]
-  keyword : List[KeywordArgument]
-  http    : List[HTTPArgument]
-  s3      : List[S3InputArgument]
-  keys    : Sequence[Key]
-
-@dataclass
-class ExecutionOutputs():
+class ExecutionOutputs(TypedDict):
   s3 : List[S3OutputArgument]
 
-@dataclass
-class ExecutionSummary():
+class ExecutionSummary(TypedDict):
   inputs  : ExecutionArguments
   outputs : ExecutionOutputs
   function_id         : int

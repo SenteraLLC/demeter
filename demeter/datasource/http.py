@@ -116,12 +116,12 @@ def getHTTPRows(cursor       : Any,
   http_type_id, http_type = getHTTPByName(cursor, type_name)
   http_result = _getHTTPRows(cursor, keys, http_type, param_fn, json_fn, response_fn, http_options)
   h = HTTPArgument(
-        function_id = execution_summary.function_id,
-        execution_id = execution_summary.execution_id,
+        function_id = execution_summary["function_id"],
+        execution_id = execution_summary["execution_id"],
         http_type_id = http_type_id,
         number_of_observations = len(http_result),
       )
-  execution_summary.inputs.http.append(h)
+  execution_summary["inputs"]["http"].append(h)
 
   return http_result
 

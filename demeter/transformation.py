@@ -101,14 +101,15 @@ def Transformation(name                : str,
 
         load_fn(datasource, **kwargs)
 
-        function_id = datasource.execution_summary.function_id
+        function_id = datasource.execution_summary["function_id"]
         existing_executions = getExistingExecutions(cursor, function_id)
         maybe_duplicate_execution = getExistingDuplicate(existing_executions, datasource.execution_summary)
         if maybe_duplicate_execution is not None:
           duplicate_execution = maybe_duplicate_execution
 
-          #outputs = duplicate_execution["outputs"]
-          duplicate_execution_id = duplicate_execution.execution_id
+          # TODO: Not implemented yet
+          outputs = duplicate_execution["outputs"]
+          duplicate_execution_id = duplicate_execution["execution_id"]
           print(f"Detected matching execution #{duplicate_execution_id} for {name} {major}")
 
         else:

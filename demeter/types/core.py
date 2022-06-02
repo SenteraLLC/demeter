@@ -1,4 +1,7 @@
-from typing import Optional, Union, Mapping, Literal, Sequence, Tuple
+from typing import Optional, Union
+from typing import Mapping
+from typing import Literal
+from typing import Sequence, Tuple
 from datetime import date
 
 from ..database.types_protocols import Table, Updateable, Detailed

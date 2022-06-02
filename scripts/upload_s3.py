@@ -43,22 +43,22 @@ if __name__ == "__main__":
     s3_type = S3Type(
                 type_name = type_name,
               )
-    s3_type_data_frame = S3TypeDataFrame(
-                           driver = driver,
-                           has_geometry = has_geometry,
-                         )
-    s3_type_id = insertOrGetS3TypeDataFrame(cursor, s3_type, driver, has_geometry)
+    s3_type_dataframe = S3TypeDataFrame(
+                          driver = driver,
+                          has_geometry = has_geometry,
+                        )
+    s3_type_id = insertOrGetS3TypeDataFrame(cursor, s3_type, s3_type_dataframe)
 
     tagged_s3_subtype = TaggedS3SubType(
                           tag = S3TypeDataFrame,
-                          value = s3_type_data_frame,
+                          value = s3_type_dataframe,
                         )
 
     return s3_type_id, tagged_s3_subtype
 
   newS3TypeDataFrame("test_geojson_type", "GeoJSON", True)
 
-  geoms = datasource.get_geometry()
+  geoms = datasource.getGeometry()
 
   ns = pd.Series(range(0, len(geoms)))
 
@@ -71,10 +71,10 @@ if __name__ == "__main__":
                      driver : str,
                      has_geometry : bool
                     ) -> None:
-    s3_type_id, s3_type_data_frame = newS3TypeDataFrame(type_name, driver, has_geometry)
+    s3_type_id, s3_type_dataframe = newS3TypeDataFrame(type_name, driver, has_geometry)
 
     to_upload = S3File(value, test_file_prefix)
-    s3_file_meta = to_upload.to_file(s3_type_data_frame)
+    s3_file_meta = to_upload.to_file(s3_type_dataframe)
     datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
 
 

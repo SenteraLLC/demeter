@@ -3,16 +3,13 @@ from typing import Callable
 import psycopg2
 import psycopg2.extras
 
-from demeter.types.inputs import HTTPType, HTTPVerb, RequestBodySchema
+from demeter.types.inputs import HTTPType, HTTPVerb
 from demeter.inputs import insertHTTPType
 
 http_verb_to_string : Callable[[HTTPVerb], str] = lambda v : v.name.lower()
 
 http_verb_to_postgres = lambda v : psycopg2.extensions.AsIs("".join(["'", http_verb_to_string(v), "'"]))
 psycopg2.extensions.register_adapter(HTTPVerb, http_verb_to_postgres)
-
-json_schema_to_postgres = lambda d : psycopg2.extras.Json(d.schema)
-psycopg2.extensions.register_adapter(RequestBodySchema, json_schema_to_postgres)
 
 
 if __name__ == "__main__":
@@ -37,19 +34,18 @@ if __name__ == "__main__":
                 verb                = HTTPVerb.POST,
                 uri                 = "http://localhost:8080",
                 uri_parameters      = None,
-                request_body_schema = RequestBodySchema({"type": "object",
-                                                         "properties": {
-                                                             "field_id":   {"type": "number"},
-                                                             "start_date": {"type": "string",
-                                                                            "format": "date"
-                                                                           },
-                                                             "end_date":   {"type": "string",
-                                                                            "format": "date"
-                                                                           },
-
-                                                         }
-                                                       })
-              )
+                request_body_schema = {"type": "object",
+                                       "properties": {
+                                         "field_id":   {"type": "number"},
+                                         "start_date": {"type": "string",
+                                         "format": "date"
+                                       },
+                                      "end_date":   {"type": "string",
+                                                     "format": "date"
+                                                    },
+                                      }
+                                     }
+            )
   http_post_id = insertHTTPType(cursor, http_post)
   print("HTTP POST ID: ",http_post_id)
 

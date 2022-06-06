@@ -5,25 +5,26 @@ from typing import Sequence, Tuple
 from datetime import date
 
 from ..database.types_protocols import Table, Updateable, Detailed
-from ..database.details import Details
+from ..database.details import JsonRootObject, HashableJsonContainer
 
+from dataclasses import InitVar
 from dataclasses import dataclass
-from abc import ABC
+
+#@dataclass(frozen=True)
+#class Properties(Details):
+#  def __init__(self, name : str):
+#    super().__init__({"name": name})
+#
+#  # TODO: Inheritance/hashing/dataclass is messy
+#  #def __hash__(self) -> int:
+#  #  return super().__hash__()
+
+Properties = JsonRootObject
 
 @dataclass(frozen=True)
-class Properties(Details):
-  def __init__(self, name : str):
-    super().__init__({"name": name})
-
-  # TODO: Inheritance/hashing/dataclass is messy
-  def __hash__(self) -> int:
-    return super().__hash__()
-
-
-@dataclass(frozen=True)
-class CRS(Table):
+class CRS(Table, HashableJsonContainer):
   type       : Literal["name"]
-  properties : Properties
+  properties : InitVar[Properties]
 
 
 Point = Tuple[float, float]

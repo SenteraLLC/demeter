@@ -8,7 +8,6 @@ from ..function import getMaybeFunctionTypeId
 from ..types.function import Function, FunctionType
 from ..inputs import getS3TypeIdByName
 from ..types.execution import ExecutionSummary, ExecutionKey
-from ..database.details import Details
 
 from .wrapper_types import WrappableFunction
 

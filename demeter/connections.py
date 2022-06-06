@@ -10,7 +10,7 @@ from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import register_adapter, adapt
 
 from .types.inputs import HTTPVerb, KeywordType
-from .database.details import Details
+from .database.details import HashableJsonContainer
 
 
 def getEnv(name : str, default : Optional[str] = None):
@@ -55,7 +55,9 @@ def register() -> None:
   register_adapter(set, lambda s : adapt(list(s)))
 
   register_adapter(dict, psycopg2.extras.Json)
-  register_adapter(Details, psycopg2.extras.Json)
+  # TODO: handle dataclasses.InitVar?
+  #register_adapter(HashableJsonObject, psycopg2.extras.Json)
+  register_adapter(HashableJsonContainer, lambda c : psycopg2.extras.Json(c()))
 
   register_adapter(KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
 

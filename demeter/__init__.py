@@ -1,4 +1,3 @@
-
 from .core import *
 from .inputs import *
 from .function import *
@@ -9,7 +8,6 @@ from .connections import getPgConnection
 from . import datasource
 from . import database
 
-from .database.details import Details
 from .transformation import Transformation
 
 __all__ = [
@@ -21,7 +19,6 @@ __all__ = [
   'CropStage',
   'CropType',
   'CRS',
-  'Details',
   'Enum',
   'Execution',
   'ExecutionKey',

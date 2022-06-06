@@ -1,11 +1,12 @@
 from typing import Optional, Mapping, Any, Union, Set, Iterator, Tuple, TypeVar, Type
 
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import InitVar
+from dataclasses import dataclass, field
 
 import json
 
-from .details import Details
+from .details import JsonRootObject, HashableJsonContainer
 
 class Table():
   def keys(self) -> Set[str]:
@@ -28,30 +29,19 @@ class Table():
     raise TypeError
 
 
-T = TypeVar('T', bound=Table, covariant=True)
-
-class TableEncoder(json.JSONEncoder):
-
-  def default(self, obj : Any):
-    if isinstance(obj, Table):
-      t = obj
-      return t.args()
-
-    elif isinstance(obj, Details):
-      d = obj
-      return d.details
-
-    return super().default(obj)
-
+# TODO: Make an alias for the partially applied dataclass
+#       Waiting on Python 3.11 feature: dataclass transforms
+#       For now, we have to copy-paste these decorators
 
 @dataclass(frozen=True)
 class Updateable(Table):
   last_updated : Optional[datetime]
 
+Details = JsonRootObject
 
 @dataclass(frozen=True)
-class Detailed(Updateable):
-  details : Optional[Details]
+class Detailed(Updateable, HashableJsonContainer):
+  details  : InitVar[Optional[Details]]
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,7 @@ import datetime
 from .database.api_protocols import GetId, GetTable, ReturnId
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, insertOrGetType
 
-from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, GeomImpl, InsertableGeom, CRS, Coordinates, Polygon, MultiPolygon, Properties, Point, Line
+from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, GeomImpl, InsertableGeom, CRS, Coordinates, MultiPolygon, Point, Line
 
 getMaybeFieldId          : GetId[Field]      = getMaybeIdFunction(Field)
 getMaybeOwnerId          : GetId[Owner]      = getMaybeIdFunction(Owner)
@@ -34,7 +34,7 @@ insertOrGetField = partial(insertOrGetType, getMaybeFieldId, insertField)
 
 def makeInsertable(geom : Geom) -> InsertableGeom:
   return InsertableGeom(
-           geom = json.dumps(geom.geom),
+           geom = json.dumps(geom.geom, cls=geom.Encoder),
            container_geom_id = geom.container_geom_id,
          )
 

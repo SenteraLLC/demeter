@@ -1,37 +1,28 @@
 from typing import Optional, Union
-from typing import Mapping
 from typing import Literal
-from typing import Sequence, Tuple
-from datetime import date
+from typing import Tuple
+from datetime import date, datetime
 
 from ..database.types_protocols import Table, Updateable, Detailed
-from ..database.details import JsonRootObject, HashableJsonContainer
+from ..database.details import HashablePair
 
+from collections import OrderedDict
 from dataclasses import InitVar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-#@dataclass(frozen=True)
-#class Properties(Details):
-#  def __init__(self, name : str):
-#    super().__init__({"name": name})
-#
-#  # TODO: Inheritance/hashing/dataclass is messy
-#  #def __hash__(self) -> int:
-#  #  return super().__hash__()
-
-Properties = JsonRootObject
 
 @dataclass(frozen=True)
-class CRS(Table, HashableJsonContainer):
+class CRS:
   type       : Literal["name"]
-  properties : InitVar[Properties]
+  # TODO: What other properties are available?
+  properties : HashablePair
 
 
 Point = Tuple[float, float]
 Line = Tuple[Point, ...]
-# Postgis only wants MultiPolygon, not Polygon
-Polygon = Line
-MultiPolygon = Tuple[Polygon, ...]
+# Postgis only wants MultiPolygon
+_Polygon = Line
+MultiPolygon = Tuple[_Polygon, ...]
 Coordinates = Union[Point, Line, MultiPolygon]
 
 
@@ -39,7 +30,15 @@ Coordinates = Union[Point, Line, MultiPolygon]
 class GeomImpl(Table):
   type        : str
   coordinates : Coordinates
-  crs         : CRS
+  crs_name    : InitVar[str]
+  crs         : CRS = field(init=False)
+
+  def __post_init__(self, crs_name : str):
+    crs = CRS(type = "name",
+              properties = HashablePair("name", crs_name),
+             )
+    object.__setattr__(self, 'crs', crs)
+
 
 @dataclass(frozen=True)
 class Geom(Updateable):
@@ -67,8 +66,10 @@ class Field(Table):
   geom_id     : int
   year        : Optional[int]
   grower_id   : Optional[int]
-  sentera_id  : Optional[str]
   external_id : Optional[str]
+  # TODO: Internal id?
+  sentera_id  : Optional[str]      = None
+  created     : Optional[datetime] = None
 
 @dataclass(frozen=True)
 class GeoSpatialKey(Table):

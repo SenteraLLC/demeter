@@ -1,4 +1,4 @@
-from typing import Union, Mapping, Optional, TypeVar, NewType, Protocol
+from typing import Union, Mapping, Optional, TypeVar, NewType, Generic, Literal
 from collections import OrderedDict
 
 import json
@@ -7,9 +7,9 @@ from dataclasses import dataclass, field
 
 
 J = TypeVar('J')
-_JSON_VALUE = Optional[Union[int, float, str, None, J]]
-#_JsonObject = Mapping[str, _JSON_VALUE[J]]
-_JsonObject = OrderedDict[str, _JSON_VALUE[J]]
+_JsonPrimitive = Union[int, float, str, bool, None]
+_JsonValue = Optional[Union[_JsonPrimitive, J]]
+_JsonObject = OrderedDict[str, _JsonValue[J]]
 
 # Mypy doesn't have recursive types yet
 
@@ -19,33 +19,22 @@ JsonDepth3     = _JsonObject[JsonDepth4]
 JsonDepth2     = _JsonObject[JsonDepth3]
 JsonRootObject = _JsonObject[JsonDepth2]
 
-
-class HashableJsonObject:
-  def __init__(self, root : JsonRootObject):
-    self.root = root
-
-  def __hash__(self) -> int:
-    return hash(frozenset(self.root))
+class HashableJSON:
+  def __init__(self, root : JsonRootObject) -> None:
+    self._root = root
 
   def __call__(self) -> JsonRootObject:
-    return self.root
+    return self._root
 
-@dataclass(frozen=True)
-class HashableJsonContainer:
-  _impl : Optional[HashableJsonObject] = field(init=False)
+  def __hash__(self) -> int:
+    return hash(frozenset(self._root))
 
-  def __post_init__(self, *args : JsonRootObject):
-    l = len(args)
-    if l <= 0:
-      raise Exception("Container has no InitVar")
-    elif l > 1:
-      raise Exception("Only one JSON field supported.")
-    first = args[0]
-    object.__setattr__(self, '_impl', HashableJsonObject(first))
+IncompleteHashableJSON = Union[JsonRootObject, HashableJSON]
 
-  def __call__(self) -> HashableJsonObject:
-    if self._impl is None:
-      raise Exception("Null Json Container")
-    return self._impl
-
+class HashablePair(HashableJSON):
+  def __init__(self,
+               k : str,
+               v : _JsonPrimitive
+              ):
+    self._root = OrderedDict({k : v})
 

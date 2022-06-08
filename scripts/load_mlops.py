@@ -34,19 +34,17 @@ def maybeGetProperty(feature : Dict[str, Any], name : str) -> Optional[str]:
   return None
 
 
-def loadGeometry(crs               : demeter.CRS,
+def loadGeometry(crs_name          : str,
                  feature           : Dict[str, Any],
                  container_geom_id : int = None,
                 ) -> demeter.Geom:
   geometry = feature["geometry"]
+  # TODO: How to deal with these projections? Not technically correct?
   g = demeter.GeomImpl(
         type        = geometry["type"],
         coordinates = geometry["coordinates"],
-        crs         = crs,
+        crs_name    = crs_name,
       )
-  # TODO: How to deal with these projections? Not technically correct?
-  if crs["properties"]["name"] == "urn:ogc:def:crs:OGC:1.3:CRS84":
-    crs["properties"]["name"] = "urn:ogc:def:crs:EPSG::4326"
   return demeter.Geom(
             container_geom_id = container_geom_id,
             geom              = g,
@@ -54,9 +52,9 @@ def loadGeometry(crs               : demeter.CRS,
          )
 
 
-def loadField(cursor  : Any,
-              feature : Dict[str, Any],
-              crs     : demeter.CRS,
+def loadField(cursor   : Any,
+              feature  : Dict[str, Any],
+              crs_name : str,
              ) -> int:
   f = feature
   owner = demeter.Owner(
@@ -77,7 +75,9 @@ def loadField(cursor  : Any,
   if grower_id is None:
     grower_id = demeter.insertGrower(cursor, grower)
 
-  geom = loadGeometry(crs, f)
+  geom = loadGeometry(crs_name, f)
+  print("GEOM: ",geom)
+  print("2nd: ",geom["geom"])
   geom_id = demeter.insertGeom(cursor, geom)
 
   year = getProperty(f, "year")
@@ -98,11 +98,12 @@ def loadField(cursor  : Any,
 def loadFieldFile(cursor, filename : str) -> Dict[str, int]:
   with open(filename) as geojson_file:
     contents        = json.load(geojson_file)
-    crs : demeter.CRS = contents["crs"]
+    crs = contents["crs"]
+    crs_name = getCRSName(crs)
     field_id_map = {}
     for f in contents["features"]:
       field_tag = getProperty(f, "field_id")
-      field_id = loadField(cursor, f, crs)
+      field_id = loadField(cursor, f, crs_name)
       field_id_map[field_tag] = field_id
     return field_id_map
 
@@ -173,6 +174,13 @@ def yieldCSVRow(file                : TextIO,
     yield required, optional, None
 
 
+def getCRSName(crs_contents : Dict[str, Any]) -> str:
+  crs_name = crs_contents["properties"]["name"]
+  if crs_name == "urn:ogc:def:crs:OGC:1.3:CRS84":
+    return "urn:ogc:def:crs:EPSG::4326"
+  return crs_name
+
+
 def yieldGeoJsonRow(file : TextIO,
                     cursor              : Any,
                     required_properties : Set[str],
@@ -184,8 +192,10 @@ def yieldGeoJsonRow(file : TextIO,
   for f in features:
     geom_id : Optional[int] = None
     if maybeGetProperty(f, "geometry") is not None:
+
       crs = contents["crs"]
-      geom   = loadGeometry(crs, f)
+      crs_name = getCRSName(crs)
+      geom   = loadGeometry(crs_name, f)
       geom_id = demeter.insertGeom(cursor, geom)
 
     required : Dict[str, str] = {"field_tag" : getProperty(f, "field_id")}
@@ -283,7 +293,7 @@ def insertLocalValue(cursor         : Any,
                   acquired       = acquired,
                   details        = None,
                 )
-  local_value_id = demeter.insertLocalValue(cursor, local_value)
+  local_value_id = demeter.insertOrGetLocalValue(cursor, local_value)
 
   return local_value_id
 
@@ -345,14 +355,15 @@ def loadSentinelFile(parse_meta : ParseMeta,
   local_groups : Dict[int, Set[int]] = {}
   with open(filename) as geojson_file:
     contents        = json.load(geojson_file)
-    crs : demeter.CRS = contents["crs"]
+    crs = contents["crs"]
     features = contents["features"]
     for f in features:
       field_tag = getProperty(f, "field_id")
       field_id = field_id_map[field_tag]
       field = demeter.getField(cursor, field_id)
 
-      geom = loadGeometry(crs, f)
+      crs_name = getCRSName(crs)
+      geom   = loadGeometry(crs_name, f)
       geom_id = demeter.insertGeom(cursor, geom)
 
       date = getProperty(f, "acquisition_time")
@@ -399,14 +410,14 @@ def loadWeatherFile(parse_meta : ParseMeta,
   with open(filename) as geojson_file:
     print(filename)
     contents        = json.load(geojson_file)
-    crs : demeter.CRS = contents["crs"]
+    crs = contents["crs"]
     features = contents["features"]
     for f in features:
       geom = f["geometry"]
       some_point = demeter.GeomImpl(
                       type = geom["type"],
                       coordinates = geom["coordinates"],
-                      crs = crs
+                      crs_name    = crs["properties"]["name"],
                    )
       stmt = """select geom_id from geom where ST_Contains(geom.geom, %(geom)s)"""
       cursor.execute(stmt, {"geom": json.dumps(some_point)})

@@ -38,7 +38,7 @@ def insertS3ObjectKeys(cursor       : Any,
                        keys         : List[Key],
                        s3_type_id   : int,
                       ) -> bool:
-  s3_key_names = S3ObjectKey.keys()
+  s3_key_names = S3ObjectKey.names()
   stmt = generateInsertMany("s3_object_key", s3_key_names, len(keys))
   args : List[int] = []
   for k in keys:

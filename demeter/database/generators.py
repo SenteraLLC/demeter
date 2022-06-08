@@ -30,7 +30,7 @@ def _generateInsertStmt(table_name : str,
                        ) -> sql.SQL:
   stmt_template = "insert into {table} ({fields}) values({places})"
 
-  names_to_fields = OrderedDict({name : sql.Identifier(name) for name in table if not (is_optional(table, name) and is_none(table, name)) })
+  names_to_fields = OrderedDict({name : sql.Identifier(name) for name in table.names() if not (is_optional(table, name) and is_none(table, name)) })
 
 
   to_interpolate : Dict[str, Any] = {
@@ -89,7 +89,7 @@ def getInsertReturnIdFunction(table : Type[Any]) -> Callable[[Any, AnyIdTable], 
 def _insertAndReturnKey(table_name : str,
                         key        : Type[SK],
                        ) -> ReturnKey[S, SK]:
-  return_key = [f for f in key.keys()]
+  return_key = [f for f in key.names()]
 
   def __impl(cursor : Any,
              table  : S,
@@ -120,7 +120,7 @@ def getMaybeId(table_name : str,
                cursor     : Any,
                table      : AnyIdTable,
               ) -> Optional[int]:
-  field_names = table.keys()
+  field_names = table.names()
   names_to_fields = OrderedDict({name: sql.Identifier(name) for name in field_names })
 
   conditions = [sql.SQL(' = ').join([sql.Identifier(n), sql.Placeholder(n)]) for n in names_to_fields if not is_none(table, n) and not is_optional(table, n) ]

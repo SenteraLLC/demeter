@@ -12,11 +12,8 @@ from collections import OrderedDict
 
 @dataclass(frozen=True)
 class Table():
-  def __iter__(self) -> Iterator[str]:
-    return (k for k in self.keys())
-
   @classmethod
-  def keys(cls) -> Sequence[str]:
+  def names(cls) -> Sequence[str]:
     return [f.name for f in fields(cls)]
 
   def __call__(self) -> OrderedDict[str, Any]:

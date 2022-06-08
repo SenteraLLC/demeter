@@ -40,15 +40,12 @@ def loadGeometry(crs_name          : str,
                 ) -> demeter.Geom:
   geometry = feature["geometry"]
   # TODO: How to deal with these projections? Not technically correct?
-  g = demeter.GeomImpl(
-        type        = geometry["type"],
-        coordinates = geometry["coordinates"],
-        crs_name    = crs_name,
-      )
   return demeter.Geom(
             container_geom_id = container_geom_id,
-            geom              = g,
-            last_updated      = datetime.now(),
+            type         = geometry["type"],
+            coordinates  = geometry["coordinates"],
+            crs_name     = crs_name,
+            last_updated = datetime.now(),
          )
 
 
@@ -76,8 +73,6 @@ def loadField(cursor   : Any,
     grower_id = demeter.insertGrower(cursor, grower)
 
   geom = loadGeometry(crs_name, f)
-  print("GEOM: ",geom)
-  print("2nd: ",geom["geom"])
   geom_id = demeter.insertGeom(cursor, geom)
 
   year = getProperty(f, "year")
@@ -232,7 +227,7 @@ def loadPlantingFile(parse_meta : ParseMeta,
       field = demeter.getField(cursor, field_id)
 
       if geom_id is None:
-        geom_id = field["geom_id"]
+        geom_id = field.geom_id
 
       crop_type = demeter.CropType(species  = required["crop"],
                                  cultivar = optional["variety"],
@@ -260,7 +255,7 @@ def loadPlantingFile(parse_meta : ParseMeta,
       crop_stage_id = demeter.insertOrGetCropStage(cursor, crop_stage)
 
       date_emerged = maybeParseDate(optional["date_emerge"])
-      planting_geom_id = planting_key["geom_id"]
+      planting_geom_id = planting_key.geom_id
       crop_progress = demeter.CropProgress(
                         field_id = field_id,
                         crop_type_id = crop_type_id,
@@ -317,7 +312,7 @@ def loadAppliedFile(parse_meta : ParseMeta,
       field = demeter.getField(cursor, field_id)
 
       if geom_id is None:
-        geom_id = field["geom_id"]
+        geom_id = field.geom_id
 
       source_keys : Dict[str, str] = {
         "n"   : "nitrogen",
@@ -414,13 +409,15 @@ def loadWeatherFile(parse_meta : ParseMeta,
     features = contents["features"]
     for f in features:
       geom = f["geometry"]
-      some_point = demeter.GeomImpl(
-                      type = geom["type"],
-                      coordinates = geom["coordinates"],
-                      crs_name    = crs["properties"]["name"],
+      some_point = demeter.Geom(
+                     container_geom_id = None,
+                     type = geom["type"],
+                     coordinates = geom["coordinates"],
+                     crs_name    = crs["properties"]["name"],
+                     last_updated = datetime.now(),
                    )
       stmt = """select geom_id from geom where ST_Contains(geom.geom, %(geom)s)"""
-      cursor.execute(stmt, {"geom": json.dumps(some_point)})
+      cursor.execute(stmt, {"geom": some_point.geom})
       results = cursor.fetchall()
       if len(results):
         print("Contained by: ",len(results))
@@ -452,7 +449,7 @@ def loadWeatherDerivedFile(parse_meta : ParseMeta,
       field_tag = row["field_id"]
       field_id = field_id_map[field_tag]
       field = demeter.getField(cursor, field_id)
-      geom_id = field["geom_id"]
+      geom_id = field.geom_id
 
       date = row["date"]
       acquired = parseDate(date)
@@ -518,7 +515,7 @@ def loadSampleFile(parse_meta : ParseMeta,
       field = demeter.getField(cursor, field_id)
 
       if geom_id is None:
-        geom_id = field["geom_id"]
+        geom_id = field.geom_id
 
       if key is not None:
         local_type = required[key]

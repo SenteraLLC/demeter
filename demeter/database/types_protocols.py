@@ -43,6 +43,7 @@ class Detailed(Updateable):
 
   def __post_init__(self):
     details = HashableJSON(self.details)
+    object.__setattr__(self, 'details', details)
 
 
 @dataclass(frozen=True)

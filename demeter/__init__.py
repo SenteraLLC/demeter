@@ -13,12 +13,12 @@ from .transformation import Transformation
 __all__ = [
   'datasource',
   'database',
+
   'Coordinates',
   'CropProgress',
   'CropProgressKey',
   'CropStage',
   'CropType',
-  'CRS',
   'Enum',
   'Execution',
   'ExecutionKey',
@@ -28,7 +28,6 @@ __all__ = [
   'FunctionType',
   'GeoSpatialKey',
   'Geom',
-  'GeomImpl',
   'Grower',
   'HTTPArgument',
   'HTTPParameter',
@@ -51,6 +50,7 @@ __all__ = [
   'Planting',
   'PlantingKey',
   'Point',
+  'Polygon',
   'ReportType',
   'RequestBodySchema',
   'S3InputArgument',
@@ -67,6 +67,7 @@ __all__ = [
   'TaggedS3SubType',
   'TemporalKey',
   'Transformation',
+
   'getField',
   'getGeom',
   'getHTTPByName',
@@ -103,6 +104,7 @@ __all__ = [
   'getS3TypeBase',
   'getS3TypeIdByName',
   'getTableFunction',
+
   'insertCropProgress',
   'insertCropStage',
   'insertCropType',

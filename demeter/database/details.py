@@ -31,10 +31,3 @@ class HashableJSON:
 
 IncompleteHashableJSON = Union[JsonRootObject, HashableJSON]
 
-class HashablePair(HashableJSON):
-  def __init__(self,
-               k : str,
-               v : _JsonPrimitive
-              ):
-    self._root = OrderedDict({k : v})
-

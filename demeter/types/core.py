@@ -1,54 +1,62 @@
 from typing import Optional, Union
-from typing import Literal
-from typing import Tuple
+from typing import Literal, Mapping, Tuple
 from datetime import date, datetime
 
 from ..database.types_protocols import Table, Updateable, Detailed
-from ..database.details import HashablePair
+from ..database.details import HashableJSON
 
-from collections import OrderedDict
+import json
 from dataclasses import InitVar
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
+
+
+Point = Tuple[float, float]
+Line = Tuple[Point, ...]
+Polygon = Line
+MultiPolygon = Tuple[Polygon, ...]
+# Postgis won't accept a lone Polygon
+Coordinates = Union[Point, Line, MultiPolygon]
 
 
 @dataclass(frozen=True)
 class CRS:
   type       : Literal["name"]
   # TODO: What other properties are available?
-  properties : HashablePair
-
-
-Point = Tuple[float, float]
-Line = Tuple[Point, ...]
-# Postgis only wants MultiPolygon
-_Polygon = Line
-MultiPolygon = Tuple[_Polygon, ...]
-Coordinates = Union[Point, Line, MultiPolygon]
+  properties : Mapping[Literal["name"], str]
 
 
 @dataclass(frozen=True)
-class GeomImpl(Table):
+class GeomImpl:
   type        : str
   coordinates : Coordinates
-  crs_name    : InitVar[str]
-  crs         : CRS = field(init=False)
-
-  def __post_init__(self, crs_name : str):
-    crs = CRS(type = "name",
-              properties = HashablePair("name", crs_name),
-             )
-    object.__setattr__(self, 'crs', crs)
+  crs         : CRS
 
 
 @dataclass(frozen=True)
 class Geom(Updateable):
-  container_geom_id : Optional[int]
-  geom              : GeomImpl
+  crs_name          : InitVar[str]
+  type              : InitVar[str]
+  coordinates       : InitVar[Coordinates]
+  geom              : str = field(init=False)
 
-@dataclass(frozen=True)
-class InsertableGeom(Table):
   container_geom_id : Optional[int]
-  geom              : str
+
+  def __post_init__(self,
+                    crs_name : str,
+                    type : str,
+                    coordinates : Coordinates
+                   ):
+    crs = CRS(type = "name",
+              properties = {"name": crs_name},
+             )
+    impl = GeomImpl(
+      type = type,
+      coordinates = coordinates,
+      crs = crs
+    )
+    geom = json.dumps(impl, default=asdict)
+    object.__setattr__(self, 'geom', geom)
+
 
 @dataclass(frozen=True)
 class Owner(Table):

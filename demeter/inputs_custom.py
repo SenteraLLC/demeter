@@ -38,23 +38,22 @@ def insertS3ObjectKeys(cursor       : Any,
                        keys         : List[Key],
                        s3_type_id   : int,
                       ) -> bool:
-  s3_key_names = list(S3ObjectKey.__annotations__.keys())
+  s3_key_names = S3ObjectKey.keys()
   stmt = generateInsertMany("s3_object_key", s3_key_names, len(keys))
-  args = []
+  args : List[int] = []
   for k in keys:
     s3_object_key = S3ObjectKey(
                       s3_object_id      = s3_object_id,
                       geospatial_key_id = k.geospatial_key_id,
                       temporal_key_id   = k.temporal_key_id,
                     )
-    for key_name in s3_key_names:
-      args.append(s3_object_key[key_name])
+    args.extend(s3_object_key().values())
   results = cursor.execute(stmt, args)
   return True
 
 
 def getS3ObjectByKey(cursor         : Any,
-                     k              : Key,
+                     key            : Key,
                     ) -> Optional[Tuple[int, S3Object]]:
   stmt = """select *
             from s3_object O, s3_object_key K
@@ -62,11 +61,11 @@ def getS3ObjectByKey(cursor         : Any,
                   K.geospatial_key_id = %(geospatial_key_id)s and
                   K.temporal_key_id = %(temporal_key_id)s
          """
-  args = { k : v for k, v in k.items() if k in ["geospatial_key_id", "temporal_key_id"] }
+  args = { k : v for k, v in key().items() if k in ["geospatial_key_id", "temporal_key_id"] }
   cursor.execute(stmt, args)
   results = cursor.fetchall()
   if len(results) <= 0:
-    raise Exception("No S3 object exists for: ",k)
+    raise Exception("No S3 object exists for: ",key)
 
   result_with_id = results[0]
   s3_object_id = result_with_id.pop("s3_object_id")

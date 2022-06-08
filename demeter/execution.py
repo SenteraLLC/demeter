@@ -1,7 +1,7 @@
 from .types.execution import Execution, LocalArgument, HTTPArgument, KeywordArgument, S3InputArgument, S3OutputArgument, ExecutionKey
 
 from .database.api_protocols import ReturnId, ReturnSameKey
-from .database.generators import getMaybeIdFunction, getTableFunction, getInsertReturnIdFunction, getInsertReturnKeyFunction
+from .database.generators import getInsertReturnIdFunction, getInsertReturnKeyFunction
 
 from .execution_custom import getExecutionSummaries, \
                               getExistingExecutions

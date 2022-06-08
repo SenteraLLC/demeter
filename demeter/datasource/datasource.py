@@ -85,7 +85,7 @@ class DataSource(DataSourceBase):
       tag = tagged_s3_subtype.tag
       subtype = tagged_s3_subtype.value
       if tag == S3TypeDataFrame:
-        dataframe_subtype = S3TypeDataFrame(**subtype.args())
+        dataframe_subtype = S3TypeDataFrame(**subtype())
         maybe_df, maybe_gdf = rawToDataFrame(raw_results, dataframe_subtype)
         if maybe_df is not None:
           df = self.dataframes[type_name] = maybe_df

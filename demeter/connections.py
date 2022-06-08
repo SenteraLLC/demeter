@@ -66,6 +66,6 @@ def getPgConnection() -> PGConnection:
   user = getEnv("DemeterPGUSER", getpass.getuser())
   options = getEnv("DemeterPGOPTIONS", "")
   database = getEnv("DemeterPG", "postgres")
-  return psycopg2.connect(host="localhost", options="-c search_path=test_mlops,public", database="postgres")
+  return psycopg2.connect(host="localhost", options="-c search_path=test_mlops,public", database="postgres", cursor_factory=psycopg2.extras.NamedTupleCursor)
 
 

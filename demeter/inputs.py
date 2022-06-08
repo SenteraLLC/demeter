@@ -43,8 +43,8 @@ def insertOrGetS3TypeDataFrame(cursor : Any,
             values(%(s3_type_id)s, %(driver)s, %(has_geometry)s)
             on conflict do nothing"""
   args = {"s3_type_id"   : s3_type_id,
-          "driver"       : s3_type_dataframe["driver"],
-          "has_geometry" : s3_type_dataframe["has_geometry"],
+          "driver"       : s3_type_dataframe.driver,
+          "has_geometry" : s3_type_dataframe.has_geometry,
          }
   cursor.execute(stmt, args)
 

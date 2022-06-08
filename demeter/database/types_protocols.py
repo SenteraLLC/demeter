@@ -1,9 +1,8 @@
-from typing import Optional, Mapping, Any, Union, Set, Iterator, Tuple, TypeVar, Type
+from typing import Optional, Mapping, Any, Union, TypeVar, Sequence, Iterator
 
 from datetime import datetime
-from dataclasses import InitVar
-from dataclasses import dataclass, field
-from dataclasses import asdict
+from dataclasses import dataclass
+from dataclasses import fields
 
 import json
 
@@ -13,38 +12,21 @@ from collections import OrderedDict
 
 @dataclass(frozen=True)
 class Table():
-  def keys(self) -> Set[str]:
-    return set(self.__dataclass_fields__.keys())
+  def __iter__(self) -> Iterator[str]:
+    return (k for k in self.keys())
 
-  def items(self) -> Iterator[Tuple[str, Any]]:
-    keys = self.keys()
-    return ((k, self[k]) for k in keys)
+  @classmethod
+  def keys(cls) -> Sequence[str]:
+    return [f.name for f in fields(cls)]
 
-  def args(self) -> Mapping[str, Any]:
-    return dict(self.items())
-
-  # TODO: This should be handled by dataclasses.fields(...)
-  def __getitem__(self, k : str) -> Any:
-    # TODO: Allows bad attributes to get None back
-    #       Also prevents infinite recursion on __getitem__
-    return getattr(self, k)
-
-  def __iter__(self):
-    raise TypeError
+  def __call__(self) -> OrderedDict[str, Any]:
+    out = [(f.name, getattr(self, f.name)) for f in fields(self)]
+    return OrderedDict(out)
 
   class Encoder(json.JSONEncoder):
-    DEFAULT = json.JSONEncoder.default
-
-    def default(self, obj):
-      if isinstance(obj, HashableJSON):
-        _impl = obj()
-        return _impl
-      elif isinstance(obj, Table):
-        items = asdict(obj)
-        return items
-
-      return self.DEFAULT(obj)
-
+    def default(self, obj : Any):
+      return obj() if isinstance(obj, Table) \
+                   else json.JSONEncoder.default(self, obj)
 
 T = TypeVar('T', bound=Table)
 
@@ -64,7 +46,6 @@ class Detailed(Updateable):
 
   def __post_init__(self):
     details = HashableJSON(self.details)
-
 
 
 @dataclass(frozen=True)

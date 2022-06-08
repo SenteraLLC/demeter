@@ -1,4 +1,4 @@
-from typing import TypedDict, Any, Literal, List, Dict, Callable, Optional, Sequence, Type, TypeVar, Union
+from typing import TypedDict, Any, Literal, Dict, Callable, Optional, Sequence, Type, TypeVar, Union
 from psycopg2 import sql, extras
 
 from collections import OrderedDict
@@ -29,13 +29,13 @@ def _generateInsertStmt(table_name : str,
                        ) -> sql.SQL:
   stmt_template = "insert into {table} ({fields}) values({places})"
 
-  names_to_fields = OrderedDict({name : sql.Identifier(name) for name in table.keys() if not (is_optional(table, name) and is_none(table, name)) })
+  names_to_fields = OrderedDict({name : sql.Identifier(name) for name in table if not (is_optional(table, name) and is_none(table, name)) })
 
 
   to_interpolate : Dict[str, Any] = {
     "table"  : sql.Identifier(table_name),
     "fields" : sql.SQL(",").join(names_to_fields.values()),
-    "places" : sql.SQL(",").join([sql.Placeholder(n) for n in names_to_fields.keys()]),
+    "places" : sql.SQL(",").join([sql.Placeholder(n) for n in names_to_fields]),
   }
   if return_key is not None:
     key_names = [sql.Identifier(k) for k in return_key]
@@ -47,7 +47,7 @@ def _generateInsertStmt(table_name : str,
 
 
 def generateInsertMany(table_name     : str,
-                       field_names    : List[str],
+                       field_names    : Sequence[str],
                        number_inserts : int,
                       ) -> sql.SQL:
   placeholder = sql.SQL("").join([sql.SQL("("),
@@ -75,7 +75,7 @@ def _insertAndReturnId(table_name : str,
   table_id = table_name + "_id"
   return_key = [table_id]
   stmt = _generateInsertStmt(table_name, table, return_key)
-  cursor.execute(stmt, table.args())
+  cursor.execute(stmt, table())
   result = cursor.fetchone()
   return int(result[table_id])
 
@@ -88,13 +88,13 @@ def getInsertReturnIdFunction(table : Type[Any]) -> Callable[[Any, AnyIdTable], 
 def _insertAndReturnKey(table_name : str,
                         key        : Type[SK],
                        ) -> ReturnKey[S, SK]:
-  return_key = list(key.__dataclass_fields__.keys())
+  return_key = [f for f in key.keys()]
 
   def __impl(cursor : Any,
              table  : S,
             ) -> SK:
     stmt = _generateInsertStmt(table_name, table, return_key)
-    cursor.execute(stmt, table.args())
+    cursor.execute(stmt, table())
     result = cast(SK, cursor.fetchone())
     return result
 
@@ -119,7 +119,7 @@ def getMaybeId(table_name : str,
                cursor     : Any,
                table      : AnyIdTable,
               ) -> Optional[int]:
-  field_names = cast(Sequence[str], table.keys())
+  field_names = table.keys()
   names_to_fields = OrderedDict({name: sql.Identifier(name) for name in field_names })
 
   conditions = [sql.SQL(' = ').join([sql.Identifier(n), sql.Placeholder(n)]) for n in names_to_fields if not is_none(table, n) and not is_optional(table, n) ]
@@ -132,7 +132,7 @@ def getMaybeId(table_name : str,
     sql.Identifier(table_name),
     sql.SQL(' and ').join(conditions),
   )
-  cursor.execute(stmt, table.args())
+  cursor.execute(stmt, table())
   result = cursor.fetchone()
   if result is not None:
     return result[table_id]

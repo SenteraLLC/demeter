@@ -51,8 +51,6 @@ __all__ = [
   'Planting',
   'PlantingKey',
   'Point',
-  'Polygon',
-  'Properties',
   'ReportType',
   'RequestBodySchema',
   'S3InputArgument',

@@ -16,7 +16,6 @@ def checkHTTPParams(params : Mapping[str, Any],
                    ) -> None:
   try:
     missing = set(expected_params) - set(params.keys())
-    # TODO: Allow optional params?
     if len(missing):
       raise Exception(f"Missing args: {missing}")
     extraneous = set(params.keys()) - set(expected_params)
@@ -66,6 +65,7 @@ def wrap_requests_fn(requests_fn : Callable[..., requests.Response],
 
 
 # TODO: Handle responses besides JSON
+# TODO: Bulk requests with related keys
 def _getHTTPRows(cursor       : Any,
                  keys         : List[Key],
                  http_type    : HTTPType,

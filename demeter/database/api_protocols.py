@@ -25,7 +25,6 @@ GetId = Callable[[Any, I], Optional[int]]
 GetTable = Callable[[Any, int], I]
 ReturnId = Callable[[Any, I], int]
 
-# TODO: Fix typing issues here
 S = TypeVar('S', bound=AnyKeyTable)
 SK = TypeVar('SK', bound=TableKey)
 ReturnKey = Callable[[Any, S], SK]

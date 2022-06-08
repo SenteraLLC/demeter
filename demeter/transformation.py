@@ -50,7 +50,6 @@ def Transformation(name                : str,
     if maybe_latest is not None:
       maybe_function_id, maybe_latest_signature = maybe_latest
 
-    # TODO: Only allow primitive values in kwargs?
     @wraps(fn)
     def add_datasource(*args : Any, **kwargs : Any) -> ExecutionOutputs:
       if len(args):
@@ -107,7 +106,7 @@ def Transformation(name                : str,
         if maybe_duplicate_execution is not None:
           duplicate_execution = maybe_duplicate_execution
 
-          # TODO: Not implemented yet
+          # TODO: Test this
           outputs = duplicate_execution["outputs"]
           duplicate_execution_id = duplicate_execution["execution_id"]
           print(f"Detected matching execution #{duplicate_execution_id} for {name} {major}")
@@ -122,7 +121,6 @@ def Transformation(name                : str,
           if maybe_execution_id is not None:
             execution_id = maybe_execution_id
             print(f"Ran function {name} {major} as execution #{execution_id}")
-
       mlops_db_connection.commit()
       return outputs
 

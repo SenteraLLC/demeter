@@ -30,8 +30,6 @@ insertOrGetGrower = partial(insertOrGetType, getMaybeGrowerId, insertGrower)
 insertOrGetField = partial(insertOrGetType, getMaybeFieldId, insertField)
 
 
-
-# TODO: The ST_Equals check is also done on insert, worth resolving?
 def getMaybeDuplicateGeom(cursor : Any,
                           geom   : Geom,
                          ) -> Optional[int]:

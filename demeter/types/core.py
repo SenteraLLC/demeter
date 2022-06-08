@@ -75,7 +75,6 @@ class Field(Table):
   year        : Optional[int]
   grower_id   : Optional[int]
   external_id : Optional[str]
-  # TODO: Internal id?
   sentera_id  : Optional[str]      = None
   created     : Optional[datetime] = None
 

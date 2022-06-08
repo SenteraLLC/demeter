@@ -13,7 +13,8 @@ from .type_lookups import id_table_lookup, key_table_lookup
 from typing import get_origin, get_args, Union
 
 
-# TODO: This 'is_optional' filter might be a bad idea...
+# TODO: Add options for 'is_none' and 'is_optional'
+
 def is_none(table : AnyTable, key : str) -> bool:
   return getattr(table, key) is None
 
@@ -123,8 +124,6 @@ def getMaybeId(table_name : str,
   names_to_fields = OrderedDict({name: sql.Identifier(name) for name in field_names })
 
   conditions = [sql.SQL(' = ').join([sql.Identifier(n), sql.Placeholder(n)]) for n in names_to_fields if not is_none(table, n) and not is_optional(table, n) ]
-  # TODO: Is this worth supporting as an option somehow?
-  #conditions.extend([sql.SQL('').join([sql.Identifier(n), sql.SQL(" is null")]) for n in names_to_fields if is_none(table, n) ])
 
   table_id = "_".join([table_name, "id"])
   stmt = sql.SQL("select {0} from {1} where {2}").format(

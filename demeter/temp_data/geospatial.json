@@ -1,11 +1,17 @@
 [
-  {"geom_id": 1,
-   "field_id": 1
+  {"geom_id": 12668,
+   "field_id":12291
   },
-  {"geom_id": 2,
-   "field_id": 2
+  {"geom_id": 12669,
+   "field_id": 12292
   },
-  {"geom_id": 3,
-   "field_id": 3
+  {"geom_id": 12670,
+   "field_id":12293
+  },
+  {"geom_id": 1484,
+   "field_id": 1107
+  },
+  {"geom_id": 1485,
+   "field_id": 1108
   }
 ]

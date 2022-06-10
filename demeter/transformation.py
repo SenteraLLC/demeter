@@ -1,16 +1,13 @@
-from typing import List, Dict, Any, Callable, Generator, Union, Optional, Sequence, Mapping
+from typing import List, Any, Callable, Optional, Mapping
 
 import psycopg2
 from functools import wraps
-import sys
 
 from . import temporary
 from .datasource.datasource import DataSource
 from .datasource.register import DataSourceRegister
-from .datasource.s3_file import S3File, LocalFile
-from .types.function import Function, FunctionType, FunctionSignature
+from .types.function import FunctionSignature
 from .function import getLatestFunctionSignature
-from .inputs import getS3Type, getS3TypeIdByName
 
 from .execution import insertExecution, getExistingExecutions
 from .types.execution import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument, Key
@@ -22,25 +19,28 @@ from .util.cli import parseCLIArguments
 from .util.mode import getModeFromKwargs
 from .util.mode import ExecutionMode
 from .util.setup import getOutputTypes, getKeywordParameterTypes, createFunction
-from .util.wrapper_types import OutputLoadFunction, WrappableFunction, AddGeoDataFrameWrapper
-from .util.teardown import insertExecutionArguments, insertRawOutputs, insertInitFile
+from .util.wrapper_types import OutputLoadFunction, WrappableFunction
+from .util.wrapper_types import WrappedTransformation as WrappedTransformation
+from .util.teardown import insertRawOutputs, insertInitFile
 from .util.existing import getExistingDuplicate
 
 
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Local) -> (S3, Local)
 
+
+
 def Transformation(name                : str,
                    major               : int,
                    output_to_type_name : Mapping[str, str],
                    load_fn             : OutputLoadFunction,
-                  ) -> Callable[[WrappableFunction], AddGeoDataFrameWrapper]:
-  def setup_datasource(fn : WrappableFunction) -> AddGeoDataFrameWrapper:
+                   ) -> Callable[[WrappableFunction], WrappedTransformation]:
+  def setup_datasource(fn : WrappableFunction) -> WrappedTransformation:
     # TODO: How to handle aws credentials and role assuming?
     (s3_connection, bucket_name) = getS3Connection()
 
     mlops_db_connection = getPgConnection()
-    cursor = mlops_db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cursor = mlops_db_connection.cursor()
 
     function = createFunction(cursor, name, major)
 
@@ -88,7 +88,6 @@ def Transformation(name                : str,
 
         keys : List[Key] = []
         if mode == ExecutionMode.CLI:
-          #keyword_types = getKeywordParameterTypes(fn)
           kwargs, default_cli_kwargs = parseCLIArguments(name, major, keyword_types)
           geospatial_key_file = default_cli_kwargs["geospatial_key_file"]
           temporal_key_file = default_cli_kwargs["temporal_key_file"]
@@ -100,15 +99,15 @@ def Transformation(name                : str,
 
         load_fn(datasource, **kwargs)
 
-        function_id = datasource.execution_summary["function_id"]
+        function_id = datasource.execution_summary.function_id
         existing_executions = getExistingExecutions(cursor, function_id)
         maybe_duplicate_execution = getExistingDuplicate(existing_executions, datasource.execution_summary)
         if maybe_duplicate_execution is not None:
           duplicate_execution = maybe_duplicate_execution
 
           # TODO: Test this
-          outputs = duplicate_execution["outputs"]
-          duplicate_execution_id = duplicate_execution["execution_id"]
+          outputs = duplicate_execution.outputs
+          duplicate_execution_id = duplicate_execution.execution_id
           print(f"Detected matching execution #{duplicate_execution_id} for {name} {major}")
 
         else:
@@ -127,5 +126,3 @@ def Transformation(name                : str,
     return add_datasource
   return setup_datasource
 
-# Irrigation Status, Review Data for Yield Quantity, Protein Quantity
-# Grower Field, Region (Country),

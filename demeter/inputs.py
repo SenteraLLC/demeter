@@ -1,19 +1,23 @@
-from typing import Tuple, Any
+from typing import Tuple, Any, Optional, Mapping, Type, Callable, TypeVar
 
 from functools import partial as __partial
 
 from .database.api_protocols import GetId, GetTable, ReturnId, ReturnSameKey
+from .database.types_protocols import AnyKey
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getInsertReturnSameKeyFunction, getTableFunction, insertOrGetType
+from .database.util import CovariantMapping
 
-from .types.inputs import *
+from .types.inputs import HTTPType, S3Object, S3Type, S3TypeDataFrame, S3ObjectKey, S3SubType, TaggedS3SubType
 
-from .inputs_custom import getHTTPByName, \
-                           insertS3ObjectKeys, \
-                           getS3ObjectByKey, \
-                           getS3ObjectByKeys, \
-                           getS3TypeIdByName
+from .inputs_custom \
+import getHTTPByName      as getHTTPByName, \
+       insertS3ObjectKeys as insertS3ObjectKeys, \
+       getS3ObjectByKey   as getS3ObjectByKey, \
+       getS3ObjectByKeys  as getS3ObjectByKeys, \
+       getS3TypeIdByName  as getS3TypeIdByName \
 
-from .local import getLocalType, getMaybeLocalTypeId, insertLocalType, insertOrGetLocalType
+from .local import getLocalType as getLocalType
+from .local import getMaybeLocalTypeId, insertLocalType, insertOrGetLocalType
 
 getMaybeHTTPTypeId : GetId[HTTPType] = getMaybeIdFunction(HTTPType)
 getMaybeS3TypeId   : GetId[S3Type]   = getMaybeIdFunction(S3Type)
@@ -50,12 +54,11 @@ def insertOrGetS3TypeDataFrame(cursor : Any,
 
   return s3_type_id
 
-
-s3_sub_type_get_lookup = {
+s3_sub_type_get_lookup : CovariantMapping[Type[S3SubType], Callable[[Any, int], S3SubType]] = {
   S3TypeDataFrame : getMaybeS3TypeDataFrame
 }
 
-s3_sub_type_insert_lookup = {
+s3_sub_type_insert_lookup : CovariantMapping[Type[S3SubType], Callable[[Any, Any], AnyKey]] = {
   S3TypeDataFrame : insertS3TypeDataFrame
 }
 

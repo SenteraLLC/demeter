@@ -8,17 +8,18 @@ from ..types.execution import ExecutionSummary, LocalArgument, Key
 
 T = TypeVar('T')
 
+# TODO: Does this get nested annotations?
 def sqlToTypedDict(rows : List[Any],
-                   some_type : Type,
+                   some_type : Type[Any],
                   ) -> List[T]:
-  return cast(List[T], [{k : v for k, v in row.items() if k in some_type.__annotations__.keys()} for row in rows])
+  return cast(List[T], [{k : v for k, v in row._asdict().items() if k in some_type.__annotations__.keys()} for row in rows])
 
 
 def queryLocalByKey(cursor     : Any,
                     key        : Key,
                     local_type_id : int,
                    ) -> Iterable[Tuple[LocalValue, UnitType]]:
-  stmt = """select *
+  stmt = """select V.*, U.unit, U.local_type_id
             from local_value V, unit_type U
             where V.unit_type_id = U.unit_type_id and U.local_type_id = %s and
               V.geom_id = %s and V.field_id = %s and (V.acquired is null or (V.acquired > %s and V.acquired < %s))
@@ -66,12 +67,12 @@ def loadLocalRaw(cursor : Any,
     results_for_type = loadType(cursor, keys, local_type_id)
 
     l = LocalArgument(
-          function_id = execution_summary["function_id"],
-          execution_id = execution_summary["execution_id"],
+          function_id = execution_summary.function_id,
+          execution_id = execution_summary.execution_id,
           local_type_id = local_type_id,
           number_of_observations = len(results_for_type),
         )
-    execution_summary["inputs"]["local"].append(l)
+    execution_summary.inputs["local"].append(l)
 
     results.extend(results_for_type)
   return results

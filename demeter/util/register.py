@@ -15,10 +15,10 @@ from ..types.function import Function, FunctionSignature, S3TypeSignature, Local
 from ..constants import NOW
 
 
-def makeDummyArguments(keyword_types : Dict[str, Type]) -> Dict[str, Any]:
+def makeDummyArguments(keyword_types : Dict[str, Type[Any]]) -> Dict[str, Any]:
   out : Dict[str, Any] = {}
   for name, typ in keyword_types.items():
-    type_to_dummy : Mapping[Type, Any] = {
+    type_to_dummy : Mapping[Type[Any], Any] = {
       str : "",
       int : 0,
       float : 0.0,
@@ -27,7 +27,7 @@ def makeDummyArguments(keyword_types : Dict[str, Type]) -> Dict[str, Any]:
   return out
 
 
-def keyword_type_to_enum(_type : Type) -> KeywordType:
+def keyword_type_to_enum(_type : Type[Any]) -> KeywordType:
   return {str : KeywordType.STRING,
           int : KeywordType.INTEGER,
           float : KeywordType.FLOAT
@@ -36,7 +36,7 @@ def keyword_type_to_enum(_type : Type) -> KeywordType:
 def getSignature(cursor : Any,
                  function : Function,
                  input_types : DataSourceTypes,
-                 keyword_types : Dict[str, Type],
+                 keyword_types : Dict[str, Type[Any]],
                  output_types : Dict[str, Tuple[str, int]],
                 ) -> FunctionSignature:
   def unpackS3Type(s3_type_and_subtype : Tuple[S3Type, Optional[TaggedS3SubType]]) -> S3TypeSignature:
@@ -74,7 +74,7 @@ def getSignature(cursor : Any,
 def insertFunctionTypes(cursor : Any,
                         function : Function,
                         input_types : DataSourceTypes,
-                        keyword_types : Dict[str, Type],
+                        keyword_types : Dict[str, Type[Any]],
                         output_types : Dict[str, Tuple[str, int]],
                        ) -> Tuple[int, int]:
   function_id, minor = insertFunction(cursor, function)
@@ -141,7 +141,7 @@ def diffSignatures(cursor : Any,
 
 def registerFunction(cursor : Any,
                      input_types : DataSourceTypes,
-                     keyword_types : Dict[str, Type],
+                     keyword_types : Dict[str, Type[Any]],
                      function : Function,
                      output_types : Dict[str, Tuple[str, int]],
                      maybe_latest_signature : Optional[FunctionSignature],

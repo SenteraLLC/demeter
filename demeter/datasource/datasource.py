@@ -12,13 +12,14 @@ from ..types.local import LocalType
 
 from collections import OrderedDict
 
-from .base import DataSourceBase
 from .util import createKeywordArguments
 from .local import getLocalRows
 from .http import getHTTPRows
 from .s3 import getRawS3, rawToDataFrame
 from .s3_file import SupportedS3DataType, AnyDataFrame, S3FileMeta
 from .types import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
+
+from .base import DataSourceBase as DataSourceBase
 
 import pandas as pd
 import geopandas as gpd # type: ignore
@@ -34,14 +35,14 @@ class DataSource(DataSourceBase):
                cursor             : Any,
                s3_connection      : Any,
                keyword_arguments  : Dict[str, Any],
-               keyword_types      : Dict[str, Type],
+               keyword_types      : Dict[str, Type[Any]],
               ):
     super().__init__(cursor, function_id, execution_id)
 
     self.s3_connection = s3_connection
     self.cursor = cursor
-    self.keys = self.execution_summary["inputs"]["keys"] = keys
-    self.execution_summary["inputs"]["keyword"] = createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
+    self.keys = self.execution_summary.inputs["keys"] = keys
+    self.execution_summary.inputs["keyword"] = createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
 
     self.dataframes : Dict[str, pd.DataFrame] = OrderedDict()
     self.geodataframes : Dict[str, gpd.GeoDataFrame] = OrderedDict()
@@ -69,7 +70,7 @@ class DataSource(DataSourceBase):
     raw_results = getHTTPRows(self.cursor, self.keys, self.execution_summary, type_name, param_fn, json_fn, response_fn, http_options)
     results : List[Dict[str, Any]] = []
     for key, row in raw_results:
-      results.append(dict(**key, **row))
+      results.append(dict(**key(), **row))
 
     df = pd.DataFrame(results)
     self.dataframes[type_name] = df
@@ -166,10 +167,13 @@ class DataSource(DataSourceBase):
       return self.getGeometry()
     return geo if (geo := self.geodataframes.pop(type_name, None)) is not None else self.dataframes.pop(type_name)
 
-  def _findExisting(self, type_name : str, explicit_join_results) -> Optional[frozenset[str]]:
+  def _findExisting(self,
+                    type_name : str,
+                    explicit_join_results : JoinResults,
+                   ) -> Optional[frozenset[str]]:
     for type_names, existing_result in explicit_join_results.items():
       if type_name in type_names:
-        return type_names
+        return frozenset(type_names)
     return None
 
 
@@ -245,7 +249,7 @@ class DataSource(DataSourceBase):
       left_suffix = str(uuid.uuid4())
       out = out.sjoin(gdf, lsuffix=left_suffix, rsuffix=k)
 
-      ljoin = lambda s : "_".join([s, left_suffix])
+      ljoin : Callable[[str], str] = lambda s : "_".join([s, left_suffix])
       to_rename = {"geom_id", "container_geom_id"}
       out.rename(columns={ljoin(s) : s for s in to_rename}, inplace=True)
 

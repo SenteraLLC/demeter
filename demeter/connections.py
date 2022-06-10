@@ -10,10 +10,12 @@ from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import register_adapter, adapt
 
 from .types.inputs import HTTPVerb, KeywordType
+
 from .database.details import HashableJSON
+from .database.types_protocols import Table
 
 
-def getEnv(name : str, default : Optional[str] = None):
+def getEnv(name : str, default : Optional[str] = None) -> str:
   v = os.environ.get(name, default)
   if v is None:
     raise Exception(f"Environment variable for '{name}' not set")
@@ -45,6 +47,7 @@ def getS3Connection() -> Tuple[Any, str]:
   )
   return s3_resource, bucket_name
 
+
 def register() -> None:
   http_verb_to_string : Callable[[HTTPVerb], str] = lambda v : v.name.lower()
 
@@ -52,12 +55,14 @@ def register() -> None:
 
   register_adapter(HTTPVerb, verb_to_sql)
 
-  register_adapter(set, lambda s : adapt(list(s)))
+  register_adapter(set, lambda s : adapt(list(s))) # type: ignore
 
-  register_adapter(dict, psycopg2.extras.Json)
-  register_adapter(HashableJSON, lambda j : psycopg2.extras.Json(j()))
+  #register_adapter(HashableJSON, lambda j : psycopg2.extras.Json(j()))
+  register_adapter(Table, lambda t : t())
 
   register_adapter(KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
+
+
 
 
 def getPgConnection() -> PGConnection:

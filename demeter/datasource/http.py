@@ -9,6 +9,7 @@ from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 from ..types.inputs import HTTPType, HTTPVerb
 from ..inputs import getHTTPByName
 from ..types.execution import ExecutionSummary, HTTPArgument, Key
+from ..database.details import JsonRoot
 
 
 def checkHTTPParams(params : Mapping[str, Any],
@@ -38,7 +39,7 @@ def parseHTTPParams(expected_params : Sequence[str],
     raise Exception("Expecting URL params but no param function provided")
 
 
-def parseRequestSchema(request_body_schema : Mapping,
+def parseRequestSchema(request_body_schema : JsonRoot,
                        json_fn             : Optional[KeyToArgsFunction],
                        k                   : Key,
                       ) -> Mapping[str, Any]:
@@ -51,13 +52,14 @@ def parseRequestSchema(request_body_schema : Mapping,
     raise Exception("Expecting HTTP json request but no json function provided")
 
 
+# NOTE: Wait for Python 3.11 ParamSpec
 def wrap_requests_fn(requests_fn : Callable[..., requests.Response],
                      cursor      : Any,
                     ) -> Callable[..., requests.Response]:
   wraps(requests_fn)
   def wrapped(uri : str,
-              *args,
-              **kwargs,
+              *args : Any,
+              **kwargs : Any,
              ) -> requests.Response:
     return requests_fn(uri, *args, **kwargs)
 
@@ -90,9 +92,9 @@ def _getHTTPRows(cursor       : Any,
     if expected_params is not None:
       http_options["params"] = parseHTTPParams(expected_params, param_fn, k)
 
-    request_body_schema = http_type.request_body_schema
+    request_body_schema = http_type.schema
     if request_body_schema is not None:
-      http_options["json"] = parseRequestSchema(request_body_schema, json_fn, k)
+      http_options["json"] = parseRequestSchema(request_body_schema(), json_fn, k)
 
     wrapped = wrap_requests_fn(func, cursor)
     raw_response = wrapped(uri, **http_options)
@@ -116,12 +118,12 @@ def getHTTPRows(cursor       : Any,
   http_type_id, http_type = getHTTPByName(cursor, type_name)
   http_result = _getHTTPRows(cursor, keys, http_type, param_fn, json_fn, response_fn, http_options)
   h = HTTPArgument(
-        function_id = execution_summary["function_id"],
-        execution_id = execution_summary["execution_id"],
+        function_id = execution_summary.function_id,
+        execution_id = execution_summary.execution_id,
         http_type_id = http_type_id,
         number_of_observations = len(http_result),
       )
-  execution_summary["inputs"]["http"].append(h)
+  execution_summary.inputs["http"].append(h)
 
   return http_result
 

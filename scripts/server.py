@@ -1,7 +1,8 @@
 # Python 3 server example
+from typing import Callable
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-import datetime
+from datetime import datetime
 
 import urllib
 
@@ -9,13 +10,13 @@ hostName = "localhost"
 serverPort = 8080
 
 dateFormat = "%Y-%m-%d"
-parseDate = lambda s : datetime.datetime.strptime(s, dateFormat)
-dateToString = lambda d : d.strftime(dateFormat)
+parseDate : Callable[[str], datetime] = lambda s : datetime.strptime(s, dateFormat)
+dateToString : Callable[[datetime], str] = lambda d : d.strftime(dateFormat)
 
 class MyServer(BaseHTTPRequestHandler):
-    def do_GET(self):
-        query = urllib.parse.urlparse(self.path).query
-        query = urllib.parse.unquote(query)
+    def do_GET(self) -> None:
+        query = urllib.parse.urlparse(self.path).query # type: ignore
+        query = urllib.parse.unquote(query) # type: ignore
         query_components = dict(qc.split("=") for qc in query.split("&"))
         try:
             field_id = query_components["field_id"]
@@ -45,7 +46,7 @@ class MyServer(BaseHTTPRequestHandler):
         self.wfile.write(bytes(json.dumps(result), "utf-8"))
 
 
-    def do_POST(self):
+    def do_POST(self) -> None:
         '''Reads post request body'''
         self.send_response(200)
         self.send_header('Content-type', 'application/json')

@@ -1,4 +1,4 @@
-from typing import Sequence, Union, Optional, List, Generator
+from typing import Sequence, Union, Optional, List, Generator, TypeVar
 
 from ..database.types_protocols import Table, SelfKey
 
@@ -6,9 +6,10 @@ from .function import FunctionId
 from .core import GeoSpatialKey, TemporalKey
 
 from dataclasses import dataclass
+from collections import OrderedDict
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Argument(FunctionId):
   execution_id      : int
 
@@ -44,14 +45,12 @@ class _KeyIds(Table):
   geospatial_key_id : int
   temporal_key_id   : int
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Key(_KeyIds, GeoSpatialKey, TemporalKey):
   pass
 
 KeyGenerator = Generator[Key, None, None]
 
-
-from typing import TypedDict
 
 @dataclass(frozen=True)
 class Execution(Table):
@@ -60,6 +59,8 @@ class Execution(Table):
 @dataclass(frozen=True)
 class ExecutionKey(_KeyIds, SelfKey):
   execution_id      : int
+
+from typing import TypedDict
 
 class ExecutionOutputs(TypedDict):
   s3 : List[S3OutputArgument]
@@ -71,7 +72,8 @@ class ExecutionArguments(TypedDict):
   s3      : List[S3InputArgument]
   keys    : Sequence[Key]
 
-class ExecutionSummary(TypedDict):
+@dataclass
+class ExecutionSummary:
   inputs  : ExecutionArguments
   outputs : ExecutionOutputs
   function_id         : int

@@ -16,7 +16,7 @@ T = TypeVar('T')
 # TODO: Waiting for mypy to support Callable[[Foo, ...], Bar]
 OutputLoadFunction = Callable[[DataSourceBase], gpd.GeoDataFrame]
 
-class AddGeoDataFrameWrapper(Protocol):
+class WrappedTransformation(Protocol):
     def __call__(self, **kwargs: Any) -> ExecutionOutputs: ...
 
 

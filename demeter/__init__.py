@@ -9,63 +9,13 @@ from . import datasource
 from . import database
 
 from .transformation import Transformation
+from . import types
+from .types import *
 
 __all__ = [
   'datasource',
   'database',
 
-  'Coordinates',
-  'CropProgress',
-  'CropProgressKey',
-  'CropStage',
-  'CropType',
-  'Enum',
-  'Execution',
-  'ExecutionKey',
-  'Field',
-  'Function',
-  'FunctionSignature',
-  'FunctionType',
-  'GeoSpatialKey',
-  'Geom',
-  'Grower',
-  'HTTPArgument',
-  'HTTPParameter',
-  'HTTPType',
-  'HTTPVerb',
-  'Harvest',
-  'HarvestKey',
-  'Keyword',
-  'KeywordArgument',
-  'KeywordParameter',
-  'KeywordType',
-  'Line',
-  'LocalArgument',
-  'LocalGroup',
-  'LocalParameter',
-  'LocalType',
-  'LocalValue',
-  'MultiPolygon',
-  'Owner',
-  'Planting',
-  'PlantingKey',
-  'Point',
-  'Polygon',
-  'ReportType',
-  'RequestBodySchema',
-  'S3InputArgument',
-  'S3InputParameter',
-  'S3Object',
-  'S3ObjectKey',
-  'S3Output',
-  'S3OutputArgument',
-  'S3OutputParameter',
-  'S3SubType',
-  'S3Type',
-  'S3TypeDataFrame',
-  'Table',
-  'TaggedS3SubType',
-  'TemporalKey',
   'Transformation',
 
   'getField',
@@ -160,3 +110,7 @@ __all__ = [
   'insertTemporalKey',
   'insertUnitType',
 ]
+
+__all__.extend(types.__all__)
+
+

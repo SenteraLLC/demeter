@@ -1,13 +1,17 @@
 from typing import Union, Any, Optional, Type, Sequence, Mapping
+from typing import cast
 
 from enum import Enum
 
-import jsonschema
+from ..types.local import LocalType as LocalType
 
-from ..types.local import LocalType
 from ..database.types_protocols import TypeTable, Table, SelfKey
+from ..database.details import JSON, HashableJSON
 
 from dataclasses import dataclass
+
+
+# HTTP
 
 class HTTPVerb(Enum):
   GET    = 1
@@ -21,8 +25,19 @@ class HTTPType(TypeTable):
   verb                : HTTPVerb
   uri                 : str
   uri_parameters      : Optional[Sequence[str]]
-  request_body_schema : Optional[Mapping]
+  request_body_schema : Optional[JSON]
 
+  @property
+  def schema(self) -> HashableJSON:
+    return cast(HashableJSON, self.request_body_schema)
+
+  def __post_init__(self) -> None:
+    if (s := self.request_body_schema) is not None:
+      hashable_schema = HashableJSON(s)
+      object.__setattr__(self, 'request_body_schema', hashable_schema)
+
+
+# Keyword
 
 class KeywordType(Enum):
   STRING  = 1
@@ -31,31 +46,31 @@ class KeywordType(Enum):
   JSON    = 4
 
 @dataclass(frozen=True)
-class Keyword(object):
+class Keyword:
   keyword_name : str
   keyword_type : KeywordType
 
+
+# S3
 
 @dataclass(frozen=True)
 class S3Type(TypeTable):
   type_name : str
 
+
 @dataclass(frozen=True)
-class S3TypeDataFrame(TypeTable, SelfKey):
+class S3SubType(TypeTable):
+  pass
+
+@dataclass(frozen=True)
+class S3TypeDataFrame(S3SubType, SelfKey):
   driver       : str
   has_geometry : bool
 
-S3SubType = Union[S3TypeDataFrame]
-
 @dataclass(frozen=True)
-class TaggedS3SubType(object):
+class TaggedS3SubType:
   tag   : Type[S3SubType]
   value : S3SubType
-
-s3_subtype_table_lookup = {
-  S3TypeDataFrame : "s3_type_dataframe",
-}
-
 
 @dataclass(frozen=True)
 class S3Output(Table):
@@ -75,4 +90,6 @@ class S3ObjectKey(SelfKey):
   temporal_key_id   : int
 
 
+# Aggregate Type
+#   See '.api_protocol.py'
 AnyTypeTable = Union[HTTPType, S3Type, LocalType, S3TypeDataFrame]

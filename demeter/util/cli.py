@@ -6,7 +6,10 @@ import argparse
 
 from ..types.core import GeoSpatialKey, TemporalKey
 
-def parseCLIArguments(name : str, major : int, keyword_types : Dict[str, Type]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def parseCLIArguments(name : str,
+                      major : int,
+                      keyword_types : Dict[str, Type[Any]]
+                     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
   def toGeoSpatialKeys(filename :str) -> List[GeoSpatialKey]:
     f = open(filename)

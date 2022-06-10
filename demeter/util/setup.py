@@ -34,13 +34,13 @@ def createFunction(cursor : Any,
   return f
 
 
-def getKeywordParameterTypes(fn : WrappableFunction) -> Dict[str, Type]:
+def getKeywordParameterTypes(fn : WrappableFunction) -> Dict[str, Type[Any]]:
   signature = inspect.signature(fn)
   first_argument = list(signature.parameters.keys())[0]
   # Always remove first argumnet
   annotations = fn.__annotations__
   blacklist = ["return", first_argument]
-  keyword_types : Dict[str, Type] = {}
+  keyword_types : Dict[str, Type[Any]] = {}
   for parameter_name, _type in annotations.items():
     if parameter_name not in blacklist:
       keyword_types[parameter_name] = _type

@@ -45,7 +45,7 @@ class Geom(Updateable):
                     crs_name : str,
                     type : str,
                     coordinates : Coordinates
-                   ):
+                   ) -> None:
     crs = CRS(type = "name",
               properties = {"name": crs_name},
              )

@@ -1,3 +1,6 @@
+from typing import List, Optional, Dict, Any, Set, TypedDict, Callable, TextIO, Tuple, Iterator, Mapping
+from typing import cast
+
 import demeter
 
 import psycopg2
@@ -10,8 +13,6 @@ import os
 import json
 from datetime import datetime, date
 
-from typing import List, Optional, Dict, Any, Set, TypedDict, Callable, TextIO, Tuple, Iterator, Mapping
-
 NOW = datetime.now()
 
 def pickFilenames(path : str, filenames : List[str], name : str) -> List[str]:
@@ -23,12 +24,12 @@ def pickFilenames(path : str, filenames : List[str], name : str) -> List[str]:
 
 
 def getProperty(feature : Dict[str, Any], name : str) -> str:
-  return feature["properties"][name]
+  return str(feature["properties"][name])
 
 
 def maybeGetProperty(feature : Dict[str, Any], name : str) -> Optional[str]:
   try:
-    return feature["properties"][name]
+    return str(feature["properties"][name])
   except KeyError:
     pass
   return None
@@ -36,7 +37,7 @@ def maybeGetProperty(feature : Dict[str, Any], name : str) -> Optional[str]:
 
 def loadGeometry(crs_name          : str,
                  feature           : Dict[str, Any],
-                 container_geom_id : int = None,
+                 container_geom_id : Optional[int] = None,
                 ) -> demeter.Geom:
   geometry = feature["geometry"]
   # TODO: How to deal with these projections? Not technically correct?
@@ -90,7 +91,7 @@ def loadField(cursor   : Any,
   return demeter.insertField(cursor, field)
 
 
-def loadFieldFile(cursor, filename : str) -> Dict[str, int]:
+def loadFieldFile(cursor : Any, filename : str) -> Dict[str, int]:
   with open(filename) as geojson_file:
     contents        = json.load(geojson_file)
     crs = contents["crs"]
@@ -170,7 +171,7 @@ def yieldCSVRow(file                : TextIO,
 
 
 def getCRSName(crs_contents : Dict[str, Any]) -> str:
-  crs_name = crs_contents["properties"]["name"]
+  crs_name = str(crs_contents["properties"]["name"])
   if crs_name == "urn:ogc:def:crs:OGC:1.3:CRS84":
     return "urn:ogc:def:crs:EPSG::4326"
   return crs_name
@@ -364,7 +365,7 @@ def loadSentinelFile(parse_meta : ParseMeta,
       date = getProperty(f, "acquisition_time")
       acquired = parseDate(date)
 
-      simplify_sensor_type = lambda s : s.split()[0].lower()
+      simplify_sensor_type : Callable[[str], str] = lambda s : s.split()[0].lower()
       sensor_name = simplify_sensor_type(getProperty(f, "sensor_type"))
       local_group = demeter.LocalGroup(
                       group_name     = sensor_name,
@@ -442,7 +443,7 @@ def loadWeatherDerivedFile(parse_meta : ParseMeta,
     if reader.fieldnames is not None:
       data_fields = [f for f in reader.fieldnames if f not in blacklist]
 
-    getUnitAbbreviation = lambda f : f.split("_")[1]
+    getUnitAbbreviation : Callable[[str], str]= lambda f : f.split("_")[1]
 
     planting_keys : List[demeter.PlantingKey] = []
     for row in reader:
@@ -545,17 +546,17 @@ def loadFieldIdMap(filename : str) -> Dict[str, int]:
     return {}
 
   with open(filename) as f:
-    return json.load(f)
+    return cast(Dict[str, int], json.load(f))
+
 
 import demeter.connections
 
-def loadDataFolder(hostname : str, data_path : str, field_id_map : Dict[str, int]):
+def loadDataFolder(hostname : str,
+                   data_path : str,
+                   field_id_map : Dict[str, int]
+                  ) -> None:
   connection = demeter.connections.getPgConnection()
-  #psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
-
-  #options = "-c search_path=test_mlops,public"
-  #connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
-  cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cursor = connection.cursor()
 
   print("Loading Data Directory: ",data_path)
 
@@ -615,13 +616,13 @@ def loadData(hostname  : str,
       pass
 
 
-def main(hostname : str, data_path : str, field_id_path : str):
+def main(hostname : str, data_path : str, field_id_path : str) -> int:
   # The field map is a hacky cache for storing field keys
   field_id_map = loadFieldIdMap(field_id_path)
   loadData(hostname, data_path, field_id_map)
   with open(field_id_path, "w") as f:
     json.dump(field_id_map, f)
-
+  return 0
 
 
 if __name__ == "__main__":

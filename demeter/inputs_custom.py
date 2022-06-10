@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Any, Optional, Union
 
 import sys
 
@@ -6,13 +6,14 @@ from psycopg2 import sql
 from psycopg2.extensions import register_adapter, adapt
 import psycopg2.extras
 
-from .database.generators import generateInsertMany
+from .database.generators import generateInsertMany, PGJoin, PGFormat
 
 from .types.execution import Key
 
-from .types.inputs import *
+from .types.inputs import HTTPVerb, HTTPType, S3ObjectKey, S3Object
 
-def stringToHTTPVerb(s : str):
+
+def stringToHTTPVerb(s : str) -> HTTPVerb:
   return HTTPVerb[s.upper()]
 
 def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, HTTPType]:
@@ -24,10 +25,11 @@ def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, HTTPType]:
     raise Exception(f"HTTP Type does exist for {http_type_name}")
   result_with_id = results[0]
 
-  http_type_id = result_with_id["http_type_id"]
-  result_with_id["verb"] = stringToHTTPVerb(result_with_id["verb"])
-  del result_with_id["http_type_id"]
-  result = result_with_id
+  http_type_id = result_with_id.http_type_id
+  result = {k : (stringToHTTPVerb(v) if k == "verb" else v)
+            for k, v in result_with_id._asdict().items()
+            if k != 'http_type_id'
+           }
   http_type = HTTPType(**result)
 
   return http_type_id, http_type
@@ -82,27 +84,36 @@ def getS3ObjectByKeys(cursor    : Any,
   clauses = []
   args : List[Union[str, int]] = [type_name]
   for k in keys:
-    clauses.append(sql.SQL("").join(
-                    [sql.SQL("("),
-                     sql.SQL(" and ").join([sql.Placeholder() + sql.SQL(" = K.geospatial_key_id"),
-                                            sql.Placeholder() + sql.SQL(" = K.temporal_key_id"),
-                                           ]),
-                     sql.SQL(")")
-                    ],
-                  ))
+    clauses.append(PGJoin("",
+                          [sql.SQL("("),
+                           PGJoin(" and ",
+                                  [(sql.Placeholder()
+                                    +
+                                    sql.SQL(" = K.geospatial_key_id")
+                                   ),
+                                   (sql.Placeholder()
+                                    +
+                                    sql.SQL(" = K.temporal_key_id")
+                                   )
+                                  ]
+                                 ),
+                           sql.SQL(")"),
+                          ]
+                         )
+                  )
     args.append(k.geospatial_key_id)
     args.append(k.temporal_key_id)
 
-  filters = sql.SQL(" or ").join(clauses)
+  filters = PGJoin(" or ", clauses)
 
-  stmt = sql.SQL("""select O.s3_object_id, O.key, O.bucket_name, O.s3_type_id, count(*)
+  stmt = PGFormat("""select O.s3_object_id, O.key, O.bucket_name, O.s3_type_id, count(*)
                     from s3_object O
                     join s3_type T on T.type_name = %s and T.s3_type_id = O.s3_type_id
                     join s3_object_key K on O.s3_object_id = K.s3_object_id
                     where {filters}
                     group by O.s3_object_id, O.key, O.bucket_name, O.s3_type_id
                     order by O.s3_object_id desc
-                 """).format(filters = filters)
+                 """, filters = filters)
 
   cursor.execute(stmt, args)
   results = cursor.fetchall()
@@ -111,15 +122,15 @@ def getS3ObjectByKeys(cursor    : Any,
     return None
 
   most_recent = results[0]
-  s3_object_id = most_recent["s3_object_id"]
+  s3_object_id = most_recent.s3_object_id
   if len(results) > 1:
-    duplicate_object_ids = [x["s3_object_id"] for x in results]
+    duplicate_object_ids = [x.s3_object_id for x in results]
     sys.stderr.write(f"Multiple results detected for {type_name} ({duplicate_object_ids}), taking most recent '{s3_object_id}'")
 
   s3_object = S3Object(
-                key = most_recent["key"],
-                bucket_name = most_recent["bucket_name"],
-                s3_type_id = most_recent["s3_type_id"],
+                key = most_recent.key,
+                bucket_name = most_recent.bucket_name,
+                s3_type_id = most_recent.s3_type_id,
               )
 
   return s3_object_id, s3_object
@@ -131,7 +142,7 @@ def getS3TypeIdByName(cursor : Any, type_name : str) -> int:
   results = cursor.fetchall()
   if len(results) <= 0:
     raise Exception(f"No type exists '%(type_name)s'",type_name)
-  return results[0]["s3_type_id"]
+  return int(results[0].s3_type_id)
 
 
 

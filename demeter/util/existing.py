@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Any
+from typing import Optional, Sequence, Any, Callable, Tuple, Mapping
 
 from ..types.execution import ExecutionSummary
 
@@ -17,7 +17,7 @@ def getExistingDuplicate(existing_executions : Sequence[ExecutionSummary],
       if left_key in blacklist:
         continue
       try:
-        right_value = right[left_key]
+        right_value = right.get(left_key)
       except KeyError:
         right_value = None
       if all(type(v) == dict for v in [left_value, right_value]):
@@ -27,9 +27,9 @@ def getExistingDuplicate(existing_executions : Sequence[ExecutionSummary],
       elif all(type(v) == list for v in [left_value, right_value]):
         if len(left_value) != len(right_value):
           return False
-        sort_by = lambda d : sorted(d.items())
-        left_sorted = sorted(left_value, key=sort_by)
-        right_sorted = sorted(right_value, key=sort_by)
+        left_sorted = sorted(left_value)
+        right_sorted = sorted(right_value)
+
         for l, r in zip(left_sorted, right_sorted):
           nested_eq = eq(l, r)
           if not nested_eq:
@@ -39,8 +39,8 @@ def getExistingDuplicate(existing_executions : Sequence[ExecutionSummary],
     return True
 
   for e in existing_executions:
-    inputs = e["inputs"]
-    if eq(inputs, execution_summary["inputs"]):
+    inputs = e.inputs
+    if eq(inputs, execution_summary.inputs):
       return e
   return None
 

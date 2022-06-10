@@ -6,9 +6,8 @@ from .types.inputs import Keyword, KeywordType
 
 from .types.function import Function, FunctionSignature, FunctionType, LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter, KeywordParameter
 
-from .function_custom import insertFunction, \
-                             getLatestFunctionSignature
-
+from .function_custom import insertFunction as insertFunction, \
+                             getLatestFunctionSignature as getLatestFunctionSignature
 
 from .database.generators import getMaybeIdFunction
 

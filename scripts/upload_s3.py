@@ -24,7 +24,7 @@ if __name__ == "__main__":
   hostname = "localhost"
   options = "-c search_path=test_mlops,public"
   connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
-  cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cursor = connection.cursor()
 
   s3_role_arn = os.environ['S3_ROLE_ARN']
 

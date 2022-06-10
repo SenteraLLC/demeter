@@ -1,16 +1,16 @@
-from typing import TypedDict, Any, Literal, Dict, Callable, Optional, Sequence, Type, TypeVar, Union
-from psycopg2 import sql, extras
+from typing import TypedDict, Any, Callable, Optional, Sequence, Type, TypeVar, Union, Dict, Mapping
+from typing import cast, get_origin, get_args
 
 from collections import OrderedDict
-
-from typing import cast
 from functools import partial
+
+from psycopg2 import sql
+from psycopg2.sql import SQL, Composable, Composed, Identifier, Placeholder
 
 from .types_protocols import TableKey
 from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable, ReturnKey, ReturnSameKey, S, SK, AnyTable, I, S
 from .type_lookups import id_table_lookup, key_table_lookup
 
-from typing import get_origin, get_args, Union
 
 
 # TODO: Add options for 'is_none' and 'is_optional'
@@ -18,54 +18,63 @@ from typing import get_origin, get_args, Union
 def is_none(table : AnyTable, key : str) -> bool:
   return getattr(table, key) is None
 
-def is_optional(table : AnyTable, key : str):
+def is_optional(table : AnyTable, key : str) -> bool:
   field = table.__dataclass_fields__[key].type
   return get_origin(field) is Union and \
            type(None) in get_args(field)
+
+# NOTE: Psycopg2.sql method stubs are untyped
+#   These 'overrides' will have to do for now
+def PGJoin(sep : str, args : Sequence[Composable]) -> Composed:
+  return cast(Composed, SQL(sep).join(args)) # type: ignore
+
+def PGFormat(template : str,
+             *args : Composable,
+             **kwargs : Composable
+            ) -> Composed:
+  return cast(Composed, SQL(template).format(*args, **kwargs)) # type: ignore
 
 
 def _generateInsertStmt(table_name : str,
                         table      : Union[AnyTable, AnyKeyTable],
                         return_key : Optional[Sequence[str]],
-                       ) -> sql.SQL:
+                       ) -> Composed:
   stmt_template = "insert into {table} ({fields}) values({places})"
 
-  names_to_fields = OrderedDict({name : sql.Identifier(name) for name in table.names() if not (is_optional(table, name) and is_none(table, name)) })
+  names_to_fields = OrderedDict({name : Identifier(name) for name in table.names() if not (is_optional(table, name) and is_none(table, name)) })
 
 
   to_interpolate : Dict[str, Any] = {
-    "table"  : sql.Identifier(table_name),
-    "fields" : sql.SQL(",").join(names_to_fields.values()),
-    "places" : sql.SQL(",").join([sql.Placeholder(n) for n in names_to_fields]),
+    "table"  : Identifier(table_name),
+    "fields" : PGJoin(",", tuple(names_to_fields.values())),
+    "places" : PGJoin(",", [Placeholder(n) for n in names_to_fields]),
   }
   if return_key is not None:
-    key_names = [sql.Identifier(k) for k in return_key]
+    key_names = [Identifier(k) for k in return_key]
     stmt_template += " returning {returning}"
-    returning = sql.SQL(",").join(key_names)
+    returning = PGJoin(",", key_names)
     to_interpolate["returning"] = returning
-  stmt = sql.SQL(stmt_template).format(**to_interpolate)
+  stmt = PGFormat(stmt_template, **to_interpolate)
   return stmt
 
 
 def generateInsertMany(table_name     : str,
                        field_names    : Sequence[str],
                        number_inserts : int,
-                      ) -> sql.SQL:
-  placeholder = sql.SQL("").join([sql.SQL("("),
-                                  sql.SQL(", ").join([sql.Placeholder()] * len(field_names)),
-                                  sql.SQL(")")
-                                 ]
+                      ) -> Composed:
+  placeholder = PGJoin("", [SQL("("),
+                          PGJoin(", ", [Placeholder()] * len(field_names)),
+                          SQL(")")
+                         ]
                                 )
-  values = sql.SQL(", ").join(
-                   [placeholder] * number_inserts
-                  )
-  fields = sql.SQL(", ").join(map(sql.Identifier, field_names))
+  values = PGJoin(", ", [placeholder] * number_inserts)
+  fields = PGJoin(", ", tuple(map(sql.Identifier, field_names)))
 
-  stmt = sql.SQL("insert into {table_name} ({fields}) values{values}").format(
-                 table_name = sql.Identifier(table_name),
-                 fields = fields,
-                 values = values,
-                )
+  stmt = PGFormat("insert into {table_name} ({fields}) values{values}",
+                  table_name = Identifier(table_name),
+                  fields = fields,
+                  values = values,
+                 )
   return stmt
 
 
@@ -78,7 +87,7 @@ def _insertAndReturnId(table_name : str,
   stmt = _generateInsertStmt(table_name, table, return_key)
   cursor.execute(stmt, table())
   result = cursor.fetchone()
-  return int(result[table_id])
+  return int(result[0])
 
 
 def getInsertReturnIdFunction(table : Type[Any]) -> Callable[[Any, AnyIdTable], int]:
@@ -90,7 +99,6 @@ def _insertAndReturnKey(table_name : str,
                         key        : Type[SK],
                        ) -> ReturnKey[S, SK]:
   return_key = [f for f in key.names()]
-
   def __impl(cursor : Any,
              table  : S,
             ) -> SK:
@@ -115,26 +123,25 @@ def getInsertReturnKeyFunction(table : Type[S]) -> ReturnKey[S, SK]:
   return fn
 
 
-
 def getMaybeId(table_name : str,
                cursor     : Any,
                table      : AnyIdTable,
               ) -> Optional[int]:
   field_names = table.names()
-  names_to_fields = OrderedDict({name: sql.Identifier(name) for name in field_names })
+  names_to_fields = OrderedDict({name: Identifier(name) for name in field_names })
 
-  conditions = [sql.SQL(' = ').join([sql.Identifier(n), sql.Placeholder(n)]) for n in names_to_fields if not is_none(table, n) and not is_optional(table, n) ]
+  conditions = [PGJoin(' = ', [Identifier(n), Placeholder(n)]) for n in names_to_fields if not is_none(table, n) and not is_optional(table, n) ]
 
   table_id = "_".join([table_name, "id"])
-  stmt = sql.SQL("select {0} from {1} where {2}").format(
-    sql.Identifier(table_id),
-    sql.Identifier(table_name),
-    sql.SQL(' and ').join(conditions),
-  )
+  stmt = PGFormat("select {0} from {1} where {2}",
+                  Identifier(table_id),
+                  Identifier(table_name),
+                  PGJoin(' and ', conditions),
+                 )
   cursor.execute(stmt, table())
   result = cursor.fetchone()
   if result is not None:
-    return result[table_id]
+    return int(result[0])
   return None
 
 
@@ -149,17 +156,17 @@ def getMaybeTableById(table_type    : Type[I],
                       table_id      : int,
                      ) -> Optional[I]:
   table_name = id_table_lookup[table_type]
-  condition = sql.SQL(' = ').join([sql.Identifier(table_id_name), sql.Placeholder(table_id_name)])
-  stmt = sql.SQL("select * from {0} where {1}").format(
-    sql.Identifier(table_name),
-    condition,
-  )
+  condition = PGJoin(' = ', [Identifier(table_id_name), Placeholder(table_id_name)])
+  stmt = PGFormat("select * from {0} where {1}",
+                  Identifier(table_name),
+                  condition,
+                 )
   cursor.execute(stmt, {table_id_name : table_id})
   result = cursor.fetchone()
   if result is None:
     return None
-  del result[table_id_name]
-  return cast(I, table_type(**result))
+  table_args = {k : v for k, v in result._asdict().items() if k != table_id_name}
+  return cast(I, table_type(**table_args))
 
 
 def getTableById(table_type    : Type[I],
@@ -190,11 +197,11 @@ def getTableByKey(table_name : str,
                   table_id   : int,
                  ) -> S:
   table_id_name = "_".join([table_name, "id"])
-  conditions = [sql.SQL(' = ').join([sql.Identifier(k), sql.Placeholder(k)]) for k in key]
-  stmt = sql.SQL("select * from {0} where {1}").format(
-    sql.Identifier(table_name),
-    sql.SQL(' and ').join(conditions),
-  )
+  conditions = [PGJoin(' = ', [Identifier(k), Placeholder(k)]) for k in key]
+  stmt = PGFormat("select * from {0} where {1}",
+                  Identifier(table_name),
+                  PGJoin(' and ', conditions),
+                 )
   cursor.execute(stmt, {table_id_name : table_id})
   result = cursor.fetchone()
   return cast(S, result)

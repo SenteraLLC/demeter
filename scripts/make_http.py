@@ -16,7 +16,7 @@ if __name__ == "__main__":
   hostname = "localhost"
   options = "-c search_path=test_mlops,public"
   connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
-  cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cursor = connection.cursor()
 
   http_get = HTTPType(
                type_name           = "http_uri_params_test_type",

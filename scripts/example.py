@@ -1,11 +1,11 @@
 from demeter.datasource.datasource import DataSource
 from demeter.datasource.types import OneToManyResponseFunction
 from demeter.datasource.s3_file import S3File
-from demeter.transformation import Transformation
+from demeter.transformation import Transformation, WrappedTransformation
 from demeter.types.local import LocalType
 
 import geopandas as gpd  # type: ignore
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Union, Tuple, Mapping
 
 # Long Term
 # TODO: How to deal with dataframe indexes?
@@ -45,15 +45,15 @@ def init(datasource : DataSource, some_constant : int) -> None:
                              ),
                   ])
 
-  parameters = lambda k : {"field_id"   : k["field_id"],
-                           "start_date" : k["start_date"],
-                           "end_date"   : k["end_date"],
+  parameters = lambda k : {"field_id"   : k.field_id,
+                           "start_date" : k.start_date,
+                           "end_date"   : k.end_date,
                           }
   datasource.http("http_uri_params_test_type", param_fn=parameters, response_fn=OneToManyResponseFunction)
 
-  request_body = lambda k : {"field_id"   : k["field_id"],
-                             "start_date" : k["start_date"],
-                             "end_date"   : k["end_date"]
+  request_body = lambda k : {"field_id"   : k.field_id,
+                             "start_date" : k.start_date,
+                             "end_date"   : k.end_date
                             }
   datasource.http("http_request_body_test_type", json_fn=request_body)
 
@@ -73,11 +73,12 @@ VERSION = 4
 OUTPUTS = {"foo": "test_geojson_type"}
 
 @Transformation(FUNCTION_NAME, VERSION, OUTPUTS, init) # type: ignore
-def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int):
+def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int) -> Mapping[str, S3File]:
+  print("GDF IS: ",gdf.to_string())
   return {"foo": S3File(gdf, "testing_geojson")}
 
 
-def cli(fn):
+def cli(fn : WrappedTransformation) -> None:
   from demeter.util.mode import ExecutionMode
   fn(mode = ExecutionMode.CLI)
   #fn(mode = ExecutionMode.REGISTER)

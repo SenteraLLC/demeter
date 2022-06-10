@@ -3,8 +3,8 @@ from .types.execution import Execution, LocalArgument, HTTPArgument, KeywordArgu
 from .database.api_protocols import ReturnId, ReturnSameKey
 from .database.generators import getInsertReturnIdFunction, getInsertReturnKeyFunction
 
-from .execution_custom import getExecutionSummaries, \
-                              getExistingExecutions
+from .execution_custom import getExecutionSummaries as getExistingSummaries, \
+                              getExistingExecutions as getExistingExecutions
 
 insertExecution : ReturnId[Execution] = getInsertReturnIdFunction(Execution)
 

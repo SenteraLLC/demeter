@@ -1,6 +1,7 @@
-from datetime import time, date
-
 from typing import TypedDict, Sequence, Dict, Optional, Any, List
+from typing import cast
+
+from datetime import date
 
 from demeter import Owner
 
@@ -184,7 +185,7 @@ def get_field(cursor : Any, field_id : int) -> DataField:
 """
   cursor.execute(stmt, {"field_id": field_id})
   result = cursor.fetchone()
-  return result["field_output"]
+  return cast(DataField, result["field_output"])
 
 
 import geopandas # type: ignore
@@ -233,7 +234,7 @@ if __name__ == "__main__":
 
   options = "-c search_path=test_mlops"
   connection = psycopg2.connect(host=args.host, dbname="postgres", options=options)
-  cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cursor = connection.cursor()
 
   # This code gets a geopandas matrix for the given list of inputs from a field id
   if len(args.features) or len(args.feature_groups):

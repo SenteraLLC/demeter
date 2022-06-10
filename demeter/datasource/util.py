@@ -4,7 +4,7 @@ from ..types.execution import KeywordArgument
 
 
 def createKeywordArguments(keyword_arguments : Dict[str, Any],
-                           keyword_types     : Dict[str, Type],
+                           keyword_types     : Dict[str, Type[Any]],
                            execution_id      : int,
                            function_id       : int,
                           ) -> List[KeywordArgument]:
@@ -22,7 +22,7 @@ def createKeywordArguments(keyword_arguments : Dict[str, Any],
       value_number = float(v)
 
     typ = keyword_types[name]
-    type_to_cast : Mapping[Type, Callable[[Any], Any]] = {
+    type_to_cast : Mapping[Type[Any], Callable[[Any], Any]] = {
       str   : set_string,
       int   : set_number,
       float : set_number,

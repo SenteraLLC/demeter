@@ -8,7 +8,7 @@ from demeter import insertOrGetFunctionType, insertOrGetS3TypeDataFrame
 def main() -> None:
   connection = connections.getPgConnection()
 
-  cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+  cursor = connection.cursor()
 
   f = FunctionType(
         function_type_name='transformation',

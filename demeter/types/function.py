@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple, Union, Protocol
+from typing import Optional, Sequence, Tuple, Union
 
 from enum import Enum
 from datetime import datetime

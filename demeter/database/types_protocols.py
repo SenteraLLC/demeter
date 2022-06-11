@@ -3,11 +3,11 @@ from typing import cast
 
 from datetime import datetime
 from dataclasses import dataclass
-from dataclasses import fields
+from dataclasses import field, fields
 
 import json
 
-from .details import JSON, HashableJSON
+from .details import JSON
 
 from collections import OrderedDict
 
@@ -44,16 +44,9 @@ T = TypeVar('T', bound=Table)
 class Updateable(Table):
   last_updated : Optional[datetime]
 
-
 @dataclass(frozen=True)
 class Detailed(Updateable):
-  details : Optional[JSON]
-
-  def __post_init__(self) -> None:
-    if (d := self.details) is not None:
-      hashable_details = HashableJSON(d)
-      object.__setattr__(self, 'details', hashable_details)
-
+  details : Optional[JSON] = field(hash=False)
 
 @dataclass(frozen=True)
 class TypeTable(Table):

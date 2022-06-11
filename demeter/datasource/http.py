@@ -9,7 +9,7 @@ from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 from ..types.inputs import HTTPType, HTTPVerb
 from ..inputs import getHTTPByName
 from ..types.execution import ExecutionSummary, HTTPArgument, Key
-from ..database.details import JsonRoot
+from ..database.details import JSON
 
 
 def checkHTTPParams(params : Mapping[str, Any],
@@ -39,7 +39,7 @@ def parseHTTPParams(expected_params : Sequence[str],
     raise Exception("Expecting URL params but no param function provided")
 
 
-def parseRequestSchema(request_body_schema : JsonRoot,
+def parseRequestSchema(request_body_schema : JSON,
                        json_fn             : Optional[KeyToArgsFunction],
                        k                   : Key,
                       ) -> Mapping[str, Any]:
@@ -92,9 +92,9 @@ def _getHTTPRows(cursor       : Any,
     if expected_params is not None:
       http_options["params"] = parseHTTPParams(expected_params, param_fn, k)
 
-    request_body_schema = http_type.schema
+    request_body_schema = http_type.request_body_schema
     if request_body_schema is not None:
-      http_options["json"] = parseRequestSchema(request_body_schema(), json_fn, k)
+      http_options["json"] = parseRequestSchema(request_body_schema, json_fn, k)
 
     wrapped = wrap_requests_fn(func, cursor)
     raw_response = wrapped(uri, **http_options)

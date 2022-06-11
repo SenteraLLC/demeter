@@ -41,7 +41,7 @@ def getMaybeDuplicateGeom(cursor : Any,
   cursor.execute(stmt, args)
   result = cursor.fetchall()
   if len(result) >= 1:
-    return int(result[0]["geom_id"])
+    return int(result[0].geom_id)
   return None
 
 
@@ -56,7 +56,7 @@ def insertGeom(cursor   : Any,
             returning geom_id"""
   cursor.execute(stmt, geom)
   result = cursor.fetchone()
-  return int(result["geom_id"])
+  return int(result.geom_id)
 
 insertOrGetGeom = insertGeom
 

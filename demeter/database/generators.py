@@ -12,7 +12,6 @@ from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTabl
 from .type_lookups import id_table_lookup, key_table_lookup
 
 
-
 # TODO: Add options for 'is_none' and 'is_optional'
 
 def is_none(table : AnyTable, key : str) -> bool:
@@ -41,8 +40,11 @@ def _generateInsertStmt(table_name : str,
                        ) -> Composed:
   stmt_template = "insert into {table} ({fields}) values({places})"
 
-  names_to_fields = OrderedDict({name : Identifier(name) for name in table.names() if not (is_optional(table, name) and is_none(table, name)) })
-
+  names_to_fields = OrderedDict({name : Identifier(name)
+                                 for name in table.names()
+                                   if not (is_optional(table, name) and
+                                      is_none(table, name))
+                               })
 
   to_interpolate : Dict[str, Any] = {
     "table"  : Identifier(table_name),
@@ -55,6 +57,7 @@ def _generateInsertStmt(table_name : str,
     returning = PGJoin(",", key_names)
     to_interpolate["returning"] = returning
   stmt = PGFormat(stmt_template, **to_interpolate)
+
   return stmt
 
 

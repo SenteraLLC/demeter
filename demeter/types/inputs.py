@@ -6,7 +6,7 @@ from enum import Enum
 from ..types.local import LocalType as LocalType
 
 from ..database.types_protocols import TypeTable, Table, SelfKey
-from ..database.details import JSON, HashableJSON
+from ..database.details import JSON
 
 from dataclasses import dataclass
 
@@ -26,15 +26,6 @@ class HTTPType(TypeTable):
   uri                 : str
   uri_parameters      : Optional[Sequence[str]]
   request_body_schema : Optional[JSON]
-
-  @property
-  def schema(self) -> HashableJSON:
-    return cast(HashableJSON, self.request_body_schema)
-
-  def __post_init__(self) -> None:
-    if (s := self.request_body_schema) is not None:
-      hashable_schema = HashableJSON(s)
-      object.__setattr__(self, 'request_body_schema', hashable_schema)
 
 
 # Keyword

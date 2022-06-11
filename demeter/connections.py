@@ -11,7 +11,6 @@ from psycopg2.extensions import register_adapter, adapt
 
 from .types.inputs import HTTPVerb, KeywordType
 
-from .database.details import HashableJSON
 from .database.types_protocols import Table
 
 
@@ -57,7 +56,6 @@ def register() -> None:
 
   register_adapter(set, lambda s : adapt(list(s))) # type: ignore
 
-  #register_adapter(HashableJSON, lambda j : psycopg2.extras.Json(j()))
   register_adapter(Table, lambda t : t())
 
   register_adapter(KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))

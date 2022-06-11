@@ -3,7 +3,6 @@ from typing import Literal, Mapping, Tuple
 from datetime import date, datetime
 
 from ..database.types_protocols import Table, Updateable, Detailed
-from ..database.details import HashableJSON
 
 import json
 from dataclasses import InitVar

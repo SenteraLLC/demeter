@@ -62,7 +62,7 @@ __all__ = [
   'TableKey',
   'TaggedS3SubType',
   'TemporalKey',
-  'TypeTable'
+  'TypeTable',
   'UnitType',
   'Updateable',
 ]

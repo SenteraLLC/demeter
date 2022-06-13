@@ -6,7 +6,7 @@ from .types_protocols import TableKey
 
 AnyTypeTable = Union[local.AnyTypeTable, inputs.AnyTypeTable, function.FunctionType]
 
-AnyDataTable = Union[local.AnyDataTable, inputs.S3Object, function.Function, execution.Execution, core.AnyDataTable]
+AnyDataTable = Union[local.AnyDataTable, inputs.S3Object, inputs.S3Output, function.Function, execution.Execution, core.AnyDataTable]
 
 AnyIdTable = Union[AnyTypeTable, AnyDataTable, inputs.S3SubType]
 

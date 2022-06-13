@@ -1,12 +1,9 @@
-from typing import Union, Tuple, Type
-from typing import cast
+from typing import Union, Tuple, Type, Mapping, Dict
 
-from .types_protocols import Table, TableKey, TypeTable
+from .types_protocols import Table, TableKey
 from ..types import local, inputs, function, execution, core
-from .util import CovariantMapping
-from .util import sumCovariantMappings
 
-type_table_lookup : CovariantMapping[Type[TypeTable], str] = {
+type_table_lookup : Mapping[Type[Table], str] = {
   local.UnitType   : "unit_type",
   local.LocalType  : "local_type",
   local.CropType   : "crop_type",
@@ -20,7 +17,7 @@ type_table_lookup : CovariantMapping[Type[TypeTable], str] = {
 }
 
 
-data_table_lookup : CovariantMapping[Type[Table], str] = {
+data_table_lookup : Mapping[Type[Table], str] = {
   core.Geom          : "geom",
   core.Owner         : "owner",
   core.Grower        : "grower",
@@ -28,15 +25,23 @@ data_table_lookup : CovariantMapping[Type[Table], str] = {
   local.LocalValue    : "local_value",
   core.GeoSpatialKey : "geospatial_key",
   core.TemporalKey   : "temporal_key",
-  #inputs.S3Output     : "s3_output",
+  inputs.S3Output     : "s3_output",
   inputs.S3Object     : "s3_object",
   function.Function   : "function",
   execution.Execution : "execution",
 }
 
-id_table_lookup = sumCovariantMappings(type_table_lookup, data_table_lookup)
 
-key_table_lookup : CovariantMapping[Type[Table], Tuple[str, Type[TableKey]]] = {
+def sumMappings(*ms : Mapping[Type[Table], str]) -> Mapping[Type[Table], str]:
+  out : Dict[Type[Table], str] = {}
+  for m in ms:
+    out.update(m.items())
+  return out
+
+id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
+
+
+key_table_lookup : Mapping[Type[Table], Tuple[str, Type[TableKey]]] = {
   local.Planting     : ("planting", local.PlantingKey),
   local.Harvest      : ("harvest",  local.HarvestKey),
   local.CropProgress : ("crop_progress", local.CropProgressKey),

@@ -1,5 +1,6 @@
 from typing import Optional, Any, Union, TypeVar, Sequence, Set, Callable, Tuple
 from typing import cast
+from abc import ABC
 
 from datetime import datetime
 from dataclasses import dataclass
@@ -14,7 +15,7 @@ from collections import OrderedDict
 D = TypeVar('D')
 
 @dataclass(frozen=True)
-class Table():
+class Table(ABC):
   def names(self) -> Sequence[str]:
     return [f.name for f in fields(self)]
 

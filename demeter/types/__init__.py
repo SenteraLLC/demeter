@@ -5,13 +5,16 @@ from .local import *
 from .function import *
 from .execution import *
 from .inputs import *
+from ..database.types_protocols import *
 
 __all__ = [
+  'AnyKey',
   'Coordinates',
   'CropProgress',
   'CropProgressKey',
   'CropStage',
   'CropType',
+  'Detailed',
   'Execution',
   'ExecutionKey',
   'Field',
@@ -44,6 +47,7 @@ __all__ = [
   'Point',
   'Polygon',
   'ReportType',
+  'SelfKey',
   'S3InputArgument',
   'S3InputParameter',
   'S3Object',
@@ -55,7 +59,10 @@ __all__ = [
   'S3Type',
   'S3TypeDataFrame',
   'Table',
+  'TableKey',
   'TaggedS3SubType',
   'TemporalKey',
+  'TypeTable'
   'UnitType',
+  'Updateable',
 ]

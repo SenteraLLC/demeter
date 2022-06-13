@@ -5,7 +5,6 @@ from functools import partial as __partial
 from .database.api_protocols import GetId, GetTable, ReturnId, ReturnSameKey
 from .database.types_protocols import AnyKey
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getInsertReturnSameKeyFunction, getTableFunction, insertOrGetType
-from .database.util import CovariantMapping
 
 from .types.inputs import HTTPType, S3Object, S3Type, S3TypeDataFrame, S3ObjectKey, S3SubType, TaggedS3SubType
 
@@ -36,6 +35,7 @@ insertS3ObjectKey : ReturnSameKey[S3ObjectKey] = getInsertReturnSameKeyFunction(
 insertS3TypeDataFrame : ReturnSameKey[S3TypeDataFrame] = getInsertReturnSameKeyFunction(S3TypeDataFrame)
 
 insertOrGetS3Type = __partial(insertOrGetType, getMaybeS3TypeId, insertS3TypeBase)
+insertOrGetHTTPType = __partial(insertOrGetType, getMaybeS3TypeId, insertS3TypeBase)
 
 
 def insertOrGetS3TypeDataFrame(cursor : Any,
@@ -54,11 +54,11 @@ def insertOrGetS3TypeDataFrame(cursor : Any,
 
   return s3_type_id
 
-s3_sub_type_get_lookup : CovariantMapping[Type[S3SubType], Callable[[Any, int], S3SubType]] = {
+s3_sub_type_get_lookup : Mapping[Type[S3SubType], Callable[[Any, int], S3SubType]] = {
   S3TypeDataFrame : getMaybeS3TypeDataFrame
 }
 
-s3_sub_type_insert_lookup : CovariantMapping[Type[S3SubType], Callable[[Any, Any], AnyKey]] = {
+s3_sub_type_insert_lookup : Mapping[Type[S3SubType], Callable[[Any, Any], AnyKey]] = {
   S3TypeDataFrame : insertS3TypeDataFrame
 }
 

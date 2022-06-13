@@ -1,7 +1,7 @@
 from functools import partial as __partial
 
 from .database.api_protocols import GetId, GetTable, ReturnId, ReturnKey
-from .database.generators import getMaybeIdFunction, getTableFunction, getInsertReturnIdFunction, getInsertReturnKeyFunction, insertOrGetType
+from .database.generators import getMaybeIdFunction, getTableFunction, getInsertReturnIdFunction, getInsertReturnKeyFunction, partialInsertOrGetId
 
 from .types.local import LocalValue, UnitType, LocalType, CropType, CropStage, ReportType, LocalGroup
 from .types.local import Planting, Harvest, CropProgress, PlantingKey, HarvestKey, CropProgressKey
@@ -29,11 +29,11 @@ insertPlanting     : ReturnKey[Planting, PlantingKey] = getInsertReturnKeyFuncti
 insertHarvest      : ReturnKey[Harvest, HarvestKey] = getInsertReturnKeyFunction(Harvest)
 insertCropProgress : ReturnKey[CropProgress, CropProgressKey] = getInsertReturnKeyFunction(CropProgress)
 
-insertOrGetUnitType = __partial(insertOrGetType, getMaybeUnitTypeId, insertUnitType)
-insertOrGetLocalType = __partial(insertOrGetType, getMaybeLocalTypeId, insertLocalType)
-insertOrGetLocalValue = __partial(insertOrGetType, getMaybeLocalValueId, insertLocalValue)
-insertOrGetCropType = __partial(insertOrGetType, getMaybeCropTypeId, insertCropType)
-insertOrGetCropStage = __partial(insertOrGetType, getMaybeCropStageId, insertCropStage)
-insertOrGetLocalGroup = __partial(insertOrGetType, getMaybeLocalGroupId, insertLocalGroup)
+insertOrGetUnitType = partialInsertOrGetId(getMaybeUnitTypeId, insertUnitType)
+insertOrGetLocalType = partialInsertOrGetId(getMaybeLocalTypeId, insertLocalType)
+insertOrGetLocalValue = partialInsertOrGetId(getMaybeLocalValueId, insertLocalValue)
+insertOrGetCropType = partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
+insertOrGetCropStage = partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
+insertOrGetLocalGroup = partialInsertOrGetId(getMaybeLocalGroupId, insertLocalGroup)
 
 

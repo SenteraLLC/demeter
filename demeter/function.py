@@ -28,8 +28,7 @@ insertS3InputParameter : ReturnSameKey[S3InputParameter] = getInsertReturnKeyFun
 insertS3OutputParameter : ReturnSameKey[S3OutputParameter] = getInsertReturnKeyFunction(S3OutputParameter)
 insertKeywordParameter : ReturnSameKey[KeywordParameter] = getInsertReturnKeyFunction(KeywordParameter)
 
+from .database.generators import partialInsertOrGetId
 
-from .database.generators import insertOrGetType
-from functools import partial as __partial
+insertOrGetFunctionType = partialInsertOrGetId(getMaybeFunctionTypeId, insertFunctionType)
 
-insertOrGetFunctionType = __partial(insertOrGetType, getMaybeFunctionTypeId, insertFunctionType)

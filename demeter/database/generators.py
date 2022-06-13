@@ -1,4 +1,4 @@
-from typing import TypedDict, Any, Callable, Optional, Sequence, Type, TypeVar, Union, Dict, Mapping
+from typing import Any, Callable, Optional, Sequence, Type, Union, Dict, Mapping
 from typing import cast, get_origin, get_args
 
 from collections import OrderedDict
@@ -7,9 +7,10 @@ from functools import partial
 from psycopg2 import sql
 from psycopg2.sql import SQL, Composable, Composed, Identifier, Placeholder
 
-from .types_protocols import TableKey
-from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable, ReturnKey, ReturnSameKey, S, SK, AnyTable, I, S
+from .types_protocols import T, TableKey
+from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable, ReturnKey, ReturnSameKey, S, SK, AnyTable, I
 from .type_lookups import id_table_lookup, key_table_lookup
+
 
 
 # TODO: Add options for 'is_none' and 'is_optional'
@@ -93,7 +94,7 @@ def _insertAndReturnId(table_name : str,
   return int(result[0])
 
 
-def getInsertReturnIdFunction(table : Type[Any]) -> Callable[[Any, AnyIdTable], int]:
+def getInsertReturnIdFunction(table : Type[T]) -> Callable[[Any, AnyIdTable], int]:
   table_name = id_table_lookup[table]
   return partial(_insertAndReturnId, table_name)
 
@@ -148,8 +149,8 @@ def getMaybeId(table_name : str,
   return None
 
 
-def getMaybeIdFunction(table : Type[Any]) -> Callable[[Any, AnyIdTable], Optional[int]]:
-  table_name = id_table_lookup[table]
+def getMaybeIdFunction(t : Type[T]) -> Callable[[Any, AnyIdTable], Optional[int]]:
+  table_name = id_table_lookup[t]
   return partial(getMaybeId, table_name)
 
 
@@ -185,13 +186,13 @@ def getTableById(table_type    : Type[I],
   return table
 
 
-def getTableFunction(table : Type[Any],
+def getTableFunction(t : Type[I],
                      table_id_name : Optional[str] = None
                     ) -> Callable[[Any, int], I]:
-  table_name = id_table_lookup[table]
+  table_name = id_table_lookup[t]
   if table_id_name is None:
     table_id_name = "_".join([table_name, "id"])
-  return partial(getTableById, table, table_id_name)
+  return partial(getTableById, t, table_id_name)
 
 
 def getTableByKey(table_name : str,
@@ -210,21 +211,25 @@ def getTableByKey(table_name : str,
   return cast(S, result)
 
 
-def getTableKeyFunction(table : Type[Any]) -> Callable[[Any, int], S]:
-  table_name, key = key_table_lookup[table]
+def getTableKeyFunction(t : Type[S]) -> Callable[[Any, int], S]:
+  table_name, key = key_table_lookup[t]
   return partial(getTableByKey, table_name, key)
 
 
-W = TypeVar('W', bound=AnyTypeTable)
-
-def insertOrGetType(get_id    : GetId[W],
-                    return_id : ReturnId[W],
-                    cursor    : Any,
-                    some_type : W,
-                   ) -> int:
+def _insertOrGetType(get_id    : GetId[I],
+                     return_id : ReturnId[I],
+                     cursor    : Any,
+                     some_type : I,
+                    ) -> int:
   maybe_type_id = get_id(cursor, some_type)
   if maybe_type_id is not None:
     return maybe_type_id
   return return_id(cursor, some_type)
+
+
+def partialInsertOrGetId(get_id    : GetId[I],
+                         return_id : ReturnId[I],
+                        ) -> Callable[[Any, I], int]:
+  return partial(_insertOrGetType, get_id, return_id)
 
 

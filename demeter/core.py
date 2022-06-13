@@ -3,7 +3,7 @@ from typing import Optional, Any
 from functools import partial
 
 from .database.api_protocols import GetId, GetTable, ReturnId
-from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, insertOrGetType
+from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, partialInsertOrGetId
 
 from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, Coordinates, Polygon, MultiPolygon, Point, Line
 
@@ -23,11 +23,11 @@ insertGrower         : ReturnId[Grower]     = getInsertReturnIdFunction(Grower)
 insertGeoSpatialKey : ReturnId[GeoSpatialKey] = getInsertReturnIdFunction(GeoSpatialKey)
 insertTemporalKey : ReturnId[TemporalKey] = getInsertReturnIdFunction(TemporalKey)
 
-insertOrGetGeoSpatialKey = partial(insertOrGetType, getMaybeGeoSpatialKeyId, insertGeoSpatialKey)
-insertOrGetTemporalKey = partial(insertOrGetType, getMaybeTemporalKeyId, insertTemporalKey)
-insertOrGetOwner = partial(insertOrGetType, getMaybeOwnerId, insertOwner)
-insertOrGetGrower = partial(insertOrGetType, getMaybeGrowerId, insertGrower)
-insertOrGetField = partial(insertOrGetType, getMaybeFieldId, insertField)
+insertOrGetGeoSpatialKey = partialInsertOrGetId(getMaybeGeoSpatialKeyId, insertGeoSpatialKey)
+insertOrGetTemporalKey = partialInsertOrGetId(getMaybeTemporalKeyId, insertTemporalKey)
+insertOrGetOwner = partialInsertOrGetId(getMaybeOwnerId, insertOwner)
+insertOrGetGrower = partialInsertOrGetId(getMaybeGrowerId, insertGrower)
+insertOrGetField = partialInsertOrGetId(getMaybeFieldId, insertField)
 
 
 def getMaybeDuplicateGeom(cursor : Any,

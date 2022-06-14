@@ -8,7 +8,6 @@ from .inputs import *
 from ..database.types_protocols import *
 
 __all__ = [
-  'AnyKey',
   'Coordinates',
   'CropProgress',
   'CropProgressKey',
@@ -48,6 +47,7 @@ __all__ = [
   'Polygon',
   'ReportType',
   'SelfKey',
+  'SomeKey',
   'S3InputArgument',
   'S3InputParameter',
   'S3Object',

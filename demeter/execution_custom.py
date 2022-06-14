@@ -5,9 +5,7 @@ from .util.sql import openRelative
 
 from .types.execution import ExecutionSummary, Key
 from .types.execution import ExecutionArguments, LocalArgument, HTTPArgument, S3InputArgument, KeywordArgument, S3OutputArgument
-from .types.execution import ExecutionOutputs, S3OutputArgument
-
-from .database.types_protocols import TableId
+from .types.execution import ExecutionOutputs, S3OutputArgument, TableId
 
 def getExecutionSummaries(cursor : Any,
                           function_id : TableId,

@@ -6,12 +6,11 @@ from psycopg2 import sql
 from psycopg2.extensions import register_adapter, adapt
 import psycopg2.extras
 
-from .database.types_protocols import TableId
 from .database.generators import generateInsertMany, PGJoin, PGFormat
 
 from .types.execution import Key
 
-from .types.inputs import HTTPVerb, HTTPType, S3ObjectKey, S3Object
+from .types.inputs import HTTPVerb, HTTPType, S3ObjectKey, S3Object, TableId
 
 
 def stringToHTTPVerb(s : str) -> HTTPVerb:

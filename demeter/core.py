@@ -4,9 +4,8 @@ from functools import partial
 
 from .database.api_protocols import GetId, GetTable, ReturnId
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getTableFunction, partialInsertOrGetId
-from .database.types_protocols import TableId
 
-from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, Coordinates, Polygon, MultiPolygon, Point, Line
+from .types.core import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, Coordinates, Polygon, MultiPolygon, Point, Line, TableId
 
 getMaybeFieldId          : GetId[Field]      = getMaybeIdFunction(Field)
 getMaybeOwnerId          : GetId[Owner]      = getMaybeIdFunction(Owner)

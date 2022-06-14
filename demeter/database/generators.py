@@ -7,10 +7,9 @@ from functools import partial
 from psycopg2 import sql
 from psycopg2.sql import SQL, Composable, Composed, Identifier, Placeholder
 
-from .types_protocols import T, TableKey, TableId
-from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable, ReturnKey, ReturnSameKey, S, SK, AnyTable, I
+from .types_protocols import TableKey, TableId
+from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable, ReturnKey, ReturnSameKey, S, SK, AnyTable, I, T
 from .type_lookups import id_table_lookup, key_table_lookup
-
 
 
 # TODO: Add options for 'is_none' and 'is_optional'

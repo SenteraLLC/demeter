@@ -21,8 +21,6 @@ AnyKeyTable = Union[local.AnyKeyTable,
 
 AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
 
-SomeKey = Union[TableKey, TableId]
-
 R = TypeVar('R')
 InsertFn = Callable[[Any, T], R]
 

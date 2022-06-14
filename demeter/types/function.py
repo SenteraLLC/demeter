@@ -3,7 +3,9 @@ from typing import Optional, Sequence, Tuple, Union
 from enum import Enum
 from datetime import datetime
 
-from ..database.types_protocols import TypeTable, Table, Detailed, SelfKey, TableId
+from ..database.types_protocols import TypeTable, Table, Detailed, SelfKey
+from ..database.types_protocols import TableId as TableId
+
 from ..types.inputs import S3Type, S3TypeDataFrame, HTTPType, Keyword
 from ..types.local import LocalType
 

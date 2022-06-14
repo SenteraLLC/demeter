@@ -2,7 +2,8 @@ from typing import Optional, Union
 from typing import Literal, Mapping, Tuple
 from datetime import date, datetime
 
-from ..database.types_protocols import Table, Updateable, Detailed, TableId
+from ..database.types_protocols import Table, Updateable, Detailed
+from ..database.types_protocols import TableId as TableId
 
 import json
 from dataclasses import InitVar

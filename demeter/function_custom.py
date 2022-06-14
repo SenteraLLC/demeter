@@ -1,10 +1,8 @@
 from typing import Any, Tuple, Optional
 
 from .types.inputs import Keyword, KeywordType
-from .types.function import Function, FunctionSignature
+from .types.function import Function, FunctionSignature, TableId
 from .util.sql import openRelative
-
-from .database.types_protocols import TableId
 
 def insertFunction(cursor : Any,
                    function : Function,

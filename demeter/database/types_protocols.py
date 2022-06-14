@@ -1,16 +1,14 @@
-from typing import Optional, Any, TypeVar, Sequence, Set, Callable, Tuple, NewType
+from typing import Optional, Any, TypeVar, Sequence, Set, Tuple, Union, NewType
 from typing import cast
-from abc import ABC
 
+from abc import ABC
 from datetime import datetime
 from dataclasses import dataclass
 from dataclasses import field, fields
-
 import json
+from collections import OrderedDict
 
 from .details import JSON
-
-from collections import OrderedDict
 
 D = TypeVar('D')
 
@@ -35,9 +33,6 @@ class Table(ABC):
                    else json.JSONEncoder.default(self, obj)
 
 
-T = TypeVar('T', bound=Table)
-TableId = NewType('TableId', int)
-
 # TODO: Make an alias for the partially applied dataclass
 #       Waiting on Python 3.11 feature: dataclass transforms
 #       For now, we have to copy-paste these decorators
@@ -59,6 +54,10 @@ class TableKey(Table):
   @classmethod
   def names(cls) -> Sequence[str]:
     return [f.name for f in fields(cls)]
+
+TableId = NewType('TableId', int)
+
+SomeKey = Union[TableKey, TableId]
 
 @dataclass(frozen=True)
 class SelfKey(TableKey):

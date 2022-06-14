@@ -1,7 +1,8 @@
 from typing import TypedDict, Optional, Union, Dict, Literal, Tuple, Generator
 from datetime import date
 
-from ..database.types_protocols import Detailed, TypeTable, TableKey, TableId
+from ..database.types_protocols import Detailed, TypeTable, TableKey
+from ..database.types_protocols import TableId as TableId
 
 from dataclasses import dataclass
 

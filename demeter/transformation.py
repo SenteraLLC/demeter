@@ -10,8 +10,7 @@ from .types.function import FunctionSignature
 from .function import getLatestFunctionSignature
 
 from .execution import insertExecution, getExistingExecutions
-from .types.execution import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument, Key
-from .database.types_protocols import TableId
+from .types.execution import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument, Key, TableId
 
 from .connections import getS3Connection, getPgConnection
 
@@ -28,8 +27,6 @@ from .util.existing import getExistingDuplicate
 
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Local) -> (S3, Local)
-
-
 
 def Transformation(name                : str,
                    major               : int,

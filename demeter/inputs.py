@@ -2,8 +2,8 @@ from typing import Tuple, Any, Optional, Mapping, Type, Callable, TypeVar
 
 from functools import partial as __partial
 
-from .database.types_protocols import TableId
-from .database.api_protocols import GetId, GetTable, ReturnId, ReturnSameKey, SomeKey
+from .database.types_protocols import TableId, SomeKey
+from .database.api_protocols import GetId, GetTable, ReturnId, ReturnSameKey
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getInsertReturnSameKeyFunction, getTableFunction, partialInsertOrGetId
 
 from .types.inputs import HTTPType, S3Object, S3Type, S3TypeDataFrame, S3ObjectKey, S3SubType, TaggedS3SubType

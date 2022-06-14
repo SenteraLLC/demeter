@@ -5,7 +5,8 @@ from enum import Enum
 
 from ..types.local import LocalType as LocalType
 
-from ..database.types_protocols import TypeTable, Table, SelfKey, TableId
+from ..database.types_protocols import TypeTable, Table, SelfKey
+from ..database.types_protocols import TableId as TableId
 from ..database.details import JSON
 
 from dataclasses import dataclass

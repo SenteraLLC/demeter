@@ -1,6 +1,8 @@
 from typing import Sequence, Union, Optional, List, Generator, TypeVar
 
-from ..database.types_protocols import Table, SelfKey, TableId
+from ..database.types_protocols import Table, SelfKey
+from ..database.types_protocols import TableId as TableId
+
 
 from .function import FunctionId
 from .core import GeoSpatialKey, TemporalKey

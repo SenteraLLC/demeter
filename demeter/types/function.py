@@ -3,7 +3,7 @@ from typing import Optional, Sequence, Tuple, Union
 from enum import Enum
 from datetime import datetime
 
-from ..database.types_protocols import TypeTable, Table, Detailed, SelfKey
+from ..database.types_protocols import TypeTable, Table, Detailed, SelfKey, TableId
 from ..types.inputs import S3Type, S3TypeDataFrame, HTTPType, Keyword
 from ..types.local import LocalType
 
@@ -18,13 +18,13 @@ class FunctionType(TypeTable):
 class Function(Detailed):
   function_name    : str
   major            : int
-  function_type_id : int
+  function_type_id : TableId
   created          : datetime
 
 
 @dataclass(frozen=True)
 class FunctionId(Table):
-  function_id : int
+  function_id : TableId
 
 @dataclass(frozen=True)
 class Parameter(FunctionId):
@@ -32,20 +32,20 @@ class Parameter(FunctionId):
 
 @dataclass(frozen=True)
 class LocalParameter(Parameter, SelfKey):
-  local_type_id       : int
+  local_type_id       : TableId
 
 @dataclass(frozen=True)
 class HTTPParameter(Parameter, SelfKey, Detailed):
-  http_type_id        : int
+  http_type_id        : TableId
 
 @dataclass(frozen=True)
 class S3InputParameter(Parameter, SelfKey, Detailed):
-  s3_type_id              : int
+  s3_type_id              : TableId
 
 @dataclass(frozen=True)
 class S3OutputParameter(Parameter, SelfKey, Detailed):
   s3_output_parameter_name : str
-  s3_type_id               : int
+  s3_type_id               : TableId
 
 @dataclass(frozen=True)
 class KeywordParameter(Keyword, Parameter, SelfKey):

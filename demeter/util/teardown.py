@@ -6,6 +6,7 @@ from ..types.execution import ExecutionSummary, ExecutionKey, S3OutputArgument, 
 from ..execution import insertLocalArgument, insertHTTPArgument, insertS3InputArgument, insertKeywordArgument, insertExecutionKey, insertS3OutputArgument
 from ..datasource.datasource import DataSource
 from ..datasource.s3_file import S3File
+from ..database.types_protocols import TableId
 from ..types.inputs import S3Type
 from ..inputs import getS3TypeIdByName, getS3Type
 
@@ -61,7 +62,7 @@ def insertRawOutputs(cursor : Any,
                      raw_outputs : RawFunctionOutputs,
                      output_to_type_name : Mapping[str, str],
                      bucket_name : str,
-                    ) -> Optional[int]:
+                    ) -> Optional[TableId]:
   execution_summary = datasource.execution_summary
   function_id = execution_summary.function_id
   execution_id = execution_summary.execution_id

@@ -7,9 +7,11 @@ from .types.execution import ExecutionSummary, Key
 from .types.execution import ExecutionArguments, LocalArgument, HTTPArgument, S3InputArgument, KeywordArgument, S3OutputArgument
 from .types.execution import ExecutionOutputs, S3OutputArgument
 
+from .database.types_protocols import TableId
+
 def getExecutionSummaries(cursor : Any,
-                          function_id : int,
-                          execution_id : int,
+                          function_id : TableId,
+                          execution_id : TableId,
                          ) -> List[ExecutionSummary]:
   f = openRelative("getExecutionSummaries.sql")
   stmt = f.read()
@@ -21,7 +23,7 @@ def getExecutionSummaries(cursor : Any,
 
 
 def getExistingExecutions(cursor : Any,
-                          function_id : int,
+                          function_id : TableId,
                          ) -> Sequence[ExecutionSummary]:
   f = openRelative("getExistingExecutions.sql")
   stmt = f.read()

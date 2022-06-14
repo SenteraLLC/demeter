@@ -9,6 +9,7 @@ from ..types.execution import Key
 from ..types.inputs import S3TypeDataFrame, S3Object
 from ..inputs import insertS3Object, insertS3ObjectKeys
 from ..types.local import LocalType
+from ..database.types_protocols import TableId
 
 from collections import OrderedDict
 
@@ -30,8 +31,8 @@ JoinResults = Dict[frozenset[str], AnyDataFrame]
 class DataSource(DataSourceBase):
   def __init__(self,
                keys               : List[Key],
-               function_id        : int,
-               execution_id       : int,
+               function_id        : TableId,
+               execution_id       : TableId,
                cursor             : Any,
                s3_connection      : Any,
                keyword_arguments  : Dict[str, Any],
@@ -101,11 +102,11 @@ class DataSource(DataSourceBase):
 
 
   def upload(self,
-             s3_type_id  : int,
+             s3_type_id  : TableId,
              bucket_name : str,
              blob        : BytesIO,
              s3_key      : str = str(uuid.uuid4()),
-            ) -> int:
+            ) -> TableId:
     self.s3_connection.Bucket(bucket_name).upload_fileobj(Key=s3_key, Fileobj=blob)
     s3_object = S3Object(
                   s3_type_id = s3_type_id,
@@ -118,10 +119,10 @@ class DataSource(DataSourceBase):
 
 
   def upload_file(self,
-                  s3_type_id   : int,
+                  s3_type_id   : TableId,
                   bucket_name  : str,
                   s3_file_meta : S3FileMeta,
-                 ) -> int:
+                 ) -> TableId:
     s3_filename_on_disk = s3_file_meta["filename_on_disk"]
     f = open(s3_filename_on_disk, "rb")
     as_bytes = BytesIO(f.read())

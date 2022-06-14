@@ -4,9 +4,11 @@ from .types.inputs import Keyword, KeywordType
 from .types.function import Function, FunctionSignature
 from .util.sql import openRelative
 
+from .database.types_protocols import TableId
+
 def insertFunction(cursor : Any,
                    function : Function,
-                  ) -> Tuple[int, int]:
+                  ) -> Tuple[TableId, int]:
   stmt = """with minor as (
               select coalesce(max(minor), -1) + 1 as version
               from function
@@ -28,7 +30,7 @@ def insertFunction(cursor : Any,
 
 def getLatestFunctionSignature(cursor : Any,
                                function : Function
-                              ) -> Optional[Tuple[int, FunctionSignature]]:
+                              ) -> Optional[Tuple[TableId, FunctionSignature]]:
   f = openRelative("getLatestFunctionSignature.sql")
   stmt = f.read()
   cursor.execute(stmt, function())

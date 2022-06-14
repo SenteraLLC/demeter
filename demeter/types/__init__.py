@@ -59,6 +59,7 @@ __all__ = [
   'S3Type',
   'S3TypeDataFrame',
   'Table',
+  'TableId',
   'TableKey',
   'TaggedS3SubType',
   'TemporalKey',

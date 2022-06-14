@@ -8,6 +8,7 @@ from ..inputs import getS3Type, getHTTPType, getLocalType
 from ..types.function import S3InputParameter, HTTPParameter, S3OutputParameter
 from ..function import insertLocalParameter, insertS3InputParameter, insertHTTPParameter, insertS3OutputParameter, insertKeywordParameter, insertFunction
 
+from ..database.types_protocols import TableId
 from ..datasource.types import DataSourceTypes
 from ..datasource.register import DataSourceRegister
 
@@ -37,7 +38,7 @@ def getSignature(cursor : Any,
                  function : Function,
                  input_types : DataSourceTypes,
                  keyword_types : Dict[str, Type[Any]],
-                 output_types : Dict[str, Tuple[str, int]],
+                 output_types : Dict[str, Tuple[str, TableId]],
                 ) -> FunctionSignature:
   def unpackS3Type(s3_type_and_subtype : Tuple[S3Type, Optional[TaggedS3SubType]]) -> S3TypeSignature:
     s3_type, maybe_tagged_s3_subtype = s3_type_and_subtype
@@ -75,8 +76,8 @@ def insertFunctionTypes(cursor : Any,
                         function : Function,
                         input_types : DataSourceTypes,
                         keyword_types : Dict[str, Type[Any]],
-                        output_types : Dict[str, Tuple[str, int]],
-                       ) -> Tuple[int, int]:
+                        output_types : Dict[str, Tuple[str, TableId]],
+                       ) -> Tuple[TableId, int]:
   function_id, minor = insertFunction(cursor, function)
 
   for i in input_types["local_type_ids"]:
@@ -143,7 +144,7 @@ def registerFunction(cursor : Any,
                      input_types : DataSourceTypes,
                      keyword_types : Dict[str, Type[Any]],
                      function : Function,
-                     output_types : Dict[str, Tuple[str, int]],
+                     output_types : Dict[str, Tuple[str, TableId]],
                      maybe_latest_signature : Optional[FunctionSignature],
                     ) -> Optional[int]:
   function_id, new_minor = insertFunctionTypes(cursor, function, input_types, keyword_types, output_types)

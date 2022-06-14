@@ -1,18 +1,18 @@
 from typing import TypedDict, Optional, Union, Dict, Literal, Tuple, Generator
 from datetime import date
 
-from ..database.types_protocols import Detailed, TypeTable, TableKey
+from ..database.types_protocols import Detailed, TypeTable, TableKey, TableId
 
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class LocalValue(Detailed):
-  geom_id        : int
-  field_id       : Optional[int]
-  unit_type_id   : int
+  geom_id        : TableId
+  field_id       : Optional[TableId]
+  unit_type_id   : TableId
   quantity       : float
-  local_group_id : Optional[int]
+  local_group_id : Optional[TableId]
   acquired       : Optional[date]
 
 AnyDataTable = Union[LocalValue]
@@ -25,7 +25,7 @@ class LocalType(TypeTable):
 @dataclass(frozen=True)
 class UnitType(TypeTable):
   unit          : str
-  local_type_id : int
+  local_type_id : TableId
 
 @dataclass(frozen=True)
 class ReportType(TypeTable):
@@ -40,8 +40,8 @@ class LocalGroup(TypeTable):
 class CropType(TypeTable, Detailed):
   species     : str
   cultivar    : Optional[str]
-  parent_id_1 : Optional[int]
-  parent_id_2 : Optional[int]
+  parent_id_1 : Optional[TableId]
+  parent_id_2 : Optional[TableId]
 
 @dataclass(frozen=True)
 class CropStage(TypeTable):
@@ -51,9 +51,9 @@ AnyTypeTable = Union[UnitType, CropType, CropStage, ReportType, LocalGroup]
 
 @dataclass(frozen=True)
 class PlantHarvestKey(TableKey):
-  field_id      : int
-  crop_type_id  : int
-  geom_id       : int
+  field_id      : TableId
+  crop_type_id  : TableId
+  geom_id       : TableId
 
 @dataclass(frozen=True)
 class PlantingKey(PlantHarvestKey):
@@ -77,11 +77,11 @@ class Harvest(HarvestKey, PlantHarvest):
 
 @dataclass(frozen=True)
 class CropProgressKey(TableKey):
-  field_id         : int
-  crop_type_id     : int
-  planting_geom_id : int
-  geom_id          : Optional[int]
-  crop_stage_id    : int
+  field_id         : TableId
+  crop_type_id     : TableId
+  planting_geom_id : TableId
+  geom_id          : Optional[TableId]
+  crop_stage_id    : TableId
 
 @dataclass(frozen=True)
 class CropProgress(CropProgressKey):

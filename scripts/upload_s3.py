@@ -16,7 +16,7 @@ from demeter import temporary
 
 from demeter.datasource.s3_file import S3File
 
-from demeter import S3Type, TaggedS3SubType, S3TypeDataFrame
+from demeter import S3Type, TaggedS3SubType, S3TypeDataFrame, TableId
 from demeter import insertOrGetS3TypeDataFrame
 
 
@@ -34,12 +34,12 @@ if __name__ == "__main__":
 
   test_keys = list(temporary.load_keys(cursor))
 
-  datasource = DataSource(test_keys, 0, 0, cursor, s3_connection, {}, {})
+  datasource = DataSource(test_keys, TableId(0), TableId(0), cursor, s3_connection, {}, {})
 
   def newS3TypeDataFrame(type_name : str,
                          driver : str,
                          has_geometry : bool
-                        ) -> Tuple[int, TaggedS3SubType]:
+                        ) -> Tuple[TableId, TaggedS3SubType]:
     s3_type = S3Type(
                 type_name = type_name,
               )

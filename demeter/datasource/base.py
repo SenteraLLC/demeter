@@ -5,6 +5,7 @@ from typing import Dict, Any, TypedDict, List, Optional
 import pandas as pd
 
 from ..types.execution import ExecutionSummary, ExecutionArguments, ExecutionOutputs
+from ..database.types_protocols import TableId
 from ..local import getMaybeLocalTypeId
 from ..types.local import LocalType
 from ..inputs import getS3TypeIdByName, getHTTPByName
@@ -16,8 +17,8 @@ from .s3_file import SupportedS3DataType
 class DataSourceBase(ABC):
   def __init__(self,
                cursor : Any,
-               function_id : int,
-               execution_id : int,
+               function_id : TableId,
+               execution_id : TableId,
               ):
     self.LOCAL = "__LOCAL"
     self.GEOM = "__PRIMARY_GEOMETRY"

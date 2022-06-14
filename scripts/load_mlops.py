@@ -37,7 +37,7 @@ def maybeGetProperty(feature : Dict[str, Any], name : str) -> Optional[str]:
 
 def loadGeometry(crs_name          : str,
                  feature           : Dict[str, Any],
-                 container_geom_id : Optional[int] = None,
+                 container_geom_id : Optional[demeter.TableId] = None,
                 ) -> demeter.Geom:
   geometry = feature["geometry"]
   # TODO: How to deal with these projections? Not technically correct?
@@ -53,7 +53,7 @@ def loadGeometry(crs_name          : str,
 def loadField(cursor   : Any,
               feature  : Dict[str, Any],
               crs_name : str,
-             ) -> int:
+             ) -> demeter.TableId:
   f = feature
   owner = demeter.Owner(
             owner = getProperty(f, "owner"),
@@ -80,7 +80,7 @@ def loadField(cursor   : Any,
   field = demeter.Field(
             owner_id = owner_id,
             year = int(year),
-            geom_id = geom_id,
+            geom_id = demeter.TableId(geom_id),
             grower_id = grower_id,
             sentera_id = None,
             external_id = None,
@@ -91,7 +91,7 @@ def loadField(cursor   : Any,
   return demeter.insertField(cursor, field)
 
 
-def loadFieldFile(cursor : Any, filename : str) -> Dict[str, int]:
+def loadFieldFile(cursor : Any, filename : str) -> Dict[str, demeter.TableId]:
   with open(filename) as geojson_file:
     contents        = json.load(geojson_file)
     crs = contents["crs"]
@@ -137,10 +137,10 @@ def maybeParseDate(d : Optional[str]) -> Optional[datetime]:
 class ParseMeta(TypedDict):
   cursor       : Any
   filename     : str
-  field_id_map : Dict[str, int]
+  field_id_map : Dict[str, demeter.TableId]
 
 
-RowAndMaybeGeomId = Tuple[Dict[str, str], Dict[str, Optional[str]], Optional[int]]
+RowAndMaybeGeomId = Tuple[Dict[str, str], Dict[str, Optional[str]], Optional[demeter.TableId]]
 
 def maybeLower(s : Any) -> Any:
   if isinstance(s, str):
@@ -186,7 +186,7 @@ def yieldGeoJsonRow(file : TextIO,
   features = contents["features"]
 
   for f in features:
-    geom_id : Optional[int] = None
+    geom_id : Optional[demeter.TableId] = None
     if maybeGetProperty(f, "geometry") is not None:
 
       crs = contents["crs"]
@@ -272,12 +272,12 @@ def loadPlantingFile(parse_meta : ParseMeta,
 
 def insertLocalValue(cursor         : Any,
                      quantity       : float,
-                     unit_type_id   : int,
-                     geom_id        : int,
-                     field_id       : int,
-                     local_group_id : Optional[int],
+                     unit_type_id   : demeter.TableId,
+                     geom_id        : demeter.TableId,
+                     field_id       : demeter.TableId,
+                     local_group_id : Optional[demeter.TableId],
                      acquired       : datetime,
-                    ) -> int:
+                    ) -> demeter.TableId:
 
   local_value = demeter.LocalValue(
                   geom_id        = geom_id,
@@ -297,7 +297,7 @@ def insertLocalValue(cursor         : Any,
 
 def loadAppliedFile(parse_meta : ParseMeta,
                     yield_fn   : YieldFn,
-                   ) -> Set[int]:
+                   ) -> Set[demeter.TableId]:
   cursor       = parse_meta["cursor"]
   filename     = parse_meta["filename"]
   field_id_map = parse_meta["field_id_map"]
@@ -343,12 +343,12 @@ def loadAppliedFile(parse_meta : ParseMeta,
 
 def loadSentinelFile(parse_meta : ParseMeta,
                      _          : YieldFn,
-                    ) -> Dict[int, Set[int]]:
+                    ) -> Dict[demeter.TableId, Set[demeter.TableId]]:
   cursor       = parse_meta["cursor"]
   filename     = parse_meta["filename"]
   field_id_map = parse_meta["field_id_map"]
 
-  local_groups : Dict[int, Set[int]] = {}
+  local_groups : Dict[demeter.TableId, Set[demeter.TableId]] = {}
   with open(filename) as geojson_file:
     contents        = json.load(geojson_file)
     crs = contents["crs"]
@@ -377,7 +377,7 @@ def loadSentinelFile(parse_meta : ParseMeta,
 
       wavelengths = {k[len(prefix):] : float(v) for k, v in f["properties"].items() if k.startswith(prefix)}
 
-      local_ids : Set[int] = set()
+      local_ids : Set[demeter.TableId] = set()
       type_category = "wavelength"
       for wavelength, quantity in wavelengths.items():
         local_type = demeter.LocalType(type_name=wavelength, type_category=type_category)
@@ -397,12 +397,12 @@ def loadSentinelFile(parse_meta : ParseMeta,
 
 def loadWeatherFile(parse_meta : ParseMeta,
                     _          : YieldFn,
-                   ) -> Dict[int, Set[int]]:
+                   ) -> Dict[demeter.TableId, Set[demeter.TableId]]:
   cursor       = parse_meta["cursor"]
   filename     = parse_meta["filename"]
   field_id_map = parse_meta["field_id_map"]
 
-  local_groups : Dict[int, Set[int]] = {}
+  local_groups : Dict[demeter.TableId, Set[demeter.TableId]] = {}
   with open(filename) as geojson_file:
     print(filename)
     contents        = json.load(geojson_file)
@@ -429,12 +429,12 @@ def loadWeatherFile(parse_meta : ParseMeta,
 
 def loadWeatherDerivedFile(parse_meta : ParseMeta,
                            yield_fn   : YieldFn,
-                          ) -> Dict[int, Set[int]]:
+                          ) -> Dict[demeter.TableId, Set[demeter.TableId]]:
   cursor       = parse_meta["cursor"]
   filename     = parse_meta["filename"]
   field_id_map = parse_meta["field_id_map"]
 
-  local_groups : Dict[int, Set[int]] = {}
+  local_groups : Dict[demeter.TableId, Set[demeter.TableId]] = {}
   with open(filename) as csv_file:
     reader = csv.DictReader(csv_file)
 
@@ -468,7 +468,7 @@ def loadWeatherDerivedFile(parse_meta : ParseMeta,
                     )
       local_group_id = demeter.insertOrGetLocalGroup(cursor, local_group)
 
-      local_ids : Set[int] = set()
+      local_ids : Set[demeter.TableId] = set()
       for field_name in data_fields:
         quantity = float(row[field_name])
 
@@ -491,7 +491,7 @@ OBS_PREFIX = "obs_"
 
 def loadSampleFile(parse_meta : ParseMeta,
                    yield_fn   : YieldFn,
-                  ) -> Set[int]:
+                  ) -> Set[demeter.TableId]:
   cursor       = parse_meta["cursor"]
   filename     = parse_meta["filename"]
   field_id_map = parse_meta["field_id_map"]
@@ -541,19 +541,19 @@ def loadSampleFile(parse_meta : ParseMeta,
 
 
 
-def loadFieldIdMap(filename : str) -> Dict[str, int]:
+def loadFieldIdMap(filename : str) -> Dict[str, demeter.TableId]:
   if not os.path.exists(filename):
     return {}
 
   with open(filename) as f:
-    return cast(Dict[str, int], json.load(f))
+    return cast(Dict[str, demeter.TableId], json.load(f))
 
 
 import demeter.connections
 
 def loadDataFolder(hostname : str,
                    data_path : str,
-                   field_id_map : Dict[str, int]
+                   field_id_map : Dict[str, demeter.TableId]
                   ) -> None:
   connection = demeter.connections.getPgConnection()
   cursor = connection.cursor()
@@ -599,7 +599,7 @@ def loadDataFolder(hostname : str,
 # TODO: Just hard-coding this information until it can be better organized
 def loadData(hostname  : str,
              data_path : str,
-             field_id_map : Dict[str, int],
+             field_id_map : Dict[str, demeter.TableId],
             ) -> None:
   data_folders = sorted([f for f in os.listdir(data_path) if f.endswith("css")])
   for f in data_folders:

@@ -1,6 +1,6 @@
 from typing import Sequence, Union, Optional, List, Generator, TypeVar
 
-from ..database.types_protocols import Table, SelfKey
+from ..database.types_protocols import Table, SelfKey, TableId
 
 from .function import FunctionId
 from .core import GeoSpatialKey, TemporalKey
@@ -11,28 +11,28 @@ from collections import OrderedDict
 
 @dataclass(frozen=True, order=True)
 class Argument(FunctionId):
-  execution_id      : int
+  execution_id      : TableId
 
 @dataclass(frozen=True)
 class LocalArgument(Argument, SelfKey):
-  local_type_id : int
+  local_type_id : TableId
   number_of_observations : int
 
 @dataclass(frozen=True)
 class HTTPArgument(Argument, SelfKey):
-  http_type_id : int
+  http_type_id : TableId
   number_of_observations : int
 
 @dataclass(frozen=True)
 class S3InputArgument(Argument, SelfKey):
-  s3_type_id   : int
-  s3_object_id : int
+  s3_type_id   : TableId
+  s3_object_id : TableId
 
 @dataclass(frozen=True)
 class S3OutputArgument(Argument, SelfKey):
   s3_output_parameter_name : str
-  s3_type_id               : int
-  s3_object_id             : int
+  s3_type_id               : TableId
+  s3_object_id             : TableId
 
 @dataclass(frozen=True)
 class KeywordArgument(Argument, SelfKey):
@@ -42,8 +42,8 @@ class KeywordArgument(Argument, SelfKey):
 
 @dataclass(frozen=True)
 class _KeyIds(Table):
-  geospatial_key_id : int
-  temporal_key_id   : int
+  geospatial_key_id : TableId
+  temporal_key_id   : TableId
 
 @dataclass(frozen=True, order=True)
 class Key(_KeyIds, GeoSpatialKey, TemporalKey):
@@ -54,11 +54,11 @@ KeyGenerator = Generator[Key, None, None]
 
 @dataclass(frozen=True)
 class Execution(Table):
-  function_id  : int
+  function_id  : TableId
 
 @dataclass(frozen=True)
 class ExecutionKey(_KeyIds, SelfKey):
-  execution_id      : int
+  execution_id : TableId
 
 from typing import TypedDict
 
@@ -76,8 +76,8 @@ class ExecutionArguments(TypedDict):
 class ExecutionSummary:
   inputs  : ExecutionArguments
   outputs : ExecutionOutputs
-  function_id         : int
-  execution_id        : int
+  function_id         : TableId
+  execution_id        : TableId
 
 AnyKeyTable = Union[LocalArgument, HTTPArgument, S3InputArgument, S3OutputArgument, KeywordArgument, ExecutionKey]
 

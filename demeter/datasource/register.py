@@ -4,6 +4,7 @@ import pandas as pd
 import geopandas as gpd # type: ignore
 
 from ..types.inputs import LocalType
+from ..database.types_protocols import TableId
 
 from .base import DataSourceBase
 from .s3_file import SupportedS3DataType
@@ -11,10 +12,11 @@ from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 
 
 class DataSourceRegister(DataSourceBase):
+  # TODO: Fix weird defaults
   def __init__(self,
                cursor : Any,
-               function_id : int = 0,
-               execution_id : int = 0,
+               function_id : TableId = TableId(0),
+               execution_id : TableId = TableId(0),
               ):
     super().__init__(cursor, function_id, execution_id)
 

@@ -7,7 +7,7 @@ from functools import partial
 from psycopg2 import sql
 from psycopg2.sql import SQL, Composable, Composed, Identifier, Placeholder
 
-from .types_protocols import T, TableKey
+from .types_protocols import T, TableKey, TableId
 from .api_protocols import GetId, ReturnId, AnyIdTable, AnyKeyTable, AnyTypeTable, ReturnKey, ReturnSameKey, S, SK, AnyTable, I
 from .type_lookups import id_table_lookup, key_table_lookup
 
@@ -85,13 +85,13 @@ def generateInsertMany(table_name     : str,
 def _insertAndReturnId(table_name : str,
                        cursor     : Any,
                        table      : AnyIdTable,
-                      ) -> int:
+                      ) -> TableId:
   table_id = table_name + "_id"
   return_key = [table_id]
   stmt = _generateInsertStmt(table_name, table, return_key)
   cursor.execute(stmt, table())
   result = cursor.fetchone()
-  return int(result[0])
+  return TableId(result[0])
 
 
 def getInsertReturnIdFunction(table : Type[I]) -> ReturnId[I]:
@@ -130,7 +130,7 @@ def getInsertReturnKeyFunction(table : Type[S]) -> ReturnKey[S, SK]:
 def getMaybeId(table_name : str,
                cursor     : Any,
                table      : AnyIdTable,
-              ) -> Optional[int]:
+              ) -> Optional[TableId]:
   field_names = table.names()
   names_to_fields = OrderedDict({name: Identifier(name) for name in field_names })
 
@@ -145,11 +145,11 @@ def getMaybeId(table_name : str,
   cursor.execute(stmt, table())
   result = cursor.fetchone()
   if result is not None:
-    return int(result[0])
+    return TableId(result[0])
   return None
 
 
-def getMaybeIdFunction(t : Type[T]) -> Callable[[Any, AnyIdTable], Optional[int]]:
+def getMaybeIdFunction(t : Type[T]) -> Callable[[Any, AnyIdTable], Optional[TableId]]:
   table_name = id_table_lookup[t]
   return partial(getMaybeId, table_name)
 
@@ -157,7 +157,7 @@ def getMaybeIdFunction(t : Type[T]) -> Callable[[Any, AnyIdTable], Optional[int]
 def getMaybeTableById(table_type    : Type[I],
                       table_id_name : str,
                       cursor        : Any,
-                      table_id      : int,
+                      table_id      : TableId,
                      ) -> Optional[I]:
   table_name = id_table_lookup[table_type]
   condition = PGJoin(' = ', [Identifier(table_id_name), Placeholder(table_id_name)])
@@ -176,7 +176,7 @@ def getMaybeTableById(table_type    : Type[I],
 def getTableById(table_type    : Type[I],
                  table_id_name : str,
                  cursor        : Any,
-                 table_id      : int,
+                 table_id      : TableId,
                 ) -> I:
   table_name = id_table_lookup[table_type]
   maybe_table = getMaybeTableById(table_type, table_id_name, cursor, table_id)
@@ -188,7 +188,7 @@ def getTableById(table_type    : Type[I],
 
 def getTableFunction(t : Type[I],
                      table_id_name : Optional[str] = None
-                    ) -> Callable[[Any, int], I]:
+                    ) -> Callable[[Any, TableId], I]:
   table_name = id_table_lookup[t]
   if table_id_name is None:
     table_id_name = "_".join([table_name, "id"])
@@ -198,7 +198,7 @@ def getTableFunction(t : Type[I],
 def getTableByKey(table_name : str,
                   key        : Sequence[str],
                   cursor     : Any,
-                  table_id   : int,
+                  table_id   : TableId,
                  ) -> S:
   table_id_name = "_".join([table_name, "id"])
   conditions = [PGJoin(' = ', [Identifier(k), Placeholder(k)]) for k in key]
@@ -211,7 +211,7 @@ def getTableByKey(table_name : str,
   return cast(S, result)
 
 
-def getTableKeyFunction(t : Type[S]) -> Callable[[Any, int], S]:
+def getTableKeyFunction(t : Type[S]) -> Callable[[Any, TableId], S]:
   table_name, key = key_table_lookup[t]
   return partial(getTableByKey, table_name, key)
 
@@ -220,7 +220,7 @@ def _insertOrGetType(get_id    : GetId[I],
                      return_id : ReturnId[I],
                      cursor    : Any,
                      some_type : I,
-                    ) -> int:
+                    ) -> TableId:
   maybe_type_id = get_id(cursor, some_type)
   if maybe_type_id is not None:
     return maybe_type_id

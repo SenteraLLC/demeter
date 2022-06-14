@@ -2,7 +2,7 @@ from typing import Optional, Union
 from typing import Literal, Mapping, Tuple
 from datetime import date, datetime
 
-from ..database.types_protocols import Table, Updateable, Detailed
+from ..database.types_protocols import Table, Updateable, Detailed, TableId
 
 import json
 from dataclasses import InitVar
@@ -38,7 +38,7 @@ class Geom(Updateable):
   coordinates       : InitVar[Coordinates]
   geom              : str = field(init=False)
 
-  container_geom_id : Optional[int]
+  container_geom_id : Optional[TableId]
 
   def __post_init__(self,
                     crs_name : str,
@@ -63,24 +63,24 @@ class Owner(Table):
 
 @dataclass(frozen=True)
 class Grower(Detailed):
-  owner_id    : int
+  owner_id    : TableId
   farm        : str
   external_id : Optional[str]
 
 @dataclass(frozen=True)
 class Field(Table):
-  owner_id    : int
-  geom_id     : int
+  owner_id    : TableId
+  geom_id     : TableId
   year        : Optional[int]
-  grower_id   : Optional[int]
+  grower_id   : Optional[TableId]
   external_id : Optional[str]
   sentera_id  : Optional[str]      = None
   created     : Optional[datetime] = None
 
 @dataclass(frozen=True)
 class GeoSpatialKey(Table):
-  geom_id  : int
-  field_id : Optional[int]
+  geom_id  : TableId
+  field_id : Optional[TableId]
 
 @dataclass(frozen=True)
 class TemporalKey(Table):

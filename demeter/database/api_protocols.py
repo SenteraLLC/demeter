@@ -27,10 +27,10 @@ R = TypeVar('R')
 InsertFn = Callable[[Any, T], R]
 
 I = TypeVar('I', bound=AnyIdTable)
-GetId = Callable[[Any, I], Optional[int]]
-GetTable = Callable[[Any, int], I]
-ReturnId = Callable[[Any, I], int]
-#ReturnId = InsertFn[I, int]
+GetId = Callable[[Any, I], Optional[TableId]]
+GetTable = Callable[[Any, TableId], I]
+ReturnId = Callable[[Any, I], TableId]
+#ReturnId = InsertFn[I, TableId]
 
 S = TypeVar('S', bound=AnyKeyTable)
 SK = TypeVar('SK', bound=TableKey)

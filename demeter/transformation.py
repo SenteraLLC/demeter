@@ -11,6 +11,7 @@ from .function import getLatestFunctionSignature
 
 from .execution import insertExecution, getExistingExecutions
 from .types.execution import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument, Key
+from .database.types_protocols import TableId
 
 from .connections import getS3Connection, getPgConnection
 
@@ -44,7 +45,7 @@ def Transformation(name                : str,
 
     function = createFunction(cursor, name, major)
 
-    maybe_function_id : Optional[int] = None
+    maybe_function_id : Optional[TableId] = None
     maybe_latest_signature : Optional[FunctionSignature] = None
     maybe_latest = getLatestFunctionSignature(cursor, function)
     if maybe_latest is not None:

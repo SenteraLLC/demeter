@@ -6,6 +6,7 @@ from psycopg2 import sql
 from psycopg2.extensions import register_adapter, adapt
 import psycopg2.extras
 
+from .database.types_protocols import TableId
 from .database.generators import generateInsertMany, PGJoin, PGFormat
 
 from .types.execution import Key
@@ -16,7 +17,7 @@ from .types.inputs import HTTPVerb, HTTPType, S3ObjectKey, S3Object
 def stringToHTTPVerb(s : str) -> HTTPVerb:
   return HTTPVerb[s.upper()]
 
-def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, HTTPType]:
+def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[TableId, HTTPType]:
   stmt = """select * from http_type where type_name = %(name)s"""
   cursor.execute(stmt, { 'name' : http_type_name })
 
@@ -36,9 +37,9 @@ def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[int, HTTPType]:
 
 
 def insertS3ObjectKeys(cursor       : Any,
-                       s3_object_id : int,
+                       s3_object_id : TableId,
                        keys         : List[Key],
-                       s3_type_id   : int,
+                       s3_type_id   : TableId,
                       ) -> bool:
   s3_key_names = S3ObjectKey.names()
   stmt = generateInsertMany("s3_object_key", s3_key_names, len(keys))
@@ -56,7 +57,7 @@ def insertS3ObjectKeys(cursor       : Any,
 
 def getS3ObjectByKey(cursor         : Any,
                      key            : Key,
-                    ) -> Optional[Tuple[int, S3Object]]:
+                    ) -> Optional[Tuple[TableId, S3Object]]:
   stmt = """select *
             from s3_object O, s3_object_key K
             where O.s3_object_id = K.s3_object_id and
@@ -80,7 +81,7 @@ def getS3ObjectByKey(cursor         : Any,
 def getS3ObjectByKeys(cursor    : Any,
                       keys      : List[Key],
                       type_name : str,
-                     ) -> Optional[Tuple[int, S3Object]]:
+                     ) -> Optional[Tuple[TableId, S3Object]]:
   clauses = []
   args : List[Union[str, int]] = [type_name]
   for k in keys:
@@ -136,13 +137,12 @@ def getS3ObjectByKeys(cursor    : Any,
   return s3_object_id, s3_object
 
 
-def getS3TypeIdByName(cursor : Any, type_name : str) -> int:
+def getS3TypeIdByName(cursor : Any, type_name : str) -> TableId:
   stmt = """select s3_type_id from s3_type where type_name = %(type_name)s"""
   cursor.execute(stmt, {"type_name": type_name})
   results = cursor.fetchall()
   if len(results) <= 0:
     raise Exception(f"No type exists '%(type_name)s'",type_name)
-  return int(results[0].s3_type_id)
-
+  return TableId(results[0].s3_type_id)
 
 

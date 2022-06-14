@@ -2,6 +2,7 @@ from typing import Tuple, Any, Optional, Mapping, Type, Callable, TypeVar
 
 from functools import partial as __partial
 
+from .database.types_protocols import TableId
 from .database.api_protocols import GetId, GetTable, ReturnId, ReturnSameKey, SomeKey
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getInsertReturnSameKeyFunction, getTableFunction, partialInsertOrGetId
 
@@ -40,7 +41,7 @@ insertOrGetHTTPType = partialInsertOrGetId(getMaybeHTTPTypeId, insertHTTPType)
 def insertOrGetS3TypeDataFrame(cursor : Any,
                                s3_type : S3Type,
                                s3_type_dataframe : S3TypeDataFrame,
-                              ) -> int:
+                              ) -> TableId:
   s3_type_id = insertOrGetS3Type(cursor, s3_type)
   stmt = """insert into s3_type_dataframe(s3_type_id, driver, has_geometry)
             values(%(s3_type_id)s, %(driver)s, %(has_geometry)s)
@@ -53,7 +54,7 @@ def insertOrGetS3TypeDataFrame(cursor : Any,
 
   return s3_type_id
 
-s3_sub_type_get_lookup : Mapping[Type[S3SubType], Callable[[Any, int], S3SubType]] = {
+s3_sub_type_get_lookup : Mapping[Type[S3SubType], Callable[[Any, TableId], S3SubType]] = {
   S3TypeDataFrame : getMaybeS3TypeDataFrame
 }
 
@@ -64,7 +65,7 @@ s3_sub_type_insert_lookup : Mapping[Type[S3SubType], Callable[[Any, Any], SomeKe
 def insertS3Type(cursor : Any,
                  s3_type : S3Type,
                  s3_sub_type : Optional[S3SubType],
-                ) -> int:
+                ) -> TableId:
   s3_type_id = insertOrGetS3Type(cursor, s3_type)
   if s3_sub_type is not None:
     sub_type_insert_fn = s3_sub_type_insert_lookup[type(s3_sub_type)]
@@ -73,7 +74,7 @@ def insertS3Type(cursor : Any,
 
 
 def getS3Type(cursor : Any,
-              s3_type_id : int,
+              s3_type_id : TableId,
              ) -> Tuple[S3Type, Optional[TaggedS3SubType]]:
   s3_type = getS3TypeBase(cursor, s3_type_id)
   maybe_s3_sub_type = None

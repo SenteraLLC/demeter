@@ -5,7 +5,7 @@ from enum import Enum
 
 from ..types.local import LocalType as LocalType
 
-from ..database.types_protocols import TypeTable, Table, SelfKey
+from ..database.types_protocols import TypeTable, Table, SelfKey, TableId
 from ..database.details import JSON
 
 from dataclasses import dataclass
@@ -65,22 +65,24 @@ class TaggedS3SubType:
 
 @dataclass(frozen=True)
 class S3Output(Table):
-  function_id : int
-  s3_type_id  : int
+  function_id : TableId
+  s3_type_id  : TableId
 
 @dataclass(frozen=True)
 class S3Object(Table):
   key         : str
   bucket_name : str
-  s3_type_id  : int
+  s3_type_id  : TableId
 
 @dataclass(frozen=True)
 class S3ObjectKey(SelfKey):
-  s3_object_id      : int
-  geospatial_key_id : int
-  temporal_key_id   : int
+  s3_object_id      : TableId
+  geospatial_key_id : TableId
+  temporal_key_id   : TableId
 
 
 # Aggregate Type
 #   See '.api_protocol.py'
 AnyTypeTable = Union[HTTPType, S3Type, LocalType, S3TypeDataFrame]
+
+

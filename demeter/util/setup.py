@@ -4,6 +4,7 @@ import inspect
 
 from ..constants import NOW
 
+from ..database.types_protocols import TableId
 from ..function import getMaybeFunctionTypeId
 from ..types.function import Function, FunctionType
 from ..inputs import getS3TypeIdByName
@@ -49,8 +50,8 @@ def getKeywordParameterTypes(fn : WrappableFunction) -> Dict[str, Type[Any]]:
 
 def getOutputTypes(cursor : Any,
                    output_to_type_name : Mapping[str, str],
-                  ) -> Dict[str, Tuple[str, int]]:
-      output_types : Dict[str, Tuple[str, int]] = {}
+                  ) -> Dict[str, Tuple[str, TableId]]:
+      output_types : Dict[str, Tuple[str, TableId]] = {}
       for output_name, output_type_name in output_to_type_name.items():
         s3_type_id = getS3TypeIdByName(cursor, output_type_name)
         output_types[output_name] = (output_type_name, s3_type_id)

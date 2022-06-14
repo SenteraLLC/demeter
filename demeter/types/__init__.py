@@ -6,6 +6,7 @@ from .function import *
 from .execution import *
 from .inputs import *
 from ..database.types_protocols import *
+from ..database.api_protocols import SomeKey
 
 __all__ = [
   'Coordinates',

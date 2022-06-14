@@ -94,7 +94,7 @@ def _insertAndReturnId(table_name : str,
   return int(result[0])
 
 
-def getInsertReturnIdFunction(table : Type[T]) -> Callable[[Any, AnyIdTable], int]:
+def getInsertReturnIdFunction(table : Type[I]) -> ReturnId[I]:
   table_name = id_table_lookup[table]
   return partial(_insertAndReturnId, table_name)
 
@@ -229,7 +229,7 @@ def _insertOrGetType(get_id    : GetId[I],
 
 def partialInsertOrGetId(get_id    : GetId[I],
                          return_id : ReturnId[I],
-                        ) -> Callable[[Any, I], int]:
+                        ) -> ReturnId[I]:
   return partial(_insertOrGetType, get_id, return_id)
 
 

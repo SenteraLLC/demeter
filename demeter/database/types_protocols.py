@@ -1,4 +1,4 @@
-from typing import Optional, Any, Union, TypeVar, Sequence, Set, Callable, Tuple
+from typing import Optional, Any, TypeVar, Sequence, Set, Callable, Tuple, NewType
 from typing import cast
 from abc import ABC
 
@@ -36,6 +36,7 @@ class Table(ABC):
 
 
 T = TypeVar('T', bound=Table)
+TableId = NewType('TableId', int)
 
 # TODO: Make an alias for the partially applied dataclass
 #       Waiting on Python 3.11 feature: dataclass transforms
@@ -62,7 +63,4 @@ class TableKey(Table):
 @dataclass(frozen=True)
 class SelfKey(TableKey):
   pass
-
-# TODO: Consider using typing.NewType for serial keys
-AnyKey = Union[TableKey, int]
 

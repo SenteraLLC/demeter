@@ -2,7 +2,9 @@ from typing import Optional, Callable, TypeVar, Any, Union
 
 from ..types import local, inputs, function, execution, core
 
-from .types_protocols import TableKey
+from .types_protocols import Table, TableKey, TableId
+
+T = TypeVar('T', bound=Table)
 
 AnyTypeTable = Union[local.AnyTypeTable, inputs.AnyTypeTable, function.FunctionType]
 
@@ -19,13 +21,20 @@ AnyKeyTable = Union[local.AnyKeyTable,
 
 AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
 
+SomeKey = Union[TableKey, TableId]
+
+R = TypeVar('R')
+InsertFn = Callable[[Any, T], R]
 
 I = TypeVar('I', bound=AnyIdTable)
 GetId = Callable[[Any, I], Optional[int]]
 GetTable = Callable[[Any, int], I]
 ReturnId = Callable[[Any, I], int]
+#ReturnId = InsertFn[I, int]
 
 S = TypeVar('S', bound=AnyKeyTable)
 SK = TypeVar('SK', bound=TableKey)
+
 ReturnKey = Callable[[Any, S], SK]
 ReturnSameKey = Callable[[Any, S], S]
+

@@ -2,8 +2,7 @@ from typing import Tuple, Any, Optional, Mapping, Type, Callable, TypeVar
 
 from functools import partial as __partial
 
-from .database.api_protocols import GetId, GetTable, ReturnId, ReturnSameKey
-from .database.types_protocols import AnyKey
+from .database.api_protocols import GetId, GetTable, ReturnId, ReturnSameKey, SomeKey
 from .database.generators import getMaybeIdFunction, getInsertReturnIdFunction, getInsertReturnSameKeyFunction, getTableFunction, partialInsertOrGetId
 
 from .types.inputs import HTTPType, S3Object, S3Type, S3TypeDataFrame, S3ObjectKey, S3SubType, TaggedS3SubType
@@ -58,7 +57,7 @@ s3_sub_type_get_lookup : Mapping[Type[S3SubType], Callable[[Any, int], S3SubType
   S3TypeDataFrame : getMaybeS3TypeDataFrame
 }
 
-s3_sub_type_insert_lookup : Mapping[Type[S3SubType], Callable[[Any, Any], AnyKey]] = {
+s3_sub_type_insert_lookup : Mapping[Type[S3SubType], Callable[[Any, Any], SomeKey]] = {
   S3TypeDataFrame : insertS3TypeDataFrame
 }
 

@@ -33,7 +33,7 @@ ReturnId = Callable[[Any, I], TableId]
 #ReturnId = InsertFn[I, TableId]
 
 S = TypeVar('S', bound=AnyKeyTable)
-SK = TypeVar('SK', bound=TableKey)
+SK = TypeVar('SK', bound=SomeKey)
 
 ReturnKey = Callable[[Any, S], SK]
 ReturnSameKey = Callable[[Any, S], S]

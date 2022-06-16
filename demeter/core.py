@@ -47,6 +47,7 @@ def getMaybeDuplicateGeom(cursor : Any,
 
 def insertGeom(cursor   : Any,
                geom     : Geom,
+               container_geom_id : Optional[int] = None,
               ) -> TableId:
   maybe_geom_id = getMaybeDuplicateGeom(cursor, geom)
   if maybe_geom_id is not None:
@@ -54,7 +55,7 @@ def insertGeom(cursor   : Any,
   stmt = """insert into geom(container_geom_id, geom)
             values(%(container_geom_id)s, ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)))
             returning geom_id"""
-  cursor.execute(stmt, geom)
+  cursor.execute(stmt, {"geom": geom, "container_geom_id": container_geom_id})
   result = cursor.fetchone()
   return TableId(result.geom_id)
 

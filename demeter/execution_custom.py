@@ -14,7 +14,7 @@ def getExecutionSummaries(cursor : Any,
   f = openRelative("getExecutionSummaries.sql")
   stmt = f.read()
 
-  cursor.execute(stmt, function_id)
+  cursor.execute(stmt, {"function_id": function_id})
   result = cursor.fetchall()
 
   return [cast(ExecutionSummary, dict(r)) for r in result]

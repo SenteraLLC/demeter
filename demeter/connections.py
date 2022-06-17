@@ -8,6 +8,7 @@ import psycopg2
 import psycopg2.extras
 from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import register_adapter, adapt
+from collections import OrderedDict
 
 from .types.inputs import HTTPVerb, KeywordType
 
@@ -55,12 +56,12 @@ def register() -> None:
   register_adapter(HTTPVerb, verb_to_sql)
 
   register_adapter(set, lambda s : adapt(list(s))) # type: ignore
+  # NOTE: Do not change this to 'dict'. We want determinism.
+  register_adapter(OrderedDict, psycopg2.extras.Json)
 
   register_adapter(Table, lambda t : t())
 
   register_adapter(KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
-
-
 
 
 def getPgConnection() -> PGConnection:

@@ -55,7 +55,7 @@ def insertGeom(cursor   : Any,
   stmt = """insert into geom(container_geom_id, geom)
             values(%(container_geom_id)s, ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)))
             returning geom_id"""
-  cursor.execute(stmt, {"geom": geom, "container_geom_id": container_geom_id})
+  cursor.execute(stmt, geom())
   result = cursor.fetchone()
   return TableId(result.geom_id)
 

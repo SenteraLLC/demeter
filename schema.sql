@@ -396,7 +396,6 @@ CREATE UNIQUE INDEX function_subtype_null_unique_idx
   WHERE (function_subtype_name is NULL);
 
 
--- TODO: Probably need 'created_by' and 'updated_by' columns
 create table function (
   -- TODO: UUID seems like the correct type but we need to understand function storage
   function_id   bigserial
@@ -479,12 +478,13 @@ create table local_value (
                  references unit_type(unit_type_id)
                  not null,
 
-  acquired       timestamp without time zone,
-
-  unique (geom_id, field_id, unit_type_id, acquired),
+  acquired       timestamp without time zone
+                 not null,
 
   quantity       float
                  not null,
+
+  unique (geom_id, field_id, unit_type_id, acquired, quantity),
 
   local_group_id bigint
                  references local_group(local_group_id),
@@ -732,7 +732,7 @@ create table keyword_argument (
 
   value_number float,
   value_string text
-  -- TODO: JSON
+  -- TODO: Eventually support a JSON type with accompanying JSON schema
 );
 
 

@@ -1,4 +1,4 @@
-from typing import Optional, Any, TypeVar, Sequence, Set, Tuple, Union, NewType
+from typing import Optional, Any, TypeVar, Sequence, Set, Union, NewType
 from typing import cast
 
 from abc import ABC
@@ -20,9 +20,6 @@ class Table(ABC):
   def __call__(self) -> OrderedDict[str, Any]:
     out = [(f.name, getattr(self, f.name)) for f in fields(self)]
     return OrderedDict(out)
-
-  def items(self) -> Sequence[Tuple[str, Any]]:
-    return list(self().items())
 
   def get(self, k : str) -> D:
     return cast(D, self.__getattribute__(k))

@@ -14,7 +14,7 @@ class LocalValue(Detailed):
   unit_type_id   : TableId
   quantity       : float
   local_group_id : Optional[TableId]
-  acquired       : Optional[date]
+  acquired       : date
 
 AnyDataTable = Union[LocalValue]
 

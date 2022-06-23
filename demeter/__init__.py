@@ -9,7 +9,6 @@ from . import datasource
 from . import database
 
 from .transformation import Transformation
-from . import types
 from .types import *
 
 __all__ = [
@@ -111,6 +110,7 @@ __all__ = [
   'insertUnitType',
 ]
 
+from . import types
 __all__.extend(types.__all__)
 
 

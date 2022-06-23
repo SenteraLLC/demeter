@@ -1,13 +1,14 @@
 from typing import Optional, Union
 from typing import Literal, Mapping, Tuple
+from typing import cast
+
+import json
 from datetime import date, datetime
+from dataclasses import InitVar
+from dataclasses import dataclass, field, asdict
 
 from ..database.types_protocols import Table, Updateable, Detailed
 from ..database.types_protocols import TableId as TableId
-
-import json
-from dataclasses import InitVar
-from dataclasses import dataclass, field, asdict
 
 
 Point = Tuple[float, float]
@@ -56,6 +57,9 @@ class Geom(Updateable):
     )
     geom = json.dumps(impl, default=asdict)
     object.__setattr__(self, 'geom', geom)
+
+  #def getImpl(self) -> GeomImpl:
+  #  return cast(GeomImpl, json.loads(self.geom))
 
 
 @dataclass(frozen=True)

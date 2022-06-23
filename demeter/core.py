@@ -45,6 +45,7 @@ def getMaybeDuplicateGeom(cursor : Any,
   return None
 
 
+# TODO: Warn the user when the geometry is modified by ST_MakeValid
 def insertGeom(cursor   : Any,
                geom     : Geom,
                container_geom_id : Optional[int] = None,

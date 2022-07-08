@@ -10,7 +10,7 @@ import tarfile
 import geopandas as gpd  # type: ignore
 import pandas as pd
 
-from ...task import TaggedS3SubType, S3TypeDataFrame
+from ... import task
 
 AnyDataFrame = Union[gpd.GeoDataFrame, pd.DataFrame]
 
@@ -34,7 +34,7 @@ class S3File(object):
 
 
   def to_file(self,
-              maybe_tagged_s3_subtype : Optional[TaggedS3SubType],
+              maybe_tagged_s3_subtype : Optional[task.TaggedS3SubType],
               converter_args   : Dict[str, Any] = {},
              ) -> S3FileMeta:
     tmp_filename = "/tmp/"+str(uuid.uuid4())
@@ -82,15 +82,15 @@ def FILETYPE_TO_PANDAS_WRITE_FN(pandas_file_type : PandasFileType, value : pd.Da
 
 def writeS3FileToDisk(value                   : SupportedS3DataType,
                       tmp_filename            : str,
-                      maybe_tagged_s3_subtype : Optional[TaggedS3SubType],
+                      maybe_tagged_s3_subtype : Optional[task.TaggedS3SubType],
                       converter_args          : Dict[str, Any],
                      ) -> None:
   if maybe_tagged_s3_subtype is not None:
     tagged_s3_subtype = cast(AnyDataFrame, maybe_tagged_s3_subtype)
     tag = tagged_s3_subtype.tag
     s3_subtype = tagged_s3_subtype.value
-    if (tag == S3TypeDataFrame):
-      s3_type_dataframe = cast(S3TypeDataFrame, s3_subtype)
+    if (tag == task.S3TypeDataFrame):
+      s3_type_dataframe = cast(task.S3TypeDataFrame, s3_subtype)
       value = cast(AnyDataFrame, value)
       has_geometry = s3_type_dataframe.has_geometry
       driver = s3_type_dataframe.driver

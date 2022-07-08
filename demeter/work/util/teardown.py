@@ -2,20 +2,18 @@ from typing import Any, List, Mapping, Optional
 
 import geopandas as gpd # type: ignore
 
-from ...data.core.types import Key
+from ... import data
+from ... import task
+from ... import db
+
+from ..datasource import DataSource, S3File
 from ..types import ExecutionSummary, ExecutionKey, S3OutputArgument
 from .. import insertLocalArgument, insertHTTPArgument, insertS3InputArgument, insertKeywordArgument, insertExecutionKey, insertS3OutputArgument
-from ..datasource import DataSource
-from ..datasource import S3File
-
-from ...db import TableId
-from ...task import S3Type
-from ...task import getS3TypeIdByName, getS3Type
 
 from .wrapper_types import RawFunctionOutputs
 
 def insertExecutionArguments(cursor : Any,
-                             keys                : List[Key],
+                             keys                : List[data.Key],
                              execution_summary   : ExecutionSummary,
                             ) -> None:
   execution_id = execution_summary.execution_id
@@ -46,8 +44,8 @@ def insertInitFile(cursor : Any,
                    input_matrix : gpd.GeoDataFrame,
                    bucket_name  : str,
                   ) -> None:
-  s3_type_id = getS3TypeIdByName(cursor, "input_geodataframe_type")
-  s3_type, maybe_tagged_s3_sub_type = getS3Type(cursor, s3_type_id)
+  s3_type_id = task.getS3TypeIdByName(cursor, "input_geodataframe_type")
+  s3_type, maybe_tagged_s3_sub_type = task.getS3Type(cursor, s3_type_id)
   input_s3 = S3File(input_matrix, "input")
   if isinstance(input_s3, S3File):
     tagged_s3_sub_type = maybe_tagged_s3_sub_type
@@ -64,14 +62,14 @@ def insertRawOutputs(cursor : Any,
                      raw_outputs : RawFunctionOutputs,
                      output_to_type_name : Mapping[str, str],
                      bucket_name : str,
-                    ) -> Optional[TableId]:
+                    ) -> Optional[db.TableId]:
   execution_summary = datasource.execution_summary
   function_id = execution_summary.function_id
   execution_id = execution_summary.execution_id
   for output_name, output in raw_outputs.items():
     output_type = output_to_type_name[output_name]
-    s3_type_id = getS3TypeIdByName(cursor, output_type)
-    s3_type, maybe_tagged_s3_sub_type = getS3Type(cursor, s3_type_id)
+    s3_type_id = task.getS3TypeIdByName(cursor, output_type)
+    s3_type, maybe_tagged_s3_sub_type = task.getS3Type(cursor, s3_type_id)
     if isinstance(output, S3File):
       tagged_s3_sub_type = maybe_tagged_s3_sub_type
       s3_file_meta = output.to_file(tagged_s3_sub_type)
@@ -92,3 +90,4 @@ def insertRawOutputs(cursor : Any,
   insertExecutionArguments(cursor, datasource.keys, datasource.execution_summary)
 
   return execution_id
+

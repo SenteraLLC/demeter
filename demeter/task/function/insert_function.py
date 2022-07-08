@@ -1,11 +1,13 @@
 from typing import Any, Tuple, Optional
 
-from ..inputs.types import Keyword, KeywordType
-from .types import Function, FunctionSignature, TableId
+from ... import db
+from .types import Function, FunctionSignature, Keyword
+
+from .. import inputs
 
 def insertFunction(cursor : Any,
                    function : Function,
-                  ) -> Tuple[TableId, int]:
+                  ) -> Tuple[db.TableId, int]:
   stmt = """with minor as (
               select coalesce(max(minor), -1) + 1 as version
               from function
@@ -28,7 +30,7 @@ from .. import sql
 
 def getLatestFunctionSignature(cursor : Any,
                                function : Function
-                              ) -> Optional[Tuple[TableId, FunctionSignature]]:
+                              ) -> Optional[Tuple[db.TableId, FunctionSignature]]:
   stmt = sql.getLatestFunctionSignatureSQL
   cursor.execute(stmt, function())
   result = cursor.fetchone()
@@ -37,7 +39,7 @@ def getLatestFunctionSignature(cursor : Any,
 
   keyword_inputs = [Keyword(
                       keyword_name = k["keyword_name"],
-                      keyword_type = KeywordType[k["keyword_type"]],
+                      keyword_type = inputs.KeywordType[k["keyword_type"]],
                     ) for k in result.keyword_inputs
                    ]
   function_id = result.function_id

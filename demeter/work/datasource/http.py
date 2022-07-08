@@ -4,10 +4,9 @@ import requests
 import jsonschema
 from functools import wraps
 
-from ...task import HTTPType, HTTPVerb
-from ...task import getHTTPByName
-from ...data import Key
-from ...db import JSON
+from ... import data
+from ... import task
+from ... import db
 
 from ..types import ExecutionSummary, HTTPArgument
 
@@ -30,7 +29,7 @@ def checkHTTPParams(params : Mapping[str, Any],
 
 def parseHTTPParams(expected_params : Sequence[str],
                     param_fn        : Optional[KeyToArgsFunction],
-                    k               : Key,
+                    k               : data.Key,
                    ) -> Mapping[str, Any]:
   if param_fn is not None:
     params = param_fn(k)
@@ -40,9 +39,9 @@ def parseHTTPParams(expected_params : Sequence[str],
     raise Exception("Expecting URL params but no param function provided")
 
 
-def parseRequestSchema(request_body_schema : JSON,
+def parseRequestSchema(request_body_schema : db.JSON,
                        json_fn             : Optional[KeyToArgsFunction],
-                       k                   : Key,
+                       k                   : data.Key,
                       ) -> Mapping[str, Any]:
   if json_fn is not None:
     request_body = json_fn(k)
@@ -66,17 +65,17 @@ def wrap_requests_fn(requests_fn : Callable[..., requests.Response],
 
   return wrapped
 
-
 # TODO: Handle responses besides JSON
 # TODO: Bulk requests with related keys
 def _getHTTPRows(cursor       : Any,
-                 keys         : List[Key],
-                 http_type    : HTTPType,
+                 keys         : List[data.Key],
+                 http_type    : task.HTTPType,
                  param_fn     : Optional[KeyToArgsFunction],
                  json_fn      : Optional[KeyToArgsFunction],
                  response_fn  : ResponseFunction,
                  http_options : Dict[str, Any] = {},
-                ) -> List[Tuple[Key, Mapping[str, Any]]]:
+                ) -> List[Tuple[data.Key, Mapping[str, Any]]]:
+  from ...task import HTTPVerb
   verb = http_type.verb
   verb_to_fn : Mapping[HTTPVerb, Callable[..., requests.Response]] = {
     HTTPVerb.GET    : requests.get,
@@ -87,7 +86,7 @@ def _getHTTPRows(cursor       : Any,
   func = verb_to_fn[verb]
   uri = http_type.uri
 
-  responses : List[Tuple[Key, Mapping[str, Any]]] = []
+  responses : List[Tuple[data.Key, Mapping[str, Any]]] = []
   for k in keys:
     expected_params = http_type.uri_parameters
     if expected_params is not None:
@@ -108,15 +107,15 @@ def _getHTTPRows(cursor       : Any,
 
 
 def getHTTPRows(cursor       : Any,
-                keys         : List[Key],
+                keys         : List[data.Key],
                 execution_summary : ExecutionSummary,
                 type_name    : str,
                 param_fn     : Optional[KeyToArgsFunction] = None,
                 json_fn      : Optional[KeyToArgsFunction] = None,
                 response_fn  : ResponseFunction = OneToOneResponseFunction,
                 http_options : Dict[str, Any] = {}
-               ) -> List[Tuple[Key, Mapping[str, Any]]]:
-  http_type_id, http_type = getHTTPByName(cursor, type_name)
+               ) -> List[Tuple[data.Key, Mapping[str, Any]]]:
+  http_type_id, http_type = task.getHTTPByName(cursor, type_name)
   http_result = _getHTTPRows(cursor, keys, http_type, param_fn, json_fn, response_fn, http_options)
   h = HTTPArgument(
         function_id = execution_summary.function_id,

@@ -7,9 +7,7 @@ from datetime import date, datetime
 from dataclasses import InitVar
 from dataclasses import dataclass, field, asdict
 
-from ...db import Table, Detailed
-from ...db import TableId as TableId
-
+from ... import db
 
 Point = Tuple[float, float]
 Line = Tuple[Point, ...]
@@ -34,13 +32,13 @@ class GeomImpl:
 
 
 @dataclass(frozen=True)
-class Geom(Table):
+class Geom(db.Table):
   crs_name          : InitVar[str]
   type              : InitVar[str]
   coordinates       : InitVar[Coordinates]
   geom              : str = field(init=False)
 
-  container_geom_id : Optional[TableId]
+  container_geom_id : Optional[db.TableId]
 
   def __post_init__(self,
                     crs_name : str,
@@ -60,47 +58,107 @@ class Geom(Table):
 
 
 @dataclass(frozen=True)
-class Owner(Table):
+class Owner(db.Table):
   owner : str
+
 
 #reveal_type(Detailed)
 @dataclass(frozen=True)
-class Grower(Detailed):
-  owner_id    : TableId
+class Grower(db.Detailed):
+  owner_id    : db.TableId
   farm        : str
   external_id : Optional[str]
 #reveal_type(Grower)
 
 @dataclass(frozen=True)
-class Field(Table):
-  owner_id    : TableId
-  geom_id     : TableId
+class Field(db.Table):
+  owner_id    : db.TableId
+  geom_id     : db.TableId
   year        : Optional[int]
-  grower_id   : Optional[TableId]
+  grower_id   : Optional[db.TableId]
   external_id : Optional[str]
   sentera_id  : Optional[str]      = None
   created     : Optional[datetime] = None
 
 @dataclass(frozen=True)
-class GeoSpatialKey(Table):
-  geom_id  : TableId
-  field_id : Optional[TableId]
+class GeoSpatialKey(db.Table):
+  geom_id  : db.TableId
+  field_id : Optional[db.TableId]
 
 @dataclass(frozen=True)
-class TemporalKey(Table):
+class TemporalKey(db.Table):
   start_date : date
   end_date   : date
 
 @dataclass(frozen=True)
-class _KeyIds(Table):
-  geospatial_key_id : TableId
-  temporal_key_id   : TableId
+class _KeyIds(db.Table):
+  geospatial_key_id : db.TableId
+  temporal_key_id   : db.TableId
 
 @dataclass(frozen=True, order=True)
 class Key(_KeyIds, GeoSpatialKey, TemporalKey):
   pass
 
+AnyDataTable = Union[Geom, Owner, Grower, Field, GeoSpatialKey, TemporalKey, Key]
+
 KeyGenerator = Generator[Key, None, None]
 
-AnyDataTable = Union[Geom, Owner, Grower, Field, GeoSpatialKey, TemporalKey]
+@dataclass(frozen=True)
+class CropType(db.TypeTable, db.Detailed):
+  species     : str
+  cultivar    : Optional[str]
+  parent_id_1 : Optional[db.TableId]
+  parent_id_2 : Optional[db.TableId]
+
+@dataclass(frozen=True)
+class CropStage(db.TypeTable):
+  crop_stage : str
+
+@dataclass(frozen=True)
+class PlantHarvestKey(db.TableKey):
+  field_id      : db.TableId
+  crop_type_id  : db.TableId
+  geom_id       : db.TableId
+
+@dataclass(frozen=True)
+class PlantingKey(PlantHarvestKey):
+  pass
+
+@dataclass(frozen=True)
+class HarvestKey(PlantHarvestKey):
+  pass
+
+@dataclass(frozen=True)
+class _PlantHarvest(db.Detailed):
+  completed : Optional[date]
+
+@dataclass(frozen=True)
+class Planting(PlantingKey, _PlantHarvest):
+  pass
+
+@dataclass(frozen=True)
+class Harvest(HarvestKey, _PlantHarvest):
+  pass
+
+@dataclass(frozen=True)
+class CropProgressKey(db.TableKey):
+  field_id         : db.TableId
+  crop_type_id     : db.TableId
+  planting_geom_id : db.TableId
+  geom_id          : Optional[db.TableId]
+  crop_stage_id    : db.TableId
+
+@dataclass(frozen=True)
+class CropProgress(CropProgressKey):
+  day             : Optional[date]
+
+@dataclass(frozen=True)
+class ReportType(db.TypeTable):
+  report : str
+
+AnyTypeTable = Union[CropType, CropStage, ReportType]
+
+AnyKeyTable = Union[Planting, Harvest, CropProgress]
+
+AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]
 

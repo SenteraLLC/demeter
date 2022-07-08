@@ -3,31 +3,31 @@ from typing import Any, Optional, Callable, List, Dict
 import pandas as pd
 import geopandas as gpd # type: ignore
 
-from ...data import LocalType
-from ...db import TableId
+from ... import data
+from ... import db
 
-from .base import DataSourceBase
-from .s3_file import SupportedS3DataType
+from . import base
+from . import s3_file
+
 from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 
-
-class DataSourceRegister(DataSourceBase):
-  # TODO: Fix weird defaults
+class DataSourceRegister(base.DataSourceBase):
+  # TODO: Fix weird defaults, maybe use a sentinel value
   def __init__(self,
                cursor : Any,
-               function_id : TableId = TableId(0),
-               execution_id : TableId = TableId(0),
+               function_id : db.TableId = db.TableId(0),
+               execution_id : db.TableId = db.TableId(0),
               ):
     super().__init__(cursor, function_id, execution_id)
 
 
   def _s3(self,
           type_name   : str,
-         ) -> SupportedS3DataType:
+         ) -> s3_file.SupportedS3DataType:
     return pd.DataFrame()
 
 
-  def _local(self, local_types : List[LocalType]) -> pd.DataFrame:
+  def _local(self, local_types : List[data.LocalType]) -> pd.DataFrame:
     return pd.DataFrame()
 
 

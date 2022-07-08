@@ -1,10 +1,10 @@
 from typing import Any, Mapping, Type, Callable, Optional, Tuple
 
-from ...db.base_types import TableId, SomeKey
+from ...db import TableId, SomeKey
 
 from .types import S3Type, S3TypeDataFrame, S3SubType, TaggedS3SubType
 
-from . import insertOrGetS3Type, getMaybeS3TypeDataFrame, insertS3TypeDataFrame, getS3TypeBase
+from .generated import insertOrGetS3Type, getMaybeS3TypeDataFrame, insertS3TypeDataFrame, getS3TypeBase
 
 def insertOrGetS3TypeDataFrame(cursor : Any,
                                s3_type : S3Type,
@@ -21,6 +21,7 @@ def insertOrGetS3TypeDataFrame(cursor : Any,
   cursor.execute(stmt, args)
 
   return s3_type_id
+
 
 s3_sub_type_get_lookup : Mapping[Type[S3SubType], Callable[[Any, TableId], S3SubType]] = {
   S3TypeDataFrame : getMaybeS3TypeDataFrame
@@ -67,5 +68,4 @@ def getS3TypeIdByName(cursor : Any, type_name : str) -> TableId:
   if len(results) <= 0:
     raise Exception(f"No type exists '%(type_name)s'",type_name)
   return TableId(results[0].s3_type_id)
-
 

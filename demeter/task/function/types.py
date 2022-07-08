@@ -3,69 +3,71 @@ from typing import Optional, Sequence, Tuple, Union
 from enum import Enum
 from datetime import datetime
 
-from ...db.base_types import TypeTable, Table, Detailed, SelfKey
-from ...db.base_types import TableId as TableId
+from ... import db
+from ... import data
 
-from ..inputs.types import S3Type, S3TypeDataFrame, HTTPType, Keyword
-from ...data.local.types import LocalType
+from .. import inputs
 
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
-class FunctionType(TypeTable):
+class FunctionType(db.TypeTable):
   function_type_name    : str
   function_subtype_name : Optional[str]
 
 #reveal_type(Detailed)
 @dataclass(frozen=True)
-class Function(Detailed):
+class Function(db.Detailed):
   function_name    : str
   major            : int
-  function_type_id : TableId
+  function_type_id : db.TableId
   created          : datetime
 #reveal_type(Function)
 
 @dataclass(frozen=True)
-class FunctionId(Table):
-  function_id : TableId
+class FunctionId(db.Table):
+  function_id : db.TableId
 
 @dataclass(frozen=True)
 class Parameter(FunctionId):
   pass
 
 @dataclass(frozen=True)
-class LocalParameter(Parameter, SelfKey):
-  local_type_id       : TableId
+class LocalParameter(Parameter, db.SelfKey):
+  local_type_id : db.TableId
 
 @dataclass(frozen=True)
-class HTTPParameter(Parameter, SelfKey, Detailed):
-  http_type_id        : TableId
+class HTTPParameter(Parameter, db.SelfKey, db.Detailed):
+  http_type_id : db.TableId
 
 @dataclass(frozen=True)
-class S3InputParameter(Parameter, SelfKey, Detailed):
-  s3_type_id              : TableId
+class S3InputParameter(Parameter, db.SelfKey, db.Detailed):
+  s3_type_id              : db.TableId
 
 @dataclass(frozen=True)
-class S3OutputParameter(Parameter, SelfKey, Detailed):
+class S3OutputParameter(Parameter, db.SelfKey, db.Detailed):
   s3_output_parameter_name : str
-  s3_type_id               : TableId
+  s3_type_id               : db.TableId
+
+
+from ..inputs.types import Keyword as Keyword
 
 @dataclass(frozen=True)
-class KeywordParameter(Keyword, Parameter, SelfKey):
+class KeywordParameter(Keyword, Parameter, db.SelfKey):
   pass
 
 AnyParameter = Union[LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter, KeywordParameter]
 
-S3TypeSignature = Tuple[S3Type, Optional[S3TypeDataFrame]]
+S3TypeSignature = Tuple[inputs.S3Type, Optional[inputs.S3TypeDataFrame]]
 
 @dataclass(frozen=True)
 class FunctionSignature(object):
   name           : str
   major          : int
-  local_inputs   : Sequence[LocalType]
+  local_inputs   : Sequence[data.LocalType]
   keyword_inputs : Sequence[Keyword]
   s3_inputs      : Sequence[S3TypeSignature]
-  http_inputs    : Sequence[HTTPType]
+  http_inputs    : Sequence[inputs.HTTPType]
   s3_outputs     : Sequence[S3TypeSignature]
 
 AnyDataTable = Union[Function, AnyParameter]

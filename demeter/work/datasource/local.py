@@ -1,10 +1,9 @@
 from typing import List, Tuple, Any, Type, TypeVar, Iterable
 from typing import cast
 
-from ...data import LocalType, UnitType, LocalValue
-from ...data import getMaybeLocalTypeId
+from ... import data
 
-from ..types import ExecutionSummary, LocalArgument, Key
+from ..types import ExecutionSummary, LocalArgument
 
 T = TypeVar('T')
 
@@ -16,9 +15,9 @@ def sqlToTypedDict(rows : List[Any],
 
 
 def queryLocalByKey(cursor     : Any,
-                    key        : Key,
+                    key        : data.Key,
                     local_type_id : int,
-                   ) -> Iterable[Tuple[LocalValue, UnitType]]:
+                   ) -> Iterable[Tuple[data.LocalValue, data.UnitType]]:
   stmt = """select V.*, U.unit, U.local_type_id
             from local_value V, unit_type U
             where V.unit_type_id = U.unit_type_id and U.local_type_id = %s and
@@ -35,17 +34,17 @@ def queryLocalByKey(cursor     : Any,
   cursor.execute(stmt, args)
   results = cursor.fetchall()
 
-  local_value : List[LocalValue] = sqlToTypedDict(results, LocalValue)
-  unit_type : List[UnitType] = sqlToTypedDict(results, UnitType)
+  local_value : List[data.LocalValue] = sqlToTypedDict(results, data.LocalValue)
+  unit_type : List[data.UnitType] = sqlToTypedDict(results, data.UnitType)
 
   return zip(local_value, unit_type)
 
 
 def loadType(cursor        : Any,
-             keys          : List[Key],
+             keys          : List[data.Key],
              local_type_id : int,
-            ) -> List[Tuple[LocalValue, UnitType]]:
-    results : List[Tuple[LocalValue, UnitType]] = []
+            ) -> List[Tuple[data.LocalValue, data.UnitType]]:
+    results : List[Tuple[data.LocalValue, data.UnitType]] = []
     for k in keys:
       partial_results = queryLocalByKey(cursor, k, local_type_id)
 
@@ -54,13 +53,13 @@ def loadType(cursor        : Any,
 
 
 def loadLocalRaw(cursor : Any,
-                 keys   : List[Key],
-                 local_types : List[LocalType],
+                 keys   : List[data.Key],
+                 local_types : List[data.LocalType],
                  execution_summary : ExecutionSummary,
-                ) -> List[Tuple[LocalValue, UnitType]]:
-  results : List[Tuple[LocalValue, UnitType]] = []
+                ) -> List[Tuple[data.LocalValue, data.UnitType]]:
+  results : List[Tuple[data.LocalValue, data.UnitType]] = []
   for local_type in local_types:
-    maybe_local_type_id = getMaybeLocalTypeId(cursor, local_type)
+    maybe_local_type_id = data.getMaybeLocalTypeId(cursor, local_type)
     if maybe_local_type_id is None:
       raise Exception(f"Failed to find ID for local type: {local_type}")
     local_type_id = maybe_local_type_id
@@ -79,15 +78,15 @@ def loadLocalRaw(cursor : Any,
 
 
 def getLocalRows(cursor : Any,
-                 keys   : List[Key],
-                 local_types : List[LocalType],
+                 keys   : List[data.Key],
+                 local_types : List[data.LocalType],
                  execution_summary : ExecutionSummary,
                 ) -> List[Any]:
   rows : List[Any] = []
   for t in local_types:
-    maybe_local_type_id = getMaybeLocalTypeId(cursor, t)
+    maybe_local_type_id = data.getMaybeLocalTypeId(cursor, t)
     if maybe_local_type_id is None:
-      raise Exception(f"Local Type does not exist: {t}")
+      raise Exception(f"data.Local Type does not exist: {t}")
     else:
       local_type_id = maybe_local_type_id
 

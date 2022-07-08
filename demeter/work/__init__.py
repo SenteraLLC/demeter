@@ -1,19 +1,28 @@
 from .types import Execution, LocalArgument, HTTPArgument, KeywordArgument, S3InputArgument, S3OutputArgument, ExecutionKey, Argument
 
-from ..db import ReturnId, ReturnSameKey
-from ..db.type_to_sql import getInsertReturnIdFunction, getInsertReturnKeyFunction
+from . import lookups
+from ..db import Generator
+from ..db.generic_types import ReturnId, ReturnSameKey, ReturnKey
 
-insertExecution       : ReturnId[Execution] = getInsertReturnIdFunction(Execution)
-insertExecutionKey    : ReturnSameKey[ExecutionKey] = getInsertReturnKeyFunction(ExecutionKey)
+g = Generator(type_table_lookup = lookups.type_table_lookup,
+              data_table_lookup = lookups.data_table_lookup,
+              id_table_lookup = lookups.id_table_lookup,
+              key_table_lookup = lookups.key_table_lookup,
+             )
 
-insertLocalArgument    : ReturnSameKey[LocalArgument] = getInsertReturnKeyFunction(LocalArgument)
-insertHTTPArgument     : ReturnSameKey[HTTPArgument]   = getInsertReturnKeyFunction(HTTPArgument)
-insertKeywordArgument  : ReturnSameKey[KeywordArgument]   = getInsertReturnKeyFunction(KeywordArgument)
-insertS3InputArgument  : ReturnSameKey[S3InputArgument] = getInsertReturnKeyFunction(S3InputArgument)
-insertS3OutputArgument : ReturnSameKey[S3OutputArgument] = getInsertReturnKeyFunction(S3OutputArgument)
+insertExecution       : ReturnId[Execution] = g.getInsertReturnIdFunction(Execution)
+insertExecutionKey    : ReturnSameKey[ExecutionKey] = g.getInsertReturnKeyFunction(ExecutionKey)
 
+insertLocalArgument    : ReturnSameKey[LocalArgument] = g.getInsertReturnKeyFunction(LocalArgument)
+insertHTTPArgument     : ReturnSameKey[HTTPArgument]   = g.getInsertReturnKeyFunction(HTTPArgument)
+insertKeywordArgument  : ReturnSameKey[KeywordArgument]   = g.getInsertReturnKeyFunction(KeywordArgument)
+insertS3InputArgument  : ReturnSameKey[S3InputArgument] = g.getInsertReturnKeyFunction(S3InputArgument)
+insertS3OutputArgument : ReturnSameKey[S3OutputArgument] = g.getInsertReturnKeyFunction(S3OutputArgument)
 
-from .existing import getExecutionSummaries  as getExecutionSummaries, \
+from . import union_types
+from . import lookups
+
+from .existing import getExecutionSummaries as getExecutionSummaries, \
                       getExistingExecutions as getExistingExecutions
 
 
@@ -22,6 +31,9 @@ from .datasource import *
 from .datasource.types import *
 
 __all__ = [
+  'union_types',
+  'lookups',
+
   'insertExecution',
   'insertExecutionKey',
 
@@ -52,19 +64,4 @@ __all__ = [
   'ExecutionArguments',
   'ExecutionSummary',
 ]
-
-from typing import Union
-
-AnyKeyTable = Union[LocalArgument, HTTPArgument, S3InputArgument, S3OutputArgument, KeywordArgument, ExecutionKey]
-
-from ..db import TypeTable
-class _Skip(TypeTable):
-  pass
-AnyTypeTable = Union[_Skip]
-
-AnyDataTable = Union[Execution]
-
-AnyIdTable = Union[AnyTypeTable, AnyDataTable]
-
-AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
 

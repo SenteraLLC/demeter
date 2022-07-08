@@ -1,20 +1,19 @@
 from typing import Any, List, Optional, Tuple, Union
-import sys
-
-from ...db import TableId
-from ...db.type_to_sql import generateInsertMany
-from .types import S3ObjectKey, S3Object
 
 from psycopg2 import sql
-from ...db.type_to_sql import PGJoin, PGFormat
 
-from ...data.core.types import Key
+from .types import S3ObjectKey, S3Object
 
+from ... import db
+from ... import data
+
+from ...db import PGJoin, PGFormat
+from ...db.postgres.insert import generateInsertMany
 
 def insertS3ObjectKeys(cursor       : Any,
-                       s3_object_id : TableId,
-                       keys         : List[Key],
-                       s3_type_id   : TableId,
+                       s3_object_id : db.TableId,
+                       keys         : List[data.Key],
+                       s3_type_id   : db.TableId,
                       ) -> bool:
   s3_key_names = S3ObjectKey.names()
   stmt = generateInsertMany("s3_object_key", s3_key_names, len(keys))
@@ -31,8 +30,8 @@ def insertS3ObjectKeys(cursor       : Any,
 
 
 def getS3ObjectByKey(cursor         : Any,
-                     key            : Key,
-                    ) -> Optional[Tuple[TableId, S3Object]]:
+                     key            : data.Key,
+                    ) -> Optional[Tuple[db.TableId, S3Object]]:
   stmt = """select *
             from s3_object O, s3_object_key K
             where O.s3_object_id = K.s3_object_id and
@@ -53,10 +52,12 @@ def getS3ObjectByKey(cursor         : Any,
   return s3_object_id, s
 
 
+import sys
+
 def getS3ObjectByKeys(cursor    : Any,
-                      keys      : List[Key],
+                      keys      : List[data.Key],
                       type_name : str,
-                     ) -> Optional[Tuple[TableId, S3Object]]:
+                     ) -> Optional[Tuple[db.TableId, S3Object]]:
   clauses = []
   args : List[Union[str, int]] = [type_name]
   for k in keys:

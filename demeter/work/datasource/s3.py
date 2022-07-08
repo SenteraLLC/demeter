@@ -7,14 +7,12 @@ import botocore.exceptions
 import pandas as pd
 import geopandas as gpd # type: ignore
 
-from ...data import Key
-from ..types import S3InputArgument
-from ...task import TaggedS3SubType, S3TypeDataFrame
-from ...task import getS3ObjectByKeys, getS3Type
-from ..types import ExecutionSummary
+from ... import data
+from ... import task
 
-from .s3_file import AnyDataFrame
-from .s3_file import toPandasFileType, FILETYPE_TO_PANDAS_READ_FN
+from ..types import S3InputArgument, ExecutionSummary
+
+from . import s3_file
 
 
 def download(s3_connection : Any,
@@ -33,16 +31,16 @@ def download(s3_connection : Any,
 
 def getRawS3(cursor     : Any,
              s3_connection : Any,
-             keys       : List[Key],
+             keys       : List[data.Key],
              type_name  : str,
              execution_summary : ExecutionSummary,
-            ) -> Tuple[BytesIO, Optional[TaggedS3SubType]]:
-    maybe_id_and_object = getS3ObjectByKeys(cursor, keys, type_name)
+            ) -> Tuple[BytesIO, Optional[task.TaggedS3SubType]]:
+    maybe_id_and_object = task.getS3ObjectByKeys(cursor, keys, type_name)
     if maybe_id_and_object is None:
       raise Exception(f"Failed to find S3 object '{type_name}' associated with keys")
     s3_object_id, s3_object = maybe_id_and_object
     s3_type_id = s3_object.s3_type_id
-    s3_type, maybe_tagged_s3_subtype = getS3Type(cursor, s3_type_id)
+    s3_type, maybe_tagged_s3_subtype = task.getS3Type(cursor, s3_type_id)
     s3_key = s3_object.key
     bucket_name = s3_object.bucket_name
     f = download(s3_connection, bucket_name, s3_key)
@@ -59,7 +57,7 @@ def getRawS3(cursor     : Any,
 
 
 def rawToDataFrame(raw_results : BytesIO,
-                   dataframe_subtype : S3TypeDataFrame,
+                   dataframe_subtype : task.S3TypeDataFrame,
                   ) -> Tuple[Optional[pd.DataFrame], Optional[gpd.GeoDataFrame]]:
   driver = dataframe_subtype.driver
   has_geometry = dataframe_subtype.has_geometry
@@ -67,9 +65,8 @@ def rawToDataFrame(raw_results : BytesIO,
     gdf = gpd.read_file(raw_results, driver=driver)
     return None, gdf
   else:
-    pandas_file_type = toPandasFileType(driver)
-    pandas_driver_fn = FILETYPE_TO_PANDAS_READ_FN[pandas_file_type]
+    pandas_file_type = s3_file.toPandasFileType(driver)
+    pandas_driver_fn = s3_file.FILETYPE_TO_PANDAS_READ_FN[pandas_file_type]
     df = pandas_driver_fn(raw_results)
     return df, None
-
 

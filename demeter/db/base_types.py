@@ -8,7 +8,7 @@ from dataclasses import field, fields
 import json
 from collections import OrderedDict
 
-from .json import JSON, EMPTY_JSON
+from . import json_type
 
 D = TypeVar('D')
 
@@ -35,16 +35,18 @@ class Table(ABC):
 #       Waiting on Python 3.11 feature: dataclass transforms
 #       For now, we have to copy-paste these decorators
 
-from ..now import NOW
+from .. import constants
 
 @dataclass(frozen=True)
 class Updateable(Table):
-  last_updated : datetime = field(default=NOW, hash=False, kw_only=True)
-#reveal_type(Updateable)
+  last_updated : datetime = field(default=constants.NOW, hash=False, kw_only=True)
 
 @dataclass(frozen=True)
 class Detailed(Updateable):
-  details : JSON = field(default=EMPTY_JSON, hash=False, kw_only=True)
+  details : json_type.JSON = field(default=json_type.EMPTY_JSON,
+                                   hash=False,
+                                   kw_only=True
+                                  )
 #reveal_type(Detailed)
 
 

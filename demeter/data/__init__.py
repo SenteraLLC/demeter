@@ -1,29 +1,17 @@
-from typing import Union
 
-from . import local
 from . import core
+from . import local
 
-AnyTypeTable = Union[local.types.AnyTypeTable]
-
-AnyDataTable = Union[local.types.AnyDataTable, core.types.AnyDataTable, ]
-
-AnyIdTable = Union[AnyTypeTable, AnyDataTable, ]
-
-AnyKeyTable = Union[local.types.AnyKeyTable, ]
-
-AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable, ]
-
-
+from . import union_types
 
 from .core import *
-from .core.types import *
-
 from .local import *
-from .local.types import *
+from .types import *
 
 __all__ = [
   'local',
   'core',
+  'union_types',
 
   # core
   'getMaybeFieldId',
@@ -64,6 +52,7 @@ __all__ = [
   'GeoSpatialKey',
   'TemporalKey',
   'Key',
+  'KeyIds',
 
   # local
   'getMaybeLocalValue',

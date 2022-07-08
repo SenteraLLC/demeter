@@ -1,12 +1,12 @@
 from typing import Optional, Any
 
-from ...db.generic_types import GetId, GetTable, ReturnId
+from ... import db
 
-from .types import Geom, TableId
+from .types import Geom
 
 def getMaybeDuplicateGeom(cursor : Any,
                           geom   : Geom,
-                         ) -> Optional[TableId]:
+                         ) -> Optional[db.TableId]:
   stmt = """select G.geom_id
               FROM geom G
               where ST_Equals(G.geom, ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)))
@@ -15,7 +15,7 @@ def getMaybeDuplicateGeom(cursor : Any,
   cursor.execute(stmt, args)
   result = cursor.fetchall()
   if len(result) >= 1:
-    return TableId(result[0].geom_id)
+    return db.TableId(result[0].geom_id)
   return None
 
 
@@ -23,7 +23,7 @@ def getMaybeDuplicateGeom(cursor : Any,
 def insertOrGetGeom(cursor   : Any,
                     geom     : Geom,
                     container_geom_id : Optional[int] = None,
-                   ) -> TableId:
+                   ) -> db.TableId:
   maybe_geom_id = getMaybeDuplicateGeom(cursor, geom)
   if maybe_geom_id is not None:
     return maybe_geom_id
@@ -32,5 +32,5 @@ def insertOrGetGeom(cursor   : Any,
             returning geom_id"""
   cursor.execute(stmt, geom())
   result = cursor.fetchone()
-  return TableId(result.geom_id)
+  return db.TableId(result.geom_id)
 

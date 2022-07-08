@@ -1,30 +1,20 @@
-from typing import Union
 
 from . import function
 from . import inputs
 
-AnyTypeTable = Union[inputs.types.AnyTypeTable, function.types.AnyTypeTable]
-
-AnyDataTable = Union[inputs.types.AnyDataTable, function.types.AnyDataTable]
-
-AnyIdTable = Union[AnyTypeTable, AnyDataTable, inputs.types.S3SubType]
-
-AnyKeyTable = Union[inputs.types.AnyKeyTable,
-                    function.types.AnyKeyTable,
-                   ]
-
-AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
-
+#from . import lookups
+from . import union_types
 
 from .function import *
-from .function.types import *
-
 from .inputs import *
-from .inputs.types import *
+from .types import *
+
 
 __all__ = [
   'function',
   'inputs',
+  #'lookups',
+  'union_types',
 
   # function
   'FunctionType',
@@ -87,4 +77,7 @@ __all__ = [
   'getS3ObjectByKeys',
 
 ]
+
+from .register import register_sql_adapters
+register_sql_adapters()
 

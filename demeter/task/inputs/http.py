@@ -2,13 +2,13 @@ from typing import Tuple, Any
 
 from .types import HTTPVerb, HTTPType
 
-from ...db import TableId
+from ... import db
 
 
 def stringToHTTPVerb(s : str) -> HTTPVerb:
   return HTTPVerb[s.upper()]
 
-def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[TableId, HTTPType]:
+def getHTTPByName(cursor : Any, http_type_name : str) -> Tuple[db.TableId, HTTPType]:
   stmt = """select * from http_type where type_name = %(name)s"""
   cursor.execute(stmt, { 'name' : http_type_name })
 

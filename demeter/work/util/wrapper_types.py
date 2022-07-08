@@ -2,8 +2,8 @@ from typing import Mapping, Union, Callable, Any, TypeVar, Protocol
 
 import geopandas as gpd # type: ignore
 
-from ..datasource.s3_file import S3File, LocalFile
-from ..datasource.datasource import DataSourceBase
+from ..datasource import S3File, LocalFile
+from ..datasource import DataSourceBase
 from ..types import ExecutionOutputs
 
 SupportedOutputFile = Union[S3File, LocalFile]
@@ -18,5 +18,4 @@ OutputLoadFunction = Callable[[DataSourceBase], gpd.GeoDataFrame]
 
 class WrappedTransformation(Protocol):
     def __call__(self, **kwargs: Any) -> ExecutionOutputs: ...
-
 

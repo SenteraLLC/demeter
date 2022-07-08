@@ -1,16 +1,15 @@
 from typing import Dict, TypedDict, Any, Callable, List
 from typing import cast
 
-from ...data import Key, LocalType
-
-from ...db import TableId
+from ... import data
+from ... import db
 
 class DataSourceTypes(TypedDict):
-  s3_type_ids    : Dict[TableId, str]
-  local_type_ids : Dict[TableId, LocalType]
-  http_type_ids  : Dict[TableId, str]
+  s3_type_ids    : Dict[db.TableId, str]
+  local_type_ids : Dict[db.TableId, data.LocalType]
+  http_type_ids  : Dict[db.TableId, str]
 
-KeyToArgsFunction = Callable[[Key], Dict[str, Any]]
+KeyToArgsFunction = Callable[[data.Key], Dict[str, Any]]
 
 
 import requests

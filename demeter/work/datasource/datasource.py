@@ -5,33 +5,32 @@ from typing import cast
 from io import BytesIO
 import uuid
 
-from ...data import Key, LocalType
-from ...task import S3TypeDataFrame, S3Object
-from ...task import insertS3Object, insertS3ObjectKeys
-from ...db import TableId
+from ... import data
+from ... import task
+from ... import db
 
 from collections import OrderedDict
 
-from .util import createKeywordArguments
-from .local import getLocalRows
-from .http import getHTTPRows
-from .s3 import getRawS3, rawToDataFrame
-from .s3_file import SupportedS3DataType, AnyDataFrame, S3FileMeta
-from .types import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
+from . import util
+from . import local
+from . import http
+from . import s3
+from . import s3_file
+from . import base
 
-from .base import DataSourceBase as DataSourceBase
+from .types import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 
 import pandas as pd
 import geopandas as gpd # type: ignore
 
-JoinResults = Dict[frozenset[str], AnyDataFrame]
+JoinResults = Dict[frozenset[str], s3_file.AnyDataFrame]
 
 # TODO: Defer S3 downloads until joining or manually altered
-class DataSource(DataSourceBase):
+class DataSource(base.DataSourceBase):
   def __init__(self,
-               keys               : List[Key],
-               function_id        : TableId,
-               execution_id       : TableId,
+               keys               : List[data.Key],
+               function_id        : db.TableId,
+               execution_id       : db.TableId,
                cursor             : Any,
                s3_connection      : Any,
                keyword_arguments  : Dict[str, Any],
@@ -42,18 +41,18 @@ class DataSource(DataSourceBase):
     self.s3_connection = s3_connection
     self.cursor = cursor
     self.keys = self.execution_summary.inputs["keys"] = keys
-    self.execution_summary.inputs["keyword"] = createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
+    self.execution_summary.inputs["keyword"] = util.createKeywordArguments(keyword_arguments, keyword_types, execution_id, function_id)
 
     self.dataframes : Dict[str, pd.DataFrame] = OrderedDict()
     self.geodataframes : Dict[str, gpd.GeoDataFrame] = OrderedDict()
-    self.explicit_joins : Dict[Tuple[str, str], Tuple[Optional[Callable[..., AnyDataFrame]], Dict[str, Any]]] = {}
+    self.explicit_joins : Dict[Tuple[str, str], Tuple[Optional[Callable[..., s3_file.AnyDataFrame]], Dict[str, Any]]] = {}
 
 
-  def _local(self, local_types : List[LocalType]) -> pd.DataFrame:
+  def _local(self, local_types : List[data.LocalType]) -> pd.DataFrame:
     if self.LOCAL in self.dataframes:
       raise Exception("Local data can only be acquired once.")
 
-    rows = getLocalRows(self.cursor, self.keys, local_types, self.execution_summary)
+    rows = local.getLocalRows(self.cursor, self.keys, local_types, self.execution_summary)
     df = pd.DataFrame(rows)
     self.dataframes[self.LOCAL] = df
     return df
@@ -67,7 +66,7 @@ class DataSource(DataSourceBase):
             response_fn  : ResponseFunction = OneToOneResponseFunction,
             http_options : Dict[str, Any] = {}
            ) -> pd.DataFrame:
-    raw_results = getHTTPRows(self.cursor, self.keys, self.execution_summary, type_name, param_fn, json_fn, response_fn, http_options)
+    raw_results = http.getHTTPRows(self.cursor, self.keys, self.execution_summary, type_name, param_fn, json_fn, response_fn, http_options)
     results : List[Dict[str, Any]] = []
     for key, row in raw_results:
       results.append(dict(**key(), **row))
@@ -79,15 +78,15 @@ class DataSource(DataSourceBase):
 
   def _s3(self,
           type_name   : str,
-         ) -> SupportedS3DataType:
-    raw_results, maybe_tagged_s3_subtype = getRawS3(self.cursor, self.s3_connection, self.keys, type_name, self.execution_summary)
+         ) -> s3_file.SupportedS3DataType:
+    raw_results, maybe_tagged_s3_subtype = s3.getRawS3(self.cursor, self.s3_connection, self.keys, type_name, self.execution_summary)
     if maybe_tagged_s3_subtype is not None:
       tagged_s3_subtype = maybe_tagged_s3_subtype
       tag = tagged_s3_subtype.tag
       subtype = tagged_s3_subtype.value
-      if tag == S3TypeDataFrame:
-        dataframe_subtype = S3TypeDataFrame(**subtype())
-        maybe_df, maybe_gdf = rawToDataFrame(raw_results, dataframe_subtype)
+      if tag == task.S3TypeDataFrame:
+        dataframe_subtype = task.S3TypeDataFrame(**subtype())
+        maybe_df, maybe_gdf = s3.rawToDataFrame(raw_results, dataframe_subtype)
         if maybe_df is not None:
           df = self.dataframes[type_name] = maybe_df
           return df
@@ -101,27 +100,27 @@ class DataSource(DataSourceBase):
 
 
   def upload(self,
-             s3_type_id  : TableId,
+             s3_type_id  : db.TableId,
              bucket_name : str,
              blob        : BytesIO,
              s3_key      : str = str(uuid.uuid4()),
-            ) -> TableId:
+            ) -> db.TableId:
     self.s3_connection.Bucket(bucket_name).upload_fileobj(Key=s3_key, Fileobj=blob)
-    s3_object = S3Object(
+    s3_object = task.S3Object(
                   s3_type_id = s3_type_id,
                   key = s3_key,
                   bucket_name = bucket_name,
                 )
-    s3_object_id = insertS3Object(self.cursor, s3_object)
-    insertS3ObjectKeys(self.cursor, s3_object_id, self.keys, s3_type_id)
+    s3_object_id = task.insertS3Object(self.cursor, s3_object)
+    task.insertS3ObjectKeys(self.cursor, s3_object_id, self.keys, s3_type_id)
     return s3_object_id
 
 
   def upload_file(self,
-                  s3_type_id   : TableId,
+                  s3_type_id   : db.TableId,
                   bucket_name  : str,
-                  s3_file_meta : S3FileMeta,
-                 ) -> TableId:
+                  s3_file_meta : s3_file.S3FileMeta,
+                 ) -> db.TableId:
     s3_filename_on_disk = s3_file_meta["filename_on_disk"]
     f = open(s3_filename_on_disk, "rb")
     as_bytes = BytesIO(f.read())
@@ -162,7 +161,7 @@ class DataSource(DataSourceBase):
 
 
 
-  def popDataFrame(self, type_name : str) -> Optional[AnyDataFrame]:
+  def popDataFrame(self, type_name : str) -> Optional[s3_file.AnyDataFrame]:
     if type_name == self.GEOM:
       return self.getGeometry()
     return geo if (geo := self.geodataframes.pop(type_name, None)) is not None else self.dataframes.pop(type_name)
@@ -177,7 +176,7 @@ class DataSource(DataSourceBase):
     return None
 
 
-  def getDataFrame(self, type_name : str, explicit_join_results : JoinResults) -> AnyDataFrame:
+  def getDataFrame(self, type_name : str, explicit_join_results : JoinResults) -> s3_file.AnyDataFrame:
     maybe_df = self.popDataFrame(type_name)
     if (df := maybe_df) is not None:
       return df
@@ -194,7 +193,7 @@ class DataSource(DataSourceBase):
 
     def addExplicitJoin(left_type_name : str,
                         right_type_name : str,
-                        result : AnyDataFrame,
+                        result : s3_file.AnyDataFrame,
                        ) -> bool:
       left_existing = self._findExisting(left_type_name, explicit_join_results)
       right_existing = self._findExisting(right_type_name, explicit_join_results)

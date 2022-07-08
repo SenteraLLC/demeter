@@ -1,96 +1,39 @@
 from typing import TypedDict, Optional, Union, Dict, Literal, Tuple, Generator
 from datetime import date
 
-from ...db.base_types import Detailed, TypeTable, TableKey
-from ...db.base_types import TableId as TableId
+from ... import db
 
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class LocalValue(Detailed):
-  geom_id        : TableId
-  field_id       : Optional[TableId]
-  unit_type_id   : TableId
+class LocalValue(db.Detailed):
+  geom_id        : db.TableId
+  field_id       : Optional[db.TableId]
+  unit_type_id   : db.TableId
   quantity       : float
-  local_group_id : Optional[TableId]
+  local_group_id : Optional[db.TableId]
   acquired       : date
 
 AnyDataTable = Union[LocalValue]
 
 
 @dataclass(frozen=True)
-class LocalType(TypeTable):
+class LocalType(db.TypeTable):
   type_name      : str
   type_category  : Optional[str]
 
 @dataclass(frozen=True)
-class UnitType(TypeTable):
+class UnitType(db.TypeTable):
   unit          : str
-  local_type_id : TableId
+  local_type_id : db.TableId
 
 @dataclass(frozen=True)
-class ReportType(TypeTable):
-  report : str
-
-@dataclass(frozen=True)
-class LocalGroup(TypeTable):
+class LocalGroup(db.TypeTable):
   group_name     : str
   group_category : Optional[str]
 
-@dataclass(frozen=True)
-class CropType(TypeTable, Detailed):
-  species     : str
-  cultivar    : Optional[str]
-  parent_id_1 : Optional[TableId]
-  parent_id_2 : Optional[TableId]
+AnyTypeTable = Union[LocalType, UnitType, LocalGroup]
 
-@dataclass(frozen=True)
-class CropStage(TypeTable):
-  crop_stage : str
-
-AnyTypeTable = Union[UnitType, CropType, CropStage, ReportType, LocalGroup]
-
-
-@dataclass(frozen=True)
-class PlantHarvestKey(TableKey):
-  field_id      : TableId
-  crop_type_id  : TableId
-  geom_id       : TableId
-
-@dataclass(frozen=True)
-class PlantingKey(PlantHarvestKey):
-  pass
-
-@dataclass(frozen=True)
-class HarvestKey(PlantHarvestKey):
-  pass
-
-@dataclass(frozen=True)
-class PlantHarvest(Detailed):
-  completed : Optional[date]
-
-@dataclass(frozen=True)
-class Planting(PlantingKey, PlantHarvest):
-  pass
-
-@dataclass(frozen=True)
-class Harvest(HarvestKey, PlantHarvest):
-  pass
-
-@dataclass(frozen=True)
-class CropProgressKey(TableKey):
-  field_id         : TableId
-  crop_type_id     : TableId
-  planting_geom_id : TableId
-  geom_id          : Optional[TableId]
-  crop_stage_id    : TableId
-
-@dataclass(frozen=True)
-class CropProgress(CropProgressKey):
-  day             : Optional[date]
-
-AnyKeyTable = Union[Planting, Harvest, CropProgress]
-
-AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]
+AnyTable = Union[AnyDataTable, AnyTypeTable]
 

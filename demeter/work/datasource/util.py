@@ -1,12 +1,13 @@
 from typing import Dict, Optional, List, Any, Type, Union, Mapping, Callable
 
 from ..types import KeywordArgument
-from ...db import TableId
+
+from ... import db
 
 def createKeywordArguments(keyword_arguments : Dict[str, Any],
                            keyword_types     : Dict[str, Type[Any]],
-                           execution_id      : TableId,
-                           function_id       : TableId,
+                           execution_id      : db.TableId,
+                           function_id       : db.TableId,
                           ) -> List[KeywordArgument]:
   out : List[KeywordArgument] = []
   for name, value in keyword_arguments.items():

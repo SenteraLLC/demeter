@@ -1,17 +1,14 @@
 from typing import Optional, Sequence, Any, Callable, Tuple, Mapping, List
 from typing import cast
 
-#from .util.sql import openRelative
-
-from ..data import Key
-from ..db import TableId
+from .. import data
+from .. import db
 
 from .types import ExecutionSummary, ExecutionArguments, ExecutionOutputs
 from .types import LocalArgument, HTTPArgument, S3InputArgument, KeywordArgument, S3OutputArgument
 
-
-from io import TextIOWrapper
 import os
+from io import TextIOWrapper
 
 this_dir = os.path.dirname(__file__)
 open_sql : Callable[[str], TextIOWrapper] = lambda filename : open(os.path.join(this_dir, filename))
@@ -61,8 +58,8 @@ def getExistingDuplicate(existing_executions : Sequence[ExecutionSummary],
 
 
 def getExecutionSummaries(cursor : Any,
-                          function_id : TableId,
-                          execution_id : TableId,
+                          function_id : db.TableId,
+                          execution_id : db.TableId,
                          ) -> List[ExecutionSummary]:
   f = open_sql("getExecutionSummaries.sql")
   stmt = f.read()
@@ -74,7 +71,7 @@ def getExecutionSummaries(cursor : Any,
 
 
 def getExistingExecutions(cursor : Any,
-                          function_id : TableId,
+                          function_id : db.TableId,
                          ) -> Sequence[ExecutionSummary]:
   f = open_sql("getExistingExecutions.sql")
   stmt = f.read()
@@ -102,7 +99,7 @@ def getExistingExecutions(cursor : Any,
                                     **s,
                                   ) for s in r.inputs["s3"]
                                  ],
-                       keys    = [Key(
+                       keys    = [data.Key(
                                     **k,
                                   ) for k in r.inputs["keys"]
                                  ],

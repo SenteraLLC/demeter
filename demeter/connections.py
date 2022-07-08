@@ -10,10 +10,6 @@ from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import register_adapter, adapt
 from collections import OrderedDict
 
-from .task import HTTPVerb, KeywordType
-
-from .db.base_types import Table
-
 
 def getEnv(name : str, default : Optional[str] = None) -> str:
   v = os.environ.get(name, default)
@@ -48,22 +44,10 @@ def getS3Connection() -> Tuple[Any, str]:
   return s3_resource, bucket_name
 
 
-def register() -> None:
-  http_verb_to_string : Callable[[HTTPVerb], str] = lambda v : v.name.lower()
-
-  verb_to_sql = lambda v : psycopg2.extensions.AsIs("".join(["'", http_verb_to_string(v), "'"]))
-
-
+def getPgConnection() -> PGConnection:
+  # TODO: Move this closer to wherever it is used
   register_adapter(set, lambda s : adapt(list(s))) # type: ignore
 
-  register_adapter(Table, lambda t : t())
-  register_adapter(OrderedDict, psycopg2.extras.Json)
-  register_adapter(HTTPVerb, verb_to_sql)
-  register_adapter(KeywordType, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
-
-
-def getPgConnection() -> PGConnection:
-  register()
   host = getEnv("DemeterPGHOST", "localhost")
   user = getEnv("DemeterPGUSER", getpass.getuser())
   options = getEnv("DemeterPGOPTIONS", "")

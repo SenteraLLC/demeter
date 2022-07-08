@@ -4,22 +4,21 @@ from typing import Dict, Any, TypedDict, List, Optional
 
 import pandas as pd
 
-from ..types import ExecutionSummary, ExecutionArguments, ExecutionOutputs
-from ...db.base_types import TableId
-from ...data import getMaybeLocalTypeId
-from ...data import LocalType
+from ... import db
+from ... import data
+from ... import task
 
-from ...task import getS3TypeIdByName, getHTTPByName
+from ..types import ExecutionSummary, ExecutionArguments, ExecutionOutputs
 
 from .types import DataSourceTypes, KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
-from .s3_file import SupportedS3DataType
+from . import s3_file
 
 
 class DataSourceBase(ABC):
   def __init__(self,
                cursor : Any,
-               function_id : TableId,
-               execution_id : TableId,
+               function_id : db.TableId,
+               execution_id : db.TableId,
               ):
     self.LOCAL = "__LOCAL"
     self.GEOM = "__PRIMARY_GEOMETRY"
@@ -48,27 +47,27 @@ class DataSourceBase(ABC):
   def _track_s3(self,
                 type_name   : str,
                ) -> None:
-    s3_type_id = getS3TypeIdByName(self.cursor, type_name)
+    s3_type_id = task.getS3TypeIdByName(self.cursor, type_name)
     self.types["s3_type_ids"][s3_type_id] = type_name
 
   @abstractmethod
   def _s3(self,
          type_name   : str,
-        ) -> SupportedS3DataType:
+        ) -> s3_file.SupportedS3DataType:
     raise NotImplemented
 
   def s3(self,
          type_name   : str,
-        ) -> SupportedS3DataType:
+        ) -> s3_file.SupportedS3DataType:
     self._track_s3(type_name)
     return self._s3(type_name)
 
 
   def _track_local(self,
-                   local_types : List[LocalType],
+                   local_types : List[data.LocalType],
                   ) -> None:
     for t in local_types:
-      maybe_local_type_id = getMaybeLocalTypeId(self.cursor, t)
+      maybe_local_type_id = data.getMaybeLocalTypeId(self.cursor, t)
       if maybe_local_type_id is None:
         raise Exception(f"Local Type does not exist: {t}")
       else:
@@ -76,10 +75,10 @@ class DataSourceBase(ABC):
         self.types["local_type_ids"][local_type_id] = t
 
   @abstractmethod
-  def _local(self, local_types : List[LocalType]) -> pd.DataFrame:
+  def _local(self, local_types : List[data.LocalType]) -> pd.DataFrame:
     raise NotImplemented
 
-  def local(self, local_types : List[LocalType]) -> pd.DataFrame:
+  def local(self, local_types : List[data.LocalType]) -> pd.DataFrame:
     self._track_local(local_types)
     return self._local(local_types)
 
@@ -87,7 +86,7 @@ class DataSourceBase(ABC):
   def _track_http(self,
                   type_name : str,
                  ) -> None:
-    http_type_id, http_type = getHTTPByName(self.cursor, type_name)
+    http_type_id, http_type = task.getHTTPByName(self.cursor, type_name)
     self.types["http_type_ids"][http_type_id] = type_name
 
   @abstractmethod

@@ -2,13 +2,10 @@ from typing import Union, Any, Optional, Type, Sequence, Mapping
 from typing import cast
 
 from enum import Enum
-
-from ...data import LocalType as LocalType
-
-from ...db import TypeTable, Table, SelfKey, JSON
-from ...db import TableId as TableId
-
 from dataclasses import dataclass
+
+from ... import db
+from ... import data
 
 
 # HTTP
@@ -20,12 +17,12 @@ class HTTPVerb(Enum):
   DELETE = 4
 
 @dataclass(frozen=True)
-class HTTPType(TypeTable):
+class HTTPType(db.TypeTable):
   type_name           : str
   verb                : HTTPVerb
   uri                 : str
   uri_parameters      : Optional[Sequence[str]]
-  request_body_schema : Optional[JSON]
+  request_body_schema : Optional[db.JSON]
 
 
 # Keyword
@@ -45,16 +42,16 @@ class Keyword:
 # S3
 
 @dataclass(frozen=True)
-class S3Type(TypeTable):
+class S3Type(db.TypeTable):
   type_name : str
 
 
 @dataclass(frozen=True)
-class S3SubType(TypeTable):
+class S3SubType(db.TypeTable):
   pass
 
 @dataclass(frozen=True)
-class S3TypeDataFrame(S3SubType, SelfKey):
+class S3TypeDataFrame(S3SubType, db.SelfKey):
   driver       : str
   has_geometry : bool
 
@@ -64,24 +61,24 @@ class TaggedS3SubType:
   value : S3SubType
 
 @dataclass(frozen=True)
-class S3Output(Table):
-  function_id : TableId
-  s3_type_id  : TableId
+class S3Output(db.Table):
+  function_id : db.TableId
+  s3_type_id  : db.TableId
 
 @dataclass(frozen=True)
-class S3Object(Table):
+class S3Object(db.Table):
   key         : str
   bucket_name : str
-  s3_type_id  : TableId
+  s3_type_id  : db.TableId
 
 @dataclass(frozen=True)
-class S3ObjectKey(SelfKey):
-  s3_object_id      : TableId
-  geospatial_key_id : TableId
-  temporal_key_id   : TableId
+class S3ObjectKey(db.SelfKey):
+  s3_object_id      : db.TableId
+  geospatial_key_id : db.TableId
+  temporal_key_id   : db.TableId
 
 AnyDataTable = Union[S3Output, S3Object, S3ObjectKey]
 AnyKeyTable = Union[S3ObjectKey, S3TypeDataFrame]
-AnyTypeTable = Union[HTTPType, S3Type, LocalType, S3TypeDataFrame]
+AnyTypeTable = Union[HTTPType, S3Type, data.LocalType, S3TypeDataFrame]
 AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]
 

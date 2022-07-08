@@ -4,5 +4,4 @@
 *.data.json
 .mypy_cache/
 __pycache__
-poetry.lock
 dist/

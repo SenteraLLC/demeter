@@ -129,7 +129,10 @@ def parseDate(d : str) -> datetime:
 
 def maybeParseDate(d : Optional[str]) -> Optional[datetime]:
   if d is not None and d.lower() != "na":
-    return parseDate(d)
+    try:
+      return parseDate(d)
+    except ValueError:
+      pass
   return None
 
 
@@ -246,7 +249,7 @@ def loadPlantingFile(parse_meta : ParseMeta,
                    completed    = date_planted,
                    last_updated = NOW,
                  )
-      planting_key = data.insertPlanting(cursor, planting)
+      planting_key = data.insertOrGetPlanting(cursor, planting)
       planting_keys.append(planting_key)
 
       crop_stage = data.CropStage(crop_stage = "emergence")
@@ -262,7 +265,7 @@ def loadPlantingFile(parse_meta : ParseMeta,
                         crop_stage_id = crop_stage_id,
                         day = date_emerged,
                       )
-      crop_progress_key = data.insertCropProgress(cursor, crop_progress)
+      crop_progress_key = data.insertOrGetCropProgress(cursor, crop_progress)
 
   return planting_keys
 

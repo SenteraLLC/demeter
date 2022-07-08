@@ -1,4 +1,4 @@
-from typing import Any, Optional, NamedTuple, Sequence
+from typing import Any, Optional, NamedTuple, Sequence, Tuple
 from typing import cast
 
 from collections import OrderedDict, namedtuple
@@ -53,10 +53,10 @@ def getMaybeTable(table_name : str,
 
 
 def getMaybeTableByKey(table_name : str,
-                       key_parts  : Sequence[str],
                        cursor     : Any,
                        key        : SK,
-               ) -> Optional[S]:
+               ) -> Optional[Tuple[SK, S]]:
+  key_parts = set(key.__dataclass_fields__.keys())
   table_id_name = "_".join([table_name, "id"])
   conditions = [PGJoin(' = ', [Identifier(k), Placeholder(k)]) for k in key_parts]
   stmt = PGFormat("select * from {0} where {1}",
@@ -66,7 +66,7 @@ def getMaybeTableByKey(table_name : str,
   cursor.execute(stmt, key())
   result = cursor.fetchone()
   if result is not None:
-    return cast(S, result)
+    return key, cast(S, result)
   return None
 
 

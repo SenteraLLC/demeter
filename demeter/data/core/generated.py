@@ -1,7 +1,7 @@
 from .types import Field, Grower, GeoSpatialKey, TemporalKey, Owner, Geom, Coordinates, Polygon, MultiPolygon, Point, Line
 from .types import CropType, CropStage, ReportType, Planting, Harvest, CropProgress, PlantingKey, HarvestKey, CropProgressKey
 
-from ...db.generic_types import GetId, GetTable, ReturnId, ReturnSameKey, ReturnKey
+from ...db.generic_types import GetId, GetTable, ReturnId, ReturnSameKey, ReturnKey, GetTableByKey
 
 from .lookups import *
 from ...db import Generator
@@ -45,4 +45,10 @@ insertOrGetGrower = g.partialInsertOrGetId(getMaybeGrowerId, insertGrower)
 insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
+
+getPlanting : GetTableByKey[PlantingKey, Planting] = g.getTableByKeyFunction(Planting)
+getCropProgress : GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKeyFunction(CropProgress)
+
+insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
+insertOrGetCropProgress = g.partialInsertOrGetKey(CropProgressKey, getCropProgress, insertCropProgress)
 

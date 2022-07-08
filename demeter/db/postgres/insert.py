@@ -81,15 +81,19 @@ def insertOrGetId(get_id    : GetId[I],
   return return_id(cursor, some_type)
 
 
-def insertOrGetKey(get_key   : GetTableByKey[S, SK],
+def insertOrGetKey(get_by_key : GetTableByKey[SK, S],
                    return_key : ReturnKey[S, SK],
-                   cursor    : Any,
-                   key_table : S,
+                   key_type   : Type[SK],
+                   cursor     : Any,
+                   key_table  : S,
                   ) -> SK:
-  maybe_key = get_key(cursor, key_table)
-  if maybe_key is not None:
-    return maybe_key
-  return return_key(cursor, key_table)
+  key_fields = set(key_type.__dataclass_fields__.keys())
+  key_parts = { k : v for k, v in key_table().items() if k in key_fields }
+  key = key_type(**key_parts)
+  if (x := get_by_key(cursor, key)) is not None:
+    return key
+  k = return_key(cursor, key_table)
+  return k
 
 
 def generateInsertMany(table_name     : str,

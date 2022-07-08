@@ -105,8 +105,10 @@ class SQLGenerator:
   def getTableByKeyFunction(self,
                             t : Type[S],
                            ) -> GetTableByKey[SK, S]:
-    table_name, key_parts = self.key_table_lookup[t]
-    return partial(cast(GetTableByKey[SK, S], getMaybeTableByKey), table_name, key_parts)
+    table_name, key_type = self.key_table_lookup[t]
+    gtbk = cast(GetTableByKey[SK, S], getMaybeTableByKey)
+    return partial(gtbk, table_name)
+    #return partial(getMaybeTableByKey, table_name)
 
 
   def partialInsertOrGetId(self,
@@ -117,8 +119,10 @@ class SQLGenerator:
 
 
   def partialInsertOrGetKey(self,
+                            key_type : Type[SK],
                             get_key : GetTableByKey[SK, S],
                             return_key : ReturnKey[S, SK],
                            ) -> ReturnKey[S, SK]:
-    return partial(cast(ReturnKey[S, SK], insertOrGetKey), get_key, return_key)
+    rk = cast(ReturnKey[S, SK], insertOrGetKey)
+    return partial(rk, get_key, return_key, key_type)
 

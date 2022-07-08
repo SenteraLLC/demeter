@@ -43,7 +43,7 @@ class Updateable(Table):
 
 @dataclass(frozen=True)
 class Detailed(Updateable):
-  details : json_type.JSON = field(default=json_type.EMPTY_JSON,
+  details : json_type.JSON = field(default_factory=lambda : json_type.EMPTY_JSON,
                                    hash=False,
                                    kw_only=True
                                   )

@@ -1,9 +1,5 @@
 
-from .insert_function import insertFunction as insertFunction, \
-                             getLatestFunctionSignature as getLatestFunctionSignature
-
-from .function import insertFunction as insertFunction, \
-                      getLatestFunctionSignature as getLatestFunctionSignature
-
+from .insert_function import *
+from .function import *
 from .generated import *
 

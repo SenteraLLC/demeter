@@ -2,8 +2,8 @@ import psycopg2.extras
 
 from demeter import connections
 
-from demeter import FunctionType, S3Type, S3TypeDataFrame
-from demeter import insertOrGetFunctionType, insertOrGetS3TypeDataFrame
+from demeter.task import FunctionType, S3Type, S3TypeDataFrame
+from demeter.task import insertOrGetFunctionType, insertOrGetS3TypeDataFrame
 
 def main() -> None:
   connection = connections.getPgConnection()

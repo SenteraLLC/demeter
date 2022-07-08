@@ -62,7 +62,8 @@ def insertAndReturnKey(table_name : str,
              table  : AnyKeyTable,
             ) -> SK:
     stmt = generateInsertStmt(table_name, table, return_key)
-    cursor.execute(stmt, table())
+    t = table()
+    cursor.execute(stmt, t)
     result = cast(SK, cursor.fetchone())
     return result
 

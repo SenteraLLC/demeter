@@ -22,7 +22,7 @@ from ...db.lookup_types import sumMappings
 id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
 
 key_table_lookup : KeyTableLookup = {
-  Planting     : ("taskting", PlantingKey),
+  Planting     : ("planting", PlantingKey),
   Harvest      : ("harvest",  HarvestKey),
   CropProgress : ("crop_progress", CropProgressKey),
 }

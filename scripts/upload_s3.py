@@ -11,13 +11,14 @@ from scoping import scoping # type: ignore
 from typing import Any, Tuple, Union
 
 from demeter.connections import getS3Connection
-from demeter.datasource.datasource import DataSource
-from demeter import temporary
+from demeter.work.datasource import DataSource
+from demeter.work import temporary
 
-from demeter.datasource.s3_file import S3File
+from demeter.work import S3File
 
-from demeter import S3Type, TaggedS3SubType, S3TypeDataFrame, TableId
-from demeter import insertOrGetS3TypeDataFrame
+from demeter.db import TableId
+from demeter.task import S3Type, TaggedS3SubType, S3TypeDataFrame
+from demeter.task import insertOrGetS3TypeDataFrame
 
 
 if __name__ == "__main__":

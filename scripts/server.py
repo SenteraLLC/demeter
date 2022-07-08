@@ -9,9 +9,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import psycopg2
 
 from demeter import getPgConnection
-from demeter import HTTPType, HTTPVerb
-from demeter.types.inputs import HTTPType, HTTPVerb
-from demeter.inputs import insertOrGetHTTPType
+
+from demeter.task import HTTPType, HTTPVerb
+from demeter.task import insertOrGetHTTPType
 
 
 hostName = "localhost"

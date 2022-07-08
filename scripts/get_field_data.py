@@ -3,7 +3,7 @@ from typing import cast
 
 from datetime import date
 
-from demeter import Owner
+from demeter.data import Owner
 
 class HarvestPlanting(TypedDict):
   geo_id    : int

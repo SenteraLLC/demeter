@@ -3,19 +3,18 @@ from typing import List, Any, Callable, Optional, Mapping
 import psycopg2
 from functools import wraps
 
-#from ..connections import getS3Connection, getPgConnection
 from .. import connections
 from .. import task
 from .. import data
 from .. import db
 
-from . import temporary
 from .datasource import DataSource
 from .datasource import DataSourceRegister
 
-from . import insertExecution, getExistingExecutions
 from .types import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument
 from . import existing
+from . import insertExecution
+from . import temporary
 
 from .util.register import registerFunction, makeDummyArguments
 from .util.cli import parseCLIArguments
@@ -100,7 +99,7 @@ def Transformation(name                : str,
         load_fn(datasource, **kwargs)
 
         function_id = datasource.execution_summary.function_id
-        existing_executions = getExistingExecutions(cursor, function_id)
+        existing_executions = existing.getExistingExecutions(cursor, function_id)
         maybe_duplicate_execution = existing.getExistingDuplicate(existing_executions, datasource.execution_summary)
         if maybe_duplicate_execution is not None:
           duplicate_execution = maybe_duplicate_execution

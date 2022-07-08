@@ -37,6 +37,7 @@ def getMaybeId(table_name : str,
 
 def getTable(table_name : str,
              table_id_name : str,
+             table_id : TableId,
              cursor : Any,
             ) -> NamedTuple:
   condition = PGJoin(' = ', [Identifier(table_id_name), Placeholder(table_id_name)])
@@ -44,7 +45,7 @@ def getTable(table_name : str,
                   Identifier(table_name),
                   condition,
                  )
-  cursor.execute(stmt, {table_id_name : table_id_name})
+  cursor.execute(stmt, {table_id_name : table_id})
   result = cursor.fetchone()
   return cast(NamedTuple, result)
 

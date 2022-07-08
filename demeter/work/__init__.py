@@ -21,18 +21,22 @@ insertS3OutputArgument : ReturnSameKey[S3OutputArgument] = g.getInsertReturnKeyF
 
 from . import union_types
 from . import lookups
+from . import transformation
 
-from .existing import getExecutionSummaries as getExecutionSummaries, \
-                      getExistingExecutions as getExistingExecutions
-
+from .existing import *
 
 from . import datasource
 from .datasource import *
 from .datasource.types import *
 
+from .util.mode import ExecutionMode
+
 __all__ = [
   'union_types',
   'lookups',
+  'transformation',
+
+  'ExecutionMode',
 
   'insertExecution',
   'insertExecutionKey',

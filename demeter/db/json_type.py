@@ -13,11 +13,9 @@ JsonDepth4 = _JsonObject[JSON_MAX_DEPTH_T]
 JsonDepth3 = _JsonObject[JsonDepth4]
 JsonDepth2 = _JsonObject[JsonDepth3]
 JSON = _JsonObject[JsonDepth2]
-#from typing import Any
-#JSON = Mapping[str, Any]
 
+class _EMPTY_JSON:
+  pass
 
-from types import MappingProxyType
-
-EMPTY_JSON : JSON = MappingProxyType({})
+EMPTY_JSON : JSON = {}
 

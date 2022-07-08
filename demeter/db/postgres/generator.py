@@ -15,12 +15,9 @@ from ..lookup_types import TableLookup, KeyTableLookup
 from .insert import insertAndReturnId, insertAndReturnKey, insertOrGetType
 from .get import getMaybeId, getTable, getTableByKey
 
-#from .union_types import AnyTable, AnyKeyTable, AnyIdTable, AnyKeyTable
-
 from .tools import PGJoin, PGFormat
 
 from ..generic_types import I, S, SK, T
-#from .sql_helpers import is_none, is_optional
 
 
 class SQLGenerator:
@@ -66,7 +63,7 @@ class SQLGenerator:
                         table_id      : TableId,
                        ) -> Optional[I]:
     table_name = self.id_table_lookup[table_type]
-    table = getTable(table_name, table_id_name, cursor)
+    table = getTable(table_name, table_id_name, table_id, cursor)
     if table is None:
       return None
     table_args = {k : v for k, v in table._asdict().items() if k != table_id_name}

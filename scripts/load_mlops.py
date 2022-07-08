@@ -547,8 +547,7 @@ def loadFieldIdMap(filename : str) -> Dict[str, db.TableId]:
     return cast(Dict[str, db.TableId], json.load(f))
 
 
-def loadDataFolder(hostname : str,
-                   data_path : str,
+def loadDataFolder(data_path : str,
                    field_id_map : Dict[str, db.TableId]
                   ) -> None:
   connection = demeter.getPgConnection()
@@ -593,8 +592,7 @@ def loadDataFolder(hostname : str,
 
 
 # TODO: Just hard-coding this information until it can be better organized
-def loadData(hostname  : str,
-             data_path : str,
+def loadData(data_path : str,
              field_id_map : Dict[str, db.TableId],
             ) -> None:
   data_folders = sorted([f for f in os.listdir(data_path) if f.endswith("css")])
@@ -602,20 +600,20 @@ def loadData(hostname  : str,
     path = os.path.join(data_path, f)
     if f == "2021_css":
       sub_2021_initial_path = os.path.join(path, "initial")
-      loadDataFolder(hostname, sub_2021_initial_path, field_id_map)
+      loadDataFolder(sub_2021_initial_path, field_id_map)
       update_path = os.path.join(path, "update")
       for update_dir in os.listdir(update_path):
         update_dir_path = os.path.join(update_path, update_dir)
-        loadDataFolder(hostname, update_dir_path, field_id_map)
+        loadDataFolder(update_dir_path, field_id_map)
     else:
-      loadDataFolder(hostname, path, field_id_map)
+      loadDataFolder(path, field_id_map)
       pass
 
 
-def main(hostname : str, data_path : str, field_id_path : str) -> int:
+def main(data_path : str, field_id_path : str) -> int:
   # The field map is a hacky cache for storing field keys
   field_id_map = loadFieldIdMap(field_id_path)
-  loadData(hostname, data_path, field_id_map)
+  loadData(data_path, field_id_map)
   with open(field_id_path, "w") as f:
     json.dump(field_id_map, f)
   return 0
@@ -623,9 +621,8 @@ def main(hostname : str, data_path : str, field_id_path : str) -> int:
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Process some integers.')
-  parser.add_argument('--host', type=str, help='postgres hostname', required=True)
   parser.add_argument('--data_path', type=str, help='path to folder containing mlops data', required=True)
   parser.add_argument('--field_id_path', type=str, help='Path to field id path file, required to populate some data', required=True)
   args = parser.parse_args()
-  main(args.host, args.data_path, args.field_id_path)
+  main(args.data_path, args.field_id_path)
 

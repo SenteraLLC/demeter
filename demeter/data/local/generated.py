@@ -1,8 +1,10 @@
 from .types import LocalValue, UnitType, LocalType, LocalGroup
 
-from . import lookups
 from ...db import Generator
 from ...db.generic_types import GetId, GetTable, ReturnId, ReturnSameKey, ReturnKey
+from ...db.lookup_types import TableLookup
+
+from . import lookups
 
 g = Generator(type_table_lookup = lookups.type_table_lookup,
               data_table_lookup = lookups.data_table_lookup,

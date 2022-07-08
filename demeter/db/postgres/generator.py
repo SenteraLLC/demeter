@@ -8,12 +8,12 @@ from psycopg2 import sql
 from psycopg2.sql import SQL, Composed, Identifier, Placeholder
 
 from .. import TableId
-from ..generic_types import ReturnKey, ReturnSameKey, ReturnId, GetId
+from ..generic_types import ReturnKey, ReturnSameKey, ReturnId, GetId, GetTableByKey
 from ..union_types import AnyIdTable
 from ..lookup_types import TableLookup, KeyTableLookup
 
-from .insert import insertAndReturnId, insertAndReturnKey, insertOrGetType
-from .get import getMaybeId, getTable, getTableByKey
+from .insert import insertAndReturnId, insertAndReturnKey, insertOrGetId, insertOrGetKey
+from .get import getMaybeId, getMaybeTable, getMaybeTableByKey
 
 from .tools import PGJoin, PGFormat
 
@@ -63,7 +63,7 @@ class SQLGenerator:
                         table_id      : TableId,
                        ) -> Optional[I]:
     table_name = self.id_table_lookup[table_type]
-    table = getTable(table_name, table_id_name, table_id, cursor)
+    table = getMaybeTable(table_name, table_id_name, table_id, cursor)
     if table is None:
       return None
     table_args = {k : v for k, v in table._asdict().items() if k != table_id_name}
@@ -102,16 +102,23 @@ class SQLGenerator:
     return _impl
 
 
-  def getTableKeyFunction(self,
-                          t : Type[S],
-                         ) -> Callable[[Any, TableId], S]:
-    table_name, key = self.key_table_lookup[t]
-    return partial(getTableByKey, table_name, key)
+  def getTableByKeyFunction(self,
+                            t : Type[S],
+                           ) -> GetTableByKey[SK, S]:
+    table_name, key_parts = self.key_table_lookup[t]
+    return partial(cast(GetTableByKey[SK, S], getMaybeTableByKey), table_name, key_parts)
 
 
   def partialInsertOrGetId(self,
                            get_id    : GetId[I],
                            return_id : ReturnId[I],
                           ) -> ReturnId[I]:
-    return partial(insertOrGetType, get_id, return_id)
+    return partial(insertOrGetId, get_id, return_id)
+
+
+  def partialInsertOrGetKey(self,
+                            get_key : GetTableByKey[SK, S],
+                            return_key : ReturnKey[S, SK],
+                           ) -> ReturnKey[S, SK]:
+    return partial(cast(ReturnKey[S, SK], insertOrGetKey), get_key, return_key)
 

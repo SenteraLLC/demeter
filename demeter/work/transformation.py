@@ -6,6 +6,7 @@ from functools import wraps
 from .. import connections
 from .. import task
 from .. import data
+from .. import work
 from .. import db
 
 from .datasource import DataSource
@@ -14,7 +15,6 @@ from .datasource import DataSourceRegister
 from .types import ExecutionSummary, ExecutionKey, ExecutionOutputs, Execution, S3OutputArgument
 from . import existing
 from . import insertExecution
-from . import temporary
 
 from .util.register import registerFunction, makeDummyArguments
 from .util.cli import parseCLIArguments
@@ -90,7 +90,7 @@ def Transformation(name                : str,
           kwargs, default_cli_kwargs = parseCLIArguments(name, major, keyword_types)
           geospatial_key_file = default_cli_kwargs["geospatial_key_file"]
           temporal_key_file = default_cli_kwargs["temporal_key_file"]
-          keys = list(temporary.load_keys(cursor, geospatial_key_file, temporal_key_file))
+          keys = list(work.util.loadKeys(cursor, geospatial_key_file, temporal_key_file))
         elif mode == ExecutionMode.DAEMON:
           raise Exception("Key acquisition via daemon mode yet supported.")
 

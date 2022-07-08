@@ -7,7 +7,7 @@ from psycopg2.sql import Identifier, Placeholder
 
 from .. import TableId
 from ..union_types import AnyIdTable
-from ..generic_types import S
+from ..generic_types import S, SK
 
 from .tools import PGJoin, PGFormat
 from .helpers import is_none, is_optional
@@ -35,11 +35,11 @@ def getMaybeId(table_name : str,
   return None
 
 
-def getTable(table_name : str,
-             table_id_name : str,
-             table_id : TableId,
-             cursor : Any,
-            ) -> NamedTuple:
+def getMaybeTable(table_name : str,
+                  table_id_name : str,
+                  table_id : TableId,
+                  cursor : Any,
+                 ) -> Optional[NamedTuple]:
   condition = PGJoin(' = ', [Identifier(table_id_name), Placeholder(table_id_name)])
   stmt = PGFormat("select * from {0} where {1}",
                   Identifier(table_name),
@@ -47,22 +47,26 @@ def getTable(table_name : str,
                  )
   cursor.execute(stmt, {table_id_name : table_id})
   result = cursor.fetchone()
-  return cast(NamedTuple, result)
+  if result is not None:
+    return cast(NamedTuple, result)
+  return None
 
 
-def getTableByKey(table_name : str,
-                  key        : Sequence[str],
-                  cursor     : Any,
-                  table_id   : TableId,
-                 ) -> S:
+def getMaybeTableByKey(table_name : str,
+                       key_parts  : Sequence[str],
+                       cursor     : Any,
+                       key        : SK,
+               ) -> Optional[S]:
   table_id_name = "_".join([table_name, "id"])
-  conditions = [PGJoin(' = ', [Identifier(k), Placeholder(k)]) for k in key]
+  conditions = [PGJoin(' = ', [Identifier(k), Placeholder(k)]) for k in key_parts]
   stmt = PGFormat("select * from {0} where {1}",
                   Identifier(table_name),
                   PGJoin(' and ', conditions),
                  )
-  cursor.execute(stmt, {table_id_name : table_id})
+  cursor.execute(stmt, key())
   result = cursor.fetchone()
-  return cast(S, result)
+  if result is not None:
+    return cast(S, result)
+  return None
 
 

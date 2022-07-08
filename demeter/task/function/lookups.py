@@ -3,11 +3,11 @@ from ...db.lookup_types import TableLookup, KeyTableLookup
 from .types import *
 
 type_table_lookup : TableLookup = {
-  FunctionType  : "task_type",
+  FunctionType  : "function_type",
 }
 
 data_table_lookup : TableLookup = {
-  Function : "task",
+  Function : "function",
 }
 
 from ...db.lookup_types import sumMappings

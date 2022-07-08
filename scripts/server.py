@@ -117,6 +117,8 @@ def registerTypes() -> None:
 
 
 if __name__ == "__main__":
+    registerTypes()
+
     webServer = HTTPServer((hostName, serverPort), MyServer)
     print("Server started http://%s:%s" % (hostName, serverPort))
 

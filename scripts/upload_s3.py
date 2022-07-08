@@ -10,30 +10,30 @@ from scoping import scoping # type: ignore
 
 from typing import Any, Tuple, Union
 
-from demeter.connections import getS3Connection
+from demeter.connections import getS3Connection, getPgConnection
 from demeter.work.datasource import DataSource
-from demeter.work import temporary
 
 from demeter.work import S3File
 
 from demeter.db import TableId
 from demeter.task import S3Type, TaggedS3SubType, S3TypeDataFrame
 from demeter.task import insertOrGetS3TypeDataFrame
+from demeter.work.util import parseCLIArguments, loadKeys
 
+from demeter.work.util.cli import parseCLIArguments
+
+VERSION = 1
 
 if __name__ == "__main__":
-  hostname = "localhost"
-  options = "-c search_path=test_mlops,public"
-  connection = psycopg2.connect(host=hostname, dbname="postgres", options=options)
+  connection = getPgConnection()
   cursor = connection.cursor()
-
-  s3_role_arn = os.environ['S3_ROLE_ARN']
-
-  bucket_name = os.environ['BUCKET_NAME']
 
   (s3_connection, bucket_name) = getS3Connection()
 
-  test_keys = list(temporary.load_keys(cursor))
+  kwargs, default_cli_kwargs = parseCLIArguments(__file__, VERSION)
+  geospatial_key_file = default_cli_kwargs["geospatial_key_file"]
+  temporal_key_file = default_cli_kwargs["temporal_key_file"]
+  test_keys = list(loadKeys(cursor, geospatial_key_file, temporal_key_file))
 
   datasource = DataSource(test_keys, TableId(0), TableId(0), cursor, s3_connection, {}, {})
 

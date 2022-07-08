@@ -8,7 +8,7 @@ from psycopg2.sql import SQL, Composed, Identifier, Placeholder
 
 from .. import TableId
 from ..union_types import AnyTable, AnyIdTable, AnyKeyTable
-from ..generic_types import ReturnKey, GetId, ReturnId
+from ..generic_types import ReturnKey, GetId, ReturnId, GetTableByKey
 from ..generic_types import I, S, SK
 
 from .helpers import is_none, is_optional
@@ -70,15 +70,26 @@ def insertAndReturnKey(table_name : str,
   return __impl
 
 
-def insertOrGetType(get_id    : GetId[I],
-                    return_id : ReturnId[I],
-                    cursor    : Any,
-                    some_type : I,
-                   ) -> TableId:
+def insertOrGetId(get_id    : GetId[I],
+                  return_id : ReturnId[I],
+                  cursor    : Any,
+                  some_type : I,
+                 ) -> TableId:
   maybe_type_id = get_id(cursor, some_type)
   if maybe_type_id is not None:
     return maybe_type_id
   return return_id(cursor, some_type)
+
+
+def insertOrGetKey(get_key   : GetTableByKey[S, SK],
+                   return_key : ReturnKey[S, SK],
+                   cursor    : Any,
+                   key_table : S,
+                  ) -> SK:
+  maybe_key = get_key(cursor, key_table)
+  if maybe_key is not None:
+    return maybe_key
+  return return_key(cursor, key_table)
 
 
 def generateInsertMany(table_name     : str,

@@ -3,7 +3,6 @@
 *.swo
 *.data.json
 .mypy_cache/
-.python-version
 __pycache__
 poetry.lock
 dist/

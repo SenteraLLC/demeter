@@ -18,10 +18,10 @@ def getEnv(name : str, default : Optional[str] = None) -> str:
   return v
 
 def getS3Connection() -> Tuple[Any, str]:
-  s3_role_arn = getEnv("S3_ROLE_ARN")
-  bucket_name = getEnv("BUCKET_NAME")
+  s3_role_arn = getEnv("DEMETER_S3_ROLE_ARN")
+  bucket_name = getEnv("DEMETER_BUCKET_NAME")
   if bucket_name is None:
-    raise Exception("Environment variable for 'S3_ROLE_ARN' not set")
+    raise Exception("Environment variable for 'DEMETER_S3_ROLE_ARN' not set")
 
   sts_client = boto3.client('sts')
 
@@ -48,10 +48,10 @@ def getPgConnection() -> PGConnection:
   # TODO: Move this closer to wherever it is used
   register_adapter(set, lambda s : adapt(list(s))) # type: ignore
 
-  host = getEnv("DemeterPGHOST", "localhost")
-  user = getEnv("DemeterPGUSER", getpass.getuser())
-  options = getEnv("DemeterPGOPTIONS", "")
-  database = getEnv("DemeterPG", "postgres")
-  return psycopg2.connect(host="localhost", options="-c search_path=test_mlops,public", database="postgres", cursor_factory=psycopg2.extras.NamedTupleCursor)
+  host = getEnv("DEMETER_PG_HOST", "localhost")
+  user = getEnv("DEMETER_PG_USER", getpass.getuser())
+  options = getEnv("DEMETER_PG_OPTIONS", "")
+  database = getEnv("DEMETER_PG_DATABASE", "postgres")
+  return psycopg2.connect(host=host, options=options, database=database, user=user, cursor_factory=psycopg2.extras.NamedTupleCursor)
 
 

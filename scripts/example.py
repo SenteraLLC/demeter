@@ -1,5 +1,5 @@
 from demeter.work import DataSource
-from demeter.work import OneToManyResponseFunction
+from demeter.work.datasource import OneToManyResponseFunction
 from demeter.work import S3File
 from demeter.work.transformation import Transformation, WrappedTransformation
 from demeter.data import LocalType

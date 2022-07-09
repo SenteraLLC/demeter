@@ -4,8 +4,12 @@ from . import local
 
 from . import union_types
 
-from .core import *
-from .local import *
+from .core.types import *
+from .core.functions import *
+
+from .local.types import *
+from .local.functions import *
+
 from .types import *
 
 __all__ = [

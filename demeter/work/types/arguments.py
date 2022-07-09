@@ -1,7 +1,7 @@
 from typing import Sequence, Union, Optional, List, Generator, TypeVar, Any
 
-from .. import db
-from .. import task
+from ... import db
+from ... import task
 
 from dataclasses import dataclass
 from collections import OrderedDict
@@ -43,30 +43,5 @@ class Execution(db.Table):
   function_id  : db.TableId
 
 
-from .. import data
 
-@dataclass(frozen=True)
-class ExecutionKey(data.core.types._KeyIds, db.SelfKey):
-  execution_id : db.TableId
-
-
-from typing import TypedDict
-from .. import data
-
-class ExecutionOutputs(TypedDict):
-  s3 : List[S3OutputArgument]
-
-class ExecutionArguments(TypedDict):
-  local   : List[LocalArgument]
-  keyword : List[KeywordArgument]
-  http    : List[HTTPArgument]
-  s3      : List[S3InputArgument]
-  keys    : Sequence[data.Key]
-
-@dataclass
-class ExecutionSummary:
-  inputs  : ExecutionArguments
-  outputs : ExecutionOutputs
-  function_id  : db.TableId
-  execution_id : db.TableId
 

@@ -99,10 +99,6 @@ class _KeyIds(db.Table):
 class Key(_KeyIds, GeoSpatialKey, TemporalKey):
   pass
 
-AnyDataTable = Union[Geom, Owner, Grower, Field, GeoSpatialKey, TemporalKey, Key]
-
-KeyGenerator = Generator[Key, None, None]
-
 @dataclass(frozen=True)
 class CropType(db.TypeTable, db.Detailed):
   species     : str
@@ -156,9 +152,4 @@ class CropProgress(CropProgressKey):
 class ReportType(db.TypeTable):
   report : str
 
-AnyTypeTable = Union[CropType, CropStage, ReportType]
-
-AnyKeyTable = Union[Planting, Harvest, CropProgress]
-
-AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]
 

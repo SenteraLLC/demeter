@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from ... import db
 from ... import data
 
+from ...data import LocalType as LocalType
 
 # HTTP
 
@@ -77,8 +78,4 @@ class S3ObjectKey(db.SelfKey):
   geospatial_key_id : db.TableId
   temporal_key_id   : db.TableId
 
-AnyDataTable = Union[S3Output, S3Object, S3ObjectKey]
-AnyKeyTable = Union[S3ObjectKey, S3TypeDataFrame]
-AnyTypeTable = Union[HTTPType, S3Type, data.LocalType, S3TypeDataFrame]
-AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]
 

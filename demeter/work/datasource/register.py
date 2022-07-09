@@ -9,7 +9,7 @@ from ... import db
 from . import base
 from . import s3_file
 
-from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
+from .response import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 
 class DataSourceRegister(base.DataSourceBase):
   # TODO: Fix weird defaults, maybe use a sentinel value

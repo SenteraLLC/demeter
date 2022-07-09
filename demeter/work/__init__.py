@@ -24,10 +24,12 @@ from . import lookups
 from . import transformation
 
 from .existing import *
+from .types import *
 
 from . import datasource
-from .datasource import *
+
 from .datasource.types import *
+from .datasource.functions import *
 
 from .util.mode import ExecutionMode
 
@@ -52,7 +54,6 @@ __all__ = [
 
   # datasource
   'DataSource',
-  'DataSourceBase',
   'S3File',
 
   'Argument',

@@ -8,11 +8,15 @@ from ... import db
 from ... import data
 from ... import task
 
-from ..types import ExecutionSummary, ExecutionArguments, ExecutionOutputs
+from ..types import ExecutionSummary, ExecutionArguments, ExecutionOutputs, ExecutionKey
 
-from .types import DataSourceTypes, KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
-from . import s3_file
+from .response import ResponseFunction, OneToOneResponseFunction, KeyToArgsFunction
+from .s3_file import SupportedS3DataType
 
+class DataSourceTypes(TypedDict):
+  s3_type_ids    : Dict[db.TableId, str]
+  local_type_ids : Dict[db.TableId, data.LocalType]
+  http_type_ids  : Dict[db.TableId, str]
 
 class DataSourceBase(ABC):
   def __init__(self,
@@ -53,12 +57,12 @@ class DataSourceBase(ABC):
   @abstractmethod
   def _s3(self,
          type_name   : str,
-        ) -> s3_file.SupportedS3DataType:
+        ) -> SupportedS3DataType:
     raise NotImplemented
 
   def s3(self,
          type_name   : str,
-        ) -> s3_file.SupportedS3DataType:
+        ) -> SupportedS3DataType:
     self._track_s3(type_name)
     return self._s3(type_name)
 

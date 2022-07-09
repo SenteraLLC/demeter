@@ -15,9 +15,6 @@ class LocalValue(db.Detailed):
   local_group_id : Optional[db.TableId]
   acquired       : date
 
-AnyDataTable = Union[LocalValue]
-
-
 @dataclass(frozen=True)
 class LocalType(db.TypeTable):
   type_name      : str
@@ -32,8 +29,4 @@ class UnitType(db.TypeTable):
 class LocalGroup(db.TypeTable):
   group_name     : str
   group_category : Optional[str]
-
-AnyTypeTable = Union[LocalType, UnitType, LocalGroup]
-
-AnyTable = Union[AnyDataTable, AnyTypeTable]
 

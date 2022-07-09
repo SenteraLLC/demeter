@@ -3,14 +3,14 @@ from typing import Union
 from . import inputs
 from . import function
 
-AnyTypeTable = Union[inputs.types.AnyTypeTable, function.types.AnyTypeTable]
+AnyTypeTable = Union[inputs.AnyTypeTable, function.AnyTypeTable]
 
-AnyDataTable = Union[inputs.types.AnyDataTable, function.types.AnyDataTable]
+AnyDataTable = Union[inputs.AnyDataTable, function.AnyDataTable]
 
-AnyIdTable = Union[AnyTypeTable, AnyDataTable, inputs.types.S3SubType]
+AnyIdTable = Union[AnyTypeTable, AnyDataTable, inputs.S3SubType]
 
-AnyKeyTable = Union[inputs.types.AnyKeyTable,
-                    function.types.AnyKeyTable,
+AnyKeyTable = Union[inputs.AnyKeyTable,
+                    function.AnyKeyTable,
                    ]
 
 AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]

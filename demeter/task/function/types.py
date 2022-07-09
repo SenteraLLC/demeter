@@ -56,8 +56,6 @@ from ..inputs.types import Keyword as Keyword
 class KeywordParameter(Keyword, Parameter, db.SelfKey):
   pass
 
-AnyParameter = Union[LocalParameter, HTTPParameter, S3InputParameter, S3OutputParameter, KeywordParameter]
-
 S3TypeSignature = Tuple[inputs.S3Type, Optional[inputs.S3TypeDataFrame]]
 
 @dataclass(frozen=True)
@@ -69,9 +67,4 @@ class FunctionSignature(object):
   s3_inputs      : Sequence[S3TypeSignature]
   http_inputs    : Sequence[inputs.HTTPType]
   s3_outputs     : Sequence[S3TypeSignature]
-
-AnyDataTable = Union[Function, AnyParameter]
-AnyTypeTable = Union[FunctionType]
-AnyKeyTable = Union[AnyParameter]
-AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]
 

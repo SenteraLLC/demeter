@@ -18,7 +18,7 @@ from . import s3
 from . import s3_file
 from . import base
 
-from .types import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
+from .response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 
 import pandas as pd
 import geopandas as gpd # type: ignore

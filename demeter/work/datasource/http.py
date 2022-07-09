@@ -10,7 +10,7 @@ from ... import db
 
 from ..types import ExecutionSummary, HTTPArgument
 
-from .types import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
+from .response import KeyToArgsFunction, ResponseFunction, OneToOneResponseFunction
 
 def checkHTTPParams(params : Mapping[str, Any],
                     expected_params :  Set[str]

@@ -2,18 +2,19 @@
 from . import function
 from . import inputs
 
-#from . import lookups
 from . import union_types
 
-from .function import *
-from .inputs import *
-from .types import *
+from .function.functions import *
+from .function.types import *
 
+from .inputs.functions import *
+from .inputs.types import *
+
+from .types import *
 
 __all__ = [
   'function',
   'inputs',
-  #'lookups',
   'union_types',
 
   # function

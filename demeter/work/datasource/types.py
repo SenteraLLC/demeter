@@ -1,21 +1,17 @@
-from typing import Dict, TypedDict, Any, Callable, List
-from typing import cast
+from typing import Dict, TypedDict, Any, Callable
+
+from .base import DataSourceBase as DataSourceBase, \
+                  DataSourceTypes as DataSourceTypes
+from .datasource import DataSource as DataSource
+
+from .s3_file import S3FileMeta as S3FileMeta, \
+                     S3File as S3File, \
+                     LocalFile as LocalFile
 
 from ... import data
 from ... import db
 
-class DataSourceTypes(TypedDict):
-  s3_type_ids    : Dict[db.TableId, str]
-  local_type_ids : Dict[db.TableId, data.LocalType]
-  http_type_ids  : Dict[db.TableId, str]
-
-KeyToArgsFunction = Callable[[data.Key], Dict[str, Any]]
-
-
-import requests
-
-ResponseFunction = Callable[[requests.models.Response], List[Dict[str, Any]]]
-
-OneToOneResponseFunction : ResponseFunction = lambda r : [cast(Dict[str, Any], r.json())]
-OneToManyResponseFunction : ResponseFunction = lambda rs : [cast(Dict[str, Any], r) for r in rs.json()]
+from .register import DataSourceRegister as DataSourceRegister
+from .response import OneToOneResponseFunction as OneToOneResponseFunction
+from .response import OneToManyResponseFunction as OneToManyResponseFunction
 

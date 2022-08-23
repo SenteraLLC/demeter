@@ -2,6 +2,7 @@ from typing import List
 
 from ._base_types import Table, Detailed, TypeTable, TableKey, TableId, SelfKey, SomeKey
 from ._json_type import *
+from . import _generic_types as generic_types
 
 # It is unlikely that anything besides Postgres will ever be supported
 from ._postgres import getConnection as getConnection

@@ -124,7 +124,7 @@ class HarvestKey(PlantHarvestKey):
 
 @dataclass(frozen=True)
 class _PlantHarvest(db.Detailed):
-  completed : Optional[date]
+  performed : Optional[date]
 
 @dataclass(frozen=True)
 class Planting(PlantingKey, _PlantHarvest):

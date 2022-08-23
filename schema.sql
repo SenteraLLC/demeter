@@ -109,7 +109,7 @@ create table grower (
   details  jsonb
            not null
            default '{}'::jsonb,
-  last_updated  timestamp with time zone
+  last_updated  timestamp without time zone
                 not null
                 default now()
 );
@@ -139,7 +139,7 @@ create table field (
   foreign key (owner_id, grower_id)
     references grower (owner_id, grower_id),
 
-  created  timestamp with time zone
+  created  timestamp without time zone
               not null
               default now()
 
@@ -188,7 +188,7 @@ create table crop_type (
               not null
               default '{}'::jsonb,
 
-  last_updated  timestamp with time zone
+  last_updated  timestamp without time zone
                 not null
                 default now()
 );
@@ -230,9 +230,9 @@ create table planting (
                 references geom(geom_id),
   primary key (field_id, geom_id, crop_type_id),
 
-  completed     date,
+  performed     timestamp without time zone,
 
-  last_updated  timestamp with time zone
+  last_updated  timestamp without time zone
                 not null
                 default now(),
   details       jsonb
@@ -268,7 +268,7 @@ create table crop_progress (
 );
 
 
-
+--- TODO: I think it's better to use LocalValue for this
 create table harvest (
   field_id      bigint
                 not null
@@ -277,13 +277,13 @@ create table harvest (
                 not null
                 references crop_type(crop_type_id),
   geom_id       bigint
-               not null
-               references geom(geom_id),
+                not null
+                references geom(geom_id),
   primary key (field_id, geom_id, crop_type_id),
 
-  completed     date
+  performed     timestamp without time zone
                 not null,
-  last_updated  timestamp with time zone
+  last_updated  timestamp without time zone
                 not null
                 default now(),
 
@@ -411,11 +411,11 @@ create table function (
                    references function_type(function_type_id)
                    not null,
 
-  created          timestamp with time zone
+  created          timestamp without time zone
                    not null
                    default now(),
 
-  last_updated     timestamp with time zone
+  last_updated     timestamp without time zone
                    not null
                    default now(),
 
@@ -476,7 +476,7 @@ create table local_value (
                  references unit_type(unit_type_id)
                  not null,
 
-  acquired       timestamp with time zone
+  acquired       timestamp without time zone
                  not null,
 
   quantity       float
@@ -487,7 +487,7 @@ create table local_value (
   local_group_id bigint
                  references local_group(local_group_id),
 
-  last_updated   timestamp with time zone
+  last_updated   timestamp without time zone
                  not null
                  default now(),
 
@@ -548,7 +548,7 @@ create table http_parameter (
   http_type_id bigint
                references http_type(http_type_id),
   primary key(function_id, http_type_id),
-  last_updated  timestamp with time zone
+  last_updated  timestamp without time zone
                 not null
                 default now(),
   details      jsonb
@@ -562,7 +562,7 @@ create table s3_input_parameter (
   s3_type_id    bigint references s3_type(s3_type_id),
   primary key   (function_id, s3_type_id),
 
-  last_updated  timestamp with time zone
+  last_updated  timestamp without time zone
                 not null
                 default now(),
   details       jsonb
@@ -580,7 +580,7 @@ create table s3_output_parameter (
   s3_type_id     bigint references s3_type(s3_type_id),
   primary key    (s3_output_parameter_name, s3_type_id, function_id),
 
-  last_updated  timestamp with time zone
+  last_updated  timestamp without time zone
                 not null
                 default now(),
   details        jsonb
@@ -747,7 +747,7 @@ create table published_workflow (
   major       int    not null,
   minor       serial not null,
   unique (workflow_name, major, minor),
-  last_updated  timestamp with time zone
+  last_updated  timestamp without time zone
                 not null
                 default now(),
   details     jsonb

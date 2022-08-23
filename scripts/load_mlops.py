@@ -246,7 +246,7 @@ def loadPlantingFile(parse_meta : ParseMeta,
                    field_id     = field_id,
                    crop_type_id = crop_type_id,
                    geom_id      = geom_id,
-                   completed    = date_planted,
+                   performed    = date_planted,
                    last_updated = NOW,
                  )
       planting_key = data.insertOrGetPlanting(cursor, planting)

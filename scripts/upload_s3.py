@@ -10,17 +10,19 @@ from scoping import scoping # type: ignore
 
 from typing import Any, Tuple, Union
 
-from demeter.connections import getS3Connection, getPgConnection
-from demeter.work.datasource import DataSource
+from demeter.task import getS3Connection
+from demeter.db import getConnection as getPgConnection
+from demeter.work import DataSource
 
 from demeter.work import S3File
+from demeter.task import getS3Connection
 
 from demeter.db import TableId
 from demeter.task import S3Type, TaggedS3SubType, S3TypeDataFrame
 from demeter.task import insertOrGetS3TypeDataFrame
-from demeter.work.util import parseCLIArguments, loadKeys
 
-from demeter.work.util.cli import parseCLIArguments
+from demeter.work._util.cli import parseCLIArguments
+from demeter.work._util.keys import loadKeys
 
 VERSION = 1
 

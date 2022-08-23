@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import psycopg2
 
-from demeter import getPgConnection
+from demeter import db
 
 from demeter.task import HTTPType, HTTPVerb
 from demeter.task import insertOrGetHTTPType
@@ -79,7 +79,7 @@ def registerTypes() -> None:
   http_verb_to_postgres = lambda v : psycopg2.extensions.AsIs("".join(["'", http_verb_to_string(v), "'"]))
   psycopg2.extensions.register_adapter(HTTPVerb, http_verb_to_postgres)
 
-  connection = getPgConnection()
+  connection = db.getConnection()
   cursor = connection.cursor()
   http_get = HTTPType(
                type_name           = "http_uri_params_test_type",

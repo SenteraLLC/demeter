@@ -550,7 +550,7 @@ def loadFieldIdMap(filename : str) -> Dict[str, db.TableId]:
 def loadDataFolder(data_path : str,
                    field_id_map : Dict[str, db.TableId]
                   ) -> None:
-  connection = demeter.getPgConnection()
+  connection = db.getConnection()
   cursor = connection.cursor()
 
   print("Loading Data Directory: ",data_path)

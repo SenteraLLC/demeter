@@ -1,22 +1,10 @@
+from ._core import *
+from ._local import *
 
-from . import core
-from . import local
-
-from . import union_types
-
-from .core.types import *
-from .core.functions import *
-
-from .local.types import *
-from .local.functions import *
-
-from .types import *
+from . import _core as core
+from . import _local as local
 
 __all__ = [
-  'local',
-  'core',
-  'union_types',
-
   # core
   'getMaybeFieldId',
   'getMaybeOwnerId',
@@ -88,9 +76,6 @@ __all__ = [
   'insertOrGetCropType',
   'insertOrGetCropStage',
   'insertOrGetLocalGroup',
-
-  'getMaybeDuplicateGeom',
-  'insertOrGetGeom',
 
   # local types
   'LocalValue',

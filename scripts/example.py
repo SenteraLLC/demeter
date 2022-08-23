@@ -1,7 +1,8 @@
 from demeter.work import DataSource
-from demeter.work.datasource import OneToManyResponseFunction
+from demeter.work import OneToManyResponseFunction
 from demeter.work import S3File
-from demeter.work.transformation import Transformation, WrappedTransformation
+from demeter.work import Transformation
+from demeter.work._transformation import WrappedTransformation
 from demeter.data import LocalType
 
 import geopandas as gpd  # type: ignore
@@ -79,7 +80,7 @@ def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int) -> Mappi
 
 
 def cli(fn : WrappedTransformation) -> None:
-  from demeter.work import ExecutionMode
+  from demeter.work._util import ExecutionMode
   fn(mode = ExecutionMode.CLI)
   #fn(mode = ExecutionMode.REGISTER)
 

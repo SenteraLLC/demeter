@@ -1,21 +1,15 @@
 
-from . import function
-from . import inputs
+from ._function import *
+from ._inputs import *
 
-from . import union_types
+#from . import _function as function
+#from . import _inputs as inputs
 
-from .function.functions import *
-from .function.types import *
+from ._s3_connection import getS3Connection
 
-from .inputs.functions import *
-from .inputs.types import *
-
-from .types import *
 
 __all__ = [
-  'function',
-  'inputs',
-  'union_types',
+  'getS3Connection',
 
   # function
   'FunctionType',
@@ -72,14 +66,14 @@ __all__ = [
   'insertS3Type',
   'getS3Type',
   'getS3TypeIdByName',
-  'getHTTPByName',
+  'getHTTPTypeByName',
   'insertS3ObjectKeys',
   'getS3ObjectByKey',
   'getS3ObjectByKeys',
 
 ]
 
-from .register import register_sql_adapters
+from ._register import register_sql_adapters
 register_sql_adapters()
 
 

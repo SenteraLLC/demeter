@@ -4,14 +4,15 @@ version = "1.0.44"
 description = ""
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [
-  {include = "demeter"},
-  {include = "demeter/py.typed"},
+  {include = "src/demeter"},
+  {include = "src/demeter/py.typed"},
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10.4"
+python = "~3.10.4"
 psycopg2 = "^2.9.3"
 typing_extensions = "^4.0.1"
+typing_inspect = "^0.8.0"
 jsonschema = "^4.4.0"
 geopandas = "^0.10.2"
 boto3 = "^1.20.48"
@@ -19,8 +20,18 @@ requests = "^2.27.1"
 scoping = "^0.1.2"
 dictdiffer = "^0.9.0"
 Rtree = "^1.0.0"
-Sphinx = "^5.0.2"
 sphinx-autodoc-typehints = "^1.18.3"
+piccolo-theme = "^0.11.1"
+# Candidate
+autoclasstoc = "^1.5.1"
+Sphinx = "^4.0.0"
+sphinx-toolbox = "^3.1.2"
+sphinx-rtd-theme = "^1.0.0"
+html-section = "^0.2.0"
+domdf-sphinx-theme = "^22.1.2"
+# TODO: Fix this once PR is merged
+toctree-plus = {git = "https://github.com/sphinx-toolbox/toctree_plus.git", rev = "dependabot/pip/sphinx-gte-3.0.3-and-lt-5.2.0"}
+autodocsumm = "^0.2.9"
 
 [tool.poetry.dev-dependencies]
 types-jsonschema = "^4.4.1"

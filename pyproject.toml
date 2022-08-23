@@ -19,6 +19,7 @@ requests = "^2.27.1"
 scoping = "^0.1.2"
 dictdiffer = "^0.9.0"
 Rtree = "^1.0.0"
+geo_utils = { git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "DEM-147-weather-grid"}
 
 [tool.poetry.dev-dependencies]
 types-jsonschema = "^4.4.1"
@@ -29,6 +30,7 @@ types-boto3 = "^1.0.1"
 pandas-stubs = "^1.2.0"
 mypy = "0.950"
 mypy-extensions = "0.4.3"
+ipykernel = "^6.13.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

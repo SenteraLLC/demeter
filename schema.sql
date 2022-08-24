@@ -755,3 +755,59 @@ create table published_workflow (
               default '{}'::jsonb
 
 );
+
+
+-- TODO: This needs to be factored out
+-- Grid Base Schema
+
+create table node (
+  node_id bigserial
+          primary key,
+
+  bounds geometry(Geometry, 4326) not null,
+  CONSTRAINT enforce_node_polygon CHECK (
+    geometrytype(bounds) = 'POLYGON'::text AND
+    ST_IsValid(bounds)
+   ),
+
+  value float
+);
+
+CREATE INDEX CONCURRENTLY node_idx on node using SPGIST(bounds);
+
+-- Optional Raster
+create table node_raster (
+  node_id bigint references node(node_id),
+  raster raster
+);
+
+create table root (
+  root_id bigserial primary key,
+
+  geom_id bigint
+          references geom(geom_id)
+          not null,
+  local_type_id bigint
+                references local_type(local_type_id)
+                not null,
+  unique(geom_id, local_type_id),
+
+  details       jsonb
+                not null
+                default '{}'::jsonb
+);
+
+create table node_ancestry (
+  root_id bigint
+          references root(root_id)
+          not null,
+  parent_node_id bigint
+                 references node(node_id),
+  -- TODO: Contained-by-parent constraint
+
+  node_id bigint references node(node_id) not null,
+
+  primary key (root_id, parent_node_id, node_id)
+);
+
+

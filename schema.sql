@@ -6,15 +6,15 @@
 
 -- Database Setup
 
-drop schema if exists test_mlops cascade;
-create schema test_mlops;
-set schema 'test_mlops';
+drop schema if exists demeter cascade;
+create schema demeter;
+set schema 'demeter';
 
 create extension postgis with schema public;
 create extension postgis_raster with schema public;
 create extension "postgres-json-schema" with schema public;
 
-set search_path = test_mlops, public;
+set search_path = demeter, public;
 
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$

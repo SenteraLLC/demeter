@@ -1,3 +1,12 @@
+# Demeter API
+
+The `demeter_api` is the library that the modeler uses to interact with the Demeter DB. The Demeter DB uses a robust typing system via `demeter_api` that enables the data scientist working on a project to define and add any new Type of data to the Demeter DB.
+
+The Demeter DB is the Postgres + PostGIS database responsible for tracking and accessing all agronomic data for ag-modeling. Demeter DB has a particular focus on ensuring all data is spatially and temporally aware. Likewise, spatial and temporal queries are the basis for constructing all training and prediction feature matrices.
+
+See [Demeter Definitions](https://sentera.atlassian.net/wiki/spaces/AI/pages/3020652567/Demeter+Definitions) for background on the terms we use in the Demeter/ML Ops project.
+
+
 To initialize the schema:
 1) Start a postgres instance
 2) Run 'psql --host localhost -f schema.sql postgres'
@@ -12,7 +21,7 @@ Note: You should rename the directory of the git repo from "mlops-db" to "mlops_
 
 1) Make HTTP
   Makes some http types in the database for testing
-  Example: python3 -m mlops_db.scripts.make_http
+  Example: `python3 -m scripts.make_http`
 
 2) Load MLOps data
   Loads some geoml data for predicting potato N from a set of sample data

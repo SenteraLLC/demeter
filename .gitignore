@@ -9,3 +9,4 @@ dist/
 .idea
 *.egg*
 _build/
+.env

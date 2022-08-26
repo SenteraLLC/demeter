@@ -135,13 +135,13 @@ class Valuer:
         pass
       await asyncio.sleep(1)
 
-  async def get_value(self, p : Poly) -> Value:
+  async def get_value(self, p : Poly, my_ancestry : List[Poly]) -> Tuple[Value, List[Poly]]:
     s = key(p)
     if s not in self.results:
       self.q.put_nowait(p)
     #else:
       #print("ALREADY IN RESULTS: ",s)
-    return await self._get_value(s)
+    return await self._get_value(s), my_ancestry
 
   def get_value_nowait(self, p : Poly) -> Value:
     s = key(p)
@@ -165,9 +165,9 @@ class Valuer:
         remaining_slots = MAX_LOCATIONS - len(out)
         if remaining_slots <= 0:
           break
-        print("Remaining slots: ",remaining_slots)
+        #print("Remaining slots: ",remaining_slots)
         buffer = next(yieldSplitBuffer(o, remaining_slots))
-        print("  Add buffer: ",len(buffer))
+        #print("  Add buffer: ",len(buffer))
 
         if len(buffer):
           out.update((key(p), p) for p in buffer)
@@ -177,6 +177,7 @@ class Valuer:
         stats = ["t_2m:C"]
         points = [ getCentroid(x) for x in out.values() ]
         #print("POINTS: ",points)
+        #print("MAKING REQUEST")
         r = req(dates, stats, points)
         req_count += 1
         #if req_count > 100:
@@ -207,12 +208,20 @@ _test_points = [
 
 def do_stop(p : Poly,
             v : Value,
-            parent_value : Value,
-            grandparent_value : Value,
+            ancestry : List[Poly],
+            valuer : Valuer,
+            #parent_value : Value,
+            #grandparent_value : Value,
            ) -> bool:
   try:
-    pv = parent_value
-    gpv = grandparent_value
+    print("\nDO STOP: ",p)
+    print("Ancestry depth: ",len(ancestry))
+    if len(ancestry) < 2:
+      return False
+    parent = ancestry[-1]
+    grandparent = ancestry[-2]
+    pv = valuer.get_value_nowait(parent)
+    gpv = valuer.get_value_nowait(grandparent)
     # TODO: Better heuristic
     #does_contain = False
     #for z in _test_points:
@@ -220,9 +229,11 @@ def do_stop(p : Poly,
     #    does_contain = True
     #    break
     #if not does_contain:
+      #?print("DOESNT CONTAIN.")
     #  return True
 
     total_diff = abs(pv - v) + abs(gpv - v) + abs(pv - gpv)
+    print("TOTAL DIFF IS: ",total_diff)
     return total_diff < 10
     #return total_diff < 0.1
   except IndexError:
@@ -239,18 +250,24 @@ async def run2(root : Poly) -> None:
   leaves : List[Poly] = []
 
   running = asyncio.create_task(v.run())
-  tasks : Dict[Task[Value], Poly] = {}
+  tasks : Dict[Task[Tuple[Value, List[Poly]]], Poly] = {}
 
-  q : deque[Tuple[Poly, Optional[Poly]]] = deque(((root, None), ))
-  _initial_value = await v.get_value(root)
+  _ancestry : List[Poly] = []
+  q : deque[Tuple[Poly, List[Poly]]] = deque(((root, _ancestry), ))
+  _initial_value, ancestry = await v.get_value(root, _ancestry)
+
   counter = 0
-  while len(q):
+  pending : Set[Task[Tuple[Value, List[Poly]]]] = set()
+  while len(q) or len(pending):
 
     start = int(time())
     while len(q) and int(time()) - start < 5:
-      parent, grandparent = q.pop()
+      parent, parent_ancestry = q.pop()
+      (my_ancestry := parent_ancestry.copy()).append(parent)
       parts = split(parent)
-      tasks.update({asyncio.create_task(v.get_value(p)) : p for p in parts})
+      #print("\nPARENT ANCESTRY IS: ",parent_ancestry)
+      #print("PARTS ARE: ",parts)
+      tasks.update({asyncio.create_task(v.get_value(p, my_ancestry)) : p for p in parts})
     completed, pending = await asyncio.wait(tasks, timeout=1)
 
     #print("\nLEAVE COUNT: ",len(leaves))
@@ -261,21 +278,18 @@ async def run2(root : Poly) -> None:
 
     for c in completed:
       p = tasks[c]
-      value = c.result()
+      value, ancestry = c.result()
       del tasks[c]
 
-      parent_value = parent and v.get_value_nowait(parent)
-      grandparent_value = grandparent and v.get_value_nowait(grandparent)
-      if parent_value is None or \
-         grandparent_value is None or \
-         not do_stop(p, value, parent_value, grandparent_value):
-        q.appendleft((p, parent))
+      if not do_stop(p, value, ancestry, v):
+        q.appendleft((p, ancestry))
       else:
         #print("NEW LEAF: ",p)
         leaves.append(p)
     counter += 1
 
 
+  print("\nLEAVE COUNT: ",len(leaves))
   print("Done.")
   #result = await running
   #print("Result is: ",result)

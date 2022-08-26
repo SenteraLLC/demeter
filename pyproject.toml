@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "demeter"
+version = "1.0.28"
+description = ""
+authors = ["Joel Larson <JoelLarson@sentera.com>"]
+packages = [
+  {include = "demeter"},
+  {include = "demeter/py.typed"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.10.4"
+psycopg2 = "^2.9.3"
+typing_extensions = "^4.0.1"
+jsonschema = "^4.4.0"
+geopandas = "^0.11.1"
+boto3 = "^1.20.48"
+requests = "^2.27.1"
+scoping = "^0.1.2"
+dictdiffer = "^0.9.0"
+Rtree = "^1.0.0"
+geo_utils = { git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "DEM-147-weather-grid", extras = ["geopandas", "rasterio"] }
+
+[tool.poetry.dev-dependencies]
+types-jsonschema = "^4.4.1"
+types-psycopg2 = "^2.9.7"
+types-requests = "^2.27.10"
+types-urllib3 = "^1.26.9"
+types-boto3 = "^1.0.1"
+pandas-stubs = "^1.2.0"
+mypy = "0.950"
+mypy-extensions = "0.4.3"
+ipykernel = "^6.13.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+example = "demeter.scripts.example:main"

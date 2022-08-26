@@ -1,15 +1,11 @@
-from geopandas import GeoDataFrame
-from numpy import (
-    arange,
-    count_nonzero,
-    ndarray,
-    uint32,
-)
-from numpy.typing import ArrayLike, DTypeLike
 from os.path import join
+from typing import Tuple, Union
+
+from geopandas import GeoDataFrame
+from numpy import arange, count_nonzero, ndarray, uint32
+from numpy.typing import ArrayLike, DTypeLike
 from rasterio import open as rio_open
 from shapely.geometry import MultiPolygon, Point, Polygon
-from typing import Union
 
 
 def assign_cell_ids(
@@ -28,11 +24,11 @@ def assign_cell_ids(
 
 def determine_distance(
     geometry_utm: Polygon,
-    origin_m: tuple[float, float],
+    origin_m: Tuple[float, float],
     hemisphere_ew: str,
     hemisphere_ns: str,
     pole: bool,
-) -> tuple[float, float]:
+) -> Tuple[float, float]:
     minx_m, miny_m, maxx_m, maxy_m = geometry_utm.bounds
 
     if pole and hemisphere_ew == "west":  # origin is maxx, miny
@@ -58,7 +54,7 @@ def determine_origin(
     hemisphere_ew: str,
     hemisphere_ns: str,
     pole: bool,
-) -> tuple[float, float]:
+) -> Tuple[float, float]:
 
     minx_d, miny_d, maxx_d, maxy_d = geometry_dd.bounds
     minx_m, miny_m, maxx_m, maxy_m = geometry_utm.bounds
@@ -82,7 +78,7 @@ def determine_origin(
 
 def determine_transform(
     hemisphere_ew: str, hemisphere_ns: str, pole: bool
-) -> tuple[int, int]:
+) -> Tuple[int, int]:
     if pole and hemisphere_ew == "west":  # origin is maxx, miny
         transform_coef_x, transform_coef_y = (
             -1,
@@ -104,7 +100,7 @@ def determine_transform(
 
 def increment_cell_ids(
     cell_id_min: int, cell_id_max: int, array_mask: ArrayLike
-) -> tuple[ndarray, int, int]:
+) -> Tuple[ndarray, int, int]:
     cell_id_min = cell_id_max + 1
 
     valid_pixel_n = count_nonzero(array_mask == 0)  # count valid pixels

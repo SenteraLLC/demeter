@@ -596,7 +596,7 @@ rasterio = ["rasterio (>=1.3.2,<2.0.0)"]
 type = "git"
 url = "ssh://git@github.com/SenteraLLC/py-geo-utils.git"
 reference = "DEM-147-weather-grid"
-resolved_reference = "607361edef5ae0c34afd3aa7657290d271eda171"
+resolved_reference = "c6ea6d9f5aa888c70c7cf6d9fc9491a4104f0ddf"
 
 [[package]]
 name = "geopandas"

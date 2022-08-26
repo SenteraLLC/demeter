@@ -6,6 +6,38 @@ The Demeter DB is the Postgres + PostGIS database responsible for tracking and a
 
 See [Demeter Definitions](https://sentera.atlassian.net/wiki/spaces/AI/pages/3020652567/Demeter+Definitions) for background on the terms we use in the Demeter/ML Ops project.
 
+## Setup and Installation (for development)
+1) [Set up SSH](https://github.com/SenteraLLC/install-instructions/blob/master/ssh_setup.md)
+2) Install [pyenv](https://github.com/SenteraLLC/install-instructions/blob/master/pyenv.md) and [poetry](https://python-poetry.org/docs/#installation).
+3) Install package
+``` bash
+git clone git@github.com:SenteraLLC/demeter.git
+cd demeter
+pyenv install $(cat .python-version)
+poetry config virtualenvs.in-project true
+poetry env use $(cat .python-version)
+poetry install
+```
+4) Set up `pre-commit` to ensure all commits to adhere to **black** and **PEP8** style conventions.
+``` bash
+poetry run pre-commit install
+```
+
+## Setup and Installation (used as a library)
+If using `demeter` as a dependency in your script, simply add it to the `pyproject.toml` in your project repo. Be sure to uuse the `ssh:` prefix so Travis has access to the repo for the library build process.
+
+<h5 a><strong><code>pyproject.toml</code></strong></h5>
+
+``` toml
+[tool.poetry.dependencies]
+demeter = { git = "ssh://git@github.com/SenteraLLC/demeter.git", branch = "main"}
+```
+
+Install `demeter` and all its dependencies via `poetry install`.
+
+``` console
+poetry install
+```
 
 To initialize the schema:
 1) Start a postgres instance

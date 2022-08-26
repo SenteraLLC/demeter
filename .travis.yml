@@ -1,0 +1,13 @@
+language: python
+python: 3.10
+
+install:
+  - 'pip install poetry'
+
+# jobs:
+#   include:
+#     - stage: pre-commit
+#       script: poetry run pre-commit run --all-files
+#     - stage: publish-docs-to-confluence
+#       if: (NOT type IN (pull_request)) AND (branch = main) # only deploy if merging on main
+#       after_success: cd docs && poetry run python -m sphinx -b confluence . _build/confluence -E -a -D confluence_server_user=$ATLASSIAN_USERNAME -D confluence_server_pass=$ATLASSIAN_API_TOKEN

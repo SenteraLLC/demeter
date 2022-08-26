@@ -890,7 +890,7 @@ rasterio = ["rasterio (>=1.3.2,<2.0.0)"]
 type = "git"
 url = "ssh://git@github.com/SenteraLLC/py-geo-utils.git"
 reference = "DEM-147-weather-grid"
-resolved_reference = "269a8992ed88033bbd87f6a9ba03415c9a0ff555"
+resolved_reference = "6cf38ac56ab5c6c6b1c427a52c1590ae7b1a7635"
 
 [[package]]
 name = "geopandas"
@@ -2408,8 +2408,8 @@ notebook = ">=4.4.1"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "~3.10.4"
-content-hash = "2854e114746e475d772c0fc9c57f32b3431de530982cd8bd3e346c520ee89270"
+python-versions = "~3.10.6"
+content-hash = "cd19c49c291dd1fe73aa77b3fd287c815d16ad0f789b6de39284682e39f6118c"
 
 [metadata.files]
 affine = [

@@ -9,7 +9,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.10.4"
+python = "~3.10.6"
 psycopg2 = "^2.9.3"
 typing_extensions = "^4.0.1"
 typing_inspect = "^0.8.0"

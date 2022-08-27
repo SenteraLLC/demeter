@@ -29,6 +29,12 @@ class NodeRaster(Table):
   # TODO: What Python type for raster?
   raster : str
 
+@dataclass(frozen=True)
+class NodeRasterCell(Table):
+  # TODO: I think that we can calculate this key instead of using NodeRaster
+  node_id : TableId
+  value : float
+
 
 @dataclass(frozen=True)
 class Root(Detailed):
@@ -41,6 +47,35 @@ class Ancestry(Table):
   root_id : TableId
   parent_node_id : TableId
   node_id : TableId
+
+from demeter.db._lookup_types import TableLookup
+
+id_table_lookup : TableLookup = {
+  Root : 'root',
+  Node : 'node',
+  Ancestry : 'node_ancestry',
+}
+
+from demeter.db._postgres import SQLGenerator
+
+g = SQLGenerator("demeter.data",
+                 id_table_lookup = id_table_lookup,
+                )
+
+from demeter.db._generic_types import GetId, GetTable, ReturnId
+
+getMaybeRoot = g.getMaybeIdFunction(Root)
+getMaybeNode = g.getMaybeIdFunction(Node)
+getMaybeAncestry = g.getMaybeIdFunction(Ancestry)
+
+getRoot  : GetTable[Root] = g.getTableFunction(Root)
+getNode  : GetTable[Node] = g.getTableFunction(Node)
+getAncestry  : GetTable[Ancestry] = g.getTableFunction(Ancestry)
+
+insertRoot : ReturnId[Root] = g.getInsertReturnIdFunction(Root)
+insertNode : ReturnId[Node] = g.getInsertReturnIdFunction(Node)
+insertAncestry : ReturnId[Ancestry] = g.getInsertReturnIdFunction(Ancestry)
+
 
 
 
@@ -90,7 +125,7 @@ from asyncio import Queue, Task
 Value = NewType('Value', float)
 
 MAX_LOCATIONS = 200
-TIMEOUT = 1200
+TIMEOUT = 2400
 from time import time
 
 from collections import OrderedDict
@@ -114,6 +149,7 @@ def key(p : Poly) -> str:
 
 from datetime import datetime
 import json
+from shapely.geometry import Point
 
 class Valuer:
   def __init__(self) -> None:
@@ -135,13 +171,16 @@ class Valuer:
         pass
       await asyncio.sleep(1)
 
-  async def get_value(self, p : Poly, my_ancestry : List[Poly]) -> Tuple[Value, List[Poly]]:
+  async def get_value(self,
+                      p : Poly,
+                      my_ancestry : List[Poly] = [],
+                      parent_points : List[Point] = [],
+                     ) -> Tuple[Value, List[Poly], List[Point]]:
     s = key(p)
     if s not in self.results:
       self.q.put_nowait(p)
-    #else:
-      #print("ALREADY IN RESULTS: ",s)
-    return await self._get_value(s), my_ancestry
+    my_points, _others = getContainedBy(p, parent_points)
+    return await self._get_value(s), my_ancestry, my_points
 
   def get_value_nowait(self, p : Poly) -> Value:
     s = key(p)
@@ -165,9 +204,7 @@ class Valuer:
         remaining_slots = MAX_LOCATIONS - len(out)
         if remaining_slots <= 0:
           break
-        #print("Remaining slots: ",remaining_slots)
         buffer = next(yieldSplitBuffer(o, remaining_slots))
-        #print("  Add buffer: ",len(buffer))
 
         if len(buffer):
           out.update((key(p), p) for p in buffer)
@@ -176,15 +213,10 @@ class Valuer:
         dates = [datetime.now()]
         stats = ["t_2m:C"]
         points = [ getCentroid(x) for x in out.values() ]
-        #print("POINTS: ",points)
-        #print("MAKING REQUEST")
         r = req(dates, stats, points)
         req_count += 1
-        #if req_count > 100:
-        #  import sys
-        #  sys.exit(1)
         if req_count % 10 == 0:
-          print("\nREQ COUNT: ",req_count)
+          print("REQUEST COUNT: ",req_count)
         for d in r["data"]:
           cs = d["coordinates"]
           for c in cs:
@@ -198,76 +230,68 @@ class Valuer:
 
 from typing import Optional
 from collections import deque
-from shapely.geometry import Point
-
-_test_points = [
-  Point(45.3325, -93.742),
-  Point(45.3055, -93.7941),
-  Point(46.7867, -92.1005),
-]
 
 def do_stop(p : Poly,
             v : Value,
             ancestry : List[Poly],
             valuer : Valuer,
-            #parent_value : Value,
-            #grandparent_value : Value,
+            my_points : List[Point],
            ) -> bool:
-  try:
-    print("\nDO STOP: ",p)
-    print("Ancestry depth: ",len(ancestry))
-    if len(ancestry) < 2:
-      return False
-    parent = ancestry[-1]
-    grandparent = ancestry[-2]
-    pv = valuer.get_value_nowait(parent)
-    gpv = valuer.get_value_nowait(grandparent)
-    # TODO: Better heuristic
-    #does_contain = False
-    #for z in _test_points:
-    #  if p.contains(z):
-    #    does_contain = True
-    #    break
-    #if not does_contain:
-      #?print("DOESNT CONTAIN.")
-    #  return True
+  if len(my_points) <= 0:
+    return True
+  if len(ancestry) < 2:
+    return False
 
-    total_diff = abs(pv - v) + abs(gpv - v) + abs(pv - gpv)
-    print("TOTAL DIFF IS: ",total_diff)
-    return total_diff < 10
-    #return total_diff < 0.1
-  except IndexError:
-    pass
-  return False
+  parent = ancestry[-1]
+  grandparent = ancestry[-2]
+  pv = valuer.get_value_nowait(parent)
+  gpv = valuer.get_value_nowait(grandparent)
+  total_diff = abs(pv - v) + abs(gpv - v) + abs(pv - gpv)
+  return total_diff < 10
 
 
 from typing import Set
 import asyncio
 import sys
 
-async def run2(root : Poly) -> None:
+
+def getContainedBy(p : Poly, points : List[Point]) -> Tuple[List[Point], List[Point]]:
+  yes : List[Point] = []
+  no : List[Point] = []
+  for t in points:
+    if p.contains(t):
+      yes.append(t)
+    else:
+      no.append(t)
+  return yes, no
+
+async def run2(root : Poly, points_of_interest : List[Point]) -> None:
   v = Valuer()
+  branches : List[Poly] = []
   leaves : List[Poly] = []
 
   running = asyncio.create_task(v.run())
-  tasks : Dict[Task[Tuple[Value, List[Poly]]], Poly] = {}
+  tasks : Dict[Task[Tuple[Value, List[Poly], List[Point]]], Poly] = {}
 
-  _ancestry : List[Poly] = []
-  q : deque[Tuple[Poly, List[Poly]]] = deque(((root, _ancestry), ))
-  _initial_value, ancestry = await v.get_value(root, _ancestry)
+  _value, _ancestry, my_points = await v.get_value(root, [], points_of_interest)
+
+  if len(points_of_interest) != len(my_points):
+    print("Some points did not fall in starting range: ",len(points_of_interest) - len(my_points))
+  if not len(my_points):
+    print("No valid points of interest were provided. Performing exhaustive query. This may take awhile.")
+
+  q : deque[Tuple[Poly, List[Poly], List[Point]]] = deque(((root, [], my_points), ))
 
   counter = 0
-  pending : Set[Task[Tuple[Value, List[Poly]]]] = set()
+  pending : Set[Task[Tuple[Value, List[Poly], List[Point]]]] = set()
   while len(q) or len(pending):
 
     start = int(time())
     while len(q) and int(time()) - start < 5:
-      parent, parent_ancestry = q.pop()
+      parent, parent_ancestry, parent_points = q.pop()
       (my_ancestry := parent_ancestry.copy()).append(parent)
       parts = split(parent)
-      #print("\nPARENT ANCESTRY IS: ",parent_ancestry)
-      #print("PARTS ARE: ",parts)
-      tasks.update({asyncio.create_task(v.get_value(p, my_ancestry)) : p for p in parts})
+      tasks.update({asyncio.create_task(v.get_value(p, my_ancestry, parent_points)) : p for p in parts})
     completed, pending = await asyncio.wait(tasks, timeout=1)
 
     #print("\nLEAVE COUNT: ",len(leaves))
@@ -278,17 +302,17 @@ async def run2(root : Poly) -> None:
 
     for c in completed:
       p = tasks[c]
-      value, ancestry = c.result()
+      value, ancestry, my_points = c.result()
       del tasks[c]
-
-      if not do_stop(p, value, ancestry, v):
-        q.appendleft((p, ancestry))
-      else:
-        #print("NEW LEAF: ",p)
+      stop = do_stop(p, value, ancestry, v, my_points)
+      if stop:
         leaves.append(p)
+      else:
+        branches.append(p)
+        q.appendleft((p, ancestry, my_points))
     counter += 1
 
-
+  print("\nBRANCH COUNT: ",len(branches))
   print("\nLEAVE COUNT: ",len(leaves))
   print("Done.")
   #result = await running
@@ -297,13 +321,14 @@ async def run2(root : Poly) -> None:
   #for i, l in enumerate(leaves):
   #  print(l, "\n ",l.area)
 
-
 if __name__ == '__main__':
+  test_points = [
+    Point(45.3325, -93.742),
+    Point(45.3055, -93.7941),
+    Point(46.7867, -92.1005),
+  ]
+
   start = Poly(((50, -100), (40, -100), (40, -90), (50, -90)))
-  asyncio.run(run2(start))
-
-
-
-
+  asyncio.run(run2(start, test_points))
 
 

@@ -1,82 +1,4 @@
-from typing import List, Iterator, Tuple, Awaitable, NewType
-
-from dataclasses import dataclass, field
-from dataclasses import InitVar
-
-from demeter.db import Table, TableId, Detailed
-from demeter.data import MultiPolygon, Polygon, Geom
-
-
-@dataclass(frozen=True)
-class Node(Table):
-  polygon : InitVar[Polygon]
-  value   : float
-  geom    : str = field(init=False)
-
-  def __post_init__(self, polygon : Polygon) -> None:
-    g = Geom(
-      crs_name = "urn:ogc:def:crs:EPSG::4326",
-      type = "MultiPolygon",
-      coordinates = (polygon, ),
-      container_geom_id = None,
-    )
-    geom = g.geom
-
-
-@dataclass(frozen=True)
-class NodeRaster(Table):
-  node_id : TableId
-  # TODO: What Python type for raster?
-  raster : str
-
-@dataclass(frozen=True)
-class NodeRasterCell(Table):
-  # TODO: I think that we can calculate this key instead of using NodeRaster
-  node_id : TableId
-  value : float
-
-
-@dataclass(frozen=True)
-class Root(Detailed):
-  geom_id : TableId
-  local_type_id : TableId
-
-
-@dataclass(frozen=True)
-class Ancestry(Table):
-  root_id : TableId
-  parent_node_id : TableId
-  node_id : TableId
-
-from demeter.db._lookup_types import TableLookup
-
-id_table_lookup : TableLookup = {
-  Root : 'root',
-  Node : 'node',
-  Ancestry : 'node_ancestry',
-}
-
-from demeter.db._postgres import SQLGenerator
-
-g = SQLGenerator("demeter.data",
-                 id_table_lookup = id_table_lookup,
-                )
-
-from demeter.db._generic_types import GetId, GetTable, ReturnId
-
-getMaybeRoot = g.getMaybeIdFunction(Root)
-getMaybeNode = g.getMaybeIdFunction(Node)
-getMaybeAncestry = g.getMaybeIdFunction(Ancestry)
-
-getRoot  : GetTable[Root] = g.getTableFunction(Root)
-getNode  : GetTable[Node] = g.getTableFunction(Node)
-getAncestry  : GetTable[Ancestry] = g.getTableFunction(Ancestry)
-
-insertRoot : ReturnId[Root] = g.getInsertReturnIdFunction(Root)
-insertNode : ReturnId[Node] = g.getInsertReturnIdFunction(Node)
-insertAncestry : ReturnId[Ancestry] = g.getInsertReturnIdFunction(Ancestry)
-
-
+from typing import List, Iterator, Tuple, NewType
 
 
 from shapely.geometry import Polygon as Poly # type: ignore
@@ -130,8 +52,6 @@ from time import time
 
 from collections import OrderedDict
 
-from functools import lru_cache
-
 from .meteo import req
 
 def getCentroid(p : Poly) -> Tuple[float, float]:
@@ -156,7 +76,6 @@ class Valuer:
     self.q : Queue[Poly] = Queue()
     self.results : Dict[str, Value] = {}
 
-  #@lru_cache(maxsize=2**10)
   async def _get_value(self, p_str : str) -> Value:
     start = int(time())
     while True:
@@ -228,6 +147,7 @@ class Valuer:
 
       await asyncio.sleep(1)
 
+
 from typing import Optional
 from collections import deque
 
@@ -247,12 +167,10 @@ def do_stop(p : Poly,
   pv = valuer.get_value_nowait(parent)
   gpv = valuer.get_value_nowait(grandparent)
   total_diff = abs(pv - v) + abs(gpv - v) + abs(pv - gpv)
-  return total_diff < 10
+  return total_diff < 1
 
 
 from typing import Set
-import asyncio
-import sys
 
 
 def getContainedBy(p : Poly, points : List[Point]) -> Tuple[List[Point], List[Point]]:
@@ -298,7 +216,6 @@ async def run2(root : Poly, points_of_interest : List[Point]) -> None:
     #print("Completed: ",len(completed))
     #print("PENDING: ",len(pending))
     #print("Q SIZE: ",len(q))
-    #sys.stdout.flush()
 
     for c in completed:
       p = tasks[c]
@@ -330,5 +247,6 @@ if __name__ == '__main__':
 
   start = Poly(((50, -100), (40, -100), (40, -90), (50, -90)))
   asyncio.run(run2(start, test_points))
+
 
 

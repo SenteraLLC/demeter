@@ -36,14 +36,14 @@ class Geom(db.Table):
   crs_name          : InitVar[str]
   type              : InitVar[str]
   coordinates       : InitVar[Coordinates]
-  geom              : str = field(init=False)
+  container_geom_id : Optional[db.TableId] = None
 
-  container_geom_id : Optional[db.TableId]
+  geom              : str = field(init=False)
 
   def __post_init__(self,
                     crs_name : str,
                     type : str,
-                    coordinates : Coordinates
+                    coordinates : Coordinates,
                    ) -> None:
     crs = CRS(type = "name",
               properties = {"name": crs_name},

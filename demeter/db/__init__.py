@@ -16,6 +16,9 @@ __all__ = [
   'getConnection',
   'Connection',
 
+  'JSON',
+  'EMPTY_JSON',
+
   # Base Types
   'Table',
   'Detailed',
@@ -24,9 +27,6 @@ __all__ = [
   'TableId',
   'SelfKey',
   'SomeKey',
-
-  'JSON',
-  'EMPTY_JSON',
 ]
 
 from ._register import register_sql_adapters

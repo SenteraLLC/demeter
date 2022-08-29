@@ -36,6 +36,9 @@ create table geom (
   check (ST_IsValid(geom))
 );
 
+-- TODO: Enforce SRID like this:
+--  ALTER xxxx ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 28355)
+
 -- TODO: Table for geometries that get 'repaired' with their 'IsValidMessage' and 'IsValidDetails'
 
 CREATE INDEX CONCURRENTLY geom_idx on geom using SPGIST(geom);

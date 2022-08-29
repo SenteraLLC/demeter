@@ -12,6 +12,7 @@ def frange(a : float, b : float , s : float) -> Iterator[Tuple[float, float]]:
 
 def split(p : Poly) -> Iterator[Poly]:
   x1, y1, x2, y2 = p.bounds
+
   xdiff = (x2-x1)/3
   ydiff = (y2-y1)/3
   for a1, a2 in frange(x1, x2, xdiff):
@@ -22,6 +23,8 @@ from collections import OrderedDict
 
 def _yieldSplitBuffer(p : Poly) -> Iterator[List[Poly]]:
   children = list(split(p))
+
+  # Breadth first
   if len(children):
     yield children
 
@@ -238,15 +241,61 @@ async def run2(root : Poly, points_of_interest : List[Point]) -> None:
   #for i, l in enumerate(leaves):
   #  print(l, "\n ",l.area)
 
+from demeter.db import getConnection
+
+from typing import Any
+from typing import cast
+from demeter.data import Geom
+from shapely import wkb # type: ignore
+
+def getGeoms(cursor : Any) -> List[Geom]:
+  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 100")
+
+  out : List[Geom] = []
+  rows = cursor.fetchall()
+  for r in rows:
+    g = cast(Geom, r)
+    out.append(g)
+  return out
+
+from demeter.data import insertOrGetGeom
+from demeter.grid import Root
+from demeter.grid import insertRoot, getRoot
+from shapely.geometry import MultiPoint
+
 if __name__ == '__main__':
-  test_points = [
-    Point(45.3325, -93.742),
-    Point(45.3055, -93.7941),
-    Point(46.7867, -92.1005),
-  ]
+  connection = getConnection()
 
-  start = Poly(((50, -100), (40, -100), (40, -90), (50, -90)))
-  asyncio.run(run2(start, test_points))
+  cursor = connection.cursor()
 
+  gs = getGeoms(cursor)
+
+  points : List[Point] = []
+  for g in gs:
+    some_shape = wkb.loads(g.geom, hex=True)
+
+    try:
+      (lat, long) = some_shape.centroid.coords[0]
+      points.append(Point(lat, long))
+    except TypeError:
+      continue
+
+  mp = MultiPoint(points)
+  x1, y1, x2, y2 = bounds =  mp.bounds
+  print("MULTIPOLYGON BOUNDS: ",bounds)
+  polygon_bounds = ((x1, y1), (x2, y1), (x2, y2), (x1, y2))
+
+  geom = Geom(
+           crs_name = "urn:ogc:def:crs:EPSG::4326",
+           type = 'Polygon',
+           coordinates = (polygon_bounds, ),
+         )
+  print("GEOM: ",geom)
+  #bound_geom_id = insertOrGetGeom(cursor, geom)
+  #print("Bound geom id: ",bound_geom_id)
+
+  start = Poly(polygon_bounds)
+  start_points = points
+  asyncio.run(run2(start, start_points))
 
 

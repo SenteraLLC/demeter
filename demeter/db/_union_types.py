@@ -20,7 +20,7 @@ AnyDataTable = Union[data.AnyDataTable, task.AnyDataTable, work.AnyDataTable]
 
 AnyIdTable = Union[data.AnyIdTable, task.AnyIdTable, work.AnyIdTable, grid.AnyIdTable]
 
-AnyKeyTable = Union[data.AnyKeyTable, task.AnyKeyTable, work.AnyKeyTable]
+AnyKeyTable = Union[data.AnyKeyTable, task.AnyKeyTable, work.AnyKeyTable, grid.AnyKeyTable]
 
 AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
 

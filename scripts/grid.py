@@ -62,32 +62,32 @@ def getCentroid(p : Poly) -> Tuple[float, float]:
   cx, cy = centroid = ((x1+x2)/2, (y1+y2)/2)
   return cx, cy
 
-def points_to_string(x : float, y : float) -> str:
+def pointsToKey(x : float, y : float) -> str:
   return "{:.5f},{:.5f}".format(x, y)
 
-def key(p : Poly) -> str:
+def getKey(p : Poly) -> str:
   cx, cy = getCentroid(p)
-  return points_to_string(cx, cy)
+  return pointsToKey(cx, cy)
 
 
 from datetime import datetime
 import json
 from shapely.geometry import Point
+import sys
 
 class Valuer:
   def __init__(self) -> None:
     self.q : Queue[Poly] = Queue()
     self.results : Dict[str, Value] = {}
 
-  async def _get_value(self, p_str : str) -> Value:
+  async def _get_value(self, key : str) -> Value:
     start = int(time())
     while True:
       try:
         t = int(time()) - start
         if t > TIMEOUT:
-          raise Exception(f"TIMEOUT for {p_str} Q SIZE IS: {self.q.qsize()}.")
-        r = self.results[p_str]
-        #del self.results[p_str]
+          raise Exception(f"TIMEOUT for {key} Q SIZE IS: {self.q.qsize()}.")
+        r = self.results[key]
         return r
       except KeyError:
         pass
@@ -98,30 +98,32 @@ class Valuer:
                       my_ancestry : List[Poly] = [],
                       parent_points : List[Point] = [],
                      ) -> Tuple[Value, List[Poly], List[Point]]:
-    s = key(p)
+    s = getKey(p)
     if s not in self.results:
       self.q.put_nowait(p)
     my_points, _others = getContainedBy(p, parent_points)
     return await self._get_value(s), my_ancestry, my_points
 
   def get_value_nowait(self, p : Poly) -> Value:
-    s = key(p)
+    k = getKey(p)
     try:
-      return self.results[s]
+      return self.results[k]
     except KeyError:
       pass
-    raise Exception(f"Value not found for {s} : {p}")
+    raise Exception(f"Value not found for {p} : {k}")
 
   async def run(self) -> None:
     req_count = 0
     while True:
+      sys.stdout.flush()
       out : OrderedDict[str, Poly] = OrderedDict()
       while len(out) <= MAX_LOCATIONS:
         try:
           p = self.q.get_nowait()
-          out[key(p)] = p
+          out[getKey(p)] = p
         except asyncio.QueueEmpty:
           break
+
       for k, o in out.copy().items():
         remaining_slots = MAX_LOCATIONS - len(out)
         if remaining_slots <= 0:
@@ -129,8 +131,7 @@ class Valuer:
         buffer = next(yieldSplitBuffer(o, remaining_slots))
 
         if len(buffer):
-          out.update((key(p), p) for p in buffer)
-
+          out.update((getKey(p), p) for p in buffer)
       if len(out):
         dates = [datetime.now()]
         stats = ["t_2m:C"]
@@ -144,9 +145,9 @@ class Valuer:
           for c in cs:
             lat = c["lat"]
             long = c["lon"]
-            k = points_to_string(lat, long)
+            key = pointsToKey(lat, long)
             ds = c["dates"]
-            self.results[k] = ds[0]["value"]
+            self.results[key] = ds[0]["value"]
 
       await asyncio.sleep(1)
 
@@ -186,7 +187,8 @@ def getContainedBy(p : Poly, points : List[Point]) -> Tuple[List[Point], List[Po
       no.append(t)
   return yes, no
 
-async def run2(root : Poly, points_of_interest : List[Point]) -> None:
+
+async def run(root : Poly, points_of_interest : List[Point]) -> Tuple[List[Tuple[float, Poly, Poly]], List[Tuple[float, Poly, Poly]]]:
   v = Valuer()
   branches : List[Poly] = []
   leaves : List[Poly] = []
@@ -206,7 +208,6 @@ async def run2(root : Poly, points_of_interest : List[Point]) -> None:
   counter = 0
   pending : Set[Task[Tuple[Value, List[Poly], List[Point]]]] = set()
   while len(q) or len(pending):
-
     start = int(time())
     while len(q) and int(time()) - start < 5:
       parent, parent_ancestry, parent_points = q.pop()
@@ -225,21 +226,18 @@ async def run2(root : Poly, points_of_interest : List[Point]) -> None:
       value, ancestry, my_points = c.result()
       del tasks[c]
       stop = do_stop(p, value, ancestry, v, my_points)
+      try:
+        parent = ancestry[-1]
+      except IndexError:
+        parent = None
       if stop:
-        leaves.append(p)
+        leaves.append((value, p, parent))
       else:
-        branches.append(p)
+        branches.append((value, p, parent))
         q.appendleft((p, ancestry, my_points))
     counter += 1
 
-  print("\nBRANCH COUNT: ",len(branches))
-  print("\nLEAVE COUNT: ",len(leaves))
-  print("Done.")
-  #result = await running
-  #print("Result is: ",result)
-
-  #for i, l in enumerate(leaves):
-  #  print(l, "\n ",l.area)
+  return branches, leaves
 
 from demeter.db import getConnection
 
@@ -258,10 +256,53 @@ def getGeoms(cursor : Any) -> List[Geom]:
     out.append(g)
   return out
 
-from demeter.data import insertOrGetGeom
-from demeter.grid import Root
-from demeter.grid import insertRoot, getRoot
+from demeter.data import insertOrGetGeom, insertOrGetLocalType
+from demeter.data import LocalType
+from demeter.db import TableId
+
+from demeter.grid import Root, Node, Ancestry
+from demeter.grid import insertRoot, insertNode, insertAncestry
 from shapely.geometry import MultiPoint
+
+def insertNodes(ps : List[Tuple[float, Poly, Poly]],
+                node_id_lookup : Dict[str, TableId],
+                root_id : TableId,
+               ) -> Tuple[List[Tuple[float, Poly, Poly]],
+                          List[Tuple[TableId, Optional[TableId]]]
+                         ]:
+  still_pending : List[Tuple[float, Poly, Poly]] = []
+  table_ids : List[Tuple[TableId, Optional[TableId]]] = []
+  for value, x, parent in ps:
+    n = Node(
+          polygon = x,
+          value = value,
+        )
+    node_id = insertNode(cursor, n)
+
+    maybe_parent_id : Optional[TableId] = None
+    if parent is not None:
+      parent_key = getKey(parent)
+      if parent_key in node_id_lookup:
+        #print("FETCHING: ",parent_key)
+        parent_node_id = maybe_parent_id = node_id_lookup[parent_key]
+        a = Ancestry(
+              root_id = root_id,
+              parent_node_id = parent_node_id,
+              node_id = node_id,
+            )
+        maybe_ancestor_key = insertAncestry(cursor, a)
+      else:
+        still_pending.append((value, x, parent))
+    table_ids.append((node_id, maybe_parent_id))
+
+    k = getKey(x)
+    #print("STORING: ",k)
+    node_id_lookup[k] = node_id
+
+  return still_pending, table_ids
+
+from demeter.data import Polygon
+from shapely.geometry import CAP_STYLE, JOIN_STYLE
 
 if __name__ == '__main__':
   connection = getConnection()
@@ -282,20 +323,59 @@ if __name__ == '__main__':
 
   mp = MultiPoint(points)
   x1, y1, x2, y2 = bounds =  mp.bounds
-  print("MULTIPOLYGON BOUNDS: ",bounds)
-  polygon_bounds = ((x1, y1), (x2, y1), (x2, y2), (x1, y2))
+  unbuffered_polygon_bounds = ((x1, y1), (x2, y1), (x2, y2), (x1, y2))
+  start_polygon = Poly(unbuffered_polygon_bounds).buffer(0.00001, cap_style=CAP_STYLE.square, join_style=JOIN_STYLE.mitre)
+  print("BOUNDING POLYGON: ",start_polygon)
+  root_node = Node(
+        polygon = start_polygon,
+        value = float("nan"),
+      )
+  root_node_id = insertNode(cursor, root_node)
+
+  polygon_bounds = tuple(start_polygon.exterior.coords)
 
   geom = Geom(
            crs_name = "urn:ogc:def:crs:EPSG::4326",
            type = 'Polygon',
            coordinates = (polygon_bounds, ),
          )
-  print("GEOM: ",geom)
-  #bound_geom_id = insertOrGetGeom(cursor, geom)
-  #print("Bound geom id: ",bound_geom_id)
+  bound_geom_id = insertOrGetGeom(cursor, geom)
 
-  start = Poly(polygon_bounds)
+  l = LocalType(
+    type_name = "abi grid test 8-29",
+    type_category = "abi test category",
+  )
+  local_type_id = insertOrGetLocalType(cursor, l)
+
+  r = Root(
+        geom_id = bound_geom_id,
+        local_type_id = local_type_id,
+  )
+  root_id = insertRoot(cursor, r)
+
+  from time import sleep
+
   start_points = points
-  asyncio.run(run2(start, start_points))
+  branches, leaves = asyncio.run(run(start_polygon, start_points))
+
+  node_id_lookup : Dict[str, TableId] = {getKey(start_polygon) : root_node_id}
+  branches_to_insert = branches
+  leaves_to_insert = leaves
+  while len(branches_to_insert) > 0 or len(leaves_to_insert) > 0:
+    branches_to_insert, branch_nodes = insertNodes(branches_to_insert, node_id_lookup, root_id)
+    leaves_to_insert, leaf_nodes = insertNodes(leaves_to_insert, node_id_lookup, root_id)
+
+    # TODO: Options for:
+    #       Only saving leaves that contain a point
+    #       Pick up from existing points
+    #       Don't output intermediate nodes
+    #       Delete node when it is replaced with finer resolutions
+
+  connection.commit()
+
+
+
+
+
 
 

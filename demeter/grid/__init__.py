@@ -15,7 +15,6 @@ __all__ = (
 
   'getRoot',
   'getNode',
-  'getAncestry',
 
   'insertRoot',
   'insertNode',

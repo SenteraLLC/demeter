@@ -9,31 +9,12 @@ headers = {"Authorization": "Basic c2VudGVyYTprUjFLckl5SWJnTU0="}
 
 url_template = 'https://api.meteomatics.com/{dates}/{stats}/{coords}/{typ}'
 
-tl = (50, -100)
-br = (40, -90)
-
 # Go to fifth decimal with lat long
 #  https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude/8674#8674
 
 from datetime import datetime
 today = datetime.now().strftime("%Y-%m-%dZ")
 temp = "t_2m:C"
-x1, y1 = tl
-x2, y2 = br
-
-#cx, cy = centroid = ((x1+x2)/2, (y1+y2)/2)
-#print("CENTROID: ",centroid)
-#coords = ",".join(["{:.5f}".format(x) for x in [cx, cy]])
-
-#url = url_template.format(dates=today, stats=temp, coords=coords, typ="json")
-#print("URL IS: ",url)
-#x = requests.get(url, headers=headers)
-
-#import json
-#t = x.text
-#print("T IS:",t)
-#j = json.loads(t)
-#print(json.dumps(j, indent=2))
 
 import json
 from typing import Sequence, Tuple, Dict, Any
@@ -50,8 +31,11 @@ def req(dates : Sequence[datetime],
   #print("COORDS ARE: ",coords_str)
 
   url = url_template.format(dates=dates_str, stats=stats_str, coords=coords_str, typ="json")
+  #print("URL IS: ",url)
   x = requests.get(url, headers=headers)
-
+  #print("X: ",x)
+  #print("X: ",x.text)
+  #print("X: ",dir(x))
   return json.loads(x.text)
 
 

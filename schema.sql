@@ -760,23 +760,29 @@ create table published_workflow (
 );
 
 
--- TODO: This needs to be factored out
+-- TODO: This needs to be factored out to its own repo
+--       Maybe also with LocalValue and LocalType?
 -- Grid Base Schema
 
 create table node (
   node_id bigserial
           primary key,
 
-  bounds geometry(Geometry, 4326) not null,
-  CONSTRAINT enforce_node_polygon CHECK (
-    geometrytype(bounds) = 'POLYGON'::text AND
-    ST_IsValid(bounds)
-   ),
+  geom geometry(Geometry, 4326) not null,
+  CONSTRAINT
+  enforce_node_polygon CHECK (
+    (
+      geometrytype(geom) = 'POLYGON'::text OR
+      geometrytype(geom) = 'MULTIPOLYGON'::text
+    ) AND
+    ST_IsValid(geom)
+   )
+  ,
 
   value float
 );
 
-CREATE INDEX CONCURRENTLY node_idx on node using SPGIST(bounds);
+CREATE INDEX CONCURRENTLY node_idx on node using SPGIST(geom);
 
 -- Optional Raster
 create table node_raster (
@@ -795,6 +801,9 @@ create table root (
                 not null,
   unique(geom_id, local_type_id),
 
+  last_updated  timestamp without time zone
+                not null
+                default now(),
   details       jsonb
                 not null
                 default '{}'::jsonb

@@ -38,7 +38,6 @@ def yieldTimeRange(a : datetime,
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Store meteomatics data with dynamic spatial-resolution using nested polygons')
-  parser.add_argument('--keep_ancestry', action='store_true', help='Track branch nodes in database', default=False)
   parser.add_argument('--keep_unused', action='store_true', help='Save leaf nodes even if they do not contain a point of interest', default=False)
   parser.add_argument('--stats', action='extend', help='List of meteomatic stats on which to query', required=True, nargs="+")
   parser.add_argument('--start_time', type=parseTime, help=f'Time on which to start data collection. {DATE_FORMATS}', default=datetime.now(timezone.utc))
@@ -57,22 +56,21 @@ if __name__ == '__main__':
   cursor = connection.cursor()
 
   U = args.keep_unused
-  A = args.keep_ancestry
-
 
   for d in yieldTimeRange(start, end, delta):
 
-    start_polygon, start_points, root_id, maybe_root_node_id = getStartingGeoms(cursor, U, A, d)
-    node_id_lookup : Dict[str, TableId] = {}
-    if (r := maybe_root_node_id):
-      k = getKey(start_polygon)
-      node_id_lookup[k] = r
-
     print("Fetching date: ",d)
     for s in args.stats:
+      start_polygon, start_points, root_id, maybe_root_node_id = getStartingGeoms(cursor, U, d, s)
+      node_id_lookup : Dict[str, TableId] = {}
+      if (r := maybe_root_node_id):
+        k = getKey(start_polygon)
+        node_id_lookup[k] = r
+
+
       print(' Fetching stat: ',s)
-      branches, leaves = asyncio.run(main_loop(start_polygon, start_points, do_stop, U, A, d, s))
-      insertTree(cursor, branches, leaves, node_id_lookup, root_id, A)
+      branches, leaves = asyncio.run(main_loop(start_polygon, start_points, do_stop, U, d, s))
+      insertTree(cursor, branches, leaves, node_id_lookup, root_id)
 
   connection.commit()
 

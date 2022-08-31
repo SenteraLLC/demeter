@@ -68,7 +68,6 @@ def insertNodes(cursor : Any,
                 ps : List[Tuple[float, Poly, Poly]],
                 node_id_lookup : Dict[str, TableId],
                 root_id : TableId,
-                keep_ancestry : bool,
                ) -> Tuple[List[Tuple[float, Poly, Poly]],
                           List[Tuple[TableId, Optional[TableId]]]
                          ]:
@@ -82,7 +81,7 @@ def insertNodes(cursor : Any,
     node_id = insertOrGetNode(cursor, n)
 
     maybe_parent_id : Optional[TableId] = None
-    if keep_ancestry and parent is not None:
+    if parent is not None:
       parent_key = getKey(parent)
       if parent_key in node_id_lookup:
         #print("FETCHING: ",parent_key)
@@ -115,23 +114,22 @@ def pointsToBound(points : List[Point]) -> Poly:
   b = unbuffered_polygon.buffer(0.00001, cap_style=CAP_STYLE.square, join_style=JOIN_STYLE.mitre)
   return b
 
-
+THIS_SCRIPT_TOKEN = "meteo-grid-example"
 
 def getStartingGeoms(cursor : Any,
                      keep_unused : bool,
-                     keep_ancestry : bool,
                      time          : datetime,
+                     stat          : str,
                     ) -> Tuple[Poly, List[Point], TableId, Optional[TableId]]:
   points = getPoints(cursor)
   start_polygon = pointsToBound(points)
 
   maybe_root_node_id : Optional[TableId] = None
-  if keep_ancestry:
-    root_node = Node(
-                  polygon = start_polygon,
-                  value = float("nan"),
-                )
-    maybe_root_node_id = insertOrGetNode(cursor, root_node)
+  root_node = Node(
+                polygon = start_polygon,
+                value = float("nan"),
+              )
+  maybe_root_node_id = insertOrGetNode(cursor, root_node)
 
   polygon_bounds = tuple(start_polygon.exterior.coords)
 
@@ -142,9 +140,12 @@ def getStartingGeoms(cursor : Any,
          )
   bound_geom_id = insertOrGetGeom(cursor, geom)
 
+  type_name = "_".join([THIS_SCRIPT_TOKEN, time.strftime("%Y-%m-%d %H:%M:%S"), stat.lower()])
+  type_category = "meteomatics grid test category"
+
   l = LocalType(
-    type_name = "abi grid test 8-29",
-    type_category = "abi test category",
+    type_name = type_name,
+    type_category = type_category,
   )
   local_type_id = insertOrGetLocalType(cursor, l)
 
@@ -164,21 +165,21 @@ def insertTree(cursor : Any,
                leaves : List[Tuple[float, Poly, Poly]],
                node_id_lookup : Dict[str, TableId],
                root_id : TableId,
-               keep_ancestry : bool,
-               ) -> None:
-  if keep_ancestry:
-    print("# BRANCH NODES: ",len(branches))
+              ) -> None:
+  print("# BRANCH NODES: ",len(branches))
   print("# LEAF NODES: ",len(leaves))
   branches_to_insert = branches
   leaves_to_insert = leaves
   while len(branches_to_insert) > 0 or len(leaves_to_insert) > 0:
-    branches_to_insert, branch_nodes = insertNodes(cursor, branches_to_insert, node_id_lookup, root_id, keep_ancestry)
-    leaves_to_insert, leaf_nodes = insertNodes(cursor, leaves_to_insert, node_id_lookup, root_id, keep_ancestry)
+    branches_to_insert, branch_nodes = insertNodes(cursor, branches_to_insert, node_id_lookup, root_id)
+    leaves_to_insert, leaf_nodes = insertNodes(cursor, leaves_to_insert, node_id_lookup, root_id)
 
     # TODO: Options for:
     #       Pick up from existing points
     #       Delete node when it is replaced with finer resolutions
     #       Logging
+    #       Config for default do_stop function
+    #       Custom do_stop functions?
   return None
 
 

@@ -19,7 +19,6 @@ async def main_loop(root : Poly,
                     points_of_interest : List[Point],
                     do_stop_fn : Callable[[Poly, Value, List[Poly], Valuer, List[Point]], float],
                     keep_unused : bool,
-                    keep_ancestry : bool,
                     datetime : datetime,
                     stat : str,
                    ) -> Tuple[List[Tuple[float, Poly, Poly]], List[Tuple[float, Poly, Poly]]]:
@@ -68,8 +67,7 @@ async def main_loop(root : Poly,
         if keep_unused or stop is not StopState.NO_POINTS:
           leaves.append((value, p, parent))
       else:
-        if keep_ancestry:
-          branches.append((value, p, parent))
+        branches.append((value, p, parent))
         q.appendleft((p, ancestry, my_points))
     counter += 1
 

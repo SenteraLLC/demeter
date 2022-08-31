@@ -9,15 +9,20 @@ g = SQLGenerator("demeter.data",
 
 from demeter.db._generic_types import GetId, GetTable, ReturnId, ReturnSameKey
 
-getMaybeRoot = g.getMaybeIdFunction(Root)
-getMaybeNode = g.getMaybeIdFunction(Node)
+getMaybeRootId = g.getMaybeIdFunction(Root)
+getMaybeNodeId = g.getMaybeIdFunction(Node)
 
 getMaybeAncestry = g.getTableByKeyFunction(Ancestry, Ancestry)
 
 getRoot  : GetTable[Root] = g.getTableFunction(Root)
 getNode  : GetTable[Node] = g.getTableFunction(Node)
+getAncestry = g.getTableByKeyFunction(Ancestry, Ancestry)
 
 insertRoot : ReturnId[Root] = g.getInsertReturnIdFunction(Root)
 insertNode : ReturnId[Node] = g.getInsertReturnIdFunction(Node)
 insertAncestry : ReturnSameKey[Ancestry] = g.getInsertReturnSameKeyFunction(Ancestry)
+
+insertOrGetRoot = g.partialInsertOrGetId(getMaybeRootId, insertRoot)
+insertOrGetNode = g.partialInsertOrGetId(getMaybeNodeId, insertNode)
+insertOrGetAncestry = g.partialInsertOrGetKey(Ancestry, getAncestry, insertAncestry)
 

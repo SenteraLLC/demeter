@@ -19,9 +19,11 @@ MAX_LOCATIONS = 200
 Value = NewType('Value', float)
 
 class Valuer:
-  def __init__(self) -> None:
+  def __init__(self, time : datetime, stat : str) -> None:
     self.q : Queue[Poly] = Queue()
     self.results : Dict[str, Value] = {}
+    self.time = time
+    self.stat = stat
 
   async def _get_value(self, key : str) -> Value:
     start = int(time())
@@ -36,6 +38,7 @@ class Valuer:
         pass
       await asyncio.sleep(1)
 
+
   async def get_value(self,
                       p : Poly,
                       my_ancestry : List[Poly] = [],
@@ -47,6 +50,7 @@ class Valuer:
     my_points, _others = getContainedBy(p, parent_points)
     return await self._get_value(s), my_ancestry, my_points
 
+
   def get_value_nowait(self, p : Poly) -> Value:
     k = getKey(p)
     try:
@@ -54,6 +58,7 @@ class Valuer:
     except KeyError:
       pass
     raise Exception(f"Value not found for {p} : {k}")
+
 
   async def request_loop(self) -> None:
     req_count = 0
@@ -75,10 +80,10 @@ class Valuer:
         if len(buffer):
           out.update((getKey(p), p) for p in buffer)
       if len(out):
-        dates = [datetime.now()]
-        stats = ["t_2m:C"]
+        times = [self.time]
         points = [ getCentroid(x) for x in out.values() ]
-        r = req(dates, stats, points)
+        r = req([self.time], {self.stat}, points)
+
         req_count += 1
         if req_count % 10 == 0:
           print("REQUEST COUNT: ",req_count)

@@ -801,6 +801,9 @@ create table root (
                 not null,
   unique(geom_id, local_type_id),
 
+  time          timestamp without time zone
+                not null,
+
   last_updated  timestamp without time zone
                 not null
                 default now(),

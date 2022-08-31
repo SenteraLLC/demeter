@@ -13,14 +13,12 @@ url_template = 'https://api.meteomatics.com/{dates}/{stats}/{coords}/{typ}'
 #  https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude/8674#8674
 
 from datetime import datetime
-today = datetime.now().strftime("%Y-%m-%dZ")
-temp = "t_2m:C"
 
 import json
-from typing import Sequence, Tuple, Dict, Any
+from typing import Sequence, Tuple, Dict, Any, Set
 
 def req(dates : Sequence[datetime],
-        stats : Sequence[str],
+        stats : Set[str],
         coords : Sequence[Tuple[float, float]],
         typ    : str = "json"
        ) -> Dict[str, Any]:

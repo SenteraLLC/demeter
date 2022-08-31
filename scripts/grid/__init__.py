@@ -5,6 +5,7 @@ from asyncio import Task
 from collections import deque
 from enum import IntEnum
 from time import time
+from datetime import datetime
 
 from shapely.geometry import Polygon as Poly, Point # type: ignore
 
@@ -19,8 +20,10 @@ async def main_loop(root : Poly,
                     do_stop_fn : Callable[[Poly, Value, List[Poly], Valuer, List[Point]], float],
                     keep_unused : bool,
                     keep_ancestry : bool,
+                    datetime : datetime,
+                    stat : str,
                    ) -> Tuple[List[Tuple[float, Poly, Poly]], List[Tuple[float, Poly, Poly]]]:
-  v = Valuer()
+  v = Valuer(datetime, stat)
   branches : List[Poly] = []
   leaves : List[Poly] = []
 
@@ -38,7 +41,6 @@ async def main_loop(root : Poly,
 
   counter = 0
   pending : Set[Task[Tuple[Value, List[Poly], List[Point]]]] = set()
-  print("KEEP UNUSED IS: ",keep_unused)
   while len(q) or len(pending):
     start = int(time())
     while len(q) and int(time()) - start < 5:

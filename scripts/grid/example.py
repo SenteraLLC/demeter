@@ -2,6 +2,7 @@ from typing import List, Tuple, Dict, Any
 from typing import cast
 
 import asyncio
+from datetime import datetime, timezone
 
 from typing import Optional
 
@@ -38,7 +39,7 @@ from demeter.data import Geom
 from shapely import wkb # type: ignore
 
 def getPoints(cursor : Any) -> List[Point]:
-  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 100")
+  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 1000")
 
   out : List[Point] = []
   rows = cursor.fetchall()
@@ -60,7 +61,7 @@ from demeter.data import LocalType
 from demeter.db import TableId
 
 from demeter.grid import Root, Node, Ancestry
-from demeter.grid import insertRoot, insertNode, insertAncestry
+from demeter.grid import insertOrGetRoot, insertOrGetNode, insertAncestry
 from shapely.geometry import MultiPoint
 
 def insertNodes(cursor : Any,
@@ -78,7 +79,7 @@ def insertNodes(cursor : Any,
           polygon = x,
           value = value,
         )
-    node_id = insertNode(cursor, n)
+    node_id = insertOrGetNode(cursor, n)
 
     maybe_parent_id : Optional[TableId] = None
     if keep_ancestry and parent is not None:
@@ -118,7 +119,8 @@ def pointsToBound(points : List[Point]) -> Poly:
 
 def getStartingGeoms(cursor : Any,
                      keep_unused : bool,
-                     keep_ancestry : bool
+                     keep_ancestry : bool,
+                     time          : datetime,
                     ) -> Tuple[Poly, List[Point], TableId, Optional[TableId]]:
   points = getPoints(cursor)
   start_polygon = pointsToBound(points)
@@ -129,7 +131,7 @@ def getStartingGeoms(cursor : Any,
                   polygon = start_polygon,
                   value = float("nan"),
                 )
-    maybe_root_node_id = insertNode(cursor, root_node)
+    maybe_root_node_id = insertOrGetNode(cursor, root_node)
 
   polygon_bounds = tuple(start_polygon.exterior.coords)
 
@@ -149,8 +151,9 @@ def getStartingGeoms(cursor : Any,
   r = Root(
         geom_id = bound_geom_id,
         local_type_id = local_type_id,
-  )
-  root_id = insertRoot(cursor, r)
+        time = time,
+      )
+  root_id = insertOrGetRoot(cursor, r)
 
   start_points = points
   return start_polygon, start_points, root_id, maybe_root_node_id
@@ -163,8 +166,9 @@ def insertTree(cursor : Any,
                root_id : TableId,
                keep_ancestry : bool,
                ) -> None:
-  print("NUM BRANCHES: ",len(branches))
-  print("NUM LEAVES: ",len(leaves))
+  if keep_ancestry:
+    print("# BRANCH NODES: ",len(branches))
+  print("# LEAF NODES: ",len(leaves))
   branches_to_insert = branches
   leaves_to_insert = leaves
   while len(branches_to_insert) > 0 or len(leaves_to_insert) > 0:

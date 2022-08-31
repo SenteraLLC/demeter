@@ -1,7 +1,8 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from dataclasses import dataclass, field
 from dataclasses import InitVar
+from datetime import datetime
 
 from demeter.db import Table, SelfKey, TableId, Detailed
 from demeter.data import Polygon, Geom
@@ -23,7 +24,6 @@ class Node(Table):
       coordinates = (coords, ),
       container_geom_id = None,
     )
-    print("G IS: ",g)
     object.__setattr__(self, 'geom', g.geom)
 
 
@@ -45,6 +45,7 @@ class NodeRasterCell(Table):
 class Root(Detailed):
   geom_id : TableId
   local_type_id : TableId
+  time : datetime
 
 
 # TODO: I think ancestry should be optional, note this somewhere

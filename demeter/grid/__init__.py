@@ -17,8 +17,11 @@ __all__ = (
   'getNode',
 
   'insertRoot',
+  'insertOrGetRoot',
   'insertNode',
+  'insertOrGetNode',
   'insertAncestry',
+  'insertOrGetAncestry',
 
 )
 

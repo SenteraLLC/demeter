@@ -45,13 +45,13 @@ class NodeRasterCell(Table):
 class Root(Detailed):
   geom_id : TableId
   local_type_id : TableId
+  node_id : TableId
   time : datetime
 
 
 # TODO: I think ancestry should be optional, note this somewhere
 @dataclass(frozen=True)
 class Ancestry(SelfKey):
-  root_id : TableId
   parent_node_id : TableId
   node_id : TableId
 

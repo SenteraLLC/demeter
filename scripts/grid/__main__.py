@@ -59,16 +59,13 @@ if __name__ == '__main__':
 
   for d in yieldTimeRange(start, end, delta):
 
-    print("Fetching date: ",d)
     for s in args.stats:
-      start_polygon, start_points, root_id, maybe_root_node_id = getStartingGeoms(cursor, U, d, s)
+      start_polygon, start_points, root_id, root_node_id = getStartingGeoms(cursor, U, d, s)
       node_id_lookup : Dict[str, TableId] = {}
-      if (r := maybe_root_node_id):
-        k = getKey(start_polygon)
-        node_id_lookup[k] = r
+      k = getKey(start_polygon)
+      node_id_lookup[k] = root_node_id
 
 
-      print(' Fetching stat: ',s)
       branches, leaves = asyncio.run(main_loop(start_polygon, start_points, do_stop, U, d, s))
       insertTree(cursor, branches, leaves, node_id_lookup, root_id)
 

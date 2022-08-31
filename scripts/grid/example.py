@@ -39,7 +39,7 @@ from demeter.data import Geom
 from shapely import wkb # type: ignore
 
 def getPoints(cursor : Any) -> List[Point]:
-  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 1000")
+  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 100")
 
   out : List[Point] = []
   rows = cursor.fetchall()
@@ -67,7 +67,6 @@ from shapely.geometry import MultiPoint
 def insertNodes(cursor : Any,
                 ps : List[Tuple[float, Poly, Poly]],
                 node_id_lookup : Dict[str, TableId],
-                root_id : TableId,
                ) -> Tuple[List[Tuple[float, Poly, Poly]],
                           List[Tuple[TableId, Optional[TableId]]]
                          ]:
@@ -81,13 +80,16 @@ def insertNodes(cursor : Any,
     node_id = insertOrGetNode(cursor, n)
 
     maybe_parent_id : Optional[TableId] = None
+    print("FOR NODE: ",n)
     if parent is not None:
       parent_key = getKey(parent)
+      print(" LOOKING FOR PARENT KEY: ",parent_key)
+      print("  LOOKUPS: ",node_id_lookup)
       if parent_key in node_id_lookup:
-        #print("FETCHING: ",parent_key)
+        print("FETCHING: ",parent_key)
         parent_node_id = maybe_parent_id = node_id_lookup[parent_key]
+        print(" GOT PARENT NODE ID: ",parent_node_id)
         a = Ancestry(
-              root_id = root_id,
               parent_node_id = parent_node_id,
               node_id = node_id,
             )
@@ -120,16 +122,16 @@ def getStartingGeoms(cursor : Any,
                      keep_unused : bool,
                      time          : datetime,
                      stat          : str,
-                    ) -> Tuple[Poly, List[Point], TableId, Optional[TableId]]:
+                    ) -> Tuple[Poly, List[Point], TableId, TableId]:
   points = getPoints(cursor)
   start_polygon = pointsToBound(points)
 
-  maybe_root_node_id : Optional[TableId] = None
   root_node = Node(
                 polygon = start_polygon,
+                # TODO: Find a way to populate this value from the main loop
                 value = float("nan"),
               )
-  maybe_root_node_id = insertOrGetNode(cursor, root_node)
+  root_node_id = insertOrGetNode(cursor, root_node)
 
   polygon_bounds = tuple(start_polygon.exterior.coords)
 
@@ -153,26 +155,27 @@ def getStartingGeoms(cursor : Any,
         geom_id = bound_geom_id,
         local_type_id = local_type_id,
         time = time,
+        node_id = root_node_id,
       )
   root_id = insertOrGetRoot(cursor, r)
 
   start_points = points
-  return start_polygon, start_points, root_id, maybe_root_node_id
+  return start_polygon, start_points, root_id, root_node_id
 
 
 def insertTree(cursor : Any,
                branches : List[Tuple[float, Poly, Poly]],
                leaves : List[Tuple[float, Poly, Poly]],
                node_id_lookup : Dict[str, TableId],
-               root_id : TableId,
+               root_node_id : TableId,
               ) -> None:
   print("# BRANCH NODES: ",len(branches))
   print("# LEAF NODES: ",len(leaves))
   branches_to_insert = branches
   leaves_to_insert = leaves
   while len(branches_to_insert) > 0 or len(leaves_to_insert) > 0:
-    branches_to_insert, branch_nodes = insertNodes(cursor, branches_to_insert, node_id_lookup, root_id)
-    leaves_to_insert, leaf_nodes = insertNodes(cursor, leaves_to_insert, node_id_lookup, root_id)
+    branches_to_insert, branch_nodes = insertNodes(cursor, branches_to_insert, node_id_lookup)
+    leaves_to_insert, leaf_nodes = insertNodes(cursor, leaves_to_insert, node_id_lookup)
 
     # TODO: Options for:
     #       Pick up from existing points

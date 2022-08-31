@@ -796,6 +796,9 @@ create table root (
   geom_id bigint
           references geom(geom_id)
           not null,
+  node_id bigint
+          references node(node_id)
+          not null,
   local_type_id bigint
                 references local_type(local_type_id)
                 not null,

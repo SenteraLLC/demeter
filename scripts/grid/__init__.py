@@ -1,161 +1,17 @@
-from typing import List, Iterator, Tuple, NewType
+from typing import List, Tuple, Dict
 
-
-from shapely.geometry import Polygon as Poly # type: ignore
-
-def frange(a : float, b : float , s : float) -> Iterator[Tuple[float, float]]:
-  out = a
-  while ((a < b and out < b) or
-         (a >= b and out >= b)):
-    next_out = out + s
-    yield out, (out := next_out)
-
-def split(p : Poly) -> Iterator[Poly]:
-  x1, y1, x2, y2 = p.bounds
-
-  xdiff = (x2-x1)/3
-  ydiff = (y2-y1)/3
-  for a1, a2 in frange(x1, x2, xdiff):
-    for b1, b2 in frange(y1, y2, ydiff):
-      yield Poly(((a1, b1), (a2, b1), (a2, b2), (a1, b2)))
-
-from collections import OrderedDict
-
-def _yieldSplitBuffer(p : Poly) -> Iterator[List[Poly]]:
-  children = list(split(p))
-
-  # Breadth first
-  if len(children):
-    yield children
-
-  for c in children:
-    yield from _yieldSplitBuffer(c)
-
-
-def yieldSplitBuffer(p : Poly,
-                     buffer_size : int = 999
-                    ) -> Iterator[List[Poly]]:
-  out : List[Poly] = []
-  for ps in _yieldSplitBuffer(p):
-    remaining_slots = buffer_size - len(out)
-    if remaining_slots <= 0:
-      break
-    out.extend(ps[:remaining_slots])
-  yield out
-
-from typing import Dict
 import asyncio
-from asyncio import Queue, Task
-
-Value = NewType('Value', float)
-
-MAX_LOCATIONS = 200
-TIMEOUT = 2400
-from time import time
-
-from collections import OrderedDict
-
-from .meteo import req
-
-def getCentroid(p : Poly) -> Tuple[float, float]:
-  x1, y1, x2, y2 = p.bounds
-  cx, cy = centroid = ((x1+x2)/2, (y1+y2)/2)
-  return cx, cy
-
-def pointsToKey(x : float, y : float) -> str:
-  return "{:.5f},{:.5f}".format(x, y)
-
-def getKey(p : Poly) -> str:
-  cx, cy = getCentroid(p)
-  return pointsToKey(cx, cy)
-
-
-from datetime import datetime
-import json
-from shapely.geometry import Point
-import sys
-
-class Valuer:
-  def __init__(self) -> None:
-    self.q : Queue[Poly] = Queue()
-    self.results : Dict[str, Value] = {}
-
-  async def _get_value(self, key : str) -> Value:
-    start = int(time())
-    while True:
-      try:
-        t = int(time()) - start
-        if t > TIMEOUT:
-          raise Exception(f"TIMEOUT for {key} Q SIZE IS: {self.q.qsize()}.")
-        r = self.results[key]
-        return r
-      except KeyError:
-        pass
-      await asyncio.sleep(1)
-
-  async def get_value(self,
-                      p : Poly,
-                      my_ancestry : List[Poly] = [],
-                      parent_points : List[Point] = [],
-                     ) -> Tuple[Value, List[Poly], List[Point]]:
-    s = getKey(p)
-    if s not in self.results:
-      self.q.put_nowait(p)
-    my_points, _others = getContainedBy(p, parent_points)
-    return await self._get_value(s), my_ancestry, my_points
-
-  def get_value_nowait(self, p : Poly) -> Value:
-    k = getKey(p)
-    try:
-      return self.results[k]
-    except KeyError:
-      pass
-    raise Exception(f"Value not found for {p} : {k}")
-
-  async def request_loop(self) -> None:
-    req_count = 0
-    while True:
-      sys.stdout.flush()
-      out : OrderedDict[str, Poly] = OrderedDict()
-      while len(out) <= MAX_LOCATIONS:
-        try:
-          p = self.q.get_nowait()
-          out[getKey(p)] = p
-        except asyncio.QueueEmpty:
-          break
-
-      for k, o in out.copy().items():
-        remaining_slots = MAX_LOCATIONS - len(out)
-        if remaining_slots <= 0:
-          break
-        buffer = next(yieldSplitBuffer(o, remaining_slots))
-
-        if len(buffer):
-          out.update((getKey(p), p) for p in buffer)
-      if len(out):
-        dates = [datetime.now()]
-        stats = ["t_2m:C"]
-        points = [ getCentroid(x) for x in out.values() ]
-        r = req(dates, stats, points)
-        req_count += 1
-        if req_count % 10 == 0:
-          print("REQUEST COUNT: ",req_count)
-        for d in r["data"]:
-          cs = d["coordinates"]
-          for c in cs:
-            lat = c["lat"]
-            long = c["lon"]
-            key = pointsToKey(lat, long)
-            ds = c["dates"]
-            self.results[key] = ds[0]["value"]
-
-      await asyncio.sleep(1)
-
+from asyncio import Task
 
 from typing import Optional
 from collections import deque
-
 from enum import IntEnum
+
+from shapely.geometry import Polygon as Poly, Point # type: ignore
+
+from .valuer import Valuer, Value
+from .spatial_utils import getKey, split
+
 
 class StopState(IntEnum):
   NO_POINTS = -1
@@ -183,16 +39,7 @@ def do_stop(p : Poly,
 
 from typing import Set
 
-def getContainedBy(p : Poly, points : List[Point]) -> Tuple[List[Point], List[Point]]:
-  yes : List[Point] = []
-  no : List[Point] = []
-  for t in points:
-    if p.contains(t):
-      yes.append(t)
-    else:
-      no.append(t)
-  return yes, no
-
+from time import time
 
 async def main(root : Poly,
                points_of_interest : List[Point],
@@ -247,7 +94,6 @@ async def main(root : Poly,
       else:
         if keep_ancestry:
           branches.append((value, p, parent))
-        else:
         q.appendleft((p, ancestry, my_points))
     counter += 1
 

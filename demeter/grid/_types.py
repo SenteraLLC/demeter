@@ -43,7 +43,6 @@ class NodeRasterCell(Table):
 
 @dataclass(frozen=True)
 class Root(Detailed):
-  geom_id : TableId
   local_type_id : TableId
   node_id : TableId
   time : datetime

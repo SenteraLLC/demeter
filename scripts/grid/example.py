@@ -80,15 +80,10 @@ def insertNodes(cursor : Any,
     node_id = insertOrGetNode(cursor, n)
 
     maybe_parent_id : Optional[TableId] = None
-    print("FOR NODE: ",n)
     if parent is not None:
       parent_key = getKey(parent)
-      print(" LOOKING FOR PARENT KEY: ",parent_key)
-      print("  LOOKUPS: ",node_id_lookup)
       if parent_key in node_id_lookup:
-        print("FETCHING: ",parent_key)
         parent_node_id = maybe_parent_id = node_id_lookup[parent_key]
-        print(" GOT PARENT NODE ID: ",parent_node_id)
         a = Ancestry(
               parent_node_id = parent_node_id,
               node_id = node_id,
@@ -118,14 +113,29 @@ def pointsToBound(points : List[Point]) -> Poly:
 
 THIS_SCRIPT_TOKEN = "meteo-grid-example"
 
+
+def getLocalTypeName(stat : str) -> str:
+  return "_".join([THIS_SCRIPT_TOKEN, stat.lower()])
+
+
+def getLocalType(cursor : Any, stat : str) -> TableId:
+  type_category = "meteomatics grid test category"
+  type_name = getLocalTypeName(stat)
+  l = LocalType(
+    type_name = type_name,
+    type_category = type_category,
+  )
+  local_type_id = insertOrGetLocalType(cursor, l)
+  return local_type_id
+
+
 def getStartingGeoms(cursor : Any,
+                     points : List[Point],
+                     start_polygon : Poly,
                      keep_unused : bool,
                      time          : datetime,
                      stat          : str,
-                    ) -> Tuple[Poly, List[Point], TableId, TableId]:
-  points = getPoints(cursor)
-  start_polygon = pointsToBound(points)
-
+                    ) -> Tuple[TableId, TableId]:
   root_node = Node(
                 polygon = start_polygon,
                 # TODO: Find a way to populate this value from the main loop
@@ -141,26 +151,15 @@ def getStartingGeoms(cursor : Any,
            coordinates = (polygon_bounds, ),
          )
   bound_geom_id = insertOrGetGeom(cursor, geom)
-
-  type_name = "_".join([THIS_SCRIPT_TOKEN, time.strftime("%Y-%m-%d %H:%M:%S"), stat.lower()])
-  type_category = "meteomatics grid test category"
-
-  l = LocalType(
-    type_name = type_name,
-    type_category = type_category,
-  )
-  local_type_id = insertOrGetLocalType(cursor, l)
-
+  local_type_id = getLocalType(cursor, stat)
   r = Root(
-        geom_id = bound_geom_id,
         local_type_id = local_type_id,
         time = time,
         node_id = root_node_id,
       )
   root_id = insertOrGetRoot(cursor, r)
 
-  start_points = points
-  return start_polygon, start_points, root_id, root_node_id
+  return root_id, root_node_id
 
 
 def insertTree(cursor : Any,
@@ -183,6 +182,15 @@ def insertTree(cursor : Any,
     #       Logging
     #       Config for default do_stop function
     #       Custom do_stop functions?
+    #       Find proper "root"
+    #       Option to specifiy root geom, dont generate from points
+    #       Should it be possible to change the size/geom_id of a root geom?
+    #         Hmm, does the root node geom even need to be in "geom" ?
+    #         I don't think so.
+
+
+
+
   return None
 
 

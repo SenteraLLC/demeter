@@ -796,9 +796,6 @@ create table node_raster (
 create table root (
   root_id bigserial primary key,
 
-  geom_id bigint
-          references geom(geom_id)
-          not null,
   node_id bigint
           references node(node_id)
           not null,

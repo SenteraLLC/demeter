@@ -5,6 +5,7 @@ from datetime import date
 
 from demeter.data import Owner
 
+
 class HarvestPlanting(TypedDict):
   geo_id    : int
   completed : Optional[date]

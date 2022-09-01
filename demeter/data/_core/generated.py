@@ -27,7 +27,6 @@ getMaybeReportTypeId : GetId[ReportType] = g.getMaybeIdFunction(ReportType)
 getField      : GetTable[Field]    = g.getTableFunction(Field)
 getOwner      : GetTable[Owner]    = g.getTableFunction(Owner)
 getGeom       : GetTable[Geom]     = g.getTableFunction(Geom)
-print("GET GEOM ANNOS: ",getGeom.__annotations__)
 
 insertField          : ReturnId[Field]      = g.getInsertReturnIdFunction(Field)
 insertOwner          : ReturnId[Owner]      = g.getInsertReturnIdFunction(Owner)
@@ -38,15 +37,9 @@ insertCropType   : ReturnId[CropType]   = g.getInsertReturnIdFunction(CropType)
 insertCropStage = g.getInsertReturnIdFunction(CropStage)
 insertReportType : ReturnId[ReportType] = g.getInsertReturnIdFunction(ReportType)
 
-#insertPlanting     : ReturnKey[Planting, PlantingKey] = g.getInsertReturnKeyFunction(Planting)
-#insertHarvest      : ReturnKey[Harvest, HarvestKey] = g.getInsertReturnKeyFunction(Harvest)
-#insertCropProgress = getInsertReturnKeyFunction3(CropProgress, CropProgressKey, _lookups.key_table_lookup2)
-#reveal_type(g.getInsertReturnKeyFunction)
 insertPlanting = g.getInsertReturnKeyFunction(Planting, PlantingKey)
-print("PLANTING ANNOS: ",insertPlanting.__annotations__)
 insertHarvest  = g.getInsertReturnKeyFunction(Harvest, HarvestKey)
 insertCropProgress = g.getInsertReturnKeyFunction(CropProgress, CropProgressKey)
-
 
 insertOrGetGeoSpatialKey = g.partialInsertOrGetId(getMaybeGeoSpatialKeyId, insertGeoSpatialKey)
 insertOrGetTemporalKey = g.partialInsertOrGetId(getMaybeTemporalKeyId, insertTemporalKey)

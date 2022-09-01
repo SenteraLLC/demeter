@@ -15,7 +15,6 @@ from .meteo import req
 TIMEOUT = 2400
 MAX_LOCATIONS = 200
 
-
 Value = NewType('Value', float)
 
 class Valuer:

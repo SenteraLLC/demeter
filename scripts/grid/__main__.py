@@ -15,6 +15,7 @@ from .spatial_utils import getKey
 SHORT = "%Y-%m-%dZ"
 LONG = " ".join([SHORT, "%H-%M-%SZ"])
 DATE_FORMATS = [SHORT, LONG]
+DATE_FORMATS_STR = " || ".join([s.replace('%', '%%') for s in DATE_FORMATS])
 
 def parseTime(s : str) -> datetime:
   for f in DATE_FORMATS:
@@ -22,7 +23,7 @@ def parseTime(s : str) -> datetime:
       return datetime.strptime(s, f)
     except ValueError:
       pass
-  raise ValueError(f"Invalid date string '{s}' does not match format: {DATE_FORMATS}")
+  raise ValueError(f"Invalid date string '{s}' does not match format:\n{DATE_FORMATS_STR}")
 
 
 from copy import deepcopy
@@ -37,11 +38,13 @@ def yieldTimeRange(a : datetime,
     x += delta
 
 if __name__ == '__main__':
+
+
   parser = argparse.ArgumentParser(description='Store meteomatics data with dynamic spatial-resolution using nested polygons')
   parser.add_argument('--keep_unused', action='store_true', help='Save leaf nodes even if they do not contain a point of interest', default=False)
   parser.add_argument('--stats', action='extend', help='List of meteomatic stats on which to query', required=True, nargs="+")
-  parser.add_argument('--start_time', type=parseTime, help=f'Time on which to start data collection. {DATE_FORMATS}', default=datetime.now(timezone.utc))
-  parser.add_argument('--end_time', type=parseTime, help=f'Time on which to end data collection. {DATE_FORMATS}', default=datetime.now(timezone.utc))
+  parser.add_argument('--start_time', type=parseTime, help=f'Time on which to start data collection.\n{DATE_FORMATS_STR}', default=datetime.now(timezone.utc))
+  parser.add_argument('--end_time', type=parseTime, help=f'Time on which to end data collection.\n{DATE_FORMATS_STR}', default=datetime.now(timezone.utc))
   parser.add_argument('--time_delta', type=json.loads, help=f'Python datetime.timedelta keyword arguments as json', default=timedelta(days=1))
   args = parser.parse_args()
   start = args.start_time

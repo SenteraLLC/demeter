@@ -15,6 +15,8 @@ create extension postgis_raster with schema public;
 create extension "postgres-json-schema" with schema public;
 
 set search_path = test_mlops, public;
+--create role read_and_write;
+--grant select, insert on all tables in schema test_mlops to read_and_write;
 
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$
@@ -827,5 +829,4 @@ create table node_ancestry (
 
   primary key (root_id, parent_node_id, node_id)
 );
-
 

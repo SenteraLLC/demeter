@@ -1,5 +1,7 @@
 from typing import Dict, Any, Set, List, Tuple, Optional
 
+from datetime import datetime, timedelta
+
 from demeter.db import TableId
 from shapely.geometry import Polygon as Poly, Point # type: ignore
 from shapely import wkb # type: ignore
@@ -14,7 +16,7 @@ def getNodeIdLookup(cursor : Any,
       select N.node_id, N.geom
       from root R, node N
       where R.root_id = %(root_id)s and
-            R.node_id= N.node_id
+            R.root_node_id= N.node_id
       UNION ALL
       select N.node_id, N.geom
       from node_and_geom P
@@ -36,9 +38,7 @@ def findRootByPoint(cursor : Any,
                     points : List[Point],
                     local_type_id : Optional[TableId],
                    ) -> Dict[TableId, List[Point]]:
-  # TODO: Postgres probably has native support for Point so the unnesting is pointless
-  # TODO: Yep, upgrade to psycopg3
-  # TODO: Fix hard coded 4326
+  # TODO: Postgres 3 has native support for Point so we will be able to remove this hack
   stmt = """
     with fix_point_hack as (
       select ST_SetSRID(ST_MakePoint(x, y), 4326) as point
@@ -47,7 +47,7 @@ def findRootByPoint(cursor : Any,
       from root R, node N, fix_point_hack P, local_type T
       where T.local_type_id = %(local_type_id)s and
             R.local_type_id = T.local_type_id and
-            R.node_id = N.node_id and
+            R.root_node_id = N.node_id and
             ST_Contains(N.geom, P.point)
       group by R.root_id
   """
@@ -55,6 +55,8 @@ def findRootByPoint(cursor : Any,
   cursor.execute(stmt, {"xs": list(xs), "ys": list(ys), "local_type_id": local_type_id})
   results = cursor.fetchall()
   out : Dict[TableId, List[Point]] = {}
+  # TODO: This aggregation can happen in postgres
+  #       See 'getTree'
   for r in results:
     out[r.root_id] = [Point(p["coordinates"]) for p in r.points]
   return out
@@ -67,7 +69,7 @@ def findRootByGeom(cursor : Any,
     select R.root_id, array_agg(gid) as geom_ids
     from root R, node N, geom G, unnest(%(geom_ids)s) as gid
     where gid = G.geom_id and
-          R.node_id = N.geom_id and
+          R.root_node_id = N.geom_id and
           ST_Contains(N.geom, G.geom)
     group by R.root_id
   """
@@ -78,16 +80,41 @@ def findRootByGeom(cursor : Any,
     out[r.root_id] = r.geom_ids
   return out
 
-# TODO: Make dataclasses out of these compound types
-TreeItem = Tuple[Poly, List[Poly], List[Point]]
+#TreeItem = Tuple[Poly, List[Poly], List[Point]]
+from typing import TypedDict
 
-# TODO: Is there a problem with duplicating the root node geom in 'node'?
-#       Is the 'root' node the buffered version of the 'geom' node?
-#       Should probably make a note of this somewhere
+class NodeMeta(TypedDict):
+  bounds : Poly
+  value  : float
+  ancestry : List[TableId]
+  points : List[Point]
+
+
+from dataclasses import dataclass
+from typing import Iterator
+from collections import ChainMap
+from collections.abc import ItemsView
+
+@dataclass
+class Tree:
+  leaves : Dict[TableId, NodeMeta]
+  branches : Dict[TableId, NodeMeta]
+
+  #def __iter__(self) -> ItemsView[TableId, NodeMeta]:
+  #  return ChainMap(self.leaves, self.branches).items()
+
+  def __iter__(self) -> Iterator[Tuple[TableId, NodeMeta]]:
+    return iter(ChainMap(self.leaves, self.branches).items())
+
+
+
+
 def getTree(cursor : Any,
-             root_id : TableId,
-             points_of_interest : List[Point],
-            ) -> Tuple[List[TreeItem], List[TreeItem]]:
+            root_id : TableId,
+            points_of_interest : List[Point],
+            start_time : datetime,
+            time_delta : timedelta = timedelta(seconds=1),
+           ) -> Tree:
   stmt = """
     with recursive fix_point_hack as (
       select ST_SetSRID(ST_MakePoint(x, y), 4326) as point
@@ -99,54 +126,49 @@ def getTree(cursor : Any,
              N.geom,
              '{}'::bigint[] as ancestry,
              P.point,
-             (A.parent_node_id is null) as is_leaf,
-             456 as hmm
-      from root R
-      join node N on R.node_id = N.node_id
-      left join node_ancestry A on N.node_id = A.parent_node_id
+             not exists (select * from node_ancestry where parent_node_id = N.node_id) as is_leaf
+      from test_mlops.root R
+      join test_mlops.node N on R.root_node_id = N.node_id
       natural full outer join fix_point_hack P
       where R.root_id = %(root_id)s and
             ST_Contains(N.geom, P.point)
+
       UNION ALL
+
       select N.node_id,
              N.value,
              N.geom,
              array_append(RA.ancestry, RA.node_id) as ancestry,
              RA.point,
-             (A2.node_id is not null) as is_leaf,
-             123 as hmm
-
+             not exists (select * from node_ancestry where parent_node_id = N.node_id) as is_leaf
       from rebuilt_ancestry RA
-      join node_ancestry A on RA.node_id = A.parent_node_id
-      join node N on N.node_id = A.node_id
-      left join node_ancestry A2 on N.node_id = A2.node_id
+      join test_mlops.node_ancestry A on RA.node_id = A.parent_node_id
+      join test_mlops.node N on N.node_id = A.node_id
       where ST_Contains(N.geom, RA.point)
 
-    ), agg_points as (
-      select is_leaf, node_id, value, geom, ancestry, jsonb_agg(point) as points
-      from rebuilt_ancestry
-      group by is_leaf, node_id, value, geom, ancestry
-
+    ), node_id_to_meta as (
+      select is_leaf,
+             node_id,
+             json_build_object(
+               'bounds', geom::text,
+               'value', value,
+               'ancestry', ancestry,
+               'points', jsonb_agg(point::text)
+             ) as meta
+             from rebuilt_ancestry
+             group by is_leaf, node_id, geom, value, ancestry, point
     ) select is_leaf,
-             jsonb_agg(
-               jsonb_build_object('id', node_id,
-                                  'queue_item',
-                                    jsonb_build_array(geom, ancestry, points)
-                                  )
-             )
-             from agg_points
-             group by is_leaf
+             jsonb_object_agg(node_id, meta) as node_meta
+             from node_id_to_meta
+             group by is_leaf;
   """
   xs, ys = zip(*((p.x, p.y) for p in points_of_interest))
   args = {"root_id": root_id, "xs": list(xs), "ys": list(ys) }
   cursor.execute(stmt, args)
   results = cursor.fetchall()
-  leaves = a = results[0]
-  branches = b = results[1]
-  if b["is_leaf"]:
-    leaves = b
-    branches = a
-  return leaves, branches
-
+  r0 = results[0]
+  l = r0.node_meta
+  b = results[1].node_meta
+  return Tree(l, b) if r0.is_leaf else Tree(b, l)
 
 

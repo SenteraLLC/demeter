@@ -44,11 +44,10 @@ class NodeRasterCell(Table):
 @dataclass(frozen=True)
 class Root(Detailed):
   local_type_id : TableId
-  node_id : TableId
+  root_node_id : TableId
   time : datetime
 
 
-# TODO: I think ancestry should be optional, note this somewhere
 @dataclass(frozen=True)
 class Ancestry(SelfKey):
   parent_node_id : TableId

@@ -1,4 +1,4 @@
-from typing import Dict, Iterator, Optional
+from typing import Dict, Iterator, Optional, Tuple
 
 import json
 import argparse
@@ -7,12 +7,17 @@ from datetime import datetime, timezone, timedelta
 
 from demeter.db import TableId
 from demeter.db import getConnection
+from demeter.grid import getRoot, getNodePolygon
 
-from .search import findRootByPoint
+from shapely import wkb
+
+from .search import findRootByPoint, getTree
 from .example import getStartingGeoms, insertTree, do_stop, getPoints, pointsToBound, getLocalType
+from .valuer import Valuer, Value
+
 from . import main_loop
 
-from .spatial_utils import getKey
+from .spatial_utils import getKey, getKeyFromGeoJson
 
 SHORT = "%Y-%m-%dZ"
 LONG = " ".join([SHORT, "%H-%M-%SZ"])
@@ -45,6 +50,76 @@ def yieldTimeRange(a : datetime,
     yield x
     x += delta
 
+
+from typing import List
+
+async def main(stat : str,
+               date : datetime,
+               points : List[Point],
+              ) -> None:
+  s = stat
+  local_type_id = getLocalType(cursor, s)
+  existing_roots = findRootByPoint(cursor, points, local_type_id)
+
+  d = date
+  v = Valuer(d, s)
+  running = asyncio.create_task(v.request_loop())
+
+  node_id_lookup : Dict[str, TableId] = {}
+  seed_polys : List[Tuple[Poly, List[Poly], List[Point]]] = []
+
+  if not len(existing_roots):
+    root_id, root_node_id = getStartingGeoms(cursor, points, start_polygon, U, d, s)
+    k = getKey(start_polygon)
+    node_id_lookup[k] = root_node_id
+
+    _, __, my_points = await v.get_value(start_polygon, [], points)
+    if len(points) != len(my_points):
+      print("Some points did not fall in starting range: ",len(points) - len(my_points))
+    if not len(my_points):
+      # TODO: Add this functionality
+      # print("No valid points of interest were provided. Performing exhaustive query. This may take awhile.")
+      raise Exception("No points of interest is not currently supported.")
+
+    seed_polys.append((start_polygon, [], my_points))
+
+  elif len(existing_roots) > 1:
+    raise Exception("Too many")
+
+  else:
+    # TODO: Where to store time delta
+    #import sys
+    root_id, points = existing_roots.popitem()
+    root = getRoot(cursor, root_id)
+    root_node_id = root.root_node_id
+
+   # TODO FIXME Fix time delta
+    existing = getTree(cursor, root_id, points, d, timedelta(days=1, minutes=-1))
+    # TODO: Handle key calc here or in 'toTree' sql?
+    # TODO: psycopg3 should let us skip directly to shapely::Polygon
+    #v.results = { getKeyGeoJson(m["bounds"]) : Value(m["value"]) for node_id, m in existing }
+    v.results = { getKey(wkb.loads(m["bounds"], hex=True)) : Value(m["value"]) for node_id, m in existing }
+    for node_id, leaf in existing.leaves.items():
+      # The leaves may be looked up as parents in 'insertTree'
+      k = getKey(wkb.loads(leaf["bounds"], hex=True))
+      node_id_lookup[k] = root_node_id
+
+      for lf in leaf["ancestry"]:
+        n = getNodePolygon(cursor, lf)
+
+      # We need to store metadata for the leaves in the Valuer
+      # TODO: Do in SQL
+      my_ancestry = [ getNodePolygon(cursor, node_id) for node_id in leaf["ancestry"] ]
+      p = wkb.loads(leaf["bounds"], hex=True)
+      points = [wkb.loads(z, hex=True) for z in leaf["points"]]
+      seed_polys.append((p, my_ancestry, points))
+
+  branches, leaves = await main_loop(start_polygon, points, do_stop, U, v, seed_polys)
+
+  insertTree(cursor, branches, leaves, node_id_lookup, root_id)
+  running.cancel()
+
+
 if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description='Store meteomatics data with dynamic spatial-resolution using nested polygons')
@@ -74,19 +149,6 @@ if __name__ == '__main__':
   connection = getConnection()
   cursor = connection.cursor()
 
-#  print("START.")
-#  from shapely.geometry import Point
-#  from .search import getTree
-#  points = [Point(42.843863, -111.27541), Point(43.77503, -111.96389), Point(47.616118, -111.2754108)]
-#  leaves = getTree(cursor, TableId(123), points)
-#  print("LEN LEAVES: ",len(leaves))
-#  for l in leaves:
-#    print(l)
-#  print("LEN LEAVES: ",len(leaves))
-#  print("END.")
-#  import sys
-#  sys.exit(1)
-
   U = args.keep_unused
 
   # TODO: Remove the 'or getPoints' expr when there is a better means of testing
@@ -97,19 +159,8 @@ if __name__ == '__main__':
   for d in yieldTimeRange(start, end, delta):
 
     for s in args.stats:
-      local_type_id = getLocalType(cursor, s)
-      existing_roots = findRootByPoint(cursor, points, local_type_id)
-      if not len(existing_roots):
-        root_id, root_node_id = getStartingGeoms(cursor, points, start_polygon, U, d, s)
-      elif len(existing_roots) > 1:
-        root_id,
+      asyncio.run(main(s, d, points))
 
-      node_id_lookup : Dict[str, TableId] = {}
-      k = getKey(start_polygon)
-      node_id_lookup[k] = root_node_id
-
-      branches, leaves = asyncio.run(main_loop(start_polygon, points, do_stop, U, d, s))
-      insertTree(cursor, branches, leaves, node_id_lookup, root_id)
 
   connection.commit()
 

@@ -39,7 +39,7 @@ from demeter.data import Geom
 from shapely import wkb # type: ignore
 
 def getPoints(cursor : Any) -> List[Point]:
-  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 100")
+  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 10")
 
   out : List[Point] = []
   rows = cursor.fetchall()
@@ -61,7 +61,7 @@ from demeter.data import LocalType
 from demeter.db import TableId
 
 from demeter.grid import Root, Node, Ancestry
-from demeter.grid import insertOrGetRoot, insertOrGetNode, insertAncestry
+from demeter.grid import insertOrGetRoot, insertNode, insertAncestry
 from shapely.geometry import MultiPoint
 
 def insertNodes(cursor : Any,
@@ -77,7 +77,7 @@ def insertNodes(cursor : Any,
           polygon = x,
           value = value,
         )
-    node_id = insertOrGetNode(cursor, n)
+    node_id = insertNode(cursor, n)
 
     maybe_parent_id : Optional[TableId] = None
     if parent is not None:
@@ -141,7 +141,7 @@ def getStartingGeoms(cursor : Any,
                 # TODO: Find a way to populate this value from the main loop
                 value = float("nan"),
               )
-  root_node_id = insertOrGetNode(cursor, root_node)
+  root_node_id = insertNode(cursor, root_node)
 
   polygon_bounds = tuple(start_polygon.exterior.coords)
 
@@ -155,7 +155,7 @@ def getStartingGeoms(cursor : Any,
   r = Root(
         local_type_id = local_type_id,
         time = time,
-        node_id = root_node_id,
+        root_node_id = root_node_id,
       )
   root_id = insertOrGetRoot(cursor, r)
 
@@ -178,17 +178,15 @@ def insertTree(cursor : Any,
 
     # TODO: Options for:
     #       Pick up from existing points
-    #       Delete node when it is replaced with finer resolutions
     #       Logging
     #       Config for default do_stop function
     #       Custom do_stop functions?
+    #       Custom splitter
     #       Find proper "root"
     #       Option to specifiy root geom, dont generate from points
     #       Should it be possible to change the size/geom_id of a root geom?
     #         Hmm, does the root node geom even need to be in "geom" ?
     #         I don't think so.
-
-
 
 
   return None

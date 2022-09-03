@@ -1,4 +1,4 @@
-from typing import List, Iterator, Tuple, NewType
+from typing import List, Iterator, Tuple, NewType, Dict, Any
 
 from shapely.geometry import Polygon as Poly, Point # type: ignore
 
@@ -55,6 +55,10 @@ def pointsToKey(x : float, y : float) -> str:
 def getKey(p : Poly) -> str:
   cx, cy = getCentroid(p)
   return pointsToKey(cx, cy)
+
+def getKeyFromGeoJson(g : Dict[str, Any]) -> str:
+  p = Poly(g["coordinates"][0])
+  return getKey(p)
 
 
 def getContainedBy(p : Poly, points : List[Point]) -> Tuple[List[Point], List[Point]]:

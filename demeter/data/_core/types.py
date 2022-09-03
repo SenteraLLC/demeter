@@ -38,6 +38,7 @@ class Geom(db.Table):
   coordinates       : InitVar[Coordinates]
   container_geom_id : Optional[db.TableId] = None
 
+  # TODO: Should store the wkb, not some serialized dict
   geom              : str = field(init=False)
 
   def __post_init__(self,

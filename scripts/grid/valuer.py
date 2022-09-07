@@ -1,4 +1,4 @@
-from typing import Dict, NewType, List, Tuple
+from typing import Dict, NewType, List, Tuple, Set, Iterator
 
 import asyncio
 from asyncio import Queue
@@ -7,9 +7,11 @@ from datetime import datetime
 from time import time
 
 from shapely.geometry import Polygon as Poly, Point # type: ignore
+from shapely import wkb # type: ignore
 
-from .spatial_utils import getKey, getContainedBy, yieldSplitBuffer, getCentroid, pointsToKey
+from .spatial_utils import getKey, getNodeKey, getContainedBy, yieldSplitBuffer, getCentroid, pointsToKey
 from .meteo import req
+from .search import NodeMeta
 
 
 TIMEOUT = 2400
@@ -19,8 +21,9 @@ Value = NewType('Value', float)
 
 class Valuer:
   def __init__(self, time : datetime, stat : str) -> None:
-    self.q : Queue[Poly] = Queue()
+    self.q : Queue[Tuple[Poly, int]] = Queue()
     self.results : Dict[str, Value] = {}
+    self.existing_keys : Set[str] = set()
     self.time = time
     self.stat = stat
 
@@ -32,22 +35,40 @@ class Valuer:
         if t > TIMEOUT:
           raise Exception(f"TIMEOUT for {key} Q SIZE IS: {self.q.qsize()}.")
         r = self.results[key]
+
         return r
       except KeyError:
         pass
       await asyncio.sleep(1)
+
+  def load_existing(self,
+                    existing_node_metas : Iterator[NodeMeta],
+                   ) -> bool:
+    for m in existing_node_metas:
+      g = wkb.loads(m["bounds"], hex=True)
+      k = getKey(g)
+      self.results[k] = Value(m["value"])
+      if not m["is_bud"]:
+        self.existing_keys.add(getNodeKey(g, m["level"]))
+    return True
 
 
   async def get_value(self,
                       p : Poly,
                       my_ancestry : List[Poly] = [],
                       parent_points : List[Point] = [],
-                     ) -> Tuple[Value, List[Poly], List[Point]]:
+                     ) -> Tuple[Value, bool, List[Poly], List[Point]]:
     s = getKey(p)
+
+    is_new = True
     if s not in self.results:
-      self.q.put_nowait(p)
+      level = len(my_ancestry)
+      self.q.put_nowait((p, level))
+    elif s in self.existing_keys:
+      is_new = False
+
     my_points, _others = getContainedBy(p, parent_points)
-    return await self._get_value(s), my_ancestry, my_points
+    return await self._get_value(s), is_new, my_ancestry, my_points
 
 
   def get_value_nowait(self, p : Poly) -> Value:
@@ -65,12 +86,14 @@ class Valuer:
       out : OrderedDict[str, Poly] = OrderedDict()
       while len(out) <= MAX_LOCATIONS:
         try:
-          p = self.q.get_nowait()
+          p, level = self.q.get_nowait()
           out[getKey(p)] = p
         except asyncio.QueueEmpty:
           break
 
+      # TODO: Copy by item, not entire array
       for k, o in out.copy().items():
+        child_level = level + 1
         remaining_slots = MAX_LOCATIONS - len(out)
         if remaining_slots <= 0:
           break

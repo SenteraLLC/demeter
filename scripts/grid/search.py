@@ -6,19 +6,19 @@ from demeter.db import TableId
 from shapely.geometry import Polygon as Poly, Point # type: ignore
 from shapely import wkb # type: ignore
 
-from .spatial_utils import getKey
+from .spatial_utils import getNodeKey
 
 def getNodeIdLookup(cursor : Any,
                     root_id : TableId,
                     ) -> Dict[str, TableId]:
   stmt = """
     with recursive node_and_geom as (
-      select N.node_id, N.geom
+      select N.node_id, N.geom, 0 as level
       from root R, node N
       where R.root_id = %(root_id)s and
             R.root_node_id= N.node_id
       UNION ALL
-      select N.node_id, N.geom
+      select N.node_id, N.geom, P.level + 1
       from node_and_geom P
       join node_ancestry A on P.node_id = A.parent_node_id
       join node N on N.node_id = A.node_id
@@ -29,7 +29,7 @@ def getNodeIdLookup(cursor : Any,
   out : Dict[str, TableId] = {}
   for r in results:
     g = wkb.loads(r.geom, hex=True)
-    k = getKey(g)
+    k = getNodeKey(g, r.level)
     out[k] = r.node_id
   return out
 
@@ -42,7 +42,7 @@ def findRootByPoint(cursor : Any,
   stmt = """
     with fix_point_hack as (
       select ST_SetSRID(ST_MakePoint(x, y), 4326) as point
-      from unnest(%(xs)s) as x, unnest(%(ys)s) as y
+      from unnest(%(xs)s, %(ys)s) as u(x, y)
     ) select R.root_id, jsonb_agg(P.point) as points
       from root R, node N, fix_point_hack P, local_type T
       where T.local_type_id = %(local_type_id)s and
@@ -84,10 +84,12 @@ def findRootByGeom(cursor : Any,
 from typing import TypedDict
 
 class NodeMeta(TypedDict):
+  level  : int
   bounds : Poly
   value  : float
   ancestry : List[TableId]
   points : List[Point]
+  is_bud : bool
 
 
 from dataclasses import dataclass
@@ -108,7 +110,6 @@ class Tree:
 
 
 
-
 def getTree(cursor : Any,
             root_id : TableId,
             points_of_interest : List[Point],
@@ -118,15 +119,16 @@ def getTree(cursor : Any,
   stmt = """
     with recursive fix_point_hack as (
       select ST_SetSRID(ST_MakePoint(x, y), 4326) as point
-      from unnest(%(xs)s) as x, unnest(%(ys)s) as y
+      from unnest(%(xs)s, %(ys)s) as u(x, y)
 
     ), rebuilt_ancestry as (
       select N.node_id,
+             -12345::bigint as parent_node_id,
              N.value,
              N.geom,
              '{}'::bigint[] as ancestry,
              P.point,
-             not exists (select * from node_ancestry where parent_node_id = N.node_id) as is_leaf
+             0 as level
       from test_mlops.root R
       join test_mlops.node N on R.root_node_id = N.node_id
       natural full outer join fix_point_hack P
@@ -136,27 +138,36 @@ def getTree(cursor : Any,
       UNION ALL
 
       select N.node_id,
+             A.parent_node_id,
              N.value,
              N.geom,
              array_append(RA.ancestry, RA.node_id) as ancestry,
              RA.point,
-             not exists (select * from node_ancestry where parent_node_id = N.node_id) as is_leaf
+             (RA.level + 1) as level
       from rebuilt_ancestry RA
       join test_mlops.node_ancestry A on RA.node_id = A.parent_node_id
       join test_mlops.node N on N.node_id = A.node_id
       where ST_Contains(N.geom, RA.point)
 
     ), node_id_to_meta as (
-      select is_leaf,
+      select not exists (
+               select * from rebuilt_ancestry A2
+                      where A1.node_id = A2.parent_node_id
+             ) as is_leaf,
              node_id,
              json_build_object(
+               'level', level,
                'bounds', geom::text,
                'value', value,
                'ancestry', ancestry,
-               'points', jsonb_agg(point::text)
+               'points', jsonb_agg(point::text),
+               'is_bud', exists (
+                           select * from node_ancestry A
+                           where A1.node_id = A.parent_node_id
+                         )
              ) as meta
-             from rebuilt_ancestry
-             group by is_leaf, node_id, geom, value, ancestry, point
+             from rebuilt_ancestry A1
+             group by is_leaf, node_id, level, geom, value, ancestry, point
     ) select is_leaf,
              jsonb_object_agg(node_id, meta) as node_meta
              from node_id_to_meta
@@ -168,7 +179,51 @@ def getTree(cursor : Any,
   results = cursor.fetchall()
   r0 = results[0]
   l = r0.node_meta
-  b = results[1].node_meta
+  try:
+    b = results[1].node_meta
+  except IndexError:
+    b = {}
   return Tree(l, b) if r0.is_leaf else Tree(b, l)
 
 
+
+def debug() -> None:
+  stmt = """
+  select A.geom::Polygon,
+                   B.geom::Polygon,
+                   ST_Contains(A.geom, B.geom),
+                   ST_Covers(A.geom, B.geom),
+                   ST_Overlaps(A.geom, B.geom),
+                   ST_Area(ST_Intersection(A.geom, B.geom)) / ST_Area(B.geom)
+            from test_mlops.node A, test_mlops.node B
+            where A.node_id=36395 and B.node_id=36397;
+  """
+
+
+  """
+  select A.geom::Polygon as parent,
+         B.geom::Polygon as child,
+
+         A.geom::Polygon as parent_geom,
+         B.geom::Polygon as child_geom,
+
+  """
+
+  """
+  select B.node_id as child,
+         B.value as child_value,
+         A.node_id as parent,
+         A.value as parent_value,
+         ST_Contains(A.geom, B.geom),
+         ST_Covers(A.geom, B.geom),
+         ST_Overlaps(A.geom, B.geom),
+         ST_Area(A.geom) as parent_area,
+         ST_Area(B.geom) as child_area,
+         ST_Area(ST_Intersection(A.geom, B.geom)) / ST_Area(B.geom) as child_percent,
+         ST_Area(ST_Intersection(A.geom, B.geom)) / ST_Area(A.geom) as parent_percent
+            from test_mlops.node A, test_mlops.node B, test_mlops.node_ancestry N
+            where A.node_id=N.parent_node_id and B.node_id=N.node_id
+            order by B.node_id asc, A.node_id asc;
+  """
+
+  return None

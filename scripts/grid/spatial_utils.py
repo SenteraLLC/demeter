@@ -9,6 +9,7 @@ def frange(a : float, b : float , s : float) -> Iterator[Tuple[float, float]]:
     next_out = out + s
     yield out, (out := next_out)
 
+
 def split(p : Poly) -> Iterator[Poly]:
   x1, y1, x2, y2 = p.bounds
 
@@ -56,10 +57,13 @@ def getKey(p : Poly) -> str:
   cx, cy = getCentroid(p)
   return pointsToKey(cx, cy)
 
-def getKeyFromGeoJson(g : Dict[str, Any]) -> str:
-  p = Poly(g["coordinates"][0])
-  return getKey(p)
+def getNodeKey(p : Poly, level : int) -> str:
+  cx, cy = getCentroid(p)
+  return f"[{level}]" + pointsToKey(cx, cy)
 
+#def getKeyFromGeoJson(g : Dict[str, Any]) -> str:
+#  p = Poly(g["coordinates"][0])
+#  return getKey(p)
 
 def getContainedBy(p : Poly, points : List[Point]) -> Tuple[List[Point], List[Point]]:
   yes : List[Point] = []

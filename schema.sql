@@ -796,13 +796,12 @@ create table node_raster (
 create table root (
   root_id bigserial primary key,
 
-  node_id bigint
-          references node(node_id)
-          not null,
+  root_node_id bigint
+               references node(node_id)
+               not null,
   local_type_id bigint
                 references local_type(local_type_id)
                 not null,
-  unique(geom_id, local_type_id),
 
   time          timestamp without time zone
                 not null,
@@ -816,15 +815,12 @@ create table root (
 );
 
 create table node_ancestry (
-  root_id bigint
-          references root(root_id)
-          not null,
   parent_node_id bigint
                  references node(node_id),
   -- TODO: Contained-by-parent constraint
 
   node_id bigint references node(node_id) not null,
 
-  primary key (root_id, parent_node_id, node_id)
+  primary key (parent_node_id, node_id)
 );
 

@@ -9,7 +9,7 @@ from typing import Optional
 from shapely.geometry import Polygon as Poly, Point # type: ignore
 
 from .valuer import Valuer, Value
-from .spatial_utils import getKey
+from .spatial_utils import getNodeKey
 from . import StopState
 from . import main_loop
 
@@ -22,11 +22,13 @@ def do_stop(p : Poly,
            ) -> float:
   if len(my_points) <= 0:
     return StopState.NO_POINTS
-  if len(ancestry) < 2:
+
+  try:
+    parent = ancestry[-1]
+    grandparent = ancestry[-2]
+  except IndexError:
     return False
 
-  parent = ancestry[-1]
-  grandparent = ancestry[-2]
   pv = valuer.get_value_nowait(parent)
   gpv = valuer.get_value_nowait(grandparent)
   total_diff = abs(pv - v) + abs(gpv - v) + abs(pv - gpv)
@@ -39,7 +41,7 @@ from demeter.data import Geom
 from shapely import wkb # type: ignore
 
 def getPoints(cursor : Any) -> List[Point]:
-  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 10")
+  cursor.execute("select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 50 offset 10")
 
   out : List[Point] = []
   rows = cursor.fetchall()
@@ -65,14 +67,14 @@ from demeter.grid import insertOrGetRoot, insertNode, insertAncestry
 from shapely.geometry import MultiPoint
 
 def insertNodes(cursor : Any,
-                ps : List[Tuple[float, Poly, Poly]],
+                ps : List[Tuple[float, int, Poly, Poly]],
                 node_id_lookup : Dict[str, TableId],
-               ) -> Tuple[List[Tuple[float, Poly, Poly]],
+               ) -> Tuple[List[Tuple[float, int, Poly, Poly]],
                           List[Tuple[TableId, Optional[TableId]]]
                          ]:
-  still_pending : List[Tuple[float, Poly, Poly]] = []
+  still_pending : List[Tuple[float, int, Poly, Poly]] = []
   table_ids : List[Tuple[TableId, Optional[TableId]]] = []
-  for value, x, parent in ps:
+  for value, level, x, parent in ps:
     n = Node(
           polygon = x,
           value = value,
@@ -81,7 +83,7 @@ def insertNodes(cursor : Any,
 
     maybe_parent_id : Optional[TableId] = None
     if parent is not None:
-      parent_key = getKey(parent)
+      parent_key = getNodeKey(parent, level - 1)
       if parent_key in node_id_lookup:
         parent_node_id = maybe_parent_id = node_id_lookup[parent_key]
         a = Ancestry(
@@ -90,11 +92,10 @@ def insertNodes(cursor : Any,
             )
         maybe_ancestor_key = insertAncestry(cursor, a)
       else:
-        still_pending.append((value, x, parent))
+        still_pending.append((value, level, x, parent))
     table_ids.append((node_id, maybe_parent_id))
 
-    k = getKey(x)
-    #print("STORING: ",k)
+    k = getNodeKey(x, level)
     node_id_lookup[k] = node_id
 
   return still_pending, table_ids
@@ -163,8 +164,8 @@ def getStartingGeoms(cursor : Any,
 
 
 def insertTree(cursor : Any,
-               branches : List[Tuple[float, Poly, Poly]],
-               leaves : List[Tuple[float, Poly, Poly]],
+               branches : List[Tuple[float, int, Poly, Poly]],
+               leaves : List[Tuple[float, int, Poly, Poly]],
                node_id_lookup : Dict[str, TableId],
                root_node_id : TableId,
               ) -> None:

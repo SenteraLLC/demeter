@@ -120,7 +120,6 @@ create table field (
   field_id bigserial
            primary key,
 
-  sentera_id text,
   external_id text,
 
   -- TODO: Constraint with grower_id and owner_id

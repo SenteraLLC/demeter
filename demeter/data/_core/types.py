@@ -75,7 +75,6 @@ class Field(db.Table):
   year        : Optional[int]
   grower_id   : Optional[db.TableId]
   external_id : Optional[str]
-  sentera_id  : Optional[str]      = None
   created     : Optional[datetime] = None
 
 @dataclass(frozen=True)

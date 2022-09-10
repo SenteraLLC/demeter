@@ -22,7 +22,7 @@ getRoot  : GetTable[Root] = g.getTableFunction(Root)
 getAncestry = g.getTableByKeyFunction(Ancestry, Ancestry)
 
 from typing import Any
-from shapely import wkb
+from shapely import wkb # type: ignore
 from shapely.geometry import Polygon as Poly # type: ignore
 from demeter.db import TableId
 

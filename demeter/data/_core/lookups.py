@@ -10,9 +10,8 @@ type_table_lookup : TableLookup = {
 
 data_table_lookup : TableLookup = {
   Geom          : "geom",
-  Owner         : "owner",
-  Grower        : "grower",
   Field         : "field",
+  FieldGroup    : "field",
   GeoSpatialKey : "geospatial_key",
   TemporalKey   : "temporal_key",
 }

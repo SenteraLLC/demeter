@@ -59,24 +59,20 @@ class Geom(db.Table):
 
 
 @dataclass(frozen=True)
-class Owner(db.Table):
-  owner : str
-
-from ...db import Detailed
-@dataclass(frozen=True)
-class Grower(Detailed):
-  owner_id    : db.TableId
-  farm        : str
-  external_id : Optional[str]
+class FieldGroup(db.Detailed):
+  name : str
+  parent_field_group_id : Optional[db.TableId] = None
+  external_id : Optional[str] = None
 
 @dataclass(frozen=True)
 class Field(db.Table):
-  owner_id    : db.TableId
   geom_id     : db.TableId
-  year        : Optional[int]
-  grower_id   : Optional[db.TableId]
-  external_id : Optional[str]
-  sentera_id  : Optional[str]      = None
+
+  external_id    : Optional[str]
+  grower_id      : Optional[db.TableId]
+  farm_id        : Optional[db.TableId]
+  field_group_id : Optional[db.TableId]
+
   created     : Optional[datetime] = None
 
 @dataclass(frozen=True)

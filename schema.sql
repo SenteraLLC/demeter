@@ -98,60 +98,43 @@ create constraint trigger geom_must_be_unique
        for each row execute procedure geom_must_be_unique();
 
 
-create table owner (
-  owner_id bigserial primary key,
-  owner text not null unique
-);
+create table field_group (
+  field_group_id bigserial primary key,
+  -- TODO: Add cycle detection constraint
+  parent_field_group_id bigint
+                        references field_group(field_group_id),
+  unique (field_group_id, parent_field_group_id),
 
-create table grower (
-  grower_id bigserial not null,
-  owner_id  bigint not null,
-  -- TODO: Pretty sure this is a good idea
-  primary key (grower_id, owner_id),
+  name text,
+  unique(parent_field_group_id, name),
 
   external_id text,
-  unique (owner_id, external_id),
-  farm text not null,
-  details  jsonb
-           not null
-           default '{}'::jsonb,
-  last_updated  timestamp without time zone
-                not null
-                default now()
+  details jsonb
 );
 
+CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;
 
--- TODO: This geom must be a polygon / multipolygon
+
 create table field (
   field_id bigserial
            primary key,
-
-  sentera_id text,
-  external_id text,
-
-  -- TODO: Constraint with grower_id and owner_id
-  owner_id bigint
-           references owner(owner_id)
-           not null,
-  unique (owner_id, external_id),
-  year     smallint,
   geom_id   bigint
            not null
            references geom(geom_id),
 
-  unique (geom_id, owner_id, year),
+  external_id text,
 
-  grower_id bigint,
-  foreign key (owner_id, grower_id)
-    references grower (owner_id, grower_id),
+  -- TODO: Constraints
+  grower_field_group_id bigint
+                        references field_group(field_group_id),
+  farm_field_group_id   bigint
+                        references field_group(field_group_id),
+  field_group_id bigint
+                 references field_group(field_group_id),
 
   created  timestamp without time zone
               not null
               default now()
-
-
-  -- TODO: Is this constraint true?
-  -- CHECK fields cannot overlap?
 );
 
 

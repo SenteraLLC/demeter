@@ -28,7 +28,7 @@ getFieldGroup      : GetTable[FieldGroup]    = g.getTableFunction(FieldGroup)
 getGeom       : GetTable[Geom]     = g.getTableFunction(Geom)
 
 insertField          : ReturnId[Field]      = g.getInsertReturnIdFunction(Field)
-insertFieldGroup    : ReturnId[FieldGroup]      = g.getInsertReturnIdFunction(FieldGroup)
+insertFieldGroupStrict    : ReturnId[FieldGroup]      = g.getInsertReturnIdFunction(FieldGroup)
 insertGeoSpatialKey : ReturnId[GeoSpatialKey] = g.getInsertReturnIdFunction(GeoSpatialKey)
 insertTemporalKey : ReturnId[TemporalKey] = g.getInsertReturnIdFunction(TemporalKey)
 insertCropType   : ReturnId[CropType]   = g.getInsertReturnIdFunction(CropType)
@@ -41,8 +41,8 @@ insertCropProgress = g.getInsertReturnKeyFunction(CropProgress, CropProgressKey)
 
 insertOrGetGeoSpatialKey = g.partialInsertOrGetId(getMaybeGeoSpatialKeyId, insertGeoSpatialKey)
 insertOrGetTemporalKey = g.partialInsertOrGetId(getMaybeTemporalKeyId, insertTemporalKey)
-insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
 insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
+insertOrGetFieldGroupStrict = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroupStrict)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
 
@@ -51,4 +51,5 @@ getCropProgress : GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKey
 
 insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
 insertOrGetCropProgress = g.partialInsertOrGetKey(CropProgressKey, getCropProgress, insertCropProgress)
+
 

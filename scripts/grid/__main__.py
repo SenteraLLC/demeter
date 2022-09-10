@@ -1,3 +1,6 @@
+# TODO: Resolve flake8 errors
+# flake8: noqa
+
 from typing import Dict, Iterator, Optional, Tuple, Any
 
 import json
@@ -19,8 +22,9 @@ from . import main_loop
 
 from .spatial_utils import getKey, getNodeKey
 
-SHORT = "%Y-%m-%dZ"
-LONG = " ".join([SHORT, "%H-%M-%SZ"])
+DATE = "%Y-%m-%d"
+SHORT = DATE + "Z"
+LONG = " ".join([DATE, "T%H-%M-%SZ"])
 DATE_FORMATS = [SHORT, LONG]
 DATE_FORMATS_STR = " || ".join([s.replace('%', '%%') for s in DATE_FORMATS])
 
@@ -30,7 +34,7 @@ def parseTime(s : str) -> datetime:
       return datetime.strptime(s, f)
     except ValueError:
       pass
-  raise ValueError(f"Invalid date string '{s}' does not match format:\n{DATE_FORMATS_STR}")
+  raise ValueError(f"Invalid date string '{s}' does not match format: {DATE_FORMATS_STR}")
 
 import json
 from shapely.geometry import Point, Polygon as Poly # type: ignore

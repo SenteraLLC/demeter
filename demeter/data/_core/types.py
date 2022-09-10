@@ -69,9 +69,9 @@ class Field(db.Table):
   geom_id     : db.TableId
 
   external_id    : Optional[str]
-  grower_id      : Optional[db.TableId]
-  farm_id        : Optional[db.TableId]
-  field_group_id : Optional[db.TableId]
+  grower_field_group_id : Optional[db.TableId]
+  farm_field_group_id   : Optional[db.TableId]
+  field_group_id        : Optional[db.TableId]
 
   created     : Optional[datetime] = None
 

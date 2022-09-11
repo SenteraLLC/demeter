@@ -108,7 +108,7 @@ create table field_group (
   name text,
 
   constraint roots_must_be_named check (
-    not parent_field_group_id is null and name is null
+    not (parent_field_group_id is null and name is null)
   ),
   unique(parent_field_group_id, name),
 
@@ -133,13 +133,16 @@ create table field (
   field_group_id bigint
                  references field_group(field_group_id),
 
+  created  timestamp without time zone
+              not null
+              default now(),
+
   details jsonb
           not null
           default '{}'::jsonb,
-
-  created  timestamp without time zone
-              not null
-              default now()
+  last_updated  timestamp without time zone
+                not null
+                default now()
 );
 
 

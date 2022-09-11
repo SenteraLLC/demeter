@@ -13,21 +13,18 @@ def insertFieldGroup(cursor : Any,
     with recursive ancestry as (
       select field_group_id, parent_field_group_id, 0 as i
       from field_group
-      where name = %(field_group_name)s
+      where name = %(name)s
       UNION ALL
       select G.field_group_id, G.parent_field_group_id, i + 1
       from field_group G
       join ancestry A on G.field_group_id = A.parent_field_group_id
-    ) select A1.parent_group_id,
+    ) select A1.parent_field_group_id
       from ancestry A1, ancestry A2
       where A1.i = 0 and
             A2.i > A1.i and
-            A2.field_group_id = %(field_group_id)s;
+            A2.field_group_id = %(parent_field_group_id)s;
   """
-  cursor.execute(stmt, {'field_group_name': FieldGroup.name,
-                        "parent_field_group_id": field_group.parent_field_group_id,
-                       }
-                )
+  cursor.execute(stmt, field_group())
   results = cursor.fetchall()
 
   if len(results) > 1:

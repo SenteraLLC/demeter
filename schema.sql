@@ -106,6 +106,10 @@ create table field_group (
   unique (field_group_id, parent_field_group_id),
 
   name text,
+
+  constraint roots_must_be_named check (
+    not parent_field_group_id is null and name is null
+  ),
   unique(parent_field_group_id, name),
 
   external_id text,
@@ -118,19 +122,20 @@ CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where p
 create table field (
   field_id bigserial
            primary key,
+
   geom_id   bigint
            not null
            references geom(geom_id),
 
+  name text,
   external_id text,
 
-  -- TODO: Constraints
-  grower_field_group_id bigint
-                        references field_group(field_group_id),
-  farm_field_group_id   bigint
-                        references field_group(field_group_id),
   field_group_id bigint
                  references field_group(field_group_id),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
 
   created  timestamp without time zone
               not null

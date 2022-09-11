@@ -65,13 +65,13 @@ class FieldGroup(db.Detailed):
   external_id : Optional[str] = None
 
 @dataclass(frozen=True)
-class Field(db.Table):
+class Field(db.Detailed):
   geom_id     : db.TableId
 
+  name : str
   external_id    : Optional[str]
-  grower_field_group_id : Optional[db.TableId]
-  farm_field_group_id   : Optional[db.TableId]
-  field_group_id        : Optional[db.TableId]
+
+  field_group_id : Optional[db.TableId]
 
   created     : Optional[datetime] = None
 

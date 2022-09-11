@@ -5,9 +5,10 @@ from ... import db
 from .generated import g, getMaybeFieldGroupId, insertFieldGroupStrict
 from .types import FieldGroup
 
+
 def insertFieldGroup(cursor : Any,
-                      field_group : FieldGroup,
-                     ) -> db.TableId:
+                     field_group : FieldGroup,
+                    ) -> db.TableId:
   stmt = """
     with recursive ancestry as (
       select field_group_id, parent_field_group_id, 0 as i
@@ -63,4 +64,6 @@ def getGroupHeirarchy(cursor : Any,
   cursor.execute(stmt, {'field_id' : field_id})
   results = cursor.fetchall()
   return [db.TableId(i) for i in results.root_to_leaf]
+
+
 

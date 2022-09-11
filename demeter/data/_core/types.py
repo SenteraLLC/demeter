@@ -61,7 +61,7 @@ class Geom(db.Table):
 @dataclass(frozen=True)
 class FieldGroup(db.Detailed):
   name : str
-  field_group_id : Optional[db.TableId] = None
+  parent_field_group_id : Optional[db.TableId] = None
   external_id : Optional[str] = None
 
 @dataclass(frozen=True)

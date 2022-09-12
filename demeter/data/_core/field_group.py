@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence, Dict, Set
 
 from ... import db
 
@@ -100,7 +100,7 @@ def insertFieldGroupGreedy(cursor : Any,
 insertOrGetFieldGroupGreedy = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroupGreedy)
 
 
-def getGroupHeirarchy(cursor : Any,
+def getFieldHeirarchy(cursor : Any,
                       field_id : db.TableId,
                      ) -> List[db.TableId]:
   stmt = """
@@ -123,5 +123,42 @@ def getGroupHeirarchy(cursor : Any,
   results = cursor.fetchall()
   return [db.TableId(i) for i in results.root_to_leaf]
 
+
+
+def getOrgFields(cursor : Any,
+                 field_group_id : db.TableId,
+                ) -> Dict[db.TableId, Set[db.TableId]]:
+
+  stmt = """
+    with recursive ancestry as (
+      select parent_field_group_id,
+             field_group_id,
+             0 as depth
+      from test_mlops.field_group
+      where field_group_id = %(field_group_id)s
+      UNION ALL
+      select F.parent_field_group_id,
+             F.field_group_id,
+             A.depth + 1
+      from ancestry A
+      join test_mlops.field_group F on F.parent_field_group_id = A.field_group_id
+
+   ), leaf as (
+     select A1.*
+     from ancestry A1
+     where not exists (select * from ancestry A2 where A2.parent_field_group_id = A1.field_group_id)
+
+   ) select L.field_group_id as leaf_field_group_id,
+            L.depth,
+            coalesce(jsonb_agg(F.field_id) filter (where F.field_id is not null), '[]'::jsonb) as field_ids
+     from leaf L
+     left join test_mlops.field F on F.field_group_id = L.field_group_id
+     group by L.parent_field_group_id, L.field_group_id;
+  """
+  cursor.execute(stmt, {'field_group_id' : field_group_id})
+  results = cursor.fetchall()
+  depths = {r["depth"] for r in results}
+  print("UNIQUE DEPTHS: ",depths)
+  return { r.leaf_field_group_id : r.field_ids for r in results}
 
 

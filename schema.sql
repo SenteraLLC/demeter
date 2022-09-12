@@ -471,9 +471,9 @@ create table local_value (
                  primary key,
 
   geom_id        bigint
-                 not null
                  references geom(geom_id),
   field_id       bigint
+                 not null
                  references field(field_id),
   unit_type_id   bigint
                  references unit_type(unit_type_id)

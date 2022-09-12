@@ -11,7 +11,7 @@ type_table_lookup : TableLookup = {
 data_table_lookup : TableLookup = {
   Geom          : "geom",
   Field         : "field",
-  FieldGroup    : "field",
+  FieldGroup    : "field_group",
   GeoSpatialKey : "geospatial_key",
   TemporalKey   : "temporal_key",
 }

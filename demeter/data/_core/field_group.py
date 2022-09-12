@@ -27,12 +27,6 @@ def searchFieldName(cursor : Any,
              field_group_id as leaf_id
       from field_group
       where name = %(name)s
-      UNION
-      select parent_field_group_id as parent_id,
-             field_group_id,
-             field_group_id as leaf_id
-      from field_group
-      where field_group_id = %(parent_field_group_id)s
 
     ), ancestry as (
       select * from leaf

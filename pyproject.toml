@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demeter"
-version = "1.1.9"
+version = "1.1.10"
 description = ""
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [

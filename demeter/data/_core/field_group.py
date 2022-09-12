@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Sequence
 
 from ... import db
 
-from .generated import g, getMaybeFieldGroupId, insertFieldGroupStrict
+from .generated import g, getMaybeFieldGroupId, insertFieldGroup
 from .types import FieldGroup
 
 
@@ -77,9 +77,9 @@ def searchFieldName(cursor : Any,
   return [r for r in results]
 
 
-def insertFieldGroup(cursor : Any,
-                     field_group : FieldGroup,
-                    ) -> db.TableId:
+def insertFieldGroupGreedy(cursor : Any,
+                           field_group : FieldGroup,
+                          ) -> db.TableId:
   fg = field_group
   search_results = searchFieldName(cursor,
                                    field_group,
@@ -100,10 +100,10 @@ def insertFieldGroup(cursor : Any,
   elif fg.parent_field_group_id is not None:
     raise Exception(f"Bad parent group id: {fg.parent_field_group_id}")
 
-  return insertFieldGroupStrict(cursor, field_group)
+  return insertFieldGroup(cursor, field_group)
 
 
-insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
+insertOrGetFieldGroupGreedy = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroupGreedy)
 
 
 def getGroupHeirarchy(cursor : Any,

@@ -15,15 +15,15 @@ __all__ = [
   'getGeom',
 
   'insertField',
+  'insertFieldGroupGreedy',
   'insertFieldGroup',
-  'insertFieldGroupStrict',
   'insertGeoSpatialKey',
   'insertTemporalKey',
 
   'insertOrGetGeoSpatialKey',
   'insertOrGetTemporalKey',
+  'insertOrGetFieldGroupGreedy',
   'insertOrGetFieldGroup',
-  'insertOrGetFieldGroupStrict',
   'insertOrGetField',
 
   'getMaybeDuplicateGeom',

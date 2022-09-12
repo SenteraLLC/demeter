@@ -113,7 +113,13 @@ create table field_group (
   unique(parent_field_group_id, name),
 
   external_id text,
+
   details jsonb
+          not null
+          default '{}'::jsonb,
+  last_updated  timestamp without time zone
+                not null
+                default now()
 );
 
 CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;

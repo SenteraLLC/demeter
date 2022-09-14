@@ -74,25 +74,27 @@ def searchFieldName(cursor : Any,
 def insertFieldGroupGreedy(cursor : Any,
                            field_group : FieldGroup,
                           ) -> db.TableId:
-  fg = field_group
   search_results = searchFieldName(cursor,
                                    field_group,
                                   )
-  if len(search_results) > 1:
-    raise Exception(f"Ambiguous ancestry: {search_results}")
+  p_id = field_group.parent_field_group_id
 
-  elif len(search_results) == 1:
-    r = search_results[0]
-    l = r.lineage
+  maybe_result = None
+  for r in search_results:
+    if p_id is not None and p_id in r.lineage:
+      if maybe_result is not None:
+        raise Exception(f"Ambiguous field group: {field_group}")
+      maybe_result = r
+
+  if (result := maybe_result) is not None:
+    l = result.lineage
     existing = l[-1] if len(l) else None
-    p_id = field_group.parent_field_group_id
     if existing != p_id:
       print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
       # TODO: OK???
-      field_group.parent_field_group_id = existing # type: ignore
-
-  elif fg.parent_field_group_id is not None:
-    raise Exception(f"Bad parent group id: {fg.parent_field_group_id}")
+    field_group.parent_field_group_id = existing # type: ignore
+  else:
+    raise Exception(f"Bad field group search: {field_group}")
 
   return insertFieldGroup(cursor, field_group)
 
@@ -128,7 +130,6 @@ def getFieldHeirarchy(cursor : Any,
 def getOrgFields(cursor : Any,
                  field_group_id : db.TableId,
                 ) -> Dict[db.TableId, Set[db.TableId]]:
-
   stmt = """
     with recursive ancestry as (
       select parent_field_group_id,
@@ -158,7 +159,6 @@ def getOrgFields(cursor : Any,
   cursor.execute(stmt, {'field_group_id' : field_group_id})
   results = cursor.fetchall()
   depths = {r["depth"] for r in results}
-  print("UNIQUE DEPTHS: ",depths)
   return { r.leaf_field_group_id : r.field_ids for r in results}
 
 

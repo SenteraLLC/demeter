@@ -2,9 +2,8 @@ from typing import Any, List, Optional, Sequence, Dict, Set
 
 from ... import db
 
-from .generated import g, getMaybeFieldGroupId, insertFieldGroup
+from .generated import g, getMaybeFieldGroupId, insertFieldGroup, getFieldGroup
 from .types import FieldGroup
-
 
 from dataclasses import dataclass
 
@@ -79,22 +78,26 @@ def insertFieldGroupGreedy(cursor : Any,
                                   )
   p_id = field_group.parent_field_group_id
 
-  maybe_result = None
-  for r in search_results:
-    if p_id is not None and p_id in r.lineage:
-      if maybe_result is not None:
-        raise Exception(f"Ambiguous field group: {field_group}")
-      maybe_result = r
+  if search_results:
+    maybe_result = None
+    for r in search_results:
+      if p_id is not None and p_id in r.lineage:
+        if maybe_result is not None:
+          raise Exception(f"Ambiguous field group: {field_group}")
+        maybe_result = r
 
-  if (result := maybe_result) is not None:
-    l = result.lineage
-    existing = l[-1] if len(l) else None
-    if existing != p_id:
-      print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
-      # TODO: OK???
-    field_group.parent_field_group_id = existing # type: ignore
-  else:
-    raise Exception(f"Bad field group search: {field_group}")
+    if (result := maybe_result) is not None:
+      l = result.lineage
+      existing = l[-1] if len(l) else None
+      if existing != p_id:
+        print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
+        # TODO: OK???
+      field_group.parent_field_group_id = existing # type: ignore
+    else:
+      raise Exception(f"Bad field group search: {field_group}")
+
+  if p_id and (getFieldGroup(cursor, p_id) is None):
+    raise Exception(f"Bad parent field group id for: {field_group}")
 
   return insertFieldGroup(cursor, field_group)
 

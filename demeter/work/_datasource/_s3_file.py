@@ -65,7 +65,7 @@ def toPandasFileType(as_string : str) -> PandasFileType:
   return PandasFileType[as_string.upper()]
 PandasReadFn = Dict[PandasFileType, Callable[[BufferedIOBase], pd.DataFrame]]
 FILETYPE_TO_PANDAS_READ_FN : PandasReadFn = {PandasFileType.CSV  : pd.read_csv,
-                                             PandasFileType.JSON : pd.read_json, # type: ignore
+                                             PandasFileType.JSON : pd.read_json,
                                             }
 
 PandasWriteFn = Callable[[Any], Any]

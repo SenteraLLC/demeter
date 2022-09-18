@@ -106,30 +106,24 @@ class CropStage(db.TypeTable):
   crop_stage : str
 
 @dataclass(frozen=True)
-class PlantHarvestKey(db.TableKey):
+class PlantingKey(db.TableKey):
   field_id      : db.TableId
   crop_type_id  : db.TableId
   geom_id       : db.TableId
 
 @dataclass(frozen=True)
-class PlantingKey(PlantHarvestKey):
-  pass
-
-@dataclass(frozen=True)
-class HarvestKey(PlantHarvestKey):
-  pass
-
-@dataclass(frozen=True)
-class _PlantHarvest(db.Detailed):
+class Planting(PlantingKey):
   performed : Optional[date]
 
-@dataclass(frozen=True)
-class Planting(PlantingKey, _PlantHarvest):
-  pass
 
 @dataclass(frozen=True)
-class Harvest(HarvestKey, _PlantHarvest):
-  pass
+class Act(db.Detailed):
+  field_id     : db.TableId
+  crop_type_id : Optional[db.TableId]
+  geom_id      : Optional[db.TableId]
+  performed    : Optional[date]
+
+
 
 @dataclass(frozen=True)
 class CropProgressKey(db.TableKey):

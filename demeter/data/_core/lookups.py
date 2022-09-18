@@ -22,7 +22,7 @@ id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
 
 key_table_lookup : TableLookup = {
   Planting     : "planting",
-  Harvest      : "harvest",
+  Act          : "act",
   CropProgress : "crop_progress",
 }
 

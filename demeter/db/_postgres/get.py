@@ -10,7 +10,8 @@ from .._union_types import AnyIdTable
 from .._generic_types import S, SK
 
 from .tools import doPgJoin, doPgFormat
-from .helpers import is_none, is_optional
+from .helpers import is_none, is_optional, is_date_or_time
+
 
 def getMaybeId(table_name : str,
                cursor     : Any,
@@ -19,7 +20,7 @@ def getMaybeId(table_name : str,
   field_names = table.names()
   names_to_fields = OrderedDict({name: Identifier(name) for name in field_names })
 
-  conditions = [doPgJoin(' = ', [Identifier(n), Placeholder(n)]) for n in names_to_fields if not is_none(table, n) and not is_optional(table, n) ]
+  conditions = [doPgJoin(' = ', [Identifier(n), Placeholder(n)]) for n in names_to_fields if not (is_none(table, n) or is_optional(table, n) or is_date_or_time(table, n))]
 
   table_id = "_".join([table_name, "id"])
   stmt = doPgFormat("select {0} from {1} where {2}",

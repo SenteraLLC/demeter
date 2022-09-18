@@ -64,7 +64,7 @@ __all__ = [
   'insertLocalGroup',
 
   'insertPlanting',
-  'insertHarvest',
+  'insertAct',
   'insertCropProgress',
 
   'insertOrGetUnitType',
@@ -84,13 +84,11 @@ __all__ = [
   'CropType',
   'CropStage',
 
-  'PlantHarvestKey',
   'PlantingKey',
-  'HarvestKey',
   'CropProgressKey',
 
   'Planting',
-  'Harvest',
+  'Act',
   'CropProgress',
 
 ]

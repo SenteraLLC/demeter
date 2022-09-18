@@ -12,7 +12,7 @@ g = SQLGenerator("demeter.data",
 from ...db._generic_types import GetId, GetTable, ReturnId, ReturnKey, GetTableByKey
 
 from .types import Field, FieldGroup, GeoSpatialKey, TemporalKey, Geom, Coordinates, Polygon, MultiPolygon, Point, Line
-from .types import CropType, CropStage, ReportType, Planting, Harvest, CropProgress, PlantingKey, HarvestKey, CropProgressKey
+from .types import CropType, CropStage, ReportType, Planting, Act, CropProgress, PlantingKey, CropProgressKey
 
 
 getMaybeFieldId = g.getMaybeIdFunction(Field)
@@ -34,9 +34,9 @@ insertTemporalKey : ReturnId[TemporalKey] = g.getInsertReturnIdFunction(Temporal
 insertCropType   : ReturnId[CropType]   = g.getInsertReturnIdFunction(CropType)
 insertCropStage = g.getInsertReturnIdFunction(CropStage)
 insertReportType : ReturnId[ReportType] = g.getInsertReturnIdFunction(ReportType)
+insertAct  = g.getInsertReturnIdFunction(Act)
 
 insertPlanting = g.getInsertReturnKeyFunction(Planting, PlantingKey)
-insertHarvest  = g.getInsertReturnKeyFunction(Harvest, HarvestKey)
 insertCropProgress = g.getInsertReturnKeyFunction(CropProgress, CropProgressKey)
 
 insertOrGetGeoSpatialKey = g.partialInsertOrGetId(getMaybeGeoSpatialKeyId, insertGeoSpatialKey)

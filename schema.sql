@@ -253,9 +253,9 @@ create table crop_stage (
 );
 
 create table crop_progress (
-  field_id         bigint,
-  crop_type_id     bigint,
-  planting_geom_id bigint,
+  field_id         bigint not null,
+  crop_type_id     bigint not null,
+  planting_geom_id bigint not null,
 
   foreign key (field_id, crop_type_id, planting_geom_id)
     references planting (field_id, crop_type_id, geom_id),
@@ -271,21 +271,23 @@ create table crop_progress (
 );
 
 
---- TODO: I think it's better to use LocalValue for this
-create table harvest (
+create table act (
+  act_id bigserial primary key,
   field_id      bigint
                 not null
                 references field(field_id),
+  name          text not null,
+
   crop_type_id  bigint
-                not null
                 references crop_type(crop_type_id),
-  geom_id       bigint
-                not null
-                references geom(geom_id),
-  primary key (field_id, geom_id, crop_type_id),
+  local_value_id bigint
+                 references local_value(local_value_id),
+  unique (field_id, local_value_id),
 
   performed     timestamp without time zone
                 not null,
+  unique (field_id, name, performed),
+
   last_updated  timestamp without time zone
                 not null
                 default now(),
@@ -295,10 +297,9 @@ create table harvest (
                 default '{}'::jsonb
 );
 
-CREATE TRIGGER update_harvest_last_updated BEFORE UPDATE
-ON harvest FOR EACH ROW EXECUTE PROCEDURE
+CREATE TRIGGER update_act_last_updated BEFORE UPDATE
+ON act FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
-
 
 
 -----------------

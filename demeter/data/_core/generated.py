@@ -22,6 +22,7 @@ getMaybeTemporalKeyId    : GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey
 getMaybeCropTypeId   : GetId[CropType]   = g.getMaybeIdFunction(CropType)
 getMaybeCropStageId  : GetId[CropStage]  = g.getMaybeIdFunction(CropStage)
 getMaybeReportTypeId : GetId[ReportType] = g.getMaybeIdFunction(ReportType)
+getMaybeActId = g.getMaybeIdFunction(Act)
 
 getField      : GetTable[Field]    = g.getTableFunction(Field)
 getFieldGroup      : GetTable[FieldGroup]    = g.getTableFunction(FieldGroup)
@@ -45,6 +46,7 @@ insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
 insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
+insertOrGetAct = g.partialInsertOrGetId(getMaybeActId, insertAct)
 
 getPlanting = g.getTableByKeyFunction(Planting, PlantingKey)
 getCropProgress : GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKeyFunction(CropProgress, CropProgressKey)

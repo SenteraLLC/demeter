@@ -115,14 +115,14 @@ class PlantingKey(db.TableKey):
 class Planting(PlantingKey):
   performed : Optional[date]
 
-
 @dataclass(frozen=True)
 class Act(db.Detailed):
   field_id     : db.TableId
-  crop_type_id : Optional[db.TableId]
-  geom_id      : Optional[db.TableId]
-  performed    : Optional[date]
-
+  name         : str
+  performed    : date
+  geom_id      : Optional[db.TableId] = None
+  crop_type_id : Optional[db.TableId] = None
+  local_value_id : Optional[db.TableId] = None
 
 
 @dataclass(frozen=True)

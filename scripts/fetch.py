@@ -18,13 +18,14 @@ stmt = """
      inner join test_mlops.field F on A.field_group_id = F.field_group_id
      where not exists (select * from test_mlops.field_group F where A.field_group_id = F.parent_field_group_id)
 
-   ), type_features as (
+   ), type_feature as (
      select L.field_id,
             LT.type_name,
             LT.type_category,
             LT.local_type_id,
             U.unit as unit_name,
             U.unit_type_id,
+            LV.local_value_id,
             LV.acquired,
             LV.quantity,
             LG.group_name
@@ -36,13 +37,16 @@ stmt = """
         left join test_mlops.local_group LG on LG.local_group_id = LV.local_group_id
         left join test_mlops.geom LVG on LV.geom_id = LVG.geom_id
        ) on LV.field_id = L.field_id
-     where array_length(%(local_type_id_whitelist)s::bigint[], 1) = 0 or LT.local_type_id = any(%(local_type_id_whitelist)s::bigint[])
+     where LV.acquired > '2000-01-01' and
+             (array_length(%(local_type_id_whitelist)s::bigint[], 1) is null or
+              LT.local_type_id = any(%(local_type_id_whitelist)s::bigint[]))
+
   ), time_id as (
     select local_type_id,
            unit_type_id,
            acquired,
            row_number() over (partition by local_type_id, unit_type_id order by acquired asc) as time_id
-    from type_features
+    from type_feature
     group by local_type_id, unit_type_id, acquired
     order by local_type_id, unit_type_id
 
@@ -58,13 +62,14 @@ stmt = """
            T.local_type_id,
            T.unit_type_id,
            T.time_id,
+           F.local_value_id,
            U.unit_id,
            F.quantity,
            row_number() over (partition by F.field_id, T.local_type_id, U.unit_type_id, F.quantity
                               order by T.acquired asc
                               RANGE BETWEEN INTERVAL '18 hours' PRECEDING AND INTERVAL '18 hours' FOLLOWING
                              ) as dupe_id
-    from type_features F
+    from type_feature F
     join time_id T on T.local_type_id = F.local_type_id and
                       T.unit_type_id = F.unit_type_id and
                       T.acquired = F.acquired
@@ -73,14 +78,16 @@ stmt = """
 
   ), feature as (
     select F.field_id,
+           F.local_value_id,
            F.local_type_id as feature_local_type_id,
+           F.unit_name,
            I.unit_id as feature_unit_id,
            I.time_id,
            concat_ws('.', F.field_id, F.type_name, F.unit_name, I.time_id) as prefix,
            F.unit_type_id,
            F.quantity,
            F.acquired
-    from type_features F
+    from type_feature F
     join feature_ids I on I.field_id = F.field_id and
                           I.local_type_id = F.local_type_id and
                           I.unit_type_id = F.unit_type_id and
@@ -88,18 +95,12 @@ stmt = """
     where I.dupe_id = 1
 
   ), dynamic_numeric_columns as (
-    select T.field_id,
-           T.local_type_id,
-           F.time_id,
-           F.unit_type_id,
-           T.unit_name,
-           T.type_name,
-           F.acquired,
+    select F.local_value_id,
            jsonb_object_agg(
              C.column_name,
              C.column_value
            ) as columns
-    from type_features T
+    from type_feature T
       join feature F on F.field_id = T.field_id and
                         F.feature_local_type_id = T.local_type_id and
                         F.unit_type_id = T.unit_type_id and
@@ -108,27 +109,39 @@ stmt = """
          select (F.prefix || '::quantity') as column_name,
          T.quantity as column_value
       ) as C
-    group by T.field_id, T.local_type_id, F.unit_type_id, F.time_id, T.unit_name, T.type_name, F.acquired
-    order by T.field_id, T.local_type_id, F.unit_type_id, F.time_id, T.unit_name, T.type_name, F.acquired
+    group by F.local_value_id
+    order by F.local_value_id
 
-  ), field_actions as (
+  ), field_action_maybe_dupe as (
     select F.field_id,
            A.name,
-           jsonb_agg(A.performed) as performed
+           A.performed,
+           row_number() over (partition by F.field_id, A.name
+                              order by A.performed asc
+                              RANGE BETWEEN INTERVAL '6 hours' PRECEDING AND INTERVAL '6 hours' FOLLOWING
+                             ) as dupe_id
     from feature F
-    left join act A on F.field_id = A.field_id
-    group by F.field_id, A.name
+    join act A on F.field_id = A.field_id
+    where performed > '2000-01-01'
+
+  ), field_actions as (
+     select field_id,
+            name,
+            jsonb_agg(performed) as performed
+    from field_action_maybe_dupe
+    where dupe_id = 1
+    group by field_id, name
 
   ) select F.field_id as field_id,
-           N.local_type_id,
-           N.time_id,
-           N.unit_type_id,
+           FT.feature_local_type_id,
+           FT.time_id,
+           FT.feature_unit_id,
            F.details->'AlmanacSenteraId' as sentera_id,
-           A.name as action_name,
-           A.performed as action_performed,
+           LV.details as converter_details,
+           FA.performed as harvests,
            (jsonb_build_object(
-             'unit', N.unit_name,
-             'acquired', N.acquired,
+             'unit', FT.unit_name,
+             'acquired', FT.acquired,
              'field_id', F.field_id,
              'field_name', F.name,
              'field_external_id', F.external_id,
@@ -136,8 +149,10 @@ stmt = """
              'region_name', REGION.name
            ) || N.columns) as columns
     from dynamic_numeric_columns N
-    join field F on F.field_id = N.field_id
-    join field_actions A on F.field_id = A.field_id
+    join feature FT on FT.local_value_id = N.local_value_id
+    join field F on F.field_id = FT.field_id
+    join field_actions as FA on FA.field_id = F.field_id
+    join local_value LV on LV.local_value_id = FT.local_value_id
     join field_group FARM on F.field_group_id = FARM.field_group_id
     join field_group REGION on FARM.parent_field_group_id = REGION.field_group_id
 """
@@ -162,6 +177,7 @@ if __name__ == '__main__':
 
   root_id = 60986
   whitelist = { 68 }
+  #whitelist = set()
 
   #register_adapter(Set, lambda v : psycopg2.extensions.AsIs("".join(["'", v.name, "'"])))
 
@@ -178,8 +194,9 @@ if __name__ == '__main__':
   import sys
   if debug:
     for i, r in enumerate(results):
+      print(i)
       print(r)
-      if i > 200:
+      if i > 5:
         sys.exit(1)
     sys.exit(1)
   id_to_columns : OrderedDict[int, OrderedDict[int, Any]] = OrderedDict()
@@ -188,8 +205,10 @@ if __name__ == '__main__':
     c = r["columns"]
     if (si := r["sentera_id"]) is not None:
       c["sentera_id"] = si
-    if (an := r["action_name"]) is not None:
-      c[an] = r["action_performed"]
+    if (an := r["harvests"]) is not None:
+      c["harvests"] = r["harvests"]
+    if (cv := r["converter_details"]) is not None:
+      c["converter_details"] = cv
     try:
       id_to_columns[f]
     except KeyError:
@@ -216,3 +235,84 @@ if __name__ == '__main__':
   print("Done.")
 
 
+"""
+"""
+
+"""
+
+  with field_action_maybe_dupe as (
+    select field_id,
+           name,
+           performed,
+           row_number() over (partition by field_id, name
+                              order by performed asc
+                              RANGE BETWEEN INTERVAL '6 hours' PRECEDING AND INTERVAL '6 hours' FOLLOWING
+                             ) as dupe_id
+    from test_mlops.act A
+    where performed > '2000-01-01' and
+          field_id = 209150
+
+  ), field_actions as (
+     select field_id,
+            name,
+            jsonb_agg(performed) as performed
+    from field_action_maybe_dupe
+    where dupe_id = 1
+    group by field_id, name
+
+  ), planting_maybe_dupe as (
+    select P.field_id,
+           C.species,
+           C.cultivar,
+           P.performed,
+           P.details as planting_details,
+           row_number() over (partition by P.field_id
+                              order by P.performed asc
+                              RANGE BETWEEN INTERVAL '6 hours' PRECEDING AND INTERVAL '6 hours' FOLLOWING
+                             ) as dupe_id
+    from test_mlops.planting P
+    join test_mlops.crop_type C on P.crop_type_id = C.crop_type_id
+    where P.field_id = 243395 and P.performed > '2000-01-01'
+
+  ), planting as (
+    select field_id,
+           species,
+           cultivar,
+           jsonb_agg(performed) as performed
+    from planting_maybe_dupe
+    where dupe_id = 1
+    group by field_id, species, cultivar
+
+  ) select X.field_id, X.actions, Y.plantings
+    from (
+      select field_id,
+             jsonb_agg(
+               jsonb_build_object(
+                 'name', name,
+                 'performed', performed
+               )
+             ) as actions
+      from field_actions
+      where name is not null and performed is not null
+      group by field_id
+    ) X
+    full outer join (
+      select field_id,
+             jsonb_agg(
+               jsonb_build_object(
+                 'species', species,
+                 'cultivar', cultivar,
+                 'performed', performed
+               )
+             ) as plantings
+      from planting
+      where species is not null and performed is not null
+      group by field_id
+    ) Y on X.field_id = Y.field_id
+"""
+
+"""
+          field_id = any(%(field_id)s::bigint[])
+    where P.field_id = any(%(field_id)s::bigint[]) and P.performed > '2000-01-01'
+
+"""

@@ -98,8 +98,8 @@ class Key(KeyIds, GeoSpatialKey, TemporalKey):
 class CropType(db.TypeTable, db.Detailed):
   species     : str
   cultivar    : Optional[str]
-  parent_id_1 : Optional[db.TableId]
-  parent_id_2 : Optional[db.TableId]
+  parent_id_1 : Optional[db.TableId] = None
+  parent_id_2 : Optional[db.TableId] = None
 
 @dataclass(frozen=True)
 class CropStage(db.TypeTable):
@@ -112,7 +112,7 @@ class PlantingKey(db.TableKey):
   geom_id       : db.TableId
 
 @dataclass(frozen=True)
-class Planting(PlantingKey):
+class Planting(PlantingKey, db.Detailed):
   performed : Optional[date]
 
 @dataclass(frozen=True)

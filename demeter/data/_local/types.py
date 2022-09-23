@@ -10,7 +10,7 @@ from dataclasses import dataclass
 class LocalValue(db.Detailed):
   geom_id        : Optional[db.TableId]
   field_id       : db.TableId
-  unit_type_id   : Optional[db.TableId]
+  unit_type_id   : db.TableId
   quantity       : float
   local_group_id : Optional[db.TableId]
   acquired       : date

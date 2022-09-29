@@ -13,11 +13,11 @@ def getEnv(name : str, default : Optional[Any] = None, is_required : bool = Fals
 from psycopg2.extensions import connection as PGConnection
 from psycopg2.extensions import register_adapter, adapt
 
+from typing import Type
 import psycopg2
 import psycopg2.extras
 
-def getConnection() -> PGConnection:
-  # TODO: Move this closer to wherever it is used
+def getConnection(cursor_type : Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor) -> PGConnection:
   register_adapter(set, lambda s : adapt(list(s))) # type: ignore
 
   host = getEnv("DEMETER_PG_HOST", "localhost")
@@ -26,6 +26,6 @@ def getConnection() -> PGConnection:
   user = getEnv("DEMETER_PG_USER", "postgres")
   options = getEnv("DEMETER_PG_OPTIONS", "")
   database = getEnv("DEMETER_PG_DATABASE", "postgres")
-  return psycopg2.connect(host=host, port=port, password=password, options=options, database=database, user=user, cursor_factory=psycopg2.extras.NamedTupleCursor)
+  return psycopg2.connect(host=host, port=port, password=password, options=options, database=database, user=user, cursor_factory=cursor_type)
 
 

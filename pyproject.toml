@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demeter"
-version = "1.1.17"
+version = "1.1.18"
 description = ""
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [
@@ -32,6 +32,7 @@ domdf-sphinx-theme = "^22.1.2"
 # TODO: Fix this once PR is merged
 toctree-plus = {git = "https://github.com/sphinx-toolbox/toctree_plus.git", rev = "dependabot/pip/sphinx-gte-3.0.3-and-lt-5.2.0"}
 autodocsumm = "^0.2.9"
+python-dotenv = "^0.21.0"
 
 [tool.poetry.dev-dependencies]
 types-jsonschema = "^4.4.1"

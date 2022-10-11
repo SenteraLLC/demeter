@@ -3,25 +3,42 @@ from demeter.db import TableId
 
 from dataclasses import dataclass
 
-import logging
-logger = logging.getLogger()
+from datetime import datetime
 
 from ..summary import Summary
 
-@dataclass
+
+@dataclass(frozen=True)
+class UnitSummary(Summary):
+  unit_type_id : TableId
+  unit : str
+  count : int
+  earliest : Optional[datetime]
+  latest : Optional[datetime]
+
+
+@dataclass(frozen=True)
+class LocalGroupSummary(Summary):
+  local_group_id : TableId
+  name : str
+  category : Optional[str]
+  count : int
+  earliest : Optional[datetime]
+  latest : Optional[datetime]
+
+
+@dataclass(frozen=True)
 class TypeSummary(Summary):
   local_type_id : TableId
   type_name : str
   type_category : Optional[str]
 
-  local_group_id : Optional[TableId]
-  group_name : Optional[str]
-  group_category : Optional[str]
+  value_count : int
 
-  #units : Sequence[str]
-  unit_to_count : Dict[str, int]
-
-  count : int
+  units : Sequence[UnitSummary]
+  unit_count : int
+  groups : Sequence[LocalGroupSummary]
+  group_count : int
 
 
 # TODO: Filter on fields
@@ -40,6 +57,7 @@ def getTypeSummaries(cursor : Any) -> Sequence[TypeSummary]:
                      jsonb_object_agg(
                        unit_type_id,
                        jsonb_build_object(
+                         'unit_type_id', unit_type_id,
                          'unit', unit,
                          'count', unit_count,
                          'earliest', earliest,
@@ -65,6 +83,7 @@ def getTypeSummaries(cursor : Any) -> Sequence[TypeSummary]:
                      jsonb_object_agg(
                        local_group_id,
                        jsonb_build_object(
+                         'local_group_id', local_group_id,
                          'name', group_name,
                          'category', group_category,
                          'count', group_count,
@@ -91,42 +110,44 @@ def getTypeSummaries(cursor : Any) -> Sequence[TypeSummary]:
             ) select T.local_type_id,
                      T.type_name,
                      T.type_category,
-
-                     (select sum((unit->'count')::bigint)
-                      from jsonb_each(U.id_to_unit) as f(id, unit)
-                     ) as value_count,
-
-                     unit_to_count,
+                     value_count,
                      units,
-                     jsonb_array_length(units) as unit_count,
-                     groups,
-                     jsonb_array_length(groups) as group_count
+                     groups
 
               from test_mlops.local_type T
               natural join units U
               natural left join groups GS,
               lateral (
-                select jsonb_object_agg(
-                         (unit->'unit')::text,
-                         unit->'count'
-                       ) as unit_to_count
+                select jsonb_agg(unit) as units,
+                       sum((unit->'count')::int) as value_count
                 from jsonb_each(U.id_to_unit) as f(id, unit)
-              ) x,
-              lateral (
-                select jsonb_agg(unit) as units
-                from jsonb_object_keys(unit_to_count) as unit
               ) y,
               lateral (
-                select jsonb_agg(g) as groups
-                from jsonb_each(GS.id_to_group) as f(id, g)
+                select coalesce(
+                         jsonb_agg(grp),
+                         '{}'::jsonb
+                       ) as groups
+                from jsonb_each(GS.id_to_group) as f(id, grp)
               ) z
-              order by T.type_name, T.type_category, value_count desc, unit_count desc
+              order by T.type_name, T.type_category, value_count desc, jsonb_array_length(units) desc
          """
   cursor.execute(stmt)
 
   results = cursor.fetchall()
-  logger.warning("# RESULTS: %s",len(results))
-  for r in results:
-    logger.warning("R: %s",r)
+
+  return [
+    TypeSummary(
+      local_type_id = r.local_type_id,
+      type_name = r.type_name,
+      type_category = r.type_category,
+
+      value_count = r.value_count,
+
+      units = r.units,
+      unit_count = len(r.units),
+      groups = r.groups,
+      group_count = len(r.groups),
+    ) for r in results
+  ]
   return [ r for r in results ]
 

@@ -1,16 +1,14 @@
 from typing import Sequence
 
-from .table import RawRowType, Row
-
 import curses
+from dataclasses import asdict
 
+from ..summary import RawRowType
 from ..formatting import Margins
 from ..theme import ColorScheme
 
-from dataclasses import asdict
+from .table import Row
 
-import logging
-logger = logging.getLogger()
 
 class Footer:
   def __init__(self,

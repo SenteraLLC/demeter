@@ -22,7 +22,7 @@ FOOTER_ROW_COUNT = 4
 FRAME_ROW_COUNT = HEADER_ROW_COUNT + FOOTER_ROW_COUNT
 
 @setup_curses
-def interactive_select(cursor : Any) -> Sequence[TypeSummary]:
+def select(cursor : Any) -> Sequence[TypeSummary]:
 
   margins = Margins(
     top = HEADER_ROW_COUNT,
@@ -33,19 +33,13 @@ def interactive_select(cursor : Any) -> Sequence[TypeSummary]:
 
   local_type_summaries = getTypeSummaries(cursor)
 
-    #parts.append("\n")
-
   separation_width = 3
   separator= " " * separation_width
 
   picker = Picker('Local Type Summary', local_type_summaries, margins, LAYOUT)
-  #selector._refresh_table()
 
   while (picker.step()):
     pass
-    #print("Step.")
-
-    # Footer
 
   selected_rows = picker.get_selected_rows()
   return selected_rows

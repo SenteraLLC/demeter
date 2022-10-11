@@ -12,13 +12,14 @@ from ..formatting import inferColumnFormat, getSpecifiers
 from ..theme import ColorScheme
 from ..theme import setup_theme
 
-import logging
-logger = logging.getLogger()
+from ..logging import getLogger
+from ..summary import RawRowType
+logger = getLogger()
 
 def to_ascii(s : str) -> int:
   return ord(curses.ascii.ascii(s))
 
-from .table import Table, RawRowType
+from .table import Table
 from .header import Header
 from .footer import Footer
 
@@ -77,7 +78,6 @@ class Picker(Generic[RawRowType]):
     self.table.refresh(self.selected_rows)
 
 
-
   # J - Down
   # K - Up
   # Enter - Done
@@ -92,6 +92,8 @@ class Picker(Generic[RawRowType]):
       logger.warning("ESC.")
       return self._do_cancel()
 
+    keep_going = True
+
     dy = {to_ascii('k') : -1,
           curses.KEY_UP : -1,
           to_ascii('j') : 1,
@@ -99,16 +101,16 @@ class Picker(Generic[RawRowType]):
          }.get(cmd, 0)
     if dy != 0:
       logger.warning("DY: %s",str(dy))
-      success = self._do_navigate(dy)
+      keep_going = self._do_navigate(dy)
     elif cmd == to_ascii(' '):
-      success = self._do_select()
+      keep_going = self._do_select()
     elif cmd in [to_ascii('\n'), curses.KEY_ENTER]:
       logger.warning("ENTER.")
-      success = self._do_stop()
+      keep_going = self._do_stop()
 
     self.refresh()
 
-    return True
+    return keep_going
 
 
   def _do_stop(self) -> bool:
@@ -117,7 +119,6 @@ class Picker(Generic[RawRowType]):
 
   def _do_select(self) -> bool:
     co = self.table.get_cursor_offset()
-    #co = cursor_offset
     color_scheme = ColorScheme.DEFAULT
     try:
       self.selected_rows.remove(co)
@@ -136,7 +137,7 @@ class Picker(Generic[RawRowType]):
 
 
   def _do_end(self) -> bool:
-    return True
+    return False
 
 
   def _do_cancel(self) -> bool:

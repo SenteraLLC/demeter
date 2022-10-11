@@ -4,9 +4,8 @@ from dataclasses import dataclass
 
 from .options import FormatOptions
 
-
-import logging
-logger = logging.getLogger()
+from ..logging import getLogger
+logger = getLogger()
 
 
 @dataclass(frozen=True)

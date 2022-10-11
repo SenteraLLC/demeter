@@ -9,7 +9,6 @@ def setup_curses(fn : SelectionFunction[S]) -> SelectionFunction[S]:
   def inner(cursor : Any) -> Sequence[S]:
     stdscr = curses.initscr()
     curses.start_color()
-    #curses.use_default_colors()
     curses.noecho()
     curses.cbreak()
     curses.curs_set(0)
@@ -17,6 +16,8 @@ def setup_curses(fn : SelectionFunction[S]) -> SelectionFunction[S]:
     stdscr.keypad(True)
 
     result = fn(cursor)
+
+    curses.curs_set(1)
 
     curses.nocbreak()
     stdscr.keypad(False)

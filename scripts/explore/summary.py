@@ -1,8 +1,10 @@
-from typing import Optional
+from typing import Optional, TypeVar
 
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Summary:
-  name : Optional[str]
+  pass
+
+RawRowType = TypeVar('RawRowType', bound=Summary)
 

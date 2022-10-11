@@ -22,7 +22,7 @@ FOOTER_ROW_COUNT = 4
 FRAME_ROW_COUNT = HEADER_ROW_COUNT + FOOTER_ROW_COUNT
 
 @setup_curses
-def interactive_select(cursor : Any) -> Sequence[FieldGroupSummary]:
+def select(cursor : Any) -> Sequence[FieldGroupSummary]:
 
   margins = Margins(
     top = HEADER_ROW_COUNT,

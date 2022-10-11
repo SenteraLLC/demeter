@@ -12,13 +12,12 @@ from ..formatting import Margins, ColumnFormat, Specifiers
 
 from ..theme import ColorScheme
 
-from ..summary import Summary
+from ..summary import Summary, RawRowType
 
-import logging
-logger = logging.getLogger()
+from ..logging import getLogger
+logger = getLogger()
 
 
-RawRowType = TypeVar('RawRowType', bound=Summary)
 
 @dataclass
 class Row(Generic[RawRowType]):
@@ -66,7 +65,6 @@ class Table(Generic[RawRowType]):
 
     rows : List[Row[RawRowType]] = []
     for i, r in enumerate(self.raw_rows):
-      #print("R: ",r)
       f = formatted_row = self.format_row(asdict(r), self.table_width)
 
       self.mypad.addnstr(i, 0, f, self.table_width, curses.color_pair(ColorScheme.DEFAULT))
@@ -186,8 +184,4 @@ class Table(Generic[RawRowType]):
 
   def get_number_of_visible_rows(self) -> int:
     return self.number_of_visible_rows
-
-  #def _get_blank_row(self) -> str:
-  #  return " " * self.table_width
-
 

@@ -9,9 +9,6 @@ from dataclasses import make_dataclass
 
 from ..summary import Summary
 
-#import logging
-#logger = logging.getLogger()
-
 
 @dataclass(frozen=True)
 class FieldGroupSummary(Summary):

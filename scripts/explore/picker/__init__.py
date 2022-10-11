@@ -1,13 +1,12 @@
 
 from .picker import Picker
-from .table import Table, RawRowType
+from .table import Table
 from .header import Header
 from .footer import Footer
 
 __all__ = [
   'Picker',
 
-  'RawRowType',
   'Table',
   'Header',
   'Footer',

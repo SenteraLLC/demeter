@@ -2,7 +2,7 @@
 from .summary import FieldGroupSummary
 from .summary import getFieldGroupSummaries
 
-from .select import interactive_select
+from .interactive import select as interactive_select
 
 
 __all__ = [

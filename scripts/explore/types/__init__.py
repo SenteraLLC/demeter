@@ -2,7 +2,7 @@
 from .summary import TypeSummary
 from .summary import getTypeSummaries
 
-from .select import interactive_select
+from .interactive import select as interactive_select
 
 __all__ = [
   'TypeSummary',

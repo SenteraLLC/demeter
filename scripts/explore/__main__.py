@@ -1,30 +1,81 @@
 from typing import Any, Tuple, TypeVar, Set, Callable, Dict, List, Sequence, Literal
 from typing import cast
 
-import curses
-
-import logging
-logger = logging.getLogger()
-
-from collections import OrderedDict
-
-import psycopg2.extras
+import os
+import argparse
 
 from dotenv import load_dotenv
 
 from demeter.db import getConnection
 
-#from .types import interactive_select
-from .field_groups import interactive_select
+from .logging import setupLogger
+from .data_option import DataOption
+from .main import main
+
+def to_str(d : DataOption) -> str:
+  return d.name.lower()
+DATA_OPTIONS = { to_str(d) for d in DataOption }
+
+def parseDataOption(s : str) -> DataOption:
+  try:
+    return DataOption[s.upper()]
+  except KeyError:
+    raise argparse.ArgumentTypeError(f"Bad data option: {s} not in {DATA_OPTIONS}")
+
+
+def check_dir(d : str) -> str:
+  if not os.path.isdir(d):
+    raise argparse.ArgumentTypeError(f"Path is not a directory: {d}")
+  return d
+
 
 if __name__ == '__main__':
   load_dotenv()
 
-  #connection = getConnection(psycopg2.extras.RealDictCursor)
+  parser = argparse.ArgumentParser(description='Use interactive menus to get Demeter data')
+
+  parser.add_argument(
+    '--target',
+    type=str,
+    choices=DATA_OPTIONS,
+    help="The data type to collect",
+    required=True
+  )
+  parser.add_argument(
+      "--output_directory",
+      type=str,
+      help="The output directory in which to store files",
+      required=True,
+  )
+  parser.add_argument('--filters',
+                      type=str,
+                      nargs="+",
+                      choices=DATA_OPTIONS,
+                      help='Data to be used as filters for the target type',
+                      default = [],
+                     )
+  parser.add_argument(
+      "--log_directory",
+      type=str,
+      help="The directory in which to store logs",
+      default="/tmp/",
+  )
+  args = parser.parse_args()
+  target = parseDataOption(args.target)
+  filters = [ parseDataOption(f) for f in args.filters ]
+  if target in filters:
+    t = to_str(target)
+    fs = { to_str(f) for f in filters }
+    raise argparse.ArgumentTypeError(f"Target '{t}' cannot be in filters: {fs}")
+
+  output_directory = check_dir(args.output_directory)
+  log_directory = check_dir(args.log_directory)
+  setupLogger(log_directory)
+
+  print("ARGS: ",args)
+
   connection = getConnection()
   cursor = connection.cursor()
-  types = interactive_select(cursor)
-  for t in types:
-    print("T: ",t)
+  main(cursor, target, filters, output_directory)
 
 

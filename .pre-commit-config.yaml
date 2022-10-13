@@ -1,2 +1,8 @@
+repos:
+  - repo: https://github.com/python-poetry/poetry
+    rev: ''  # add version here
+    hooks:
+      - id: poetry-check
+      - id: poetry-lock
 default_language_version:
     python: python3

@@ -8,7 +8,8 @@ did_setup = False
 def setupLogger(output_dir: str = "/tmp/") -> bool:
   t = datetime.now().strftime("%m-%d %H:%M:%S")
 
-  f = os.path.join(output_dir, "demeter.explorer.{t}.log")
+  #f = os.path.join(output_dir, f"demeter.explorer.{t}.log")
+  f = os.path.join(output_dir, f"demeter.explorer.log")
 
   logging.basicConfig(filename=f,
                       filemode='w',

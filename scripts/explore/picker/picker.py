@@ -19,9 +19,21 @@ logger = getLogger()
 def to_ascii(s : str) -> int:
   return ord(curses.ascii.ascii(s))
 
+from enum import IntEnum
+
+class Command(IntEnum):
+  UP = to_ascii('k')
+  DOWN = to_ascii('j')
+  SELECT = to_ascii(' ')
+  ENTER = to_ascii('\n')
+  BACK = to_ascii('q')
+  QUIT = 27
+
+
 from .table import Table
 from .header import Header
 from .footer import Footer
+
 
 class Picker(Generic[RawRowType]):
   def __init__(self,
@@ -34,12 +46,11 @@ class Picker(Generic[RawRowType]):
     setup_theme()
 
     self.layout = layout
-    titles : List[str] = []
     for t, f in self.layout.items():
-      titles.append(t)
       inferColumnFormat(f, t, raw_rows)
 
-    self.specifiers = getSpecifiers(layout, separator, curses.COLS)
+    self.separator = separator
+    self.specifiers = getSpecifiers(layout, self.separator, curses.COLS)
 
     self.title = title
     self.raw_rows = raw_rows
@@ -61,8 +72,9 @@ class Picker(Generic[RawRowType]):
 
     rows = self.table.get_rows()
     coords = self.table.get_coords()
-    self.footer = Footer(rows, w, m, coords.bottom)
+    self.footer = Footer(w, m, coords.bottom)
 
+    self.table.draw(self.selected_rows)
     self.refresh()
 
 
@@ -73,48 +85,42 @@ class Picker(Generic[RawRowType]):
     self.header.refresh(po, n, v)
 
     co = self.table.get_cursor_offset()
-    self.footer.refresh(co)
+    row = self.get_cursor_row()
+    self.footer.refresh(row)
 
     self.table.refresh(self.selected_rows)
 
 
-  # J - Down
-  # K - Up
-  # Enter - Done
-  # Esc - Cancel
-  # Space - Select
-  def step(self) -> bool:
+  def get_command(self) -> int:
     cmd = self.table.get_curses_command()
     logger.warning("CMD: %s",str(cmd))
+    return cmd
 
-    ESC = 27
-    if cmd == ESC:
-      logger.warning("ESC.")
-      return self._do_cancel()
+
+  def step(self, maybe_command : Optional[int] = None) -> bool:
+    if maybe_command is None:
+      maybe_command = self.get_command()
+    cmd = maybe_command
 
     keep_going = True
-
-    dy = {to_ascii('k') : -1,
-          curses.KEY_UP : -1,
-          to_ascii('j') : 1,
-          curses.KEY_DOWN : 1,
-         }.get(cmd, 0)
-    if dy != 0:
-      logger.warning("DY: %s",str(dy))
-      keep_going = self._do_navigate(dy)
-    elif cmd == to_ascii(' '):
+    if cmd == Command.QUIT:
+      return self._do_quit()
+    elif cmd == Command.SELECT:
       keep_going = self._do_select()
-    elif cmd in [to_ascii('\n'), curses.KEY_ENTER]:
-      logger.warning("ENTER.")
-      keep_going = self._do_stop()
+    elif cmd == Command.ENTER:
+      keep_going = self._do_enter()
+    else:
+      dy = {Command.UP : -1,
+            curses.KEY_UP : -1,
+            Command.DOWN : 1,
+            curses.KEY_DOWN : 1,
+           }.get(cmd, 0)
+      if dy != 0:
+        keep_going = self._do_navigate(dy)
 
     self.refresh()
 
     return keep_going
-
-
-  def _do_stop(self) -> bool:
-    return True
 
 
   def _do_select(self) -> bool:
@@ -126,25 +132,37 @@ class Picker(Generic[RawRowType]):
     except KeyError:
       self.selected_rows.add(co)
       self.table.refresh_cursor(co, self.selected_rows)
-
     return True
 
 
   def _do_navigate(self, dy : int) -> bool:
     if (dy != 0):
-      return self.table.update_cursor(dy, self.selected_rows)
+      _ = self.table.update_cursor(dy, self.selected_rows)
+      return True
     return False
 
 
-  def _do_end(self) -> bool:
-    return False
+  def _do_enter(self) -> bool:
+    return True
 
 
-  def _do_cancel(self) -> bool:
+  def _do_back(self) -> bool:
+    return True
+
+
+  def _do_quit(self) -> bool:
     return False
 
 
   def get_selected_rows(self) -> Sequence[RawRowType]:
-    return [ self.raw_rows[i] for i in self.selected_rows ]
+    return [ self.table.raw_rows[i] for i in self.selected_rows ]
+
+  def get_cursor_row(self) -> RawRowType:
+    co = self.table.get_cursor_offset()
+    return self.table.raw_rows[co]
+
+  def is_selected(self) -> bool:
+    co = self.table.get_cursor_offset()
+    return co in self.selected_rows
 
 

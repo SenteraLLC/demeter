@@ -48,8 +48,6 @@ def _calculateFixedWidth(column_format : ColumnFormat,
   return max(title_width, min(h, max(greatest_value_width, l)))
 
 
-# TODO: Use cache after debugging
-#@cache
 def inferColumnFormat(column_format : ColumnFormat,
                       title : str,
                       rows : Sequence[Any],

@@ -35,19 +35,12 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Use interactive menus to get Demeter data')
 
   parser.add_argument(
-    '--target',
+    "--output_directory",
     type=str,
-    choices=DATA_OPTIONS,
-    help="The data type to collect",
-    required=True
+    help="The output directory in which to store files",
+    required=True,
   )
-  parser.add_argument(
-      "--output_directory",
-      type=str,
-      help="The output directory in which to store files",
-      required=True,
-  )
-  parser.add_argument('--filters',
+  parser.add_argument('--targets',
                       type=str,
                       nargs="+",
                       choices=DATA_OPTIONS,
@@ -61,12 +54,7 @@ if __name__ == '__main__':
       default="/tmp/",
   )
   args = parser.parse_args()
-  target = parseDataOption(args.target)
-  filters = [ parseDataOption(f) for f in args.filters ]
-  if target in filters:
-    t = to_str(target)
-    fs = { to_str(f) for f in filters }
-    raise argparse.ArgumentTypeError(f"Target '{t}' cannot be in filters: {fs}")
+  targets = [ parseDataOption(f) for f in args.targets ]
 
   output_directory = check_dir(args.output_directory)
   log_directory = check_dir(args.log_directory)
@@ -76,6 +64,6 @@ if __name__ == '__main__':
 
   connection = getConnection()
   cursor = connection.cursor()
-  main(cursor, target, filters, output_directory)
+  main(cursor, targets, output_directory)
 
 

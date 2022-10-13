@@ -5,9 +5,15 @@ from demeter.data import FieldGroup
 from demeter.db import TableId
 
 from dataclasses import dataclass
-from dataclasses import make_dataclass
+from dataclasses import make_dataclass, asdict
 
 from ..summary import Summary
+
+#from joblib import Memory as cache
+
+from joblib import Memory # type: ignore
+location = '/tmp/demeter/'
+memory = Memory(location, verbose=0)
 
 
 @dataclass(frozen=True)
@@ -19,16 +25,20 @@ class FieldGroupSummary(Summary):
   external_id : str
   depth : int
 
-  immediate_field_count : int
-  total_field_count : int
+  field_group_ids : Sequence[TableId]
+  field_ids : Sequence[TableId]
 
-  child_field_group_ids : Sequence[TableId]
-  child_field_group_count : int
+  total_group_count : int
+  group_count : int
+
+  total_field_count : int
+  field_count : int
 
 
 # TODO: Filter on field groups
+@memory.cache(ignore=['cursor'])   # type: ignore
 def getFieldGroupSummaries(cursor : Any,
-                          ) -> Sequence[FieldGroupSummary]:
+                          ) -> Dict[TableId, FieldGroupSummary]:
   stmt = """
   with recursive descendent as (
     select *,
@@ -41,20 +51,25 @@ def getFieldGroupSummaries(cursor : Any,
     from descendent D
     join test_mlops.field_group G on D.field_group_id = G.parent_field_group_id
 
-  ), field_counts as (
+  ), fields as (
     select D.field_group_id,
-           count(F.*) as field_count
+           coalesce(
+             jsonb_agg(F.field_id)
+               filter
+               (where F.field_id is not null),
+             '[]'
+           ) as field_ids
     from descendent D
     left join test_mlops.field F on D.field_group_id = F.field_group_id
     group by D.field_group_id
 
   ), ancestor_counts as (
-    select D.parent_field_group_id as ancestor_field_group_id,
+    select D.field_group_id as ancestor_field_group_id,
            D.parent_field_group_id,
            D.field_group_id,
-           FC.field_count
+           jsonb_array_length(F.field_ids) as field_count
     from descendent D
-    join field_counts FC on D.field_group_id = FC.field_group_id
+    join fields F on D.field_group_id = F.field_group_id
     where not exists (
       select *
       from descendent D2
@@ -66,50 +81,71 @@ def getFieldGroupSummaries(cursor : Any,
            D.field_group_id,
            AC.field_count
            from ancestor_counts AC
-           join descendent D on AC.parent_field_group_id = D.field_group_id
-           join field_counts FC on D.field_group_id = FC.field_group_id
-
+           join descendent D on AC.ancestor_field_group_id = D.field_group_id
+           join fields F on D.field_group_id = F.field_group_id
   ), aggregate_counts as (
     select ancestor_field_group_id as field_group_id,
-           sum(field_count) as total_field_count
+           sum(AC.field_count) filter (where ancestor_field_group_id = field_group_id) as field_count,
+
+           sum(field_count) as total_field_count,
+           count(*) as total_group_count
     from ancestor_counts AC
     group by ancestor_field_group_id
 
   ) select D.*,
-           FC.field_count as immediate_field_count,
-           child_field_group_ids,
-           AC.total_field_count
+           F.field_ids as field_ids,
+           field_group_ids,
+           AC.total_group_count,
+           jsonb_array_length(field_group_ids) as group_count,
+           AC.total_field_count,
+           AC.field_count as field_count
     from descendent D
     join aggregate_counts AC on D.field_group_id = AC.field_group_id
-    join field_counts FC on D.field_group_id = FC.field_group_id,
-    lateral (
-      select jsonb_agg(D2.field_group_id) as child_field_group_ids
+    join fields F on D.field_group_id = F.field_group_id
+    left join lateral (
+      select coalesce(
+               jsonb_agg(D2.field_group_id)
+                 filter
+                 (where D2.field_group_id is not null),
+              '[]'
+             ) as field_group_ids
       from descendent D2
       where D.field_group_id = D2.parent_field_group_id
       group by D.field_group_id
-    ) children
+    ) children on true
     order by depth asc,
-             coalesce(jsonb_array_length(child_field_group_ids), 0) desc, FC.field_count desc, total_field_count desc;
+             AC.total_group_count,
+             group_count,
+             AC.total_field_count,
+             AC.field_count
   """
   cursor.execute(stmt)
   results = cursor.fetchall()
-  return [
-    FieldGroupSummary(
-      field_group_id = r.field_group_id,
-      parent_field_group_id = r.parent_field_group_id,
+  #for r in results:
+  #  print("R: ",r)
+  #import sys
+  #sys.exit(1)
+  return {
+    r.field_group_id : FieldGroupSummary(
+                         field_group_id = r.field_group_id,
+                         parent_field_group_id = r.parent_field_group_id,
 
-      name = r.name,
-      external_id = r.external_id,
-      depth = r.depth,
+                         name = r.name,
+                         external_id = r.external_id,
+                         depth = r.depth,
 
-      immediate_field_count = r.immediate_field_count,
-      total_field_count = r.total_field_count,
+                         field_group_ids = r.field_group_ids or [],
+                         field_ids = r.field_ids or [],
 
-      child_field_group_ids = r.child_field_group_ids,
-      child_field_group_count = len(r.child_field_group_ids),
-    ) for r in results
-  ]
-  out = cast(Sequence[FieldGroupSummary], [make_dataclass('FieldGroupSummary', r) for r in results])
-  return out
+                         total_group_count = r.total_group_count or 0,
+                         group_count = r.group_count or 0,
+
+                         total_field_count = r.total_field_count or 0,
+                         field_count = r.field_count or 0,
+
+                       ) for r in results
+  }
+  #out = cast(Sequence[FieldGroupSummary], [make_dataclass('FieldGroupSummary', r) for r in results])
+  #return out
 
 

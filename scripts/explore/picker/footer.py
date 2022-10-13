@@ -12,26 +12,22 @@ from .table import Row
 
 class Footer:
   def __init__(self,
-               rows : Sequence[Row[RawRowType]],
                width : int,
                margins : Margins,
                table_bottom : int,
               ) -> None:
-    self.rows = rows
     self.width = width
     self.margins = margins
     self.footer = curses.newwin(self.margins.bottom + 1, width, table_bottom + 1, margins.left)
 
 
   def refresh(self,
-              cursor_offset : int,
+              row : RawRowType,
              ) -> None:
     if (height := self.margins.bottom) > 0:
-      raw = self.rows[cursor_offset].raw
-
       # TODO: Improve prettification
       # NOTE: 's' is consumed by the for-loop
-      s = str(asdict(raw))
+      s = str(asdict(row))
 
       w = self.width
       for i in range(height):

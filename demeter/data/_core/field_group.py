@@ -1,100 +1,74 @@
-from typing import Any, List, Optional, Sequence, Dict, Set
+from typing import Any, List, Optional, Sequence, Dict, Set, Tuple, NamedTuple
 
 from ... import db
 
 from .generated import g, getMaybeFieldGroupId, insertFieldGroup, getFieldGroup
 from .types import FieldGroup
 
-from dataclasses import dataclass
+from collections import OrderedDict
 
-@dataclass
-class FieldNameSearchResult:
-  name : str
-  external_id : Optional[str]
-  field_group_id : db.TableId
-  lineage : Sequence[db.TableId]
-
-
-
-def searchFieldName(cursor : Any,
-                    field_group : FieldGroup,
-                   ) -> Sequence[FieldNameSearchResult]:
+def getFieldGroupAncestors(cursor : Any,
+                           field_group : FieldGroup,
+                          ) -> OrderedDict[db.TableId, Sequence[FieldGroup]]:
   stmt = """
     with recursive leaf as (
-      select parent_field_group_id as parent_id,
-             field_group_id,
-             field_group_id as leaf_id
-      from field_group
-      where name = %(name)s
+      select G.parent_field_group_id,
+             G.field_group_id
+      from test_mlops.field_group G
+      where G.field_group_id = 64299
 
     ), ancestry as (
-      select * from leaf
+      select L.field_group_id as leaf_id,
+             L.parent_field_group_id,
+             L.field_group_id,
+             0 as distance
+      from leaf L
       UNION ALL
-      select G.parent_field_group_id as parent_id,
-             G.field_group_id,
-             A.leaf_id
-      from field_group G
-      join ancestry A on G.field_group_id = A.parent_id
-
-    ), ancestry_with_root as (
-      select A.field_group_id as root_id,
-             A.parent_id,
-             A.field_group_id,
-             A.leaf_id,
-             0 as depth
+      select A.leaf_id,
+             FG.parent_field_group_id,
+             FG.field_group_id,
+             distance + 1
       from ancestry A
-      where A.parent_id is null
-      UNION ALL
-      select AWR.root_id,
-             A.parent_id,
-             A.field_group_id,
-             A.leaf_id,
-             depth + 1
-      from ancestry_with_root AWR
-      join ancestry A on AWR.field_group_id = A.parent_id and
-                         AWR.leaf_id = A.leaf_id
-
-    ), root_and_leaf as (
-      select A.root_id,
-             A.leaf_id,
-             jsonb_agg(A.field_group_id order by A.depth asc) as lineage
-      from ancestry_with_root A
-      group by A.root_id, A.leaf_id
-
-    ) select RF.lineage, to_jsonb(FG.*) as group
-      from root_and_leaf RF
-      join field_group FG on RF.leaf_id = FG.field_group_id
+      join test_mlops.field_group FG on FG.field_group_id = A.parent_field_group_id
+    ) select A.leaf_id,
+             jsonb_agg(to_jsonb(FG.*) order by A.distance asc) as leaf_to_root
+      from ancestry A
+      join test_mlops.field_group FG on FG.field_group_id = A.field_group_id
+      group by A.leaf_id
   """
   cursor.execute(stmt, field_group())
   results = cursor.fetchall()
-  return [r for r in results]
+  return OrderedDict((r["leaf_id"], r["leaf_to_root"]) for r in results)
 
 
 def insertFieldGroupGreedy(cursor : Any,
                            field_group : FieldGroup,
                           ) -> db.TableId:
-  search_results = searchFieldName(cursor,
-                                   field_group,
-                                  )
+  id_to_ancestors = getFieldGroupAncestors(cursor,
+                                           field_group,
+                                          )
+  ancestors = id_to_ancestors[field_group.field_group_id]
+  if ancestors is None:
+    raise Exception(f"Ancestors not found for Field Group: {field_group}")
+
   p_id = field_group.parent_field_group_id
 
-  if search_results:
-    maybe_result = None
-    for r in search_results:
-      if p_id is not None and p_id in r.lineage:
-        if maybe_result is not None:
-          raise Exception(f"Ambiguous field group: {field_group}")
-        maybe_result = r
+  maybe_result = None
+  for r in ancestors:
+    if p_id is not None and p_id in r.lineage:
+      if maybe_result is not None:
+        raise Exception(f"Ambiguous field group: {field_group}")
+      maybe_result = r
 
-    if (result := maybe_result) is not None:
-      l = result.lineage
-      existing = l[-1] if len(l) else None
-      if existing != p_id:
-        print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
-        # TODO: OK???
-      field_group.parent_field_group_id = existing # type: ignore
-    else:
-      raise Exception(f"Bad field group search: {field_group}")
+  if (result := maybe_result) is not None:
+    l = result.lineage
+    existing = l[-1] if len(l) else None
+    if existing != p_id:
+      print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
+      # TODO: OK???
+    field_group.parent_field_group_id = existing # type: ignore
+  else:
+    raise Exception(f"Bad field group search: {field_group}")
 
   if p_id and (getFieldGroup(cursor, p_id) is None):
     raise Exception(f"Bad parent field group id for: {field_group}")
@@ -103,30 +77,6 @@ def insertFieldGroupGreedy(cursor : Any,
 
 
 insertOrGetFieldGroupGreedy = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroupGreedy)
-
-
-def getFieldHeirarchy(cursor : Any,
-                      field_id : db.TableId,
-                     ) -> List[db.TableId]:
-  stmt = """
-    with recursive field_groups as (
-      select field_id, G.field_group_id, G.parent_field_group_id, 0 as level
-      from field F
-      left join field_group G on coalesce(F.field_group_id,
-                                          F.farm_id,
-                                          F.grower_id
-                                         ) = G.field_group_id
-      where field_id = %(field_id)s
-      UNION ALL
-      select field_id, RG.parent_field_group_id as field_group_id, G.parent_field_group_id, level + 1
-      from field_group G
-      join field_groups RG on RG.parent_field_group_id = G.field_group_id
-    ) select field_id, array_agg(field_group_id order by level asc) as root_to_leaf
-      from field_groups group by field_id;
-  """
-  cursor.execute(stmt, {'field_id' : field_id})
-  results = cursor.fetchall()
-  return [db.TableId(i) for i in results.root_to_leaf]
 
 
 
@@ -163,5 +113,87 @@ def getOrgFields(cursor : Any,
   results = cursor.fetchall()
   depths = {r["depth"] for r in results}
   return { r.leaf_field_group_id : r.field_ids for r in results}
+
+
+
+from typing import TypedDict
+from typing import cast
+
+from .types import Field, FieldGroup
+
+class FieldGroupAncestry(TypedDict):
+  fields_by_depth : Dict[int, Sequence[Field]]
+  ancestors : Sequence[FieldGroup]
+
+
+def getFieldsByFieldGroup(cursor : Any,
+                          field_group_id : db.TableId,
+                         ) -> FieldGroupAncestry:
+  stmt = """
+  with recursive ancestor as (
+     select *,
+            0 as distance
+     from test_mlops.field_group
+     where field_group_id = %(field_group_id)s
+     UNION ALL
+     select G.*,
+            distance + 1
+     from ancestor A
+     join test_mlops.field_group G on A.parent_field_group_id = G.field_group_id
+
+  ), descendant as (
+    select *,
+           (select max(distance) from ancestor) as depth
+    from ancestor
+    where distance = 0
+    UNION ALL
+    select G.*,
+           D.distance,
+           depth + 1
+    from descendant D
+    join test_mlops.field_group G on D.field_group_id = G.parent_field_group_id
+
+  ) select jsonb_build_object(
+             D.depth,
+             coalesce(
+               jsonb_agg(
+                 to_jsonb(F) order by F.last_updated desc
+               ),
+               '[]'::jsonb
+             )
+           ) as fields_by_depth,
+           jsonb_agg(to_jsonb(A) order by A.field_group_id asc) as ancestors
+    from descendant D
+    left join test_mlops.field F on D.field_group_id = F.field_group_id
+    cross join ancestor A
+    group by D.depth
+  """
+
+  cursor.execute(stmt, {'field_group_id' : field_group_id})
+  results = cursor.fetchall()
+  return cast(FieldGroupAncestry, results)
+
+
+
+def searchFieldGroup(cursor : Any,
+                     field_group : FieldGroup,
+                     do_fuzzy_search : bool = False,
+                    ) -> Sequence[FieldGroup]:
+  search_part = "where name = %(name)s"
+  if do_fuzzy_search:
+    search_part = "where name like concat('%', %(name)s, '%')"
+
+  stmt = f"""
+    with candidate as (
+      select *
+      from field_group
+      {search_part}
+
+    ) select * from candidate;
+  """
+  cursor.execute(stmt, field_group())
+  results = cursor.fetchall()
+  return [r for r in results]
+
 
 

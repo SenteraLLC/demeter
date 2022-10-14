@@ -7,6 +7,10 @@ from .types import FieldGroup
 
 from collections import OrderedDict
 
+from dataclasses import dataclass
+
+from typing import NamedTuple
+
 def getFieldGroupAncestors(cursor : Any,
                            field_group : FieldGroup,
                           ) -> OrderedDict[db.TableId, Sequence[FieldGroup]]:
@@ -15,7 +19,7 @@ def getFieldGroupAncestors(cursor : Any,
       select G.parent_field_group_id,
              G.field_group_id
       from test_mlops.field_group G
-      where G.field_group_id = 64299
+      where G.field_group_id = %(field_group)s
 
     ), ancestry as (
       select L.field_group_id as leaf_id,
@@ -30,7 +34,7 @@ def getFieldGroupAncestors(cursor : Any,
              distance + 1
       from ancestry A
       join test_mlops.field_group FG on FG.field_group_id = A.parent_field_group_id
-    ) select A.leaf_id,
+    ) select A.leaf_id as field_group_id,
              jsonb_agg(to_jsonb(FG.*) order by A.distance asc) as leaf_to_root
       from ancestry A
       join test_mlops.field_group FG on FG.field_group_id = A.field_group_id
@@ -41,42 +45,42 @@ def getFieldGroupAncestors(cursor : Any,
   return OrderedDict((r["leaf_id"], r["leaf_to_root"]) for r in results)
 
 
-def insertFieldGroupGreedy(cursor : Any,
-                           field_group : FieldGroup,
-                          ) -> db.TableId:
-  id_to_ancestors = getFieldGroupAncestors(cursor,
-                                           field_group,
-                                          )
-  ancestors = id_to_ancestors[field_group.field_group_id]
-  if ancestors is None:
-    raise Exception(f"Ancestors not found for Field Group: {field_group}")
+#def insertFieldGroupGreedy(cursor : Any,
+#                           field_group : FieldGroup,
+#                          ) -> db.TableId:
+#  id_to_ancestors = getFieldGroupAncestors(cursor,
+#                                           field_group,
+#                                          )
+#  #ancestors = id_to_ancestors[field_group.field_group_id]
+#  #if ancestors is None:
+#  #  raise Exception(f"Ancestors not found for Field Group: {field_group}")
+#  p_id = field_group.parent_field_group_id
+#
+#  maybe_result = None
+#  for ancestors in id_to_ancestors.values():
+#    lineage = [a.field_group_id for a in ancestors]
+#    if p_id is not None and p_id in r.lineage:
+#      if maybe_result is not None:
+#        raise Exception(f"Ambiguous field group: {field_group}")
+#      maybe_result = r
+#
+#  if (result := maybe_result) is not None:
+#    l = result.lineage
+#    existing = l[-1] if len(l) else None
+#    if existing != p_id:
+#      print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
+#      # TODO: OK???
+#    field_group.parent_field_group_id = existing # type: ignore
+#  else:
+#    raise Exception(f"Bad field group search: {field_group}")
+#
+#  if p_id and (getFieldGroup(cursor, p_id) is None):
+#    raise Exception(f"Bad parent field group id for: {field_group}")
+#
+#  return insertFieldGroup(cursor, field_group)
 
-  p_id = field_group.parent_field_group_id
 
-  maybe_result = None
-  for r in ancestors:
-    if p_id is not None and p_id in r.lineage:
-      if maybe_result is not None:
-        raise Exception(f"Ambiguous field group: {field_group}")
-      maybe_result = r
-
-  if (result := maybe_result) is not None:
-    l = result.lineage
-    existing = l[-1] if len(l) else None
-    if existing != p_id:
-      print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
-      # TODO: OK???
-    field_group.parent_field_group_id = existing # type: ignore
-  else:
-    raise Exception(f"Bad field group search: {field_group}")
-
-  if p_id and (getFieldGroup(cursor, p_id) is None):
-    raise Exception(f"Bad parent field group id for: {field_group}")
-
-  return insertFieldGroup(cursor, field_group)
-
-
-insertOrGetFieldGroupGreedy = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroupGreedy)
+#insertOrGetFieldGroupGreedy = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroupGreedy)
 
 
 
@@ -121,14 +125,14 @@ from typing import cast
 
 from .types import Field, FieldGroup
 
-class FieldGroupAncestry(TypedDict):
+class FieldGroupFields(TypedDict):
   fields_by_depth : Dict[int, Sequence[Field]]
   ancestors : Sequence[FieldGroup]
 
 
-def getFieldsByFieldGroup(cursor : Any,
-                          field_group_id : db.TableId,
-                         ) -> FieldGroupAncestry:
+def getFieldGroupFields(cursor : Any,
+                        field_group_id : db.TableId,
+                       ) -> FieldGroupFields:
   stmt = """
   with recursive ancestor as (
      select *,
@@ -171,7 +175,7 @@ def getFieldsByFieldGroup(cursor : Any,
 
   cursor.execute(stmt, {'field_group_id' : field_group_id})
   results = cursor.fetchall()
-  return cast(FieldGroupAncestry, results)
+  return cast(FieldGroupFields, results)
 
 
 

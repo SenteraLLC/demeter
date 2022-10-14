@@ -15,7 +15,7 @@ __all__ = [
   'getGeom',
 
   'insertField',
-  'insertFieldGroupGreedy',
+  #'insertFieldGroupGreedy',
   'insertFieldGroup',
   'insertGeoSpatialKey',
   'insertTemporalKey',

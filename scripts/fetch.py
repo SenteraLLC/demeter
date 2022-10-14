@@ -1,8 +1,19 @@
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Any, Set
 
-
-from io import TextIOWrapper
 import os
+import psycopg2.extras
+import json
+import argparse
+import pandas
+
+from dotenv import load_dotenv
+
+from collections import OrderedDict
+from io import TextIOWrapper
+
+import demeter.db
+from demeter.db import TableId
+
 
 this_dir = os.path.dirname(__file__)
 open_sql : Callable[[str], TextIOWrapper] = lambda filename : open(os.path.join(this_dir, filename))
@@ -10,28 +21,11 @@ open_sql : Callable[[str], TextIOWrapper] = lambda filename : open(os.path.join(
 get_features_stmt = open_sql('get_features.sql').read()
 get_action_planting_stmt = open_sql('get_action_planting.sql').read()
 
-import psycopg2.extras
-
-import json
-
-import pandas
-
-from typing import Any
-from collections import OrderedDict
-
-
-if __name__ == '__main__':
-  connection = psycopg2.connect(host="localhost", database="postgres", options="-c search_path=test_mlops,public")
-
-  #connection = demeter.db.getConnection()
-
-  root_id = 60986
-  whitelist = { 68, 80, 64, 65, 81  }
-  #whitelist = { 68, 80 }
-  #whitelist = set()
-
-  cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-  args = {"field_group_id": root_id, "local_type_id_whitelist": list(whitelist) }
+def main(cursor : Any,
+         field_group_id : TableId,
+         local_type_whitelist : Set[TableId],
+        ) -> None:
+  args = { "field_group_id": root_id, "local_type_id_whitelist": list(whitelist) }
   cursor.execute(get_features_stmt, args)
 
   feature_results = cursor.fetchall()
@@ -90,5 +84,34 @@ if __name__ == '__main__':
   field_to_features_out = open("/tmp/field_to_features.json", "w")
   json.dump(field_id_to_columns, field_to_features_out, indent=2)
 
-  print("Done.")
 
+if __name__ == '__main__':
+  load_dotenv()
+
+  parser = argparse.ArgumentParser(description='Load a field and all of its input data as JSON')
+
+  parser.add_argument('--field_group_id', type=str, help='field group id from demeter database', required=True)
+  parser.add_argument('--local_type_ids', type=int, nargs="+", help='list of local type ids')
+  args = parser.parse_args()
+
+  #options = "-c search_path=test_mlops"
+  #connection = psycopg2.connect(host=args.host, dbname="postgres", options=options)
+  #cursor = connection.cursor()
+
+
+  #connection = psycopg2.connect(host="localhost", database="postgres", options="-c search_path=test_mlops,public")
+  connection = demeter.db.getConnection()
+
+  root_id = args.field_group_id
+  whitelist = set(args.local_type_ids)
+
+  #root_id = 60986
+  #whitelist = { 68, 80, 64, 65, 81 }
+  #whitelist = { 68, 80 }
+  #whitelist = set()
+
+  cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+  main(cursor, root_id, whitelist)
+
+  print("Done.")

@@ -56,16 +56,16 @@ def getFieldGroupAncestors(cursor : Any,
 #  #  raise Exception(f"Ancestors not found for Field Group: {field_group}")
 #  p_id = field_group.parent_field_group_id
 #
-#  maybe_result = None
+#  lineage : List[db.TableId] = []
 #  for ancestors in id_to_ancestors.values():
-#    lineage = [a.field_group_id for a in ancestors]
-#    if p_id is not None and p_id in r.lineage:
-#      if maybe_result is not None:
+#    l = [a.field_group_id for a in ancestors] # type: ignore
+#    if p_id is not None and p_id in l:
+#      if len(l):
 #        raise Exception(f"Ambiguous field group: {field_group}")
-#      maybe_result = r
+#      lineage = l
 #
-#  if (result := maybe_result) is not None:
-#    l = result.lineage
+#  l = lineage
+#  if len(l):
 #    existing = l[-1] if len(l) else None
 #    if existing != p_id:
 #      print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
@@ -78,8 +78,8 @@ def getFieldGroupAncestors(cursor : Any,
 #    raise Exception(f"Bad parent field group id for: {field_group}")
 #
 #  return insertFieldGroup(cursor, field_group)
-
-
+#
+#
 #insertOrGetFieldGroupGreedy = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroupGreedy)
 
 
@@ -119,26 +119,35 @@ def getOrgFields(cursor : Any,
   return { r.leaf_field_group_id : r.field_ids for r in results}
 
 
-
-from typing import TypedDict
-from typing import cast
-
+from datetime import datetime
 from .types import Field, FieldGroup
 
-class FieldGroupFields(TypedDict):
-  fields_by_depth : Dict[int, Sequence[Field]]
+# TODO: How to deal with Demeter table classes vs Demeter table result classes? (IE w/ and w/o TableId)
+@dataclass(frozen=True)
+class FieldSummary(db.Detailed):
+  field_id    : db.TableId
+  geom_id     : db.TableId
+  name : str
+  external_id    : Optional[str]
+  field_group_id : Optional[db.TableId]
+  created     : Optional[datetime] = None
+
+
+@dataclass(frozen=True)
+class FieldGroupFields():
+  fields_by_depth : Dict[int, Sequence[FieldSummary]]
   ancestors : Sequence[FieldGroup]
 
 
 def getFieldGroupFields(cursor : Any,
-                        field_group_id : db.TableId,
-                       ) -> FieldGroupFields:
+                        field_group_ids : Sequence[db.TableId],
+                       ) -> OrderedDict[db.TableId, FieldGroupFields]:
   stmt = """
   with recursive ancestor as (
      select *,
             0 as distance
      from test_mlops.field_group
-     where field_group_id = %(field_group_id)s
+     where field_group_id = any(%(field_group_ids)s::bigint[])
      UNION ALL
      select G.*,
             distance + 1
@@ -146,36 +155,60 @@ def getFieldGroupFields(cursor : Any,
      join test_mlops.field_group G on A.parent_field_group_id = G.field_group_id
 
   ), descendant as (
-    select *,
+    select field_group_id as root_field_group_id,
+           *,
            (select max(distance) from ancestor) as depth
     from ancestor
     where distance = 0
     UNION ALL
-    select G.*,
+    select G.field_group_id as root_field_group_id,
+           G.*,
            D.distance,
            depth + 1
     from descendant D
     join test_mlops.field_group G on D.field_group_id = G.parent_field_group_id
 
-  ) select jsonb_build_object(
-             D.depth,
-             coalesce(
-               jsonb_agg(
-                 to_jsonb(F) order by F.last_updated desc
-               ),
-               '[]'::jsonb
-             )
-           ) as fields_by_depth,
-           jsonb_agg(to_jsonb(A) order by A.field_group_id asc) as ancestors
+  ), field_group_fields as (
+    select D.root_field_group_id,
+           D.depth,
+           coalesce(
+             jsonb_agg(
+               to_jsonb(F) order by F.last_updated desc
+             ) filter(where F is not null),
+             '[]'::jsonb
+           ) as fields
     from descendant D
     left join test_mlops.field F on D.field_group_id = F.field_group_id
-    cross join ancestor A
-    group by D.depth
+    group by D.root_field_group_id, D.depth
+
+  ) select F.root_field_group_id as field_group_id,
+           jsonb_object_agg(
+             F.depth,
+             F.fields
+           ) as fields_by_depth,
+           jsonb_agg(to_jsonb(A) order by A.field_group_id asc) as ancestors
+           from field_group_fields F
+           join ancestor A on A.field_group_id = F.root_field_group_id
+           group by F.root_field_group_id
   """
 
-  cursor.execute(stmt, {'field_group_id' : field_group_id})
+  cursor.execute(stmt, {'field_group_ids' : field_group_ids})
   results = cursor.fetchall()
-  return cast(FieldGroupFields, results)
+  #for r in results:
+  #  print(r)
+  #import sys
+  #sys.exit(1)
+
+  return OrderedDict(
+      (db.TableId(r.field_group_id),
+       FieldGroupFields(
+         fields_by_depth = r.fields_by_depth,
+         ancestors = r.ancestors
+       )
+      )
+      for r in results
+  )
+
 
 
 

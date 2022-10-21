@@ -26,7 +26,7 @@ LAYOUT = OrderedDict(
                  ),
                  ("Units",
                   ColumnFormat("units",
-                               FormatOptions(is_required=False, max_columns=40),
+                               FormatOptions(is_required=False, max_columns=60),
                               ),
                  ),
                  ("Unit Count",

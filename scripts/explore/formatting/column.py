@@ -32,6 +32,7 @@ class ColumnFormat:
 
   def shouldSkip(self, existing_titles : Set[str]) -> bool:
     is_excluded = self.options.xor_title in existing_titles
+    logger.warn("Should skip? %s %s %s", self.options.xor_title, existing_titles, is_excluded)
     if is_excluded:
       return True
     return self.options.do_skip

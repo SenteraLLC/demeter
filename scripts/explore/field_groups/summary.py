@@ -1,7 +1,7 @@
 from typing import TypedDict, Optional, Any, Sequence, Dict
 from typing import cast
 
-from demeter.data import FieldGroup
+from demeter.data import FieldGroup, Field
 from demeter.db import TableId
 
 from dataclasses import dataclass
@@ -26,7 +26,7 @@ class FieldGroupSummary(Summary):
   depth : int
 
   field_group_ids : Sequence[TableId]
-  field_ids : Sequence[TableId]
+  fields : Sequence[Field]
 
   total_group_count : int
   group_count : int
@@ -35,7 +35,6 @@ class FieldGroupSummary(Summary):
   field_count : int
 
 
-# TODO: Filter on field groups
 @memory.cache(ignore=['cursor'])   # type: ignore
 def getFieldGroupSummaries(cursor : Any,
                           ) -> Dict[TableId, FieldGroupSummary]:
@@ -54,11 +53,11 @@ def getFieldGroupSummaries(cursor : Any,
   ), fields as (
     select D.field_group_id,
            coalesce(
-             jsonb_agg(F.field_id)
+             jsonb_agg(to_jsonb(F.*))
                filter
                (where F.field_id is not null),
              '[]'
-           ) as field_ids
+           ) as fields
     from descendent D
     left join test_mlops.field F on D.field_group_id = F.field_group_id
     group by D.field_group_id
@@ -67,7 +66,7 @@ def getFieldGroupSummaries(cursor : Any,
     select D.field_group_id as ancestor_field_group_id,
            D.parent_field_group_id,
            D.field_group_id,
-           jsonb_array_length(F.field_ids) as field_count
+           jsonb_array_length(F.fields) as field_count
     from descendent D
     join fields F on D.field_group_id = F.field_group_id
     where not exists (
@@ -93,7 +92,7 @@ def getFieldGroupSummaries(cursor : Any,
     group by ancestor_field_group_id
 
   ) select D.*,
-           F.field_ids as field_ids,
+           F.fields as fields,
            field_group_ids,
            AC.total_group_count,
            jsonb_array_length(field_group_ids) as group_count,
@@ -121,10 +120,6 @@ def getFieldGroupSummaries(cursor : Any,
   """
   cursor.execute(stmt)
   results = cursor.fetchall()
-  #for r in results:
-  #  print("R: ",r)
-  #import sys
-  #sys.exit(1)
   return {
     r.field_group_id : FieldGroupSummary(
                          field_group_id = r.field_group_id,
@@ -135,7 +130,7 @@ def getFieldGroupSummaries(cursor : Any,
                          depth = r.depth,
 
                          field_group_ids = r.field_group_ids or [],
-                         field_ids = r.field_ids or [],
+                         fields = r.fields or [],
 
                          total_group_count = r.total_group_count or 0,
                          group_count = r.group_count or 0,
@@ -145,7 +140,5 @@ def getFieldGroupSummaries(cursor : Any,
 
                        ) for r in results
   }
-  #out = cast(Sequence[FieldGroupSummary], [make_dataclass('FieldGroupSummary', r) for r in results])
-  #return out
 
 

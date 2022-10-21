@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Any, Set
+from typing import Callable, Dict, List, Any, Set, Optional
 
 import os
 import psycopg2.extras
@@ -21,50 +21,55 @@ open_sql : Callable[[str], TextIOWrapper] = lambda filename : open(os.path.join(
 get_features_stmt = open_sql('get_features.sql').read()
 get_action_planting_stmt = open_sql('get_action_planting.sql').read()
 
+
 def main(cursor : Any,
-         field_group_id : TableId,
-         local_type_whitelist : Set[TableId],
+         field_ids : Set[TableId],
+         local_type_ids : Set[TableId],
         ) -> None:
-  args = { "field_group_id": root_id, "local_type_id_whitelist": list(whitelist) }
+  args = {"field_ids": list(field_ids),
+          "local_type_ids": list(local_type_ids),
+          }
+  print("ARGS: ",args)
   cursor.execute(get_features_stmt, args)
 
   feature_results = cursor.fetchall()
   print("FEATURE RESULTS: ",len(feature_results))
   print("FIRST: ",feature_results[0])
-  #import sys
-  #sys.exit(1)
 
   field_ids = set()
   for r in feature_results:
-    field_ids.add(r["columns"]["field_id"])
+    #print("R IS: ",r)
+    field_ids.add(r.column["field_id"])
   args = {"field_ids": list(field_ids) }
+  #print("ARGS: ",args)
   cursor.execute(get_action_planting_stmt, args)
   field_results = cursor.fetchall()
   print("FIELD RESULTS: ",len(field_results))
 
   field_id_to_columns : OrderedDict[int, List[Dict[str, Any]]] = OrderedDict()
 
-  id_to_columns : OrderedDict[int, OrderedDict[int, Any]] = OrderedDict()
+  name_to_column : OrderedDict[int, OrderedDict[int, Any]] = OrderedDict()
   for r in feature_results:
     columns_to_keep = {'unit_name', 'acquired', 'local_type_name', 'local_type_id', 'unit_type_id'}
 
-    l = r["local_value_id"]
+    l = r.local_value_id
 
-    c = r["columns"]
+    c = r.column
     f = c["field_id"]
     try:
       field_id_to_columns[f]
     except KeyError:
       field_id_to_columns[f] = []
     field_id_to_columns[f].append(c)
+    name_to_column[c["internal_ids"]["column_name"]] = c["quantity"]
 
   columns_out = open("/tmp/columns.json", "w")
-  json.dump(list(id_to_columns.values()), columns_out, indent=2)
+  json.dump(list(name_to_column.items()), columns_out, indent=2)
 
   id_to_field : OrderedDict[int, OrderedDict[int, Any]] = OrderedDict()
   for r in field_results:
-    f = r["field_id"]
-    m = r["field_meta"]
+    f = r.field_id
+    m = r.field_meta
     id_to_field[f] = m
     try:
       if (a := m["actions"]):
@@ -90,20 +95,15 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description='Load a field and all of its input data as JSON')
 
-  parser.add_argument('--field_group_id', type=str, help='field group id from demeter database', required=True)
+  parser.add_argument('--field_ids', type=int, nargs="+", help='list of field ids')
   parser.add_argument('--local_type_ids', type=int, nargs="+", help='list of local type ids')
   args = parser.parse_args()
-
-  #options = "-c search_path=test_mlops"
-  #connection = psycopg2.connect(host=args.host, dbname="postgres", options=options)
-  #cursor = connection.cursor()
-
 
   #connection = psycopg2.connect(host="localhost", database="postgres", options="-c search_path=test_mlops,public")
   connection = demeter.db.getConnection()
 
-  root_id = args.field_group_id
-  whitelist = set(args.local_type_ids)
+  field_ids = set(args.field_ids)
+  local_ids = set(args.local_type_ids)
 
   #root_id = 60986
   #whitelist = { 68, 80, 64, 65, 81 }
@@ -112,6 +112,6 @@ if __name__ == '__main__':
 
   cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-  main(cursor, root_id, whitelist)
+  main(cursor, field_ids, local_ids)
 
   print("Done.")

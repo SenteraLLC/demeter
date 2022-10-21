@@ -64,8 +64,8 @@ class PandasFileType(Enum):
 def toPandasFileType(as_string : str) -> PandasFileType:
   return PandasFileType[as_string.upper()]
 PandasReadFn = Dict[PandasFileType, Callable[[BufferedIOBase], pd.DataFrame]]
-FILETYPE_TO_PANDAS_READ_FN : PandasReadFn = {PandasFileType.CSV  : pd.read_csv,
-                                             PandasFileType.JSON : pd.read_json,
+FILETYPE_TO_PANDAS_READ_FN : PandasReadFn = {PandasFileType.CSV  : pd.read_csv, # type: ignore
+                                             PandasFileType.JSON : pd.read_json, # type: ignore
                                             }
 
 PandasWriteFn = Callable[[Any], Any]
@@ -93,7 +93,7 @@ def writeS3FileToDisk(value                   : SupportedS3DataType,
       has_geometry = s3_type_dataframe.has_geometry
       driver = s3_type_dataframe.driver
       if has_geometry:
-        value.to_file(tmp_filename, driver=driver, **converter_args)
+          value.to_file(tmp_filename, driver=driver, **converter_args) # type: ignore
       else:
         pandas_file_type = toPandasFileType(driver)
         to_file_fn = FILETYPE_TO_PANDAS_WRITE_FN(pandas_file_type, value)

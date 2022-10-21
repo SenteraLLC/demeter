@@ -77,5 +77,3 @@ def setup_theme() -> None:
   #curses.init_pair(ColorScheme.MENU_ALERT, R, MENU_SECONDARY)
   #curses.init_pair(ColorScheme.MENU_OTHER, W, MENU_SECONDARY)
 
-  print("SETUP THEME.")
-

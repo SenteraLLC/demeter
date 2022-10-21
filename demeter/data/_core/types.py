@@ -64,6 +64,7 @@ class FieldGroup(db.Detailed):
   parent_field_group_id : Optional[db.TableId] = None
   external_id : Optional[str] = None
 
+
 @dataclass(frozen=True)
 class Field(db.Detailed):
   geom_id     : db.TableId
@@ -75,10 +76,13 @@ class Field(db.Detailed):
 
   created     : Optional[datetime] = None
 
+
+
 @dataclass(frozen=True)
 class GeoSpatialKey(db.Table):
   geom_id  : db.TableId
   field_id : Optional[db.TableId]
+
 
 @dataclass(frozen=True)
 class TemporalKey(db.Table):

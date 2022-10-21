@@ -1,24 +1,5 @@
-with recursive ancestry as (
-  select parent_field_group_id,
-         field_group_id,
-         0 as depth
-  from test_mlops.field_group
-  where field_group_id = %(field_group_id)s
-  UNION ALL
-  select F.parent_field_group_id,
-         F.field_group_id,
-         A.depth + 1
-  from ancestry A
-  join test_mlops.field_group F on F.parent_field_group_id = A.field_group_id
-
-), leaf as (
-  select A.parent_field_group_id, A.field_group_id, F.field_id
-  from ancestry A
-  inner join test_mlops.field F on A.field_group_id = F.field_group_id
-  where not exists (select * from test_mlops.field_group F where A.field_group_id = F.parent_field_group_id)
-
-), type_feature as (
-  select L.field_id,
+with type_feature as (
+  select F.field_id,
          LT.type_name,
          LT.type_category,
          LT.local_type_id,
@@ -28,17 +9,19 @@ with recursive ancestry as (
          LV.acquired,
          LV.quantity,
          LG.group_name
-  from leaf L
+  from field F
   inner join
     (test_mlops.local_value LV
      join test_mlops.unit_type U on U.unit_type_id = LV.unit_type_id
      join test_mlops.local_type LT on LT.local_type_id = U.local_type_id
      left join test_mlops.local_group LG on LG.local_group_id = LV.local_group_id
      left join test_mlops.geom LVG on LV.geom_id = LVG.geom_id
-    ) on LV.field_id = L.field_id
+    ) on LV.field_id = F.field_id
   where LV.acquired > '2000-01-01' and
-          (array_length(%(local_type_id_whitelist)s::bigint[], 1) is null or
-          LT.local_type_id = any(%(local_type_id_whitelist)s::bigint[]))
+          (array_length(%(local_type_ids)s::bigint[], 1) is null or
+          LT.local_type_id = any(%(local_type_ids)s::bigint[])) and
+          (array_length(%(field_ids)s::bigint[], 1) is null or
+          F.field_id = any(%(field_ids)s::bigint[]))
 
 ), time_id as (
   select local_type_id,
@@ -109,7 +92,7 @@ with recursive ancestry as (
               'unit_id', FT.feature_unit_id,
               'column_name', FT.prefix
            )
-         )) as columns
+         )) as column
   from feature FT
   join local_value LV on LV.local_value_id = FT.local_value_id
 

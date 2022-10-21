@@ -1,4 +1,4 @@
-from typing import Optional, Any, Sequence, Dict
+from typing import Optional, Any, Sequence, Dict, List, Tuple
 from demeter.db import TableId
 
 from dataclasses import dataclass
@@ -42,8 +42,13 @@ class TypeSummary(Summary):
 
 
 # TODO: Filter on fields
-def getTypeSummaries(cursor : Any) -> Sequence[TypeSummary]:
-  stmt = """with field_value as (
+def getTypeSummaries(cursor : Any, field_ids : List[TableId] = []) -> Sequence[TypeSummary]:
+  search_part = ''
+  args : Dict[str, List[TableId]] = {}
+  if len(field_ids) > 0:
+    search_part = "where F.field_id = any(%(field_ids)s::bigint[])"
+    args = { "field_ids": field_ids }
+  stmt = f"""with field_value as (
               select F.field_id,
                      V.local_value_id,
                      V.unit_type_id,
@@ -51,6 +56,7 @@ def getTypeSummaries(cursor : Any) -> Sequence[TypeSummary]:
                      V.acquired
               from test_mlops.field F
               join test_mlops.local_value V on F.field_id = V.field_id
+              {search_part}
 
             ), units as (
               select local_type_id,
@@ -125,13 +131,13 @@ def getTypeSummaries(cursor : Any) -> Sequence[TypeSummary]:
               lateral (
                 select coalesce(
                          jsonb_agg(grp),
-                         '{}'::jsonb
+                         '{{}}'::jsonb
                        ) as groups
                 from jsonb_each(GS.id_to_group) as f(id, grp)
               ) z
               order by T.type_name, T.type_category, value_count desc, jsonb_array_length(units) desc
          """
-  cursor.execute(stmt)
+  cursor.execute(stmt, args)
 
   results = cursor.fetchall()
 

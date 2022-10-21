@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from demeter.db import getConnection
 
-from .logging import setupLogger
+from .log import setupLogger
 from .data_option import DataOption
 from .main import main
 

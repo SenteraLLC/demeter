@@ -29,7 +29,7 @@ HEADER_ROW_COUNT = 5
 FOOTER_ROW_COUNT = 4
 FRAME_ROW_COUNT = HEADER_ROW_COUNT + FOOTER_ROW_COUNT
 
-from ..logging import getLogger
+from ..log import getLogger
 logger = getLogger()
 
 

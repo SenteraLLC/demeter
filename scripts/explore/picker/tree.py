@@ -16,7 +16,7 @@ from ..summary import RawRowType
 from ..formatting import Margins, ColumnFormat
 from ..formatting import inferColumnFormat
 
-from ..logging import getLogger
+from ..log import getLogger
 logger = getLogger()
 
 

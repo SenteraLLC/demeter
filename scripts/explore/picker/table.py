@@ -14,7 +14,7 @@ from ..theme import ColorScheme
 
 from ..summary import Summary, RawRowType
 
-from ..logging import getLogger
+from ..log import getLogger
 logger = getLogger()
 
 

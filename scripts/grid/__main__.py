@@ -1,6 +1,3 @@
-# TODO: Resolve flake8 errors
-# flake8: noqa
-
 from typing import Dict, Iterator, Optional, Tuple, Any
 
 import json
@@ -135,7 +132,11 @@ async def main(cursor : Any,
   insertTree(cursor, branches, leaves, node_id_lookup, root_id)
   running.cancel()
 
+from dotenv import load_dotenv
+
 if __name__ == '__main__':
+  load_dotenv()
+
   parser = argparse.ArgumentParser(description='Store meteomatics data with dynamic spatial-resolution using nested polygons')
   parser.add_argument('--stats', action='extend', help='List of meteomatic stats on which to query', required=True, nargs="+")
 

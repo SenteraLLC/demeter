@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from .options import FormatOptions
 
-from ..logging import getLogger
+from ..log import getLogger
 logger = getLogger()
 
 

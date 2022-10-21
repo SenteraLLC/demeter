@@ -20,7 +20,7 @@ from ..curses import setup_curses
 
 from .layout import LAYOUT
 
-from ..logging import getLogger
+from ..log import getLogger
 logger = getLogger()
 
 HEADER_ROW_COUNT = 5

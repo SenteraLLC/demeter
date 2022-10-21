@@ -8,7 +8,7 @@ from .curses import FilterBy
 from .data_option import DataOption
 from .field_groups import FieldGroupSummary
 
-from .logging import getLogger
+from .log import getLogger
 logger = getLogger()
 
 def getFieldGroupFieldIds(target : FieldGroupSummary,

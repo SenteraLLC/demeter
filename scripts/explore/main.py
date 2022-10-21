@@ -13,7 +13,7 @@ from . import field_groups
 from .values import getValues
 from .fields import getFieldIds
 
-from .logging import getLogger
+from .log import getLogger
 
 logger = getLogger()
 

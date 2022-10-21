@@ -12,7 +12,7 @@ from ..formatting import inferColumnFormat, getSpecifiers
 from ..theme import ColorScheme
 from ..theme import setup_theme
 
-from ..logging import getLogger
+from ..log import getLogger
 from ..summary import RawRowType
 logger = getLogger()
 

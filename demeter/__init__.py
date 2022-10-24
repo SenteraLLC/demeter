@@ -1,13 +1,13 @@
-from . import data
-from . import task
-from . import work
-from . import db
+"""The database schema for agronomic modeling and supporting data science activities."""
+
+from demeter._version import __version__
+
+from . import data, db, task, work
 
 __all__ = [
-  'data',
-  'task',
-  'work',
-
-  'db',
+    "__version__",
+    "data",
+    "task",
+    "work",
+    "db",
 ]
-

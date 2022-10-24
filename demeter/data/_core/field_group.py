@@ -45,45 +45,6 @@ def getFieldGroupAncestors(cursor : Any,
   return OrderedDict((r["leaf_id"], r["leaf_to_root"]) for r in results)
 
 
-#def insertFieldGroupGreedy(cursor : Any,
-#                           field_group : FieldGroup,
-#                          ) -> db.TableId:
-#  id_to_ancestors = getFieldGroupAncestors(cursor,
-#                                           field_group,
-#                                          )
-#  #ancestors = id_to_ancestors[field_group.field_group_id]
-#  #if ancestors is None:
-#  #  raise Exception(f"Ancestors not found for Field Group: {field_group}")
-#  p_id = field_group.parent_field_group_id
-#
-#  lineage : List[db.TableId] = []
-#  for ancestors in id_to_ancestors.values():
-#    l = [a.field_group_id for a in ancestors] # type: ignore
-#    if p_id is not None and p_id in l:
-#      if len(l):
-#        raise Exception(f"Ambiguous field group: {field_group}")
-#      lineage = l
-#
-#  l = lineage
-#  if len(l):
-#    existing = l[-1] if len(l) else None
-#    if existing != p_id:
-#      print(f"Found more recent parent field group: {existing} is more recent than {p_id} [{l}]")
-#      # TODO: OK???
-#    field_group.parent_field_group_id = existing # type: ignore
-#  else:
-#    raise Exception(f"Bad field group search: {field_group}")
-#
-#  if p_id and (getFieldGroup(cursor, p_id) is None):
-#    raise Exception(f"Bad parent field group id for: {field_group}")
-#
-#  return insertFieldGroup(cursor, field_group)
-#
-#
-#insertOrGetFieldGroupGreedy = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroupGreedy)
-
-
-
 def getOrgFields(cursor : Any,
                  field_group_id : db.TableId,
                 ) -> Dict[db.TableId, Set[db.TableId]]:
@@ -194,10 +155,6 @@ def getFieldGroupFields(cursor : Any,
 
   cursor.execute(stmt, {'field_group_ids' : field_group_ids})
   results = cursor.fetchall()
-  #for r in results:
-  #  print(r)
-  #import sys
-  #sys.exit(1)
 
   return OrderedDict(
       (db.TableId(r.field_group_id),
@@ -208,8 +165,6 @@ def getFieldGroupFields(cursor : Any,
       )
       for r in results
   )
-
-
 
 
 def searchFieldGroup(cursor : Any,
@@ -231,6 +186,3 @@ def searchFieldGroup(cursor : Any,
   cursor.execute(stmt, field_group())
   results = cursor.fetchall()
   return [r for r in results]
-
-
-

@@ -18,7 +18,7 @@ def getFieldGroupAncestors(cursor : Any,
     with recursive leaf as (
       select G.parent_field_group_id,
              G.field_group_id
-      from test_mlops.field_group G
+      from field_group G
       where G.field_group_id = %(field_group)s
 
     ), ancestry as (
@@ -33,11 +33,11 @@ def getFieldGroupAncestors(cursor : Any,
              FG.field_group_id,
              distance + 1
       from ancestry A
-      join test_mlops.field_group FG on FG.field_group_id = A.parent_field_group_id
+      join field_group FG on FG.field_group_id = A.parent_field_group_id
     ) select A.leaf_id as field_group_id,
              jsonb_agg(to_jsonb(FG.*) order by A.distance asc) as leaf_to_root
       from ancestry A
-      join test_mlops.field_group FG on FG.field_group_id = A.field_group_id
+      join field_group FG on FG.field_group_id = A.field_group_id
       group by A.leaf_id
   """
   cursor.execute(stmt, field_group())
@@ -53,14 +53,14 @@ def getOrgFields(cursor : Any,
       select parent_field_group_id,
              field_group_id,
              0 as depth
-      from test_mlops.field_group
+      from field_group
       where field_group_id = %(field_group_id)s
       UNION ALL
       select F.parent_field_group_id,
              F.field_group_id,
              A.depth + 1
       from ancestry A
-      join test_mlops.field_group F on F.parent_field_group_id = A.field_group_id
+      join field_group F on F.parent_field_group_id = A.field_group_id
 
    ), leaf as (
      select A1.*
@@ -71,7 +71,7 @@ def getOrgFields(cursor : Any,
             L.depth,
             coalesce(jsonb_agg(F.field_id) filter (where F.field_id is not null), '[]'::jsonb) as field_ids
      from leaf L
-     left join test_mlops.field F on F.field_group_id = L.field_group_id
+     left join field F on F.field_group_id = L.field_group_id
      group by L.parent_field_group_id, L.field_group_id;
   """
   cursor.execute(stmt, {'field_group_id' : field_group_id})
@@ -107,13 +107,13 @@ def getFieldGroupFields(cursor : Any,
   with recursive ancestor as (
      select *,
             0 as distance
-     from test_mlops.field_group
+     from field_group
      where field_group_id = any(%(field_group_ids)s::bigint[])
      UNION ALL
      select G.*,
             distance + 1
      from ancestor A
-     join test_mlops.field_group G on A.parent_field_group_id = G.field_group_id
+     join field_group G on A.parent_field_group_id = G.field_group_id
 
   ), descendant as (
     select field_group_id as root_field_group_id,
@@ -127,7 +127,7 @@ def getFieldGroupFields(cursor : Any,
            D.distance,
            depth + 1
     from descendant D
-    join test_mlops.field_group G on D.field_group_id = G.parent_field_group_id
+    join field_group G on D.field_group_id = G.parent_field_group_id
 
   ), field_group_fields as (
     select D.root_field_group_id,
@@ -139,7 +139,7 @@ def getFieldGroupFields(cursor : Any,
              '[]'::jsonb
            ) as fields
     from descendant D
-    left join test_mlops.field F on D.field_group_id = F.field_group_id
+    left join field F on D.field_group_id = F.field_group_id
     group by D.root_field_group_id, D.depth
 
   ) select F.root_field_group_id as field_group_id,

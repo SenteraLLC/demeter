@@ -7,7 +7,7 @@ install:
 - poetry install
 
 script:
-- poetry run pre-commit run --all-files
+# - poetry run pre-commit run --all-files
 
 before_install:
 - mkdir .ci/keys

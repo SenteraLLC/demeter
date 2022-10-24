@@ -36,14 +36,15 @@ class Geom(db.Table):
   crs_name          : InitVar[str]
   type              : InitVar[str]
   coordinates       : InitVar[Coordinates]
-  geom              : str = field(init=False)
+  container_geom_id : Optional[db.TableId] = None
 
-  container_geom_id : Optional[db.TableId]
+  # TODO: Should store the wkb, not some serialized dict
+  geom              : str = field(init=False)
 
   def __post_init__(self,
                     crs_name : str,
                     type : str,
-                    coordinates : Coordinates
+                    coordinates : Coordinates,
                    ) -> None:
     crs = CRS(type = "name",
               properties = {"name": crs_name},
@@ -58,29 +59,30 @@ class Geom(db.Table):
 
 
 @dataclass(frozen=True)
-class Owner(db.Table):
-  owner : str
+class FieldGroup(db.Detailed):
+  name : str
+  parent_field_group_id : Optional[db.TableId] = None
+  external_id : Optional[str] = None
 
-from ...db import Detailed
-@dataclass(frozen=True)
-class Grower(Detailed):
-  owner_id    : db.TableId
-  farm        : str
-  external_id : Optional[str]
 
 @dataclass(frozen=True)
-class Field(db.Table):
-  owner_id    : db.TableId
+class Field(db.Detailed):
   geom_id     : db.TableId
-  year        : Optional[int]
-  grower_id   : Optional[db.TableId]
-  external_id : Optional[str]
+
+  name : str
+  external_id    : Optional[str]
+
+  field_group_id : Optional[db.TableId]
+
   created     : Optional[datetime] = None
+
+
 
 @dataclass(frozen=True)
 class GeoSpatialKey(db.Table):
   geom_id  : db.TableId
   field_id : Optional[db.TableId]
+
 
 @dataclass(frozen=True)
 class TemporalKey(db.Table):
@@ -100,38 +102,32 @@ class Key(KeyIds, GeoSpatialKey, TemporalKey):
 class CropType(db.TypeTable, db.Detailed):
   species     : str
   cultivar    : Optional[str]
-  parent_id_1 : Optional[db.TableId]
-  parent_id_2 : Optional[db.TableId]
+  parent_id_1 : Optional[db.TableId] = None
+  parent_id_2 : Optional[db.TableId] = None
 
 @dataclass(frozen=True)
 class CropStage(db.TypeTable):
   crop_stage : str
 
 @dataclass(frozen=True)
-class PlantHarvestKey(db.TableKey):
+class PlantingKey(db.TableKey):
   field_id      : db.TableId
   crop_type_id  : db.TableId
   geom_id       : db.TableId
 
 @dataclass(frozen=True)
-class PlantingKey(PlantHarvestKey):
-  pass
-
-@dataclass(frozen=True)
-class HarvestKey(PlantHarvestKey):
-  pass
-
-@dataclass(frozen=True)
-class _PlantHarvest(db.Detailed):
+class Planting(PlantingKey, db.Detailed):
   performed : Optional[date]
 
 @dataclass(frozen=True)
-class Planting(PlantingKey, _PlantHarvest):
-  pass
+class Act(db.Detailed):
+  field_id     : db.TableId
+  name         : str
+  performed    : date
+  geom_id      : Optional[db.TableId] = None
+  crop_type_id : Optional[db.TableId] = None
+  local_value_id : Optional[db.TableId] = None
 
-@dataclass(frozen=True)
-class Harvest(HarvestKey, _PlantHarvest):
-  pass
 
 @dataclass(frozen=True)
 class CropProgressKey(db.TableKey):

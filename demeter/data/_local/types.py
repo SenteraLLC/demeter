@@ -8,8 +8,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class LocalValue(db.Detailed):
-  geom_id        : db.TableId
-  field_id       : Optional[db.TableId]
+  geom_id        : Optional[db.TableId]
+  field_id       : db.TableId
   unit_type_id   : db.TableId
   quantity       : float
   local_group_id : Optional[db.TableId]

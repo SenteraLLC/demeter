@@ -15,6 +15,9 @@ create extension postgis_raster with schema public;
 create extension "postgres-json-schema" with schema public;
 
 set search_path = test_mlops, public;
+create role read_and_write;
+grant select, insert on all tables in schema test_mlops to read_and_write;
+grant usage on schema test_mlops to read_and_write;
 
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$
@@ -35,6 +38,9 @@ create table geom (
   geom geometry(Geometry, 4326) not null,
   check (ST_IsValid(geom))
 );
+
+-- TODO: Enforce SRID like this:
+--  ALTER xxxx ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 28355)
 
 -- TODO: Table for geometries that get 'repaired' with their 'IsValidMessage' and 'IsValidDetails'
 
@@ -92,59 +98,57 @@ create constraint trigger geom_must_be_unique
        for each row execute procedure geom_must_be_unique();
 
 
-create table owner (
-  owner_id bigserial primary key,
-  owner text not null unique
-);
+create table field_group (
+  field_group_id bigserial primary key,
+  -- TODO: Add cycle detection constraint
+  parent_field_group_id bigint
+                        references field_group(field_group_id),
+  unique (field_group_id, parent_field_group_id),
 
-create table grower (
-  grower_id bigserial not null,
-  owner_id  bigint not null,
-  -- TODO: Pretty sure this is a good idea
-  primary key (grower_id, owner_id),
+  name text,
+
+  constraint roots_must_be_named check (
+    not (parent_field_group_id is null and name is null)
+  ),
+  unique(parent_field_group_id, name),
 
   external_id text,
-  unique (owner_id, external_id),
-  farm text not null,
-  details  jsonb
-           not null
-           default '{}'::jsonb,
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
   last_updated  timestamp without time zone
                 not null
                 default now()
 );
 
+CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;
 
--- TODO: This geom must be a polygon / multipolygon
+
 create table field (
   field_id bigserial
            primary key,
 
-  external_id text,
-
-  -- TODO: Constraint with grower_id and owner_id
-  owner_id bigint
-           references owner(owner_id)
-           not null,
-  unique (owner_id, external_id),
-  year     smallint,
   geom_id   bigint
            not null
            references geom(geom_id),
 
-  unique (geom_id, owner_id, year),
+  name text,
+  external_id text,
 
-  grower_id bigint,
-  foreign key (owner_id, grower_id)
-    references grower (owner_id, grower_id),
+  field_group_id bigint
+                 references field_group(field_group_id),
 
   created  timestamp without time zone
               not null
-              default now()
+              default now(),
 
-
-  -- TODO: Is this constraint true?
-  -- CHECK fields cannot overlap?
+  details jsonb
+          not null
+          default '{}'::jsonb,
+  last_updated  timestamp without time zone
+                not null
+                default now()
 );
 
 
@@ -249,9 +253,9 @@ create table crop_stage (
 );
 
 create table crop_progress (
-  field_id         bigint,
-  crop_type_id     bigint,
-  planting_geom_id bigint,
+  field_id         bigint not null,
+  crop_type_id     bigint not null,
+  planting_geom_id bigint not null,
 
   foreign key (field_id, crop_type_id, planting_geom_id)
     references planting (field_id, crop_type_id, geom_id),
@@ -267,21 +271,23 @@ create table crop_progress (
 );
 
 
---- TODO: I think it's better to use LocalValue for this
-create table harvest (
+create table act (
+  act_id bigserial primary key,
   field_id      bigint
                 not null
                 references field(field_id),
+  name          text not null,
+
   crop_type_id  bigint
-                not null
                 references crop_type(crop_type_id),
-  geom_id       bigint
-                not null
-                references geom(geom_id),
-  primary key (field_id, geom_id, crop_type_id),
+  local_value_id bigint
+                 references local_value(local_value_id),
+  unique (field_id, local_value_id),
 
   performed     timestamp without time zone
                 not null,
+  unique (field_id, name, performed),
+
   last_updated  timestamp without time zone
                 not null
                 default now(),
@@ -291,10 +297,9 @@ create table harvest (
                 default '{}'::jsonb
 );
 
-CREATE TRIGGER update_harvest_last_updated BEFORE UPDATE
-ON harvest FOR EACH ROW EXECUTE PROCEDURE
+CREATE TRIGGER update_act_last_updated BEFORE UPDATE
+ON act FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
-
 
 
 -----------------
@@ -467,9 +472,9 @@ create table local_value (
                  primary key,
 
   geom_id        bigint
-                 not null
                  references geom(geom_id),
   field_id       bigint
+                 not null
                  references field(field_id),
   unit_type_id   bigint
                  references unit_type(unit_type_id)
@@ -756,23 +761,29 @@ create table published_workflow (
 );
 
 
--- TODO: This needs to be factored out
+-- TODO: This needs to be factored out to its own repo
+--       Maybe also with LocalValue and LocalType?
 -- Grid Base Schema
 
 create table node (
   node_id bigserial
           primary key,
 
-  bounds geometry(Geometry, 4326) not null,
-  CONSTRAINT enforce_node_polygon CHECK (
-    geometrytype(bounds) = 'POLYGON'::text AND
-    ST_IsValid(bounds)
-   ),
+  geom geometry(Geometry, 4326) not null,
+  CONSTRAINT
+  enforce_node_polygon CHECK (
+    (
+      geometrytype(geom) = 'POLYGON'::text OR
+      geometrytype(geom) = 'MULTIPOLYGON'::text
+    ) AND
+    ST_IsValid(geom)
+   )
+  ,
 
   value float
 );
 
-CREATE INDEX CONCURRENTLY node_idx on node using SPGIST(bounds);
+CREATE INDEX CONCURRENTLY node_idx on node using SPGIST(geom);
 
 -- Optional Raster
 create table node_raster (
@@ -783,30 +794,31 @@ create table node_raster (
 create table root (
   root_id bigserial primary key,
 
-  geom_id bigint
-          references geom(geom_id)
-          not null,
+  root_node_id bigint
+               references node(node_id)
+               not null,
   local_type_id bigint
                 references local_type(local_type_id)
                 not null,
-  unique(geom_id, local_type_id),
 
+  time          timestamp without time zone
+                not null,
+
+  last_updated  timestamp without time zone
+                not null
+                default now(),
   details       jsonb
                 not null
                 default '{}'::jsonb
 );
 
 create table node_ancestry (
-  root_id bigint
-          references root(root_id)
-          not null,
   parent_node_id bigint
                  references node(node_id),
   -- TODO: Contained-by-parent constraint
 
   node_id bigint references node(node_id) not null,
 
-  primary key (root_id, parent_node_id, node_id)
+  primary key (parent_node_id, node_id)
 );
-
 

@@ -7,25 +7,21 @@ from . import _local as local
 __all__ = [
   # core
   'getMaybeFieldId',
-  'getMaybeOwnerId',
-  'getMaybeGrowerId',
+  'getMaybeFieldGroupId',
   'getMaybeGeoSpatialKeyId',
   'getMaybeTemporalKeyId',
 
   'getField',
-  'getOwner',
   'getGeom',
 
   'insertField',
-  'insertOwner',
-  'insertGrower',
+  'insertFieldGroup',
   'insertGeoSpatialKey',
   'insertTemporalKey',
 
   'insertOrGetGeoSpatialKey',
   'insertOrGetTemporalKey',
-  'insertOrGetOwner',
-  'insertOrGetGrower',
+  'insertOrGetFieldGroup',
   'insertOrGetField',
 
   'getMaybeDuplicateGeom',
@@ -38,8 +34,7 @@ __all__ = [
   'MultiPolygon',
   'Coordinates',
   'Geom',
-  'Owner',
-  'Grower',
+  'FieldGroup',
   'Field',
   'GeoSpatialKey',
   'TemporalKey',
@@ -67,7 +62,7 @@ __all__ = [
   'insertLocalGroup',
 
   'insertPlanting',
-  'insertHarvest',
+  'insertAct',
   'insertCropProgress',
 
   'insertOrGetUnitType',
@@ -87,13 +82,11 @@ __all__ = [
   'CropType',
   'CropStage',
 
-  'PlantHarvestKey',
   'PlantingKey',
-  'HarvestKey',
   'CropProgressKey',
 
   'Planting',
-  'Harvest',
+  'Act',
   'CropProgress',
 
 ]

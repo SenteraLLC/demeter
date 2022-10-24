@@ -10,9 +10,9 @@ type_table_lookup : TableLookup = {
 
 data_table_lookup : TableLookup = {
   Geom          : "geom",
-  Owner         : "owner",
-  Grower        : "grower",
+  Act           : "act",
   Field         : "field",
+  FieldGroup    : "field_group",
   GeoSpatialKey : "geospatial_key",
   TemporalKey   : "temporal_key",
 }
@@ -23,7 +23,7 @@ id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
 
 key_table_lookup : TableLookup = {
   Planting     : "planting",
-  Harvest      : "harvest",
+  Act          : "act",
   CropProgress : "crop_progress",
 }
 

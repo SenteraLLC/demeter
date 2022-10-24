@@ -7,7 +7,6 @@ from . import _local as local
 __all__ = [
   # core
   'getMaybeFieldId',
-  'getMaybeFieldGroupId',
   'getMaybeGeoSpatialKeyId',
   'getMaybeTemporalKeyId',
 
@@ -15,13 +14,11 @@ __all__ = [
   'getGeom',
 
   'insertField',
-  'insertFieldGroup',
   'insertGeoSpatialKey',
   'insertTemporalKey',
 
   'insertOrGetGeoSpatialKey',
   'insertOrGetTemporalKey',
-  'insertOrGetFieldGroup',
   'insertOrGetField',
 
   'getMaybeDuplicateGeom',
@@ -34,7 +31,6 @@ __all__ = [
   'MultiPolygon',
   'Coordinates',
   'Geom',
-  'FieldGroup',
   'Field',
   'GeoSpatialKey',
   'TemporalKey',

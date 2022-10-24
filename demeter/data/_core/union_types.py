@@ -2,7 +2,7 @@ from typing import Union
 
 from .types import *
 
-AnyDataTable = Union[Geom, Field, GeoSpatialKey, TemporalKey, Act, Key]
+AnyDataTable = Union[Geom, Field, FieldGroup, GeoSpatialKey, TemporalKey, Act, Key]
 
 AnyTypeTable = Union[CropType, CropStage, ReportType]
 

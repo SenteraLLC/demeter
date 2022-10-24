@@ -1,10 +1,18 @@
 language: python
-python: "3.10"
 dist: focal
+python: 3.10.4
 
 install:
-  - 'pip install poetry'
-  - 'poetry install'
+- pip install poetry
+- poetry install
 
 script:
-  - poetry run pre-commit run --all-files
+- poetry run pre-commit run --all-files
+
+before_install:
+- mkdir .ci/keys
+- openssl aes-256-cbc -K $encrypted_1676da65eea7_key -iv $encrypted_1676da65eea7_iv
+  -in .ci/id_rsa.enc -out .ci/keys/id_rsa -d
+- chmod 600 .ci/keys/id_rsa
+- eval $(ssh-agent -s)
+- ssh-add .ci/keys/id_rsa

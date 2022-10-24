@@ -70,5 +70,10 @@ Process flow:
 
 
 
+TODO: CONSOLIDATE THIS, JUST NOTES FOR NOW
+
+Guide for setting up SSH tunnel
+Guide for setting up user account postgres using 'postgres' account and 'read_and_write' role and \password <user>
+  grant read_and_write to <user>;
 
 

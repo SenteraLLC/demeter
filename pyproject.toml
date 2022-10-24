@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "demeter"
 version = "1.1.22"
-description = ""
+description = "The database schema for agronomic modeling and supporting data science activities"
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [
   {include = "demeter"},

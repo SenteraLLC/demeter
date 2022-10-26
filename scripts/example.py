@@ -1,89 +1,113 @@
-from demeter.work import DataSource
-from demeter.work import OneToManyResponseFunction
-from demeter.work import S3File
-from demeter.work import Transformation
-from demeter.work._transformation import WrappedTransformation
-from demeter.data import LocalType
+from datetime import datetime
 
-import geopandas as gpd  # type: ignore
-from typing import Dict, List, Union, Tuple, Mapping
+from dotenv import load_dotenv
 
-# Long Term
-# TODO: How to deal with dataframe indexes?
-# TODO: Upload "init" file somewhere
-# TODO: Allow init to override join behavior, manually return a gpd.GeoDataFrame
-# TODO: Compare the headers of S3 outputs between function minor versions
+# Core Types
+from demeter.data import Field, FieldGroup
+from demeter.data import insertField, insertFieldGroup
 
-# ASAP
-# TODO: Should duplicate runs look a the major version of the function that outputs them? Should probably be considered
-# TODO: Add functionality to reload subset of input
-# TODO: Add functionality to reload multiple subsets of input
-# TODO: Add functionality to skip function execution altogether
-# TODO: Add functionality to download output locally when cached in S3
-# TODO: Add 'idempotent' boolean property? And/or 'mapping' property?
-#       There could be different types of 'Function' decorators
-# TODO: ???? Add meta-functionality to toggle the above options?
-# TODO: Show how to access other 'local' meta data like: owner, field
-# TODO:   How to access quasi-local data like "harvest" and "planting"?
+# Local Types
+from demeter.data import UnitType, LocalType, LocalValue, Geom, MultiPolygon, Point
+from demeter.data import insertUnitType, insertLocalType, insertLocalValue, insertOrGetGeom
 
-# TODO: How to deal with models that change from one spatial resolution to another
-#       Post processing
-#       E.G. Field level data -> Org level responses
-#       E.G. How to get region level data when a field is searched
-#       E.G. Multiple regions in field to scaler for a field
+from demeter.db import getConnection
 
-# TODO: Model metric functions?
-# TODO: Model seletion function?
-# TODO: Function for taking rasters and generating summary data
-# TODO: How to do queries that use different geometries, for example, a transformation function that maps geometries to different geometries. E.G. field -> county -> county level data -> field
-
-def init(datasource : DataSource, some_constant : int) -> None:
-  datasource.local([LocalType(type_name="nitrogen",
-                              type_category="application",
-                             ),
-                    LocalType(type_name="urea ammonium nitrate",
-                              type_category="application",
-                             ),
-                  ])
-
-  parameters = lambda k : {"field_id"   : k.field_id,
-                           "start_date" : k.start_date,
-                           "end_date"   : k.end_date,
-                          }
-  datasource.http("http_uri_params_test_type", param_fn=parameters, response_fn=OneToManyResponseFunction)
-
-  request_body = lambda k : {"field_id"   : k.field_id,
-                             "start_date" : k.start_date,
-                             "end_date"   : k.end_date
-                            }
-  datasource.http("http_request_body_test_type", json_fn=request_body)
-
-  datasource.s3("my_test_geo_type"),
-
-  datasource.s3("my_test_nongeo_type")
-
-  datasource.join(datasource.GEOM, "my_test_geo_type", gpd.GeoDataFrame.sjoin, lsuffix = "primary", rsuffix = "my_test_geo_type")
-
-  # How to join foo::start_date - foo::end_date with bar::date
-  #datasource.join("foo_type", "bar_type", pd.DataFrame.merge, on=["geom_id", "date"], how="outer")
-
-
-
-FUNCTION_NAME = "my_function"
-VERSION = 4
-OUTPUTS = {"foo": "test_geojson_type"}
-
-@Transformation(FUNCTION_NAME, VERSION, OUTPUTS, init) # type: ignore
-def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int) -> Mapping[str, S3File]:
-  print("GDF IS: ",gdf.to_string())
-  return {"foo": S3File(gdf, "testing_geojson")}
-
-
-def cli(fn : WrappedTransformation) -> None:
-  from demeter.work._util import ExecutionMode
-  fn(mode = ExecutionMode.CLI)
-  #fn(mode = ExecutionMode.REGISTER)
 
 if __name__ == "__main__":
-  cli(example_transformation)
+  load_dotenv()
 
+  c = getConnection()
+  cursor = c.cursor()
+
+  root_group = FieldGroup(
+                 name = "test field group",
+                 parent_field_group_id = None,
+                 external_id = "ABC Group Inc",
+               )
+  root_group_id = insertFieldGroup(cursor, root_group)
+  print(f"Root group id: {root_group_id}")
+
+  argentina_group = FieldGroup(
+                      name = "Argentina",
+                      parent_field_group_id = root_group_id,
+                    )
+  argentina_group_id = insertFieldGroup(cursor, argentina_group)
+  print(f"Argentina group id: {argentina_group_id}")
+
+  # NOTE: Use MultiPolygon instead of Polygon
+  #       There isn't support for lone Polygons yet
+  bound : MultiPolygon = (((
+                       -65.4545335800795,
+                       -35.19686410451283
+                     ),
+                     (
+                       -62.702558113583365,
+                       -35.193663907793265
+                     ),
+                     (
+                       -62.78401558669485,
+                       -36.94324941995089
+                     ),
+                     (
+                       -65.55755160251499,
+                       -36.87451965566409
+                     ),
+                     (
+                       -65.45449008889159,
+                       -35.18596793795566
+                     )
+                   ), )
+
+  field_geom = Geom(
+      type='Polygon',
+      coordinates=bound,
+      crs_name="urn:ogc:def:crs:EPSG::4326",
+      container_geom_id=None,
+  )
+  field_geom_id = insertOrGetGeom(cursor, field_geom)
+  print(f"Field Geom id: {field_geom_id}")
+
+  test_field = Field(
+                 name = "campo de prueba",
+                 external_id = "123456789",
+                 field_group_id = argentina_group_id,
+                 geom_id = field_geom_id,
+               )
+  field_id = insertField(cursor, test_field)
+  print(f"Field id: {field_id}")
+
+  irrigation_type = LocalType(type_name="my_irrigation_type", type_category=None)
+  irrigation_type_id = insertLocalType(cursor, irrigation_type)
+  print(f"Irrigation type id: {irrigation_type_id}")
+
+  gallons_unit = UnitType(unit="gallons", local_type_id=irrigation_type_id)
+  gallons_unit_id = insertUnitType(cursor, gallons_unit)
+  print(f"Gallons type id: {gallons_unit_id}")
+
+  obs : Point = (-63.4545335800795, -35.59686410451283)
+  obs_geom = Geom(
+      type='Polygon',
+      coordinates = obs,
+      crs_name = "urn:ogc:def:crs:EPSG::4326",
+      container_geom_id = None,
+  )
+  obs_geom_id = insertOrGetGeom(cursor, field_geom)
+  print("Observation geom id: ",obs_geom_id)
+
+  l = LocalValue(
+        geom_id = obs_geom_id,
+        field_id = field_id,
+        unit_type_id = gallons_unit_id,
+        quantity = 1234.567,
+        local_group_id = None,
+        acquired = datetime.now(),
+  )
+
+  local_value_id = insertLocalValue(cursor, l)
+  print(f"Local value id: {local_value_id}")
+
+  # NOTE SQL transaction intentionally left uncommitted
+  # cursor.commit()
+  # If you uncomment this, the script is no longer idempotent.
+  #  That is, any function 'insertFoo' will throw integrity errors.
+  #  This can be remedied by swapping them with their 'insertOrGetFoo' counterparts

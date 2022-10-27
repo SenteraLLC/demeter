@@ -12,7 +12,6 @@ data_table_lookup : TableLookup = {
   Geom          : "geom",
   Act           : "act",
   Field         : "field",
-  FieldGroup    : "field_group",
   GeoSpatialKey : "geospatial_key",
   TemporalKey   : "temporal_key",
 }

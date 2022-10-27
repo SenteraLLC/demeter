@@ -69,7 +69,7 @@ This repository supports a root level '.env' file
 
 
 ## Temporary Documentation
-https://sentera.atlassian.net/wiki/spaces/GML/pages/edit-v2/3107520532
+https://sentera.atlassian.net/wiki/spaces/GML/pages/3107520532/Demeter+Data+Types
 
 There will soon be auto-generated Sphinx documents
 
@@ -93,14 +93,12 @@ Local value id: 228730
 ```
 
 
-## Notes
+## Troubleshooting
 Installing GeoPandas for M1
-
 https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1
 
 
 ## TODO
-Guide for setting up SSH tunnel
 
 Guide for setting up user account postgres using 'postgres' account and 'read\_and\_write' role and \password <user>
   grant read\_and\_write to <user>;

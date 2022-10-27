@@ -3,9 +3,11 @@
 2) Run 'psql --host localhost --user my\_usernmae -f schema.sql postgres' (substituting any custom arguments)
 
 
-## Temporary documentation is available at
+## Temporary Documentation
 https://sentera.atlassian.net/wiki/spaces/GML/pages/edit-v2/3107520532
+
 There will soon be auto-generated Sphinx documents
+
 
 ## Scripts
 
@@ -13,6 +15,7 @@ There will soon be auto-generated Sphinx documents
    A barebones example of using Demeter data classes and functions
 
 \> python3 -m scripts.sample
+
 ```
 Root group id: 75910
 Argentina group id: 75911
@@ -27,11 +30,13 @@ Local value id: 228730
 
 ## Notes
 Installing GeoPandas for M1
+
 https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1
 
 
 ## TODO
 Guide for setting up SSH tunnel
+
 Guide for setting up user account postgres using 'postgres' account and 'read\_and\_write' role and \password <user>
   grant read\_and\_write to <user>;
 

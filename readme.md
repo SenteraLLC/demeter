@@ -1,9 +1,9 @@
 ## Requirements
-
 1. Python 3.10.4 or above
-2. A Postgres database running the Demeter schema:
-https://github.com/SenteraLLC/demeter
+2. Access to a Postgres database
 
+## Postgres Server Setup
+Use the .env file at the root of the project for Postgres credentials
 
 ### Required Environment Variables
 - DEMETER\_PG\_HOST
@@ -15,14 +15,57 @@ https://github.com/SenteraLLC/demeter
 - DEMETER\_PG\_PORT
 - DEMETER\_PG\_PASSWORD
 
+
+### Method 1: Use an existing database
+1) Locate a Postgres instance
+
+A suggested approach is to use the existing analytics database using an SSH tunnel.
+Note: You will need to have SSH credentials with the AWS Analytics Bastion
+
+Example tunnel command
+```
+ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 my-analytics-username-goes-here@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com
+```
+
+2) Configure your '.env' file to point at the Postgres server.
+A template .env file is in this repository root at '.env.template'
+
+3) Test your connection to the database:
+Example
+```
+psql --host localhost --port 5433 --user postgres postgres
+```
+You will have to ask somebody for the password
+
+
+### Method 2: Create your own database locally
+1) Download Postgres
+https://www.postgresql.org/download/
+
+
+2) Initialize a Postgres database cluster on disk with 'initdb'
+
+Example:
+```
+initdb -D /usr/local/pgsql/data
+```
+
+
+3) Start the server process
+
+Example:
+```
+postgres -D /usr/local/pgsql/data
+```
+
+4) Connect to you database with a command like this:
+psql --host localhost --user my\_username -f schema.sql postgres
+
+
 ## Notes
 This repository supports a root level '.env' file
 [python-dotenv](https://github.com/theskumar/python-dotenv)
 
-
-## Postgres Server
-1) Start or locate a postgres instance where you have permissions to create tables
-2) Run 'psql --host localhost --user my\_usernmae -f schema.sql postgres' (substituting any custom arguments)
 
 
 ## Temporary Documentation

@@ -3,12 +3,12 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Core Types
-from demeter.data import Field, FieldGroup
-from demeter.data import insertField, insertFieldGroup
+from demeter.data import Field, FieldGroup, Geom, MultiPolygon, Point
+from demeter.data import insertField, insertFieldGroup, insertOrGetGeom
 
 # Local Types
-from demeter.data import UnitType, LocalType, LocalValue, Geom, MultiPolygon, Point
-from demeter.data import insertUnitType, insertLocalType, insertLocalValue, insertOrGetGeom
+from demeter.data import UnitType, LocalType, LocalValue
+from demeter.data import insertUnitType, insertLocalType, insertLocalValue
 
 from demeter.db import getConnection
 

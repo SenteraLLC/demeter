@@ -1,3 +1,25 @@
+## Requirements
+
+1. Python 3.10.4 or above
+2. A Postgres database running the Demeter schema:
+https://github.com/SenteraLLC/demeter
+
+
+### Required Environment Variables
+- DEMETER\_PG\_HOST
+- DEMETER\_PG\_DATABASE
+- DEMETER\_PG\_OPTIONS
+- DEMETER\_PG\_USER
+
+### Optional Environment Variables
+- DEMETER\_PG\_PORT
+- DEMETER\_PG\_PASSWORD
+
+## Notes
+This repository supports a root level '.env' file
+[python-dotenv](https://github.com/theskumar/python-dotenv)
+
+
 ## Postgres Server
 1) Start or locate a postgres instance where you have permissions to create tables
 2) Run 'psql --host localhost --user my\_usernmae -f schema.sql postgres' (substituting any custom arguments)

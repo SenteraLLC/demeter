@@ -1,12 +1,13 @@
-To initialize the schema:
-1) Start a postgres instance
-2) Run 'psql --host localhost -f schema.sql postgres' (substituting any custom arguments)
+## Postgres Server
+1) Start or locate a postgres instance where you have permissions to create tables
+2) Run 'psql --host localhost --user my\_usernmae -f schema.sql postgres' (substituting any custom arguments)
 
 
-Installing GeoPandas for M1
-https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1
+## Temporary documentation is available at
+https://sentera.atlassian.net/wiki/spaces/GML/pages/edit-v2/3107520532
+There will soon be auto-generated Sphinx documents
 
-== Scripts ==
+## Scripts
 
 1) Example
    A barebones example of using Demeter data classes and functions
@@ -24,10 +25,13 @@ Local value id: 228730
 ```
 
 
-TODO
+## Notes
+Installing GeoPandas for M1
+https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1
 
+
+## TODO
 Guide for setting up SSH tunnel
 Guide for setting up user account postgres using 'postgres' account and 'read\_and\_write' role and \password <user>
   grant read\_and\_write to <user>;
-
 

@@ -109,5 +109,5 @@ if __name__ == "__main__":
   # NOTE SQL transaction intentionally left uncommitted
   # cursor.commit()
   # If you uncomment this, the script is no longer idempotent.
-  #  That is, any function 'insertFoo' will throw integrity errors.
+  #  That is, any function 'insertFoo' will throw integrity errors when run a second time.
   #  This can be remedied by swapping them with their 'insertOrGetFoo' counterparts

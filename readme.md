@@ -12,7 +12,7 @@ There will soon be auto-generated Sphinx documents
 1) Example
    A barebones example of using Demeter data classes and functions
 
-\> python3 -m scripts.example
+\> python3 -m scripts.sample
 ```
 Root group id: 75910
 Argentina group id: 75911

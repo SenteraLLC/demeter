@@ -20,7 +20,6 @@ from pyparsing import (
 )
 
 
-
 def field_act(s, loc, tok):
     fieldName = tok[0].replace('"', '')
     fieldSpec = html.escape(' '.join(tok[1::]).replace('"', '\\"'))
@@ -43,7 +42,6 @@ def create_table_act(s, loc, tok):
         {fields}
       </table>
     >];'''.format(**tok)
-
 
 
 def add_fkey_act(s, loc, tok):
@@ -87,9 +85,7 @@ def grammar():
         | parenthesis)
     field_def.setParseAction(field_act)
 
-    #tablename_def = ( ZeroOrMore(Word(alphanums + "`_.")) + Optional(QuotedString("\"")) )
     tablename_def = Word(alphanums + "`_.")
-
 
     field_list_def = field_def + ZeroOrMore(Suppress(",") + field_def)
     field_list_def.setParseAction(field_list_act)

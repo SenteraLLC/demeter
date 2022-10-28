@@ -92,6 +92,10 @@ Observation geom id:  105669
 Local value id: 228730
 ```
 
+2) Generate Graphviz chart of Postgres database
+Make sure that you have dev-dependencies installed via Poetry.
+```pg_dump --schema-only --schema test_mlops --host localhost --dbname postgres | python3 -m scripts.to_graphviz | dot -Tpng > schema.png```
+
 
 ## Troubleshooting
 Installing GeoPandas for M1

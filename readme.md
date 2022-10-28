@@ -24,7 +24,7 @@ Note: You will need to have SSH credentials with the AWS Analytics Bastion
 
 Example tunnel command
 ```
-ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 my-analytics-username-goes-here@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com
+ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 my-aws-analytics-bastion-username-goes-here@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com
 ```
 
 2) Configure your '.env' file to point at the Postgres server.

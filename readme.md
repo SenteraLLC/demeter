@@ -100,6 +100,6 @@ https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-pytho
 
 ## TODO
 
-Guide for setting up user account postgres using 'postgres' account and 'read\_and\_write' role and \password <user>
+Guide for setting up user account postgres using 'postgres' account and 'read\_and\_write' role and password <user>
   grant read\_and\_write to <user>;
 

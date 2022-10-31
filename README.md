@@ -36,10 +36,10 @@ poetry install
 ```
 
 ## Requirements
-1. Python 3.10.4 or above
-2. Access to a Postgres database (with connection credentials)
+- Python `3.10.4`+
+- Access to a Postgres database (with connection credentials)
 
-## Configure your `.env` file
+## Configure `.env` file
 Your `.env` file holds the credentials necessary to connect to the desired Postgres server (see [python-dotenv](https://github.com/theskumar/python-dotenv) for more information). It should never be committed to Github (i.e., should be part of the `.gitignore`). See [`.env.template`](https://github.com/SenteraLLC/demeter/blob/main/.env.template) for an example, and ask @Joel-Larson or @tnigon if you have questions about credentials.
 
 **Environment Variables**
@@ -56,7 +56,7 @@ If you haven't done so already, add an `.env` file at the project root with conn
 
 ### Method 1: Use an existing database
 
-### Step 1: Connect to an SSH Tunnel
+#### Step 1: Connect to an SSH Tunnel
 **IMPORTANT**: Your account on the bastion machine exists only to hold the public portion of your cryptographic key(s). See [Connecting to a Database (safely)](https://sentera.atlassian.net/wiki/spaces/GML/pages/3173416965/Connecting+to+a+Database+safely#The-General-Problem) for more information.
 
 ``` bash
@@ -75,30 +75,32 @@ psql --host localhost --port 5433 --user postgres postgres
 ```
 
 ### Method 2: Create your own database locally
-1. [Download Postgres](https://www.postgresql.org/download/)
-2. Initialize a Postgres database cluster on disk with `initdb`
+#### Step 1: [Download Postgres](https://www.postgresql.org/download/)
+#### Step 2: Initialize a Postgres database cluster on disk with `initdb`
 ``` bash
 initdb -D /usr/local/pgsql/data
 ```
 
-3. Start the server process
+#### Step 3: Start the server process
 ``` bash
 postgres -D /usr/local/pgsql/data
 ```
 
-4. Connect to your new database
+#### Step 4: Connect to your new database
 ``` bash
 psql --host localhost --user my\_username -f schema.sql postgres
 ```
 
-## Demeter Background Referenes
+## Demeter Background References
 - [Demeter Data Types](https://sentera.atlassian.net/wiki/spaces/GML/pages/3172270107/Demeter+Data+Types+use+this)
 
 ## Example Usage
 
 ### Using Demeter data classes and functions
 
-\> python3 -m scripts.sample
+``` bash
+python3 -m scripts.sample
+```
 
 ```
 Root group id: 75910
@@ -115,5 +117,5 @@ Local value id: 228730
 - [Installing GeoPandas for M1](https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1)
 
 ## TODO
-- Guide for setting up user account postgres using `postgres` account and `read_and_write` role and password <user>
-- Grant `read_and_write` to <user>
+- Guide for setting up user account postgres using `postgres` account and `read_and_write` role and password `<user>`
+- Grant `read_and_write` to `<user>`

@@ -88,7 +88,7 @@ postgres -D /usr/local/pgsql/data
 
 #### Step 4: Connect to your new database
 ``` bash
-psql --host localhost --user my\_username -f schema.sql postgres
+psql --host localhost --user my_username -f schema.sql postgres
 ```
 
 ## Demeter Background References

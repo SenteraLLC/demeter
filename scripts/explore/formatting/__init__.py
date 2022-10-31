@@ -1,19 +1,12 @@
-
-from .column import ColumnFormat
-from .column import inferColumnFormat
-
-from .options import Margins, FormatOptions
-
-from .specifiers import Specifiers
-from .specifiers import getSpecifiers
+from .column import ColumnFormat, inferColumnFormat
+from .options import FormatOptions, Margins
+from .specifiers import Specifiers, getSpecifiers
 
 __all__ = [
-  'ColumnFormat',
-  'inferColumnFormat',
-
-  'Margins',
-  'FormatOptions',
-
-  'Specifiers',
-  'getSpecifiers',
+    "ColumnFormat",
+    "inferColumnFormat",
+    "Margins",
+    "FormatOptions",
+    "Specifiers",
+    "getSpecifiers",
 ]

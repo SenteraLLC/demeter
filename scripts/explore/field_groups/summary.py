@@ -1,44 +1,43 @@
-from typing import TypedDict, Optional, Any, Sequence, Dict
-from typing import cast
+from dataclasses import asdict, dataclass, make_dataclass
+from typing import Any, Dict, Optional, Sequence, TypedDict, cast
 
-from demeter.data import FieldGroup, Field
+from joblib import Memory  # type: ignore
+
+from demeter.data import Field, FieldGroup
 from demeter.db import TableId
-
-from dataclasses import dataclass
-from dataclasses import make_dataclass, asdict
 
 from ..summary import Summary
 
-#from joblib import Memory as cache
+# from joblib import Memory as cache
 
-from joblib import Memory # type: ignore
-location = '/tmp/demeter/'
+location = "/tmp/demeter/"
 memory = Memory(location, verbose=0)
 
 
 @dataclass(frozen=True)
 class FieldGroupSummary(Summary):
-  field_group_id : TableId
-  parent_field_group_id : Optional[TableId]
+    field_group_id: TableId
+    parent_field_group_id: Optional[TableId]
 
-  name : str
-  external_id : str
-  depth : int
+    name: str
+    external_id: str
+    depth: int
 
-  field_group_ids : Sequence[TableId]
-  fields : Sequence[Field]
+    field_group_ids: Sequence[TableId]
+    fields: Sequence[Field]
 
-  total_group_count : int
-  group_count : int
+    total_group_count: int
+    group_count: int
 
-  total_field_count : int
-  field_count : int
+    total_field_count: int
+    field_count: int
 
 
-@memory.cache(ignore=['cursor'])   # type: ignore
-def getFieldGroupSummaries(cursor : Any,
-                          ) -> Dict[TableId, FieldGroupSummary]:
-  stmt = """
+@memory.cache(ignore=["cursor"])  # type: ignore
+def getFieldGroupSummaries(
+    cursor: Any,
+) -> Dict[TableId, FieldGroupSummary]:
+    stmt = """
   with recursive descendent as (
     select *,
            0 as depth
@@ -118,27 +117,21 @@ def getFieldGroupSummaries(cursor : Any,
              AC.total_field_count,
              AC.field_count
   """
-  cursor.execute(stmt)
-  results = cursor.fetchall()
-  return {
-    r.field_group_id : FieldGroupSummary(
-                         field_group_id = r.field_group_id,
-                         parent_field_group_id = r.parent_field_group_id,
-
-                         name = r.name,
-                         external_id = r.external_id,
-                         depth = r.depth,
-
-                         field_group_ids = r.field_group_ids or [],
-                         fields = r.fields or [],
-
-                         total_group_count = r.total_group_count or 0,
-                         group_count = r.group_count or 0,
-
-                         total_field_count = r.total_field_count or 0,
-                         field_count = r.field_count or 0,
-
-                       ) for r in results
-  }
-
-
+    cursor.execute(stmt)
+    results = cursor.fetchall()
+    return {
+        r.field_group_id: FieldGroupSummary(
+            field_group_id=r.field_group_id,
+            parent_field_group_id=r.parent_field_group_id,
+            name=r.name,
+            external_id=r.external_id,
+            depth=r.depth,
+            field_group_ids=r.field_group_ids or [],
+            fields=r.fields or [],
+            total_group_count=r.total_group_count or 0,
+            group_count=r.group_count or 0,
+            total_field_count=r.total_field_count or 0,
+            field_count=r.field_count or 0,
+        )
+        for r in results
+    }

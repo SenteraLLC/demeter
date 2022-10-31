@@ -1,17 +1,20 @@
-from typing import Dict, Any, Set, List, Tuple, Optional
-
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+from shapely import wkb  # type: ignore
+from shapely.geometry import Point
+from shapely.geometry import Polygon as Poly  # type: ignore
 
 from demeter.db import TableId
-from shapely.geometry import Polygon as Poly, Point # type: ignore
-from shapely import wkb # type: ignore
 
 from .spatial_utils import getNodeKey
 
-def getNodeIdLookup(cursor : Any,
-                    root_id : TableId,
-                    ) -> Dict[str, TableId]:
-  stmt = """
+
+def getNodeIdLookup(
+    cursor: Any,
+    root_id: TableId,
+) -> Dict[str, TableId]:
+    stmt = """
     with recursive node_and_geom as (
       select N.node_id, N.geom, 0 as level
       from root R, node N
@@ -24,22 +27,23 @@ def getNodeIdLookup(cursor : Any,
       join node N on N.node_id = A.node_id
     ) select * from node_and_geom;
   """
-  cursor.execute(stmt, {"root_id": root_id})
-  results = cursor.fetchall()
-  out : Dict[str, TableId] = {}
-  for r in results:
-    g = wkb.loads(r.geom, hex=True)
-    k = getNodeKey(g, r.level)
-    out[k] = r.node_id
-  return out
+    cursor.execute(stmt, {"root_id": root_id})
+    results = cursor.fetchall()
+    out: Dict[str, TableId] = {}
+    for r in results:
+        g = wkb.loads(r.geom, hex=True)
+        k = getNodeKey(g, r.level)
+        out[k] = r.node_id
+    return out
 
 
-def findRootByPoint(cursor : Any,
-                    points : List[Point],
-                    local_type_id : Optional[TableId],
-                   ) -> Dict[TableId, List[Point]]:
-  # TODO: Postgres 3 has native support for Point so we will be able to remove this hack
-  stmt = """
+def findRootByPoint(
+    cursor: Any,
+    points: List[Point],
+    local_type_id: Optional[TableId],
+) -> Dict[TableId, List[Point]]:
+    # TODO: Postgres 3 has native support for Point so we will be able to remove this hack
+    stmt = """
     with fix_point_hack as (
       select ST_SetSRID(ST_MakePoint(x, y), 4326) as point
       from unnest(%(xs)s, %(ys)s) as u(x, y)
@@ -51,21 +55,24 @@ def findRootByPoint(cursor : Any,
             ST_Contains(N.geom, P.point)
       group by R.root_id
   """
-  xs, ys = zip(*((p.x, p.y) for p in points))
-  cursor.execute(stmt, {"xs": list(xs), "ys": list(ys), "local_type_id": local_type_id})
-  results = cursor.fetchall()
-  out : Dict[TableId, List[Point]] = {}
-  # TODO: This aggregation can happen in postgres
-  #       See 'getTree'
-  for r in results:
-    out[r.root_id] = [Point(p["coordinates"]) for p in r.points]
-  return out
+    xs, ys = zip(*((p.x, p.y) for p in points))
+    cursor.execute(
+        stmt, {"xs": list(xs), "ys": list(ys), "local_type_id": local_type_id}
+    )
+    results = cursor.fetchall()
+    out: Dict[TableId, List[Point]] = {}
+    # TODO: This aggregation can happen in postgres
+    #       See 'getTree'
+    for r in results:
+        out[r.root_id] = [Point(p["coordinates"]) for p in r.points]
+    return out
 
 
-def findRootByGeom(cursor : Any,
-                   geom_ids : Set[TableId],
-                  ) -> Dict[TableId, Set[TableId]]:
-  stmt = """
+def findRootByGeom(
+    cursor: Any,
+    geom_ids: Set[TableId],
+) -> Dict[TableId, Set[TableId]]:
+    stmt = """
     select R.root_id, array_agg(gid) as geom_ids
     from root R, node N, geom G, unnest(%(geom_ids)s) as gid
     where gid = G.geom_id and
@@ -73,50 +80,53 @@ def findRootByGeom(cursor : Any,
           ST_Contains(N.geom, G.geom)
     group by R.root_id
   """
-  cursor.execute(stmt, {"geom_ids": geom_ids})
-  results = cursor.fetchall()
-  out : Dict[TableId, Set[TableId]] = {}
-  for r in results:
-    out[r.root_id] = r.geom_ids
-  return out
+    cursor.execute(stmt, {"geom_ids": geom_ids})
+    results = cursor.fetchall()
+    out: Dict[TableId, Set[TableId]] = {}
+    for r in results:
+        out[r.root_id] = r.geom_ids
+    return out
 
-#TreeItem = Tuple[Poly, List[Poly], List[Point]]
+
+# TreeItem = Tuple[Poly, List[Poly], List[Point]]
 from typing import TypedDict
 
+
 class NodeMeta(TypedDict):
-  level  : int
-  bounds : Poly
-  value  : float
-  ancestry : List[TableId]
-  points : List[Point]
-  is_bud : bool
+    level: int
+    bounds: Poly
+    value: float
+    ancestry: List[TableId]
+    points: List[Point]
+    is_bud: bool
 
 
-from dataclasses import dataclass
-from typing import Iterator
 from collections import ChainMap
 from collections.abc import ItemsView
+from dataclasses import dataclass
+from typing import Iterator
+
 
 @dataclass
 class Tree:
-  leaves : Dict[TableId, NodeMeta]
-  branches : Dict[TableId, NodeMeta]
+    leaves: Dict[TableId, NodeMeta]
+    branches: Dict[TableId, NodeMeta]
 
-  #def __iter__(self) -> ItemsView[TableId, NodeMeta]:
-  #  return ChainMap(self.leaves, self.branches).items()
+    # def __iter__(self) -> ItemsView[TableId, NodeMeta]:
+    #  return ChainMap(self.leaves, self.branches).items()
 
-  def __iter__(self) -> Iterator[Tuple[TableId, NodeMeta]]:
-    return iter(ChainMap(self.leaves, self.branches).items())
+    def __iter__(self) -> Iterator[Tuple[TableId, NodeMeta]]:
+        return iter(ChainMap(self.leaves, self.branches).items())
 
 
-
-def getTree(cursor : Any,
-            root_id : TableId,
-            points_of_interest : List[Point],
-            start_time : datetime,
-            time_delta : timedelta = timedelta(seconds=1),
-           ) -> Tree:
-  stmt = """
+def getTree(
+    cursor: Any,
+    root_id: TableId,
+    points_of_interest: List[Point],
+    start_time: datetime,
+    time_delta: timedelta = timedelta(seconds=1),
+) -> Tree:
+    stmt = """
     with recursive fix_point_hack as (
       select ST_SetSRID(ST_MakePoint(x, y), 4326) as point
       from unnest(%(xs)s, %(ys)s) as u(x, y)
@@ -173,22 +183,21 @@ def getTree(cursor : Any,
              from node_id_to_meta
              group by is_leaf;
   """
-  xs, ys = zip(*((p.x, p.y) for p in points_of_interest))
-  args = {"root_id": root_id, "xs": list(xs), "ys": list(ys) }
-  cursor.execute(stmt, args)
-  results = cursor.fetchall()
-  r0 = results[0]
-  l = r0.node_meta
-  try:
-    b = results[1].node_meta
-  except IndexError:
-    b = {}
-  return Tree(l, b) if r0.is_leaf else Tree(b, l)
-
+    xs, ys = zip(*((p.x, p.y) for p in points_of_interest))
+    args = {"root_id": root_id, "xs": list(xs), "ys": list(ys)}
+    cursor.execute(stmt, args)
+    results = cursor.fetchall()
+    r0 = results[0]
+    l = r0.node_meta
+    try:
+        b = results[1].node_meta
+    except IndexError:
+        b = {}
+    return Tree(l, b) if r0.is_leaf else Tree(b, l)
 
 
 def debug() -> None:
-  stmt = """
+    stmt = """
   select A.geom::Polygon,
                    B.geom::Polygon,
                    ST_Contains(A.geom, B.geom),
@@ -199,8 +208,7 @@ def debug() -> None:
             where A.node_id=36395 and B.node_id=36397;
   """
 
-
-  """
+    """
   select A.geom::Polygon as parent,
          B.geom::Polygon as child,
 
@@ -209,7 +217,7 @@ def debug() -> None:
 
   """
 
-  """
+    """
   select B.node_id as child,
          B.value as child_value,
          A.node_id as parent,
@@ -226,4 +234,4 @@ def debug() -> None:
             order by B.node_id asc, A.node_id asc;
   """
 
-  return None
+    return None

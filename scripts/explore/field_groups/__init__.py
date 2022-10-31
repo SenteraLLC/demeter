@@ -1,13 +1,8 @@
-
-from .summary import FieldGroupSummary
-from .summary import getFieldGroupSummaries
-
 from .interactive import select as interactive_select
-
+from .summary import FieldGroupSummary, getFieldGroupSummaries
 
 __all__ = [
-  'FieldGroupSummary',
-  'getFieldGroupSummaries',
-
-  'interactive_select',
+    "FieldGroupSummary",
+    "getFieldGroupSummaries",
+    "interactive_select",
 ]

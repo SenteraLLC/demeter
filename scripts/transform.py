@@ -1,12 +1,10 @@
-from demeter.work import DataSource
-from demeter.work import OneToManyResponseFunction
-from demeter.work import S3File
-from demeter.work import Transformation
-from demeter.work._transformation import WrappedTransformation
-from demeter.data import LocalType
+from typing import Dict, List, Mapping, Tuple, Union
 
 import geopandas as gpd  # type: ignore
-from typing import Dict, List, Union, Tuple, Mapping
+
+from demeter.data import LocalType
+from demeter.work import DataSource, OneToManyResponseFunction, S3File, Transformation
+from demeter.work._transformation import WrappedTransformation
 
 # Long Term
 # TODO: How to deal with dataframe indexes?
@@ -37,53 +35,74 @@ from typing import Dict, List, Union, Tuple, Mapping
 # TODO: Function for taking rasters and generating summary data
 # TODO: How to do queries that use different geometries, for example, a transformation function that maps geometries to different geometries. E.G. field -> county -> county level data -> field
 
-def init(datasource : DataSource, some_constant : int) -> None:
-  datasource.local([LocalType(type_name="nitrogen",
-                              type_category="application",
-                             ),
-                    LocalType(type_name="urea ammonium nitrate",
-                              type_category="application",
-                             ),
-                  ])
 
-  parameters = lambda k : {"field_id"   : k.field_id,
-                           "start_date" : k.start_date,
-                           "end_date"   : k.end_date,
-                          }
-  datasource.http("http_uri_params_test_type", param_fn=parameters, response_fn=OneToManyResponseFunction)
+def init(datasource: DataSource, some_constant: int) -> None:
+    datasource.local(
+        [
+            LocalType(
+                type_name="nitrogen",
+                type_category="application",
+            ),
+            LocalType(
+                type_name="urea ammonium nitrate",
+                type_category="application",
+            ),
+        ]
+    )
 
-  request_body = lambda k : {"field_id"   : k.field_id,
-                             "start_date" : k.start_date,
-                             "end_date"   : k.end_date
-                            }
-  datasource.http("http_request_body_test_type", json_fn=request_body)
+    parameters = lambda k: {
+        "field_id": k.field_id,
+        "start_date": k.start_date,
+        "end_date": k.end_date,
+    }
+    datasource.http(
+        "http_uri_params_test_type",
+        param_fn=parameters,
+        response_fn=OneToManyResponseFunction,
+    )
 
-  datasource.s3("my_test_geo_type"),
+    request_body = lambda k: {
+        "field_id": k.field_id,
+        "start_date": k.start_date,
+        "end_date": k.end_date,
+    }
+    datasource.http("http_request_body_test_type", json_fn=request_body)
 
-  datasource.s3("my_test_nongeo_type")
+    datasource.s3("my_test_geo_type"),
 
-  datasource.join(datasource.GEOM, "my_test_geo_type", gpd.GeoDataFrame.sjoin, lsuffix = "primary", rsuffix = "my_test_geo_type")
+    datasource.s3("my_test_nongeo_type")
 
-  # How to join foo::start_date - foo::end_date with bar::date
-  #datasource.join("foo_type", "bar_type", pd.DataFrame.merge, on=["geom_id", "date"], how="outer")
+    datasource.join(
+        datasource.GEOM,
+        "my_test_geo_type",
+        gpd.GeoDataFrame.sjoin,
+        lsuffix="primary",
+        rsuffix="my_test_geo_type",
+    )
 
+    # How to join foo::start_date - foo::end_date with bar::date
+    # datasource.join("foo_type", "bar_type", pd.DataFrame.merge, on=["geom_id", "date"], how="outer")
 
 
 FUNCTION_NAME = "my_function"
 VERSION = 4
 OUTPUTS = {"foo": "test_geojson_type"}
 
-@Transformation(FUNCTION_NAME, VERSION, OUTPUTS, init) # type: ignore
-def example_transformation(gdf : gpd.GeoDataFrame, some_constant : int) -> Mapping[str, S3File]:
-  print("GDF IS: ",gdf.to_string())
-  return {"foo": S3File(gdf, "testing_geojson")}
+
+@Transformation(FUNCTION_NAME, VERSION, OUTPUTS, init)  # type: ignore
+def example_transformation(
+    gdf: gpd.GeoDataFrame, some_constant: int
+) -> Mapping[str, S3File]:
+    print("GDF IS: ", gdf.to_string())
+    return {"foo": S3File(gdf, "testing_geojson")}
 
 
-def cli(fn : WrappedTransformation) -> None:
-  from demeter.work._util import ExecutionMode
-  fn(mode = ExecutionMode.CLI)
-  #fn(mode = ExecutionMode.REGISTER)
+def cli(fn: WrappedTransformation) -> None:
+    from demeter.work._util import ExecutionMode
+
+    fn(mode=ExecutionMode.CLI)
+    # fn(mode = ExecutionMode.REGISTER)
+
 
 if __name__ == "__main__":
-  cli(example_transformation)
-
+    cli(example_transformation)

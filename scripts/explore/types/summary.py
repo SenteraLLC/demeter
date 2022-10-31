@@ -1,54 +1,55 @@
-from typing import Optional, Any, Sequence, Dict, List, Tuple
-from demeter.db import TableId
-
 from dataclasses import dataclass
-
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+from demeter.db import TableId
 
 from ..summary import Summary
 
 
 @dataclass(frozen=True)
 class UnitSummary(Summary):
-  unit_type_id : TableId
-  unit : str
-  count : int
-  earliest : Optional[datetime]
-  latest : Optional[datetime]
+    unit_type_id: TableId
+    unit: str
+    count: int
+    earliest: Optional[datetime]
+    latest: Optional[datetime]
 
 
 @dataclass(frozen=True)
 class LocalGroupSummary(Summary):
-  local_group_id : TableId
-  name : str
-  category : Optional[str]
-  count : int
-  earliest : Optional[datetime]
-  latest : Optional[datetime]
+    local_group_id: TableId
+    name: str
+    category: Optional[str]
+    count: int
+    earliest: Optional[datetime]
+    latest: Optional[datetime]
 
 
 @dataclass(frozen=True)
 class TypeSummary(Summary):
-  local_type_id : TableId
-  type_name : str
-  type_category : Optional[str]
+    local_type_id: TableId
+    type_name: str
+    type_category: Optional[str]
 
-  value_count : int
+    value_count: int
 
-  units : Sequence[UnitSummary]
-  unit_count : int
-  groups : Sequence[LocalGroupSummary]
-  group_count : int
+    units: Sequence[UnitSummary]
+    unit_count: int
+    groups: Sequence[LocalGroupSummary]
+    group_count: int
 
 
 # TODO: Filter on fields
-def getTypeSummaries(cursor : Any, field_ids : List[TableId] = []) -> Sequence[TypeSummary]:
-  search_part = ''
-  args : Dict[str, List[TableId]] = {}
-  if len(field_ids) > 0:
-    search_part = "where F.field_id = any(%(field_ids)s::bigint[])"
-    args = { "field_ids": field_ids }
-  stmt = f"""with field_value as (
+def getTypeSummaries(
+    cursor: Any, field_ids: List[TableId] = []
+) -> Sequence[TypeSummary]:
+    search_part = ""
+    args: Dict[str, List[TableId]] = {}
+    if len(field_ids) > 0:
+        search_part = "where F.field_id = any(%(field_ids)s::bigint[])"
+        args = {"field_ids": field_ids}
+    stmt = f"""with field_value as (
               select F.field_id,
                      V.local_value_id,
                      V.unit_type_id,
@@ -137,23 +138,21 @@ def getTypeSummaries(cursor : Any, field_ids : List[TableId] = []) -> Sequence[T
               ) z
               order by T.type_name, T.type_category, value_count desc, jsonb_array_length(units) desc
          """
-  cursor.execute(stmt, args)
+    cursor.execute(stmt, args)
 
-  results = cursor.fetchall()
+    results = cursor.fetchall()
 
-  return [
-    TypeSummary(
-      local_type_id = r.local_type_id,
-      type_name = r.type_name,
-      type_category = r.type_category,
-
-      value_count = r.value_count,
-
-      units = r.units,
-      unit_count = len(r.units),
-      groups = r.groups,
-      group_count = len(r.groups),
-    ) for r in results
-  ]
-  return [ r for r in results ]
-
+    return [
+        TypeSummary(
+            local_type_id=r.local_type_id,
+            type_name=r.type_name,
+            type_category=r.type_category,
+            value_count=r.value_count,
+            units=r.units,
+            unit_count=len(r.units),
+            groups=r.groups,
+            group_count=len(r.groups),
+        )
+        for r in results
+    ]
+    return [r for r in results]

@@ -1,12 +1,18 @@
 import os
 from io import TextIOWrapper
-from typing import (Any, Callable, List, Mapping, Optional, Sequence, Tuple,
-                    cast)
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, cast
 
 from .. import data, db
-from ._types import (ExecutionArguments, ExecutionOutputs, ExecutionSummary,
-                     HTTPArgument, KeywordArgument, LocalArgument,
-                     S3InputArgument, S3OutputArgument)
+from ._types import (
+    ExecutionArguments,
+    ExecutionOutputs,
+    ExecutionSummary,
+    HTTPArgument,
+    KeywordArgument,
+    LocalArgument,
+    S3InputArgument,
+    S3OutputArgument,
+)
 
 this_dir = os.path.dirname(__file__)
 open_sql: Callable[[str], TextIOWrapper] = lambda filename: open(

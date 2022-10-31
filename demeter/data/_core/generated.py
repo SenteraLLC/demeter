@@ -9,12 +9,26 @@ g = SQLGenerator(
     key_table_lookup=_lookups.key_table_lookup,
 )
 
-from ...db._generic_types import (GetId, GetTable, GetTableByKey, ReturnId,
-                                  ReturnKey)
-from .types import (Act, Coordinates, CropProgress, CropProgressKey, CropStage,
-                    CropType, Field, Geom, GeoSpatialKey, Line, MultiPolygon,
-                    Planting, PlantingKey, Point, Polygon, ReportType,
-                    TemporalKey)
+from ...db._generic_types import GetId, GetTable, GetTableByKey, ReturnId, ReturnKey
+from .types import (
+    Act,
+    Coordinates,
+    CropProgress,
+    CropProgressKey,
+    CropStage,
+    CropType,
+    Field,
+    Geom,
+    GeoSpatialKey,
+    Line,
+    MultiPolygon,
+    Planting,
+    PlantingKey,
+    Point,
+    Polygon,
+    ReportType,
+    TemporalKey,
+)
 
 getMaybeFieldId = g.getMaybeIdFunction(Field)
 getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)

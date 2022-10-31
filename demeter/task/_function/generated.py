@@ -11,9 +11,16 @@ g = Generator(
 
 
 from ...db._generic_types import GetId, GetTable, ReturnId
-from .types import (Function, FunctionSignature, FunctionType, HTTPParameter,
-                    KeywordParameter, LocalParameter, S3InputParameter,
-                    S3OutputParameter)
+from .types import (
+    Function,
+    FunctionSignature,
+    FunctionType,
+    HTTPParameter,
+    KeywordParameter,
+    LocalParameter,
+    S3InputParameter,
+    S3OutputParameter,
+)
 
 getMaybeFunctionTypeId: GetId[FunctionType] = g.getMaybeIdFunction(FunctionType)
 

@@ -1,8 +1,12 @@
 from typing import Any, Callable, Mapping, Optional, Tuple, Type
 
 from ...db import SomeKey, TableId
-from .generated import (getMaybeS3TypeDataFrame, getS3TypeBase,
-                        insertOrGetS3Type, insertS3TypeDataFrame)
+from .generated import (
+    getMaybeS3TypeDataFrame,
+    getS3TypeBase,
+    insertOrGetS3Type,
+    insertS3TypeDataFrame,
+)
 from .types import S3SubType, S3Type, S3TypeDataFrame, TaggedS3SubType
 
 

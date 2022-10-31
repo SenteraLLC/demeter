@@ -3,9 +3,14 @@ from typing import Any, List, Mapping, Optional
 import geopandas as gpd  # type: ignore
 
 from ... import data, db, task
-from .. import (insertExecutionKey, insertHTTPArgument, insertKeywordArgument,
-                insertLocalArgument, insertS3InputArgument,
-                insertS3OutputArgument)
+from .. import (
+    insertExecutionKey,
+    insertHTTPArgument,
+    insertKeywordArgument,
+    insertLocalArgument,
+    insertS3InputArgument,
+    insertS3OutputArgument,
+)
 from .._datasource import DataSource, S3File
 from .._types import ExecutionKey, ExecutionSummary, S3OutputArgument
 from .wrapper_types import RawFunctionOutputs

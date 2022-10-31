@@ -5,8 +5,7 @@ from psycopg2 import sql
 from psycopg2.sql import SQL, Composed, Identifier, Placeholder
 
 from .. import TableId
-from .._generic_types import (SK, GetId, GetTableByKey, I, ReturnId, ReturnKey,
-                              S)
+from .._generic_types import SK, GetId, GetTableByKey, I, ReturnId, ReturnKey, S
 from .._union_types import AnyIdTable, AnyKeyTable, AnyTable
 from .helpers import is_none, is_optional
 from .tools import doPgFormat, doPgJoin

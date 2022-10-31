@@ -10,9 +10,16 @@ g = SQLGenerator(
 
 
 from ..db._generic_types import ReturnId, ReturnKey, ReturnSameKey
-from ._types import (Argument, Execution, ExecutionKey, HTTPArgument,
-                     KeywordArgument, LocalArgument, S3InputArgument,
-                     S3OutputArgument)
+from ._types import (
+    Argument,
+    Execution,
+    ExecutionKey,
+    HTTPArgument,
+    KeywordArgument,
+    LocalArgument,
+    S3InputArgument,
+    S3OutputArgument,
+)
 
 insertExecution: ReturnId[Execution] = g.getInsertReturnIdFunction(Execution)
 insertExecutionKey = g.getInsertReturnSameKeyFunction(ExecutionKey)
@@ -23,8 +30,13 @@ insertKeywordArgument = g.getInsertReturnSameKeyFunction(KeywordArgument)
 insertS3InputArgument = g.getInsertReturnSameKeyFunction(S3InputArgument)
 insertS3OutputArgument = g.getInsertReturnSameKeyFunction(S3OutputArgument)
 
-from ._datasource import (DataSource, LocalFile, OneToManyResponseFunction,
-                          OneToOneResponseFunction, S3File)
+from ._datasource import (
+    DataSource,
+    LocalFile,
+    OneToManyResponseFunction,
+    OneToOneResponseFunction,
+    S3File,
+)
 from ._existing import getExecutionSummaries, getExistingExecutions
 from ._transformation import Transformation
 from ._types import *

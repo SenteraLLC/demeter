@@ -4,10 +4,13 @@ from typing import Any, Dict, List, Optional, TypedDict
 import pandas as pd
 
 from ... import data, db, task
-from .._types import (ExecutionArguments, ExecutionKey, ExecutionOutputs,
-                      ExecutionSummary)
-from ._response import (KeyToArgsFunction, OneToOneResponseFunction,
-                        ResponseFunction)
+from .._types import (
+    ExecutionArguments,
+    ExecutionKey,
+    ExecutionOutputs,
+    ExecutionSummary,
+)
+from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 from ._s3_file import SupportedS3DataType
 
 

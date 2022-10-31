@@ -1,14 +1,12 @@
 from functools import wraps
-from typing import (Any, Callable, Dict, List, Mapping, Optional, Sequence,
-                    Set, Tuple)
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 import jsonschema
 import requests
 
 from ... import data, db, task
 from .._types import ExecutionSummary, HTTPArgument
-from ._response import (KeyToArgsFunction, OneToOneResponseFunction,
-                        ResponseFunction)
+from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 
 
 def checkHTTPParams(params: Mapping[str, Any], expected_params: Set[str]) -> None:

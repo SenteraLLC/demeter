@@ -46,7 +46,6 @@ autodocsumm = "^0.2.9"
 [tool.poetry.group.dev.dependencies]
 graphviz = "^0.20.1"
 pyparsing = "^3.0.9"
-isort = "^5.10.1"
 flake8 = "^5.0.4"
 black = {version = "^22.6", allow-prereleases = true}
 

@@ -1,13 +1,22 @@
 from typing import Union
 
+from ..db import TypeTable
 from ._types import *
 
-from ..db import TypeTable
+AnyKeyTable = Union[
+    LocalArgument,
+    HTTPArgument,
+    S3InputArgument,
+    S3OutputArgument,
+    KeywordArgument,
+    ExecutionKey,
+]
 
-AnyKeyTable = Union[LocalArgument, HTTPArgument, S3InputArgument, S3OutputArgument, KeywordArgument, ExecutionKey]
 
 class _Ignore(TypeTable):
-  pass
+    pass
+
+
 AnyTypeTable = Union[_Ignore]
 
 AnyDataTable = Union[Execution]
@@ -15,4 +24,3 @@ AnyDataTable = Union[Execution]
 AnyIdTable = Union[AnyTypeTable, AnyDataTable]
 
 AnyTable = Union[AnyTypeTable, AnyDataTable, AnyIdTable, AnyKeyTable]
-

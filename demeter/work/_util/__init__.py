@@ -1,5 +1,3 @@
-
-from .keys import *
 from .cli import *
+from .keys import *
 from .mode import *
-

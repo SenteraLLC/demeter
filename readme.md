@@ -17,22 +17,25 @@ Use the .env file at the root of the project for Postgres credentials
 
 
 ### Method 1: Use an existing database
-1) Locate a Postgres instance
 
-A suggested approach is to use the existing analytics database using an SSH tunnel.
-Note: You will need to have SSH credentials with the AWS Analytics Bastion
+#### 1. Configure your `.env` file
+Your `.env` file holds the credentials necessary to connect to the desired Postgres server. It should never be committed to Github (i.e., should be part of the `.gitignore`). See [`.env.template`](https://github.com/SenteraLLC/demeter/blob/main/.env.template) for an example, and ask @Joel-Larson or @tnigon if you have questions about credentials.
 
-Example tunnel command
+#### 2. Connect to an SSH Tunnel
+**IMPORTANT**: Your account on the bastion machine exists only to hold the public portion of your cryptographic key(s). See [Connecting to a Database (safely)](https://sentera.atlassian.net/wiki/spaces/GML/pages/3173416965/Connecting+to+a+Database+safely#The-General-Problem) for more information.
+
+``` bash
+ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:<DEMETER_PG_PORT>:<DATABASE_NAME>:<SSH_PORT><AWS_ANALYTICS_BASTION_USERNAME>@<SSH_HOST>
 ```
-ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 my-aws-analytics-bastion-username-goes-here@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com
+
+For example:
+
+``` bash
+ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 myname@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com
 ```
 
-2) Configure your '.env' file to point at the Postgres server.
-A template .env file is in this repository root at '.env.template'
-
-3) Test your connection to the database:
-Example
-```
+#### 3. Test your database connection
+``` bash
 psql --host localhost --port 5433 --user postgres postgres
 ```
 You will have to ask somebody for the password

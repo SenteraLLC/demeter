@@ -46,6 +46,7 @@ autodocsumm = "^0.2.9"
 [tool.poetry.group.dev.dependencies]
 graphviz = "^0.20.1"
 pyparsing = "^3.0.9"
+isort = "^5.10.1"
 
 [tool.poetry.dev-dependencies]
 types-jsonschema = "^4.4.1"

@@ -1,86 +1,102 @@
+# demeter
+
+The database schema for agronomic modeling and supporting data science activities.
+
+## Setup and Installation (for development)
+1) [Set up SSH](https://github.com/SenteraLLC/install-instructions/blob/master/ssh_setup.md)
+2) Install [pyenv](https://github.com/SenteraLLC/install-instructions/blob/master/pyenv.md) and [poetry](https://python-poetry.org/docs/#installation).
+3) Install package
+``` bash
+git clone git@github.com:SenteraLLC/demeter.git
+cd demeter
+pyenv install $(cat .python-version)
+poetry config virtualenvs.in-project true
+poetry env use $(cat .python-version)
+poetry install
+```
+4) Set up `pre-commit` to ensure all commits to adhere to **black** and **PEP8** style conventions.
+``` bash
+poetry run pre-commit install
+```
+
+## Setup and Installation (used as a library)
+If using `demeter` as a dependency in your script, simply add it to the `pyproject.toml` in your project repo. Be sure to uuse the `ssh:` prefix so Travis has access to the repo for the library build process.
+
+<h5 a><strong><code>pyproject.toml</code></strong></h5>
+
+``` toml
+[tool.poetry.dependencies]
+demeter = { git = "ssh://git@github.com/SenteraLLC/demeter.git", branch = "main"}
+```
+
+Install `demeter` and all its dependencies via `poetry install`.
+
+``` console
+poetry install
+```
+
 ## Requirements
 1. Python 3.10.4 or above
-2. Access to a Postgres database
+2. Access to a Postgres database (with connection credentials)
+
+## Configure your `.env` file
+Your `.env` file holds the credentials necessary to connect to the desired Postgres server (see [python-dotenv](https://github.com/theskumar/python-dotenv) for more information). It should never be committed to Github (i.e., should be part of the `.gitignore`). See [`.env.template`](https://github.com/SenteraLLC/demeter/blob/main/.env.template) for an example, and ask @Joel-Larson or @tnigon if you have questions about credentials.
+
+**Environment Variables**
+- `DEMETER_PG_HOST`
+- `DEMETER_PG_DATABASE`
+- `DEMETER_PG_OPTIONS`
+- `DEMETER_PG_USER`
+- `DEMETER_PG_PORT` (optional)
+- `DEMETER_PG_PASSWORD` (optional)
+
 
 ## Postgres Server Setup
-Use the .env file at the root of the project for Postgres credentials
-
-### Required Environment Variables
-- DEMETER\_PG\_HOST
-- DEMETER\_PG\_DATABASE
-- DEMETER\_PG\_OPTIONS
-- DEMETER\_PG\_USER
-
-### Optional Environment Variables
-- DEMETER\_PG\_PORT
-- DEMETER\_PG\_PASSWORD
-
+If you haven't done so already, add an `.env` file at the project root with connection credentials.
 
 ### Method 1: Use an existing database
 
-#### 1. Configure your `.env` file
-Your `.env` file holds the credentials necessary to connect to the desired Postgres server. It should never be committed to Github (i.e., should be part of the `.gitignore`). See [`.env.template`](https://github.com/SenteraLLC/demeter/blob/main/.env.template) for an example, and ask @Joel-Larson or @tnigon if you have questions about credentials.
-
-#### 2. Connect to an SSH Tunnel
+### Step 1: Connect to an SSH Tunnel
 **IMPORTANT**: Your account on the bastion machine exists only to hold the public portion of your cryptographic key(s). See [Connecting to a Database (safely)](https://sentera.atlassian.net/wiki/spaces/GML/pages/3173416965/Connecting+to+a+Database+safely#The-General-Problem) for more information.
 
 ``` bash
 ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:<DEMETER_PG_PORT>:<DATABASE_NAME>:<SSH_PORT><AWS_ANALYTICS_BASTION_USERNAME>@<SSH_HOST>
 ```
 
-For example:
+**For example**:
 
 ``` bash
 ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 myname@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com
 ```
 
-#### 3. Test your database connection
+#### Step 2: Test your database connection
 ``` bash
 psql --host localhost --port 5433 --user postgres postgres
 ```
-You will have to ask somebody for the password
-
 
 ### Method 2: Create your own database locally
-1) Download Postgres
-https://www.postgresql.org/download/
-
-
-2) Initialize a Postgres database cluster on disk with 'initdb'
-
-Example:
-```
+1. [Download Postgres](https://www.postgresql.org/download/)
+2. Initialize a Postgres database cluster on disk with `initdb`
+``` bash
 initdb -D /usr/local/pgsql/data
 ```
 
-
-3) Start the server process
-
-Example:
-```
+3. Start the server process
+``` bash
 postgres -D /usr/local/pgsql/data
 ```
 
-4) Connect to you database with a command like this:
+4. Connect to your new database
+``` bash
 psql --host localhost --user my\_username -f schema.sql postgres
+```
 
+## Demeter Background Referenes
+- [Demeter Data Types](https://sentera.atlassian.net/wiki/spaces/GML/pages/3172270107/Demeter+Data+Types+use+this)
 
-## Notes
-This repository supports a root level '.env' file
-[python-dotenv](https://github.com/theskumar/python-dotenv)
+## Example Usage
 
-
-
-## Temporary Documentation
-https://sentera.atlassian.net/wiki/spaces/GML/pages/3107520532/Demeter+Data+Types
-
-There will soon be auto-generated Sphinx documents
-
-
-## Scripts
-
-1) Example
-   A barebones example of using Demeter data classes and functions
+### Using Demeter data classes and functions
 
 \> python3 -m scripts.sample
 
@@ -95,14 +111,9 @@ Observation geom id:  105669
 Local value id: 228730
 ```
 
-
-## Troubleshooting
-Installing GeoPandas for M1
-https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1
-
+## Troubleshooting References
+- [Installing GeoPandas for M1](https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1)
 
 ## TODO
-
-Guide for setting up user account postgres using 'postgres' account and 'read\_and\_write' role and password <user>
-  grant read\_and\_write to <user>;
-
+- Guide for setting up user account postgres using `postgres` account and `read_and_write` role and password <user>
+- Grant `read_and_write` to <user>

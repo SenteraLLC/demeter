@@ -8,18 +8,19 @@ from ._core.types import (
     CRS,
     GeomImpl,
     Geom,
+
     Field,
     CropType,
     CropStage,
     CropProgress,
     CropProgressKey,
     Planting,
+
     PlantingKey,
-    # TODO: These might belong in another namespace
     GeoSpatialKey,
     TemporalKey,
     KeyIds,
-    # TODO: This probably belongs in 'work' or 'task'
+
     ReportType,
 )
 

@@ -98,7 +98,7 @@ class ParcelGroupParcels:
     ancestors: Sequence[ParcelGroup]
 
 
-def getParcelGroupParcels(
+def getParcels(
     cursor: Any,
     parcel_group_ids: Sequence[db.TableId],
 ) -> OrderedDict[db.TableId, ParcelGroupParcels]:

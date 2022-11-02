@@ -58,6 +58,14 @@ from ._core.geom import (
     insertOrGetGeom,
 )
 
+from ._core.parcel_group import (
+    getParcelGroupAncestors,
+    getOrgParcels,
+    ParcelSummary,
+    ParcelGroupParcels,
+    getParcels,
+    searchParcelGroup,
+)
 
 from ._local.types import (
     LocalValue,
@@ -103,6 +111,12 @@ __all__ = (
     "insertParcel",
     "insertOrGetParcel",
     "getParcel",
+    "getParcelGroupAncestors",
+    "getOrgParcels",
+    "ParcelSummary",
+    "ParcelGroupParcels",
+    "getParcels",
+    "searchParcelGroup",
     "Planting",
     "PlantingKey",
     "getPlanting",

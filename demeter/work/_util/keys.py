@@ -7,7 +7,7 @@ from ... import data
 def toGeoSpatialKeys(filename: str) -> Sequence[data.GeoSpatialKey]:
     f = open(filename)
     return [
-        data.GeoSpatialKey(geom_id=g["geom_id"], field_id=g["field_id"])
+        data.GeoSpatialKey(geom_id=g["geom_id"], parcel_id=g["parcel_id"])
         for g in json.load(f)
     ]
 
@@ -35,7 +35,7 @@ def loadKeys(
                 geospatial_key_id=geospatial_key_id,
                 temporal_key_id=temporal_key_id,
                 geom_id=g.geom_id,
-                field_id=g.field_id,
+                parcel_id=g.parcel_id,
                 start_date=t.start_date,
                 end_date=t.end_date,
             )

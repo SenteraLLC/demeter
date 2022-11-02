@@ -6,7 +6,7 @@ from .types import (
     CropStage,
     ReportType,
     Geom,
-    Field,
+    Parcel,
     GeoSpatialKey,
     TemporalKey,
     Planting,
@@ -21,7 +21,7 @@ type_table_lookup: TableLookup = {
 
 data_table_lookup: TableLookup = {
     Geom: "geom",
-    Field: "field",
+    Parcel: "parcel",
     GeoSpatialKey: "geospatial_key",
     TemporalKey: "temporal_key",
 }

@@ -9,7 +9,7 @@ from ... import db
 @dataclass(frozen=True)
 class LocalValue(db.Detailed):
     geom_id: Optional[db.TableId]
-    field_id: db.TableId
+    parcel_id: db.TableId
     unit_type_id: db.TableId
     quantity: float
     local_group_id: Optional[db.TableId]
@@ -36,7 +36,7 @@ class LocalGroup(db.TypeTable):
 
 @dataclass(frozen=True)
 class Act(db.Detailed):
-    field_id: db.TableId
+    parcel_id: db.TableId
     name: str
     performed: date
     geom_id: Optional[db.TableId] = None

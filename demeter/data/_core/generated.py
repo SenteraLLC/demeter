@@ -8,7 +8,7 @@ from .types import (
     CropProgressKey,
     CropStage,
     CropType,
-    Field,
+    Parcel,
     Geom,
     GeoSpatialKey,
     Planting,
@@ -25,17 +25,17 @@ g = SQLGenerator(
     key_table_lookup=_lookups.key_table_lookup,
 )
 
-getMaybeFieldId = g.getMaybeIdFunction(Field)
+getMaybeParcelId = g.getMaybeIdFunction(Parcel)
 getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)
 getMaybeTemporalKeyId: GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeCropStageId: GetId[CropStage] = g.getMaybeIdFunction(CropStage)
 getMaybeReportTypeId: GetId[ReportType] = g.getMaybeIdFunction(ReportType)
 
-getField: GetTable[Field] = g.getTableFunction(Field)
+getParcel: GetTable[Parcel] = g.getTableFunction(Parcel)
 getGeom: GetTable[Geom] = g.getTableFunction(Geom)
 
-insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
+insertParcel: ReturnId[Parcel] = g.getInsertReturnIdFunction(Parcel)
 insertGeoSpatialKey: ReturnId[GeoSpatialKey] = g.getInsertReturnIdFunction(
     GeoSpatialKey
 )
@@ -53,7 +53,7 @@ insertOrGetGeoSpatialKey = g.partialInsertOrGetId(
 insertOrGetTemporalKey = g.partialInsertOrGetId(
     getMaybeTemporalKeyId, insertTemporalKey
 )
-insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
+insertOrGetParcel = g.partialInsertOrGetId(getMaybeParcelId, insertParcel)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
 

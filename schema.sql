@@ -98,19 +98,19 @@ create constraint trigger geom_must_be_unique
        for each row execute procedure geom_must_be_unique();
 
 
-create table field_group (
-  field_group_id bigserial primary key,
+create table parcel_group (
+  parcel_group_id bigserial primary key,
   -- TODO: Add cycle detection constraint
-  parent_field_group_id bigint
-                        references field_group(field_group_id),
-  unique (field_group_id, parent_field_group_id),
+  parent_parcel_group_id bigint
+                        references parcel_group(parcel_group_id),
+  unique (parcel_group_id, parent_parcel_group_id),
 
   name text,
 
   constraint roots_must_be_named check (
-    not (parent_field_group_id is null and name is null)
+    not (parent_parcel_group_id is null and name is null)
   ),
-  unique(parent_field_group_id, name),
+  unique(parent_parcel_group_id, name),
 
   external_id text,
 
@@ -122,11 +122,11 @@ create table field_group (
                 default now()
 );
 
-CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;
+CREATE UNIQUE INDEX unique_name_for_null_roots_idx on parcel_group (name) where parent_parcel_group_id is null;
 
-
-create table field (
-  field_id bigserial
+-- TODO: Rename parcel to 'parcel'?
+create table parcel (
+  parcel_id bigserial
            primary key,
 
   geom_id   bigint
@@ -136,8 +136,8 @@ create table field (
   name text,
   external_id text,
 
-  field_group_id bigint
-                 references field_group(field_group_id),
+  parcel_group_id bigint
+                 references parcel_group(parcel_group_id),
 
   created  timestamp without time zone
               not null
@@ -152,7 +152,7 @@ create table field (
 );
 
 
-create function field_cannot_have_container_geom() RETURNS trigger
+create function parcel_cannot_have_container_geom() RETURNS trigger
   LANGUAGE plpgsql AS
 $$BEGIN
   IF (select geom.container_geom_id is not NULL
@@ -160,16 +160,16 @@ $$BEGIN
         where OLD.geom_id = geom.geom_id
      )
   THEN
-    RAISE EXCEPTION 'A field geometry cannot have a container geometry.';
+    RAISE EXCEPTION 'A parcel geometry cannot have a container geometry.';
   END IF;
 
   RETURN old;
 END;$$;
 
-create constraint trigger field_cannot_have_container_geom
-       after insert or update on field
+create constraint trigger parcel_cannot_have_container_geom
+       after insert or update on parcel
        deferrable initially deferred
-       for each row execute procedure field_cannot_have_container_geom();
+       for each row execute procedure parcel_cannot_have_container_geom();
 
 create table crop_type (
   crop_type_id bigserial
@@ -220,18 +220,18 @@ alter table crop_type add constraint fk_parent1_crop_type foreign key (parent_id
 alter table crop_type add constraint fk_parent2_crop_type foreign key (parent_id_2) references crop_type(crop_type_id);
 
 
--- Note: A planting geometry must intersect one-and-only-one field
+-- Note: A planting geometry must intersect one-and-only-one parcel
 create table planting (
-  field_id      bigint
+  parcel_id      bigint
                 not null
-                references field(field_id),
+                references parcel(parcel_id),
   crop_type_id  bigint
                 not null
                 references crop_type(crop_type_id),
   geom_id       bigint
                 not null
                 references geom(geom_id),
-  primary key (field_id, geom_id, crop_type_id),
+  primary key (parcel_id, geom_id, crop_type_id),
 
   performed     timestamp without time zone,
 
@@ -253,12 +253,12 @@ create table crop_stage (
 );
 
 create table crop_progress (
-  field_id         bigint not null,
+  parcel_id         bigint not null,
   crop_type_id     bigint not null,
   planting_geom_id bigint not null,
 
-  foreign key (field_id, crop_type_id, planting_geom_id)
-    references planting (field_id, crop_type_id, geom_id),
+  foreign key (parcel_id, crop_type_id, planting_geom_id)
+    references planting (parcel_id, crop_type_id, geom_id),
 
   geom_id bigint
          references geom(geom_id),
@@ -267,26 +267,20 @@ create table crop_progress (
 
   day    date,
 
-  primary key (field_id, planting_geom_id, geom_id, crop_type_id, crop_stage_id)
+  primary key (parcel_id, planting_geom_id, geom_id, crop_type_id, crop_stage_id)
 );
 
 
 create table act (
   act_id bigserial primary key,
-  field_id      bigint
+  parcel_id      bigint
                 not null
-                references field(field_id),
+                references parcel(parcel_id),
   name          text not null,
-
-  crop_type_id  bigint
-                references crop_type(crop_type_id),
-  local_value_id bigint
-                 references local_value(local_value_id),
-  unique (field_id, local_value_id),
 
   performed     timestamp without time zone
                 not null,
-  unique (field_id, name, performed),
+  unique (parcel_id, name, performed),
 
   last_updated  timestamp without time zone
                 not null
@@ -296,6 +290,18 @@ create table act (
                 not null
                 default '{}'::jsonb
 );
+
+create table act_group (
+  act_group_id  bigserial primary key,
+  name          text not null,
+  last_updated  timestamp without time zone
+                not null
+                default now(),
+  details       jsonb
+                not null
+                default '{}'::jsonb
+);
+
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
@@ -442,8 +448,8 @@ create table geospatial_key (
   geom_id    bigint
              not null
              references geom(geom_id),
-  field_id   bigint
-             references field(field_id)
+  parcel_id   bigint
+             references parcel(parcel_id)
 );
 
 
@@ -473,9 +479,9 @@ create table local_value (
 
   geom_id        bigint
                  references geom(geom_id),
-  field_id       bigint
+  parcel_id       bigint
                  not null
-                 references field(field_id),
+                 references parcel(parcel_id),
   unit_type_id   bigint
                  references unit_type(unit_type_id)
                  not null,
@@ -486,7 +492,7 @@ create table local_value (
   quantity       float
                  not null,
 
-  unique (geom_id, field_id, unit_type_id, acquired, quantity),
+  unique (geom_id, parcel_id, unit_type_id, acquired, quantity),
 
   local_group_id bigint
                  references local_group(local_group_id),

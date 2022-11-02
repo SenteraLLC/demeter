@@ -5,7 +5,7 @@ from .types import (
     CropStage,
     ReportType,
     Geom,
-    Field,
+    Parcel,
     GeoSpatialKey,
     TemporalKey,
     Planting,
@@ -13,7 +13,7 @@ from .types import (
     Key,
 )
 
-AnyDataTable = Union[Geom, Field, GeoSpatialKey, TemporalKey, Key]
+AnyDataTable = Union[Geom, Parcel, GeoSpatialKey, TemporalKey, Key]
 
 AnyTypeTable = Union[CropType, CropStage, ReportType]
 

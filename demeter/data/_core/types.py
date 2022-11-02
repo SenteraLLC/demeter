@@ -60,6 +60,12 @@ class Parcel(db.Detailed):
     name: str
     external_id: Optional[str]
 
+
+@dataclass(frozen=True)
+class ParcelGroup(db.Detailed):
+    name: str
+    parent_parcel_group_id: Optional[db.TableId] = None
+    external_id: Optional[str] = None
     created: Optional[datetime] = None
 
 

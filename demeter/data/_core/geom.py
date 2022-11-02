@@ -4,7 +4,7 @@ from ... import db
 from .types import Geom
 
 
-def getMaybeDuplicateGeom(
+def getMaybeGeomId(
     cursor: Any,
     geom: Geom,
 ) -> Optional[db.TableId]:
@@ -26,7 +26,7 @@ def insertOrGetGeom(
     geom: Geom,
     container_geom_id: Optional[int] = None,
 ) -> db.TableId:
-    maybe_geom_id = getMaybeDuplicateGeom(cursor, geom)
+    maybe_geom_id = getMaybeGeomId(cursor, geom)
     if maybe_geom_id is not None:
         return maybe_geom_id
     stmt = """insert into geom(container_geom_id, geom)

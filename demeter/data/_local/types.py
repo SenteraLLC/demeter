@@ -1,6 +1,7 @@
+from typing import Optional
+
 from dataclasses import dataclass
 from datetime import date
-from typing import Dict, Generator, Literal, Optional, Tuple, TypedDict, Union
 
 from ... import db
 
@@ -31,3 +32,11 @@ class UnitType(db.TypeTable):
 class LocalGroup(db.TypeTable):
     group_name: str
     group_category: Optional[str]
+
+
+@dataclass(frozen=True)
+class Act(db.Detailed):
+    field_id: db.TableId
+    name: str
+    performed: date
+    geom_id: Optional[db.TableId] = None

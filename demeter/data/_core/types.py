@@ -1,7 +1,7 @@
 import json
 from dataclasses import InitVar, asdict, dataclass, field
 from datetime import date, datetime
-from typing import Generator, Literal, Mapping, Optional, Tuple, Union, cast
+from typing import Literal, Mapping, Optional, Tuple, Union
 
 from ... import db
 
@@ -13,16 +13,18 @@ MultiPolygon = Tuple[Polygon, ...]
 Coordinates = Union[Point, Line, MultiPolygon]
 
 
+# TODO: Replace these with their proper geospatial library equivalents
+
+
 @dataclass(frozen=True)
 class CRS:
-    type: Literal["name"]
-    # TODO: What other properties are available?
+    type: Literal["name"]  # noqa
     properties: Mapping[Literal["name"], str]
 
 
 @dataclass(frozen=True)
 class GeomImpl:
-    type: str
+    type: str  # noqa
     coordinates: Coordinates
     crs: CRS
 
@@ -30,17 +32,16 @@ class GeomImpl:
 @dataclass(frozen=True)
 class Geom(db.Table):
     crs_name: InitVar[str]
-    type: InitVar[str]
+    type: InitVar[str]  # noqa
     coordinates: InitVar[Coordinates]
     container_geom_id: Optional[db.TableId] = None
 
-    # TODO: Should store the wkb, not some serialized dict
     geom: str = field(init=False)
 
     def __post_init__(
         self,
         crs_name: str,
-        type: str,
+        type: str,  # noqa
         coordinates: Coordinates,
     ) -> None:
         crs = CRS(
@@ -111,16 +112,6 @@ class Planting(PlantingKey, db.Detailed):
 
 
 @dataclass(frozen=True)
-class Act(db.Detailed):
-    field_id: db.TableId
-    name: str
-    performed: date
-    geom_id: Optional[db.TableId] = None
-    crop_type_id: Optional[db.TableId] = None
-    local_value_id: Optional[db.TableId] = None
-
-
-@dataclass(frozen=True)
 class CropProgressKey(db.TableKey):
     field_id: db.TableId
     crop_type_id: db.TableId
@@ -132,9 +123,6 @@ class CropProgressKey(db.TableKey):
 @dataclass(frozen=True)
 class CropProgress(CropProgressKey):
     day: Optional[date]
-
-
-#  x               : InitVar[int]
 
 
 @dataclass(frozen=True)

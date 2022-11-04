@@ -75,13 +75,13 @@ from ._local.types import (
     LocalType,
     UnitType,
     LocalGroup,
-    Act,
+    Operation,
 )
 
 from ._local.generated import (
-    insertAct,
-    insertOrGetAct,
-    getMaybeActId,
+    insertOperation,
+    insertOrGetOperation,
+    getMaybeOperationId,
     insertLocalValue,
     insertOrGetLocalValue,
     getMaybeLocalValue,
@@ -173,8 +173,8 @@ __all__ = (
     "insertLocalGroup",
     "insertOrGetLocalGroup",
     "getMaybeLocalGroupId",
-    "Act",
-    "insertAct",
-    "insertOrGetAct",
-    "getMaybeActId",
+    "Operation",
+    "insertOperation",
+    "insertOrGetOperation",
+    "getMaybeOperationId",
 )

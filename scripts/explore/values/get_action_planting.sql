@@ -1,4 +1,4 @@
-with field_action_maybe_dupe as (
+with field_operation_maybe_dupe as (
   select field_id,
          name,
          performed,
@@ -6,15 +6,15 @@ with field_action_maybe_dupe as (
                             order by performed asc
                             RANGE BETWEEN INTERVAL '6 hours' PRECEDING AND INTERVAL '6 hours' FOLLOWING
                            ) as dupe_id
-  from test_mlops.act A
+  from test_mlops.operation
   where performed > '2000-01-01' and
         field_id = any(%(field_ids)s::bigint[])
 
-), field_actions as (
+), field_operations as (
    select field_id,
           name,
           jsonb_agg(performed) as performed
-  from field_action_maybe_dupe
+  from field_operations_maybe_dupe
   where dupe_id = 1
   group by field_id, name
 
@@ -43,7 +43,7 @@ with field_action_maybe_dupe as (
 
 ) select F.field_id,
          jsonb_build_object(
-           'actions', X.actions,
+           'operations', X.operations,
            'plantings', Y.plantings,
            'field_name', F.name,
            'field_external_id', F.external_id,
@@ -63,8 +63,8 @@ with field_action_maybe_dupe as (
                'name', name,
                'performed', performed
              )
-           ) as actions
-    from field_actions
+           ) as operations 
+    from field_operations
     where name is not null and performed is not null
     group by field_id
   ) X on F.field_id = X.field_id

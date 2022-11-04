@@ -35,7 +35,7 @@ class LocalGroup(db.TypeTable):
 
 
 @dataclass(frozen=True)
-class Act(db.Detailed):
+class Operation(db.Detailed):
     parcel_id: db.TableId
     name: str
     performed: date

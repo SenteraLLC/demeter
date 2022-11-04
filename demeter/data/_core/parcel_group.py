@@ -1,15 +1,18 @@
-from typing import Any, Optional, Sequence, Dict, Set
+from typing import Any, Sequence, Dict, Set
 
 from ... import db
 
-from .types import ParcelGroup
+from .types import ParcelGroup, Field
 
 from collections import OrderedDict
-from datetime import datetime
 from dataclasses import dataclass
 
 
-# TODO:  Custom output type
+@dataclass(frozen=True)
+class FieldGroup(db.Table):
+    parcels_by_depth: Dict[int, Sequence[Field]]
+    ancestors: Sequence[ParcelGroup]
+
 
 
 def getFieldGroupAncestors(
@@ -80,25 +83,6 @@ def getOrgFields(
     cursor.execute(stmt, {"parcel_group_id": parcel_group_id})
     results = cursor.fetchall()
     return {r.leaf_parcel_group_id: r.parcel_ids for r in results}
-
-
-# TODO: Use a different parent class
-#       These are a higher level abstraction
-
-@dataclass(frozen=True)
-class Field(db.Detailed):
-    parcel_id: db.TableId
-    geom_id: db.TableId
-    name: str
-    external_id: Optional[str]
-    parcel_group_id: Optional[db.TableId]
-    created: Optional[datetime] = None
-
-
-@dataclass(frozen=True)
-class FieldGroup(db.Detailed):
-    parcels_by_depth: Dict[int, Sequence[Field]]
-    ancestors: Sequence[ParcelGroup]
 
 
 def getFields(

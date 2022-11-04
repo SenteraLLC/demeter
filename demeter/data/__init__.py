@@ -11,6 +11,7 @@ from ._core.types import (
 
     Parcel,
     ParcelGroup,
+    Field,
     CropType,
     CropStage,
     CropProgress,
@@ -64,7 +65,6 @@ from ._core.geom import (
 from ._core.parcel_group import (
     getFieldGroupAncestors,
     getOrgFields,
-    Field,
     FieldGroup,
     getFields,
     searchFieldGroup,

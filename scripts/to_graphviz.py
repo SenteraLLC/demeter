@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# type: ignore
 
 # Source: https://github.com/rm-hull/sql_graphviz
 

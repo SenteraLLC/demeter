@@ -1,7 +1,7 @@
-from typing import Any, Dict, Iterator, List, NewType, Tuple
+from typing import Iterator, List, Tuple
 
-from shapely.geometry import Point
-from shapely.geometry import Polygon as Poly  # type: ignore
+from shapely.geometry import Point  # type: ignore
+from shapely.geometry import Polygon as Poly
 
 
 def frange(a: float, b: float, s: float) -> Iterator[Tuple[float, float]]:

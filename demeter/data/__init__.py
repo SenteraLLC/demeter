@@ -10,6 +10,7 @@ from ._core.types import (
     Geom,
 
     Parcel,
+    ParcelGroup,
     CropType,
     CropStage,
     CropProgress,
@@ -31,6 +32,8 @@ from ._core.generated import (
     insertParcel,
     insertOrGetParcel,
     getParcel,
+    insertParcelGroup,
+    insertOrGetParcelGroup,
     getPlanting,
     insertPlanting,
     insertOrGetPlanting,
@@ -59,12 +62,12 @@ from ._core.geom import (
 )
 
 from ._core.parcel_group import (
-    getParcelGroupAncestors,
-    getOrgParcels,
-    ParcelSummary,
-    ParcelGroupParcels,
-    getParcels,
-    searchParcelGroup,
+    getFieldGroupAncestors,
+    getOrgFields,
+    Field,
+    FieldGroup,
+    getFields,
+    searchFieldGroup,
 )
 
 from ._local.types import (
@@ -110,13 +113,16 @@ __all__ = (
     "Parcel",
     "insertParcel",
     "insertOrGetParcel",
+    "ParcelGroup",
+    "insertParcelGroup",
+    "insertOrGetParcelGroup",
     "getParcel",
-    "getParcelGroupAncestors",
-    "getOrgParcels",
-    "ParcelSummary",
-    "ParcelGroupParcels",
-    "getParcels",
-    "searchParcelGroup",
+    "Field",
+    "FieldGroup",
+    "getFieldGroupAncestors",
+    "getOrgFields",
+    "getFields",
+    "searchFieldGroup",
     "Planting",
     "PlantingKey",
     "getPlanting",

@@ -1,13 +1,12 @@
 import asyncio
 from asyncio import Task
 from collections import deque
-from datetime import datetime
 from enum import IntEnum
 from time import time
-from typing import Any, Callable, Dict, List, Set, Tuple
+from typing import Callable, Dict, List, Set, Tuple
 
-from shapely.geometry import Point
-from shapely.geometry import Polygon as Poly  # type: ignore
+from shapely.geometry import Point  # type: ignore
+from shapely.geometry import Polygon as Poly
 
 from .spatial_utils import split
 from .valuer import Value, Valuer

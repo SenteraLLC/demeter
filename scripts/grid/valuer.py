@@ -6,8 +6,8 @@ from time import time
 from typing import Dict, Iterator, List, NewType, Set, Tuple
 
 from shapely import wkb  # type: ignore
-from shapely.geometry import Point
-from shapely.geometry import Polygon as Poly  # type: ignore
+from shapely.geometry import Point  # type: ignore
+from shapely.geometry import Polygon as Poly
 
 from .meteo import req
 from .search import NodeMeta

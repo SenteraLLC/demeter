@@ -1,14 +1,10 @@
-import curses
-from collections import OrderedDict
-from typing import Any, List, Optional, Sequence
+from typing import Any
 
-from demeter.data import FieldGroup
-from demeter.db import Table, TableId, getConnection
+from collections import OrderedDict
 
 from ..curses import FilterBy, SelectedResult, setup_curses
 from ..formatting import Margins
 from ..log import getLogger
-from ..picker import Picker
 from ..picker.tree import PickerTree
 from . import FieldGroupSummary, getFieldGroupSummaries
 from .layout import LAYOUT
@@ -31,25 +27,16 @@ def select(
         bottom=FOOTER_ROW_COUNT,
     )
 
-    field_group_summaries = getFieldGroupSummaries(cursor)
-    # for s in field_group_summaries:
-    #  print(s)
-    # print("COUNT: ",len(field_group_summaries))
-    # import sys
-    # sys.exit(1)
-
-    root_summaries = [s for s in field_group_summaries.values() if s.depth == 0]
-
-    separation_width = 3
-    separator = " " * separation_width
+    parcel_group_summaries = getFieldGroupSummaries(cursor)
 
     # TODO: Add dynamic title for tree path
     # TODO: Add dynamic footer showing selected value metadata
-    picker = PickerTree("Field Groups", margins, LAYOUT, field_group_summaries)
+
+    # Display as 'Field Groups'
+    picker = PickerTree("Field Groups", margins, LAYOUT, parcel_group_summaries)
 
     while picker.step():
-        logger.warn("FIELD GROUP STEP")
         pass
 
     selected_rows = picker.get_selected_rows()
-    return SelectedResult(selected=selected_rows, results=field_group_summaries)
+    return SelectedResult(selected=selected_rows, results=parcel_group_summaries)

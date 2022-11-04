@@ -1,9 +1,11 @@
+from typing import TypedDict
+
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from shapely import wkb  # type: ignore
-from shapely.geometry import Point
-from shapely.geometry import Polygon as Poly  # type: ignore
+from shapely.geometry import Point  # type: ignore
+from shapely.geometry import Polygon as Poly
 
 from demeter.db import TableId
 
@@ -88,8 +90,6 @@ def findRootByGeom(
     return out
 
 
-# TreeItem = Tuple[Poly, List[Poly], List[Point]]
-from typing import TypedDict
 
 
 class NodeMeta(TypedDict):

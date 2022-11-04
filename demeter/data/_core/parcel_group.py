@@ -9,7 +9,10 @@ from datetime import datetime
 from dataclasses import dataclass
 
 
-def getParcelGroupAncestors(
+# TODO:  Custom output type
+
+
+def getFieldGroupAncestors(
     cursor: Any,
     parcel_group: ParcelGroup,
 ) -> OrderedDict[db.TableId, Sequence[ParcelGroup]]:
@@ -44,7 +47,7 @@ def getParcelGroupAncestors(
     return OrderedDict((r["leaf_id"], r["leaf_to_root"]) for r in results)
 
 
-def getOrgParcels(
+def getOrgFields(
     cursor: Any,
     parcel_group_id: db.TableId,
 ) -> Dict[db.TableId, Set[db.TableId]]:
@@ -79,11 +82,11 @@ def getOrgParcels(
     return {r.leaf_parcel_group_id: r.parcel_ids for r in results}
 
 
-# TODO: How to deal with Demeter table classes vs Demeter table result classes? (IE w/ and w/o TableId)
-
+# TODO: Use a different parent class
+#       These are a higher level abstraction
 
 @dataclass(frozen=True)
-class ParcelSummary(db.Detailed):
+class Field(db.Detailed):
     parcel_id: db.TableId
     geom_id: db.TableId
     name: str
@@ -93,15 +96,15 @@ class ParcelSummary(db.Detailed):
 
 
 @dataclass(frozen=True)
-class ParcelGroupParcels:
-    parcels_by_depth: Dict[int, Sequence[ParcelSummary]]
+class FieldGroup(db.Detailed):
+    parcels_by_depth: Dict[int, Sequence[Field]]
     ancestors: Sequence[ParcelGroup]
 
 
-def getParcels(
+def getFields(
     cursor: Any,
     parcel_group_ids: Sequence[db.TableId],
-) -> OrderedDict[db.TableId, ParcelGroupParcels]:
+) -> OrderedDict[db.TableId, FieldGroup]:
     stmt = """
   with recursive ancestor as (
      select *,
@@ -158,7 +161,7 @@ def getParcels(
     return OrderedDict(
         (
             db.TableId(r.parcel_group_id),
-            ParcelGroupParcels(
+            FieldGroup(
                 parcels_by_depth=r.parcels_by_depth, ancestors=r.ancestors
             ),
         )
@@ -166,11 +169,11 @@ def getParcels(
     )
 
 
-def searchParcelGroup(
+def searchFieldGroup(
     cursor: Any,
-    parcel_group: ParcelGroup,
+    parcel_group: FieldGroup,
     do_fuzzy_search: bool = False,
-) -> Sequence[ParcelGroup]:
+) -> Sequence[FieldGroup]:
     search_part = "where name = %(name)s"
     if do_fuzzy_search:
         search_part = "where name like concat('%', %(name)s, '%')"

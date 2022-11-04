@@ -1,11 +1,10 @@
-import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, cast
 
-from shapely.geometry import Point
-from shapely.geometry import Polygon as Poly  # type: ignore
+from shapely.geometry import Point  # type: ignore
+from shapely.geometry import Polygon as Poly
 
-from . import StopState, main_loop
+from . import StopState
 from .spatial_utils import getNodeKey
 from .valuer import Value, Valuer
 
@@ -98,7 +97,8 @@ def insertNodes(
                     parent_node_id=parent_node_id,
                     node_id=node_id,
                 )
-                maybe_ancestor_key = insertAncestry(cursor, a)
+                # TODO: Do something with this key
+                _ = insertAncestry(cursor, a)
             else:
                 still_pending.append((value, level, x, parent))
         table_ids.append((node_id, maybe_parent_id))

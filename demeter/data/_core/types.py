@@ -70,6 +70,19 @@ class ParcelGroup(db.Detailed):
 
 
 @dataclass(frozen=True)
+class Field(db.Detailed):
+    parcel_id: db.TableId
+
+    name: str
+    external_id: Optional[str]
+
+    start: Optional[datetime] = None
+    end: Optional[datetime] = None
+
+    created: Optional[datetime] = None
+
+
+@dataclass(frozen=True)
 class GeoSpatialKey(db.Table):
     geom_id: db.TableId
     parcel_id: Optional[db.TableId]

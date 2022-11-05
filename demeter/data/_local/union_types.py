@@ -1,9 +1,9 @@
 from typing import Union
 
-from .types import LocalValue, LocalType, UnitType, LocalGroup, Operation
+from .types import ObservationValue, ObservationType, UnitType, Operation
 
-AnyDataTable = Union[LocalValue, Operation]
+AnyDataTable = Union[ObservationValue, Operation]
 
-AnyTypeTable = Union[LocalType, UnitType, LocalGroup]
+AnyTypeTable = Union[ObservationType, UnitType]
 
 AnyTable = Union[AnyDataTable, AnyTypeTable]

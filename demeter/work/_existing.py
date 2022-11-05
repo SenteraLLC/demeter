@@ -1,6 +1,6 @@
 import os
 from io import TextIOWrapper
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Tuple, cast
+from typing import Any, Callable, List, Mapping, Optional, Sequence, cast
 
 from .. import data, db
 from ._types import (
@@ -9,7 +9,7 @@ from ._types import (
     ExecutionSummary,
     HTTPArgument,
     KeywordArgument,
-    LocalArgument,
+    ObservationArgument,
     S3InputArgument,
     S3OutputArgument,
 )
@@ -95,11 +95,11 @@ def getExistingExecutions(
             execution_id=r.execution_id,
             function_id=r.function_id,
             inputs=ExecutionArguments(
-                local=[
-                    LocalArgument(
+                observation=[
+                    ObservationArgument(
                         **l,
                     )
-                    for l in r.inputs["local"]
+                    for l in r.inputs["observation"]
                 ],
                 keyword=[
                     KeywordArgument(

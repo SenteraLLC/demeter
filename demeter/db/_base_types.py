@@ -37,10 +37,10 @@ class Table:
 
 @dataclass(frozen=True)
 class Detailed(Table):
-    last_updated: datetime = field(
+    last_updated: datetime = field(  # type: ignore
         default_factory=datetime.now, hash=False, kw_only=True
     )
-    details: json_type.JSON = field(
+    details: json_type.JSON = field(  # type: ignore
         default_factory=lambda: json_type.EMPTY_JSON, hash=False, kw_only=True
     )
 

@@ -11,8 +11,8 @@ class Argument(task.FunctionId):
 
 
 @dataclass(frozen=True)
-class LocalArgument(Argument, db.SelfKey):
-    local_type_id: db.TableId
+class ObservationArgument(Argument, db.SelfKey):
+    observation_type_id: db.TableId
     number_of_observations: int
 
 

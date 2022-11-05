@@ -1,4 +1,4 @@
-from .types import Operation, LocalGroup, LocalType, LocalValue, UnitType
+from .types import Operation, ObservationType, ObservationValue, UnitType
 from . import lookups as _lookups
 
 from ...db._generic_types import GetId, GetTable, ReturnId
@@ -12,24 +12,21 @@ g = SQLGenerator(
 )
 
 
-getMaybeLocalValue: GetId[LocalValue] = g.getMaybeIdFunction(LocalValue)
+getMaybeObservationValue: GetId[ObservationValue] = g.getMaybeIdFunction(ObservationValue)
 getMaybeUnitTypeId: GetId[UnitType] = g.getMaybeIdFunction(UnitType)
-getMaybeLocalTypeId: GetId[LocalType] = g.getMaybeIdFunction(LocalType)
-getMaybeLocalValueId: GetId[LocalValue] = g.getMaybeIdFunction(LocalValue)
-getMaybeLocalGroupId: GetId[LocalGroup] = g.getMaybeIdFunction(LocalGroup)
+getMaybeObservationTypeId: GetId[ObservationType] = g.getMaybeIdFunction(ObservationType)
+getMaybeObservationValueId: GetId[ObservationValue] = g.getMaybeIdFunction(ObservationValue)
 getMaybeOperationId = g.getMaybeIdFunction(Operation)
 
-getLocalType: GetTable[LocalType] = g.getTableFunction(LocalType)
+getObservationType: GetTable[ObservationType] = g.getTableFunction(ObservationType)
 
-insertLocalValue: ReturnId[LocalValue] = g.getInsertReturnIdFunction(LocalValue)
+insertObservationValue: ReturnId[ObservationValue] = g.getInsertReturnIdFunction(ObservationValue)
 insertUnitType: ReturnId[UnitType] = g.getInsertReturnIdFunction(UnitType)
-insertLocalType: ReturnId[LocalType] = g.getInsertReturnIdFunction(LocalType)
-insertLocalGroup: ReturnId[LocalGroup] = g.getInsertReturnIdFunction(LocalGroup)
+insertObservationType: ReturnId[ObservationType] = g.getInsertReturnIdFunction(ObservationType)
 insertOperation = g.getInsertReturnIdFunction(Operation)
 
 
 insertOrGetUnitType = g.partialInsertOrGetId(getMaybeUnitTypeId, insertUnitType)
-insertOrGetLocalType = g.partialInsertOrGetId(getMaybeLocalTypeId, insertLocalType)
-insertOrGetLocalValue = g.partialInsertOrGetId(getMaybeLocalValueId, insertLocalValue)
-insertOrGetLocalGroup = g.partialInsertOrGetId(getMaybeLocalGroupId, insertLocalGroup)
+insertOrGetObservationType = g.partialInsertOrGetId(getMaybeObservationTypeId, insertObservationType)
+insertOrGetObservationValue = g.partialInsertOrGetId(getMaybeObservationValueId, insertObservationValue)
 insertOrGetOperation = g.partialInsertOrGetId(getMaybeOperationId, insertOperation)

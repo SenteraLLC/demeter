@@ -266,7 +266,7 @@ create table crop_progress (
   observation_type_id bigint
                       references observation_type(observation_type_id),
 
-  foreign key (crop_type_id, field_id, planting) references planting(crop_type_id, field_id, planted),
+  foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
 
   crop_stage_id bigint references crop_stage(crop_stage_id) not null,
 
@@ -274,13 +274,9 @@ create table crop_progress (
 );
 
 
-create table operation_type (
-  operation_type_id bigserial primary key,
-  type_name     text unique not null
-);
-
 create table operation (
   operation_id bigserial primary key,
+
   parcel_id    bigint
                not null
                references parcel(parcel_id),
@@ -449,11 +445,6 @@ create table observation_value (
   observation_value_id bigserial
                  primary key,
 
-  geom_id        bigint
-                 references geom(geom_id),
-  -- TODO: Operation should have constraints on parcel
-  operation_id   bigint
-                 references operation(operation_id),
   parcel_id      bigint
                  not null
                  references parcel(parcel_id),
@@ -466,6 +457,9 @@ create table observation_value (
 
   quantity       float
                  not null,
+
+  geom_id        bigint
+                 references geom(geom_id),
 
   last_updated   timestamp without time zone
                  not null

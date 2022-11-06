@@ -21,7 +21,6 @@ class Node(Table):
             crs_name="urn:ogc:def:crs:EPSG::4326",
             type="Polygon",
             coordinates=(coords,),
-            container_geom_id=None,
         )
         object.__setattr__(self, "geom", g.geom)
 

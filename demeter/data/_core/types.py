@@ -34,7 +34,6 @@ class Geom(db.Table):
     crs_name: InitVar[str]
     type: InitVar[str]  # noqa
     coordinates: InitVar[Coordinates]
-    container_geom_id: Optional[db.TableId] = None
 
     geom: str = field(init=False)
 
@@ -56,9 +55,7 @@ class Geom(db.Table):
 @dataclass(frozen=True)
 class Parcel(db.Detailed):
     geom_id: db.TableId
-
-    name: str
-    external_id: Optional[str]
+    parcel_group_id: db.TableId
 
 
 @dataclass(frozen=True)
@@ -127,28 +124,29 @@ class CropStage(db.TypeTable):
 
 @dataclass(frozen=True)
 class PlantingKey(db.TableKey):
-    parcel_id: db.TableId
     crop_type_id: db.TableId
-    geom_id: db.TableId
+    field_id: db.TableId
+    planted: datetime
 
 
 @dataclass(frozen=True)
 class Planting(PlantingKey, db.Detailed):
-    performed: Optional[date]
+    observation_type_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)
-class CropProgressKey(db.TableKey):
-    parcel_id: db.TableId
-    crop_type_id: db.TableId
-    planting_geom_id: db.TableId
+class Harvest(PlantingKey, db.Detailed):
+    observation_type_id: Optional[db.TableId]
+
+
+@dataclass(frozen=True)
+class CropProgressKey(PlantingKey):
     crop_stage_id: db.TableId
-    geom_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)
-class CropProgress(CropProgressKey):
-    day: Optional[date]
+class CropProgress(CropProgressKey, db.Detailed):
+    observation_type_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)

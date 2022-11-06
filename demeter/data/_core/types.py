@@ -83,6 +83,13 @@ class Field(db.Detailed):
 
 
 @dataclass(frozen=True)
+class FieldGroup(db.Detailed):
+    name: str
+    parent_field_group_id: Optional[db.TableId] = None
+    external_id: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class GeoSpatialKey(db.Table):
     geom_id: db.TableId
     parcel_id: Optional[db.TableId]

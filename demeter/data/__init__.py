@@ -62,10 +62,10 @@ from ._core.geom import (
     insertOrGetGeom,
 )
 
-from ._core.parcel_group import (
+from ._core.field_group import (
     getFieldGroupAncestors,
     getOrgFields,
-    FieldGroup,
+    FieldGroupFields,
     getFields,
     searchFieldGroup,
 )
@@ -116,6 +116,7 @@ __all__ = (
     "getParcel",
     "Field",
     "FieldGroup",
+    "FieldGroupFields",
     "getFieldGroupAncestors",
     "getOrgFields",
     "getFields",

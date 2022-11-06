@@ -85,8 +85,6 @@ create table parcel_group (
   ),
   unique(parent_parcel_group_id, name),
 
-  external_id text,
-
   details jsonb
           not null
           default '{}'::jsonb,
@@ -102,18 +100,10 @@ create table parcel (
            primary key,
 
   geom_id   bigint
-           not null
-           references geom(geom_id),
-
+            not null
+            references geom(geom_id),
   parcel_group_id bigint
-                 references parcel_group(parcel_group_id)
-);
-
-
-create table field_group (
-  field_group_id bigserial primary key,
-  parent_field_group_id bigint references field_group(field_group_id),
-  external_id text
+                  references parcel_group(parcel_group_id)
 );
 
 
@@ -123,10 +113,6 @@ create table field (
             references parcel(parcel_id),
 
   name text,
-  external_id text,
-
-  field_group_id bigint
-                 references field_group(field_group_id),
 
   created  timestamp without time zone
               not null
@@ -139,8 +125,6 @@ create table field (
                 not null
                 default now()
 );
-
-
 
 create table crop_type (
   crop_type_id bigserial

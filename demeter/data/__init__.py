@@ -33,8 +33,13 @@ from ._core.generated import (
     insertParcel,
     insertOrGetParcel,
     getParcel,
+    getMaybeParcelId,
     insertParcelGroup,
     insertOrGetParcelGroup,
+    insertField,
+    insertOrGetField,
+    getField,
+    getMaybeFieldId,
     getPlanting,
     insertPlanting,
     insertOrGetPlanting,
@@ -63,6 +68,8 @@ from ._core.geom import (
 )
 
 from ._core.field_group import (
+    FieldGroup,
+    insertFieldGroup,
     getFieldGroupAncestors,
     getOrgFields,
     FieldGroupFields,
@@ -114,8 +121,14 @@ __all__ = (
     "insertParcelGroup",
     "insertOrGetParcelGroup",
     "getParcel",
+    "getMaybeParcelId",
     "Field",
+    "insertField",
+    "insertOrGetField",
+    "getField",
+    "getMaybeFieldId",
     "FieldGroup",
+    "insertFieldGroup",  # TODO: Replace with 'make_field_group'
     "FieldGroupFields",
     "getFieldGroupAncestors",
     "getOrgFields",

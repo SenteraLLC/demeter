@@ -53,7 +53,7 @@ class Geom(db.Table):
 
 
 @dataclass(frozen=True)
-class Parcel(db.Detailed):
+class Parcel(db.Table):
     geom_id: db.TableId
     parcel_group_id: db.TableId
 
@@ -62,28 +62,14 @@ class Parcel(db.Detailed):
 class ParcelGroup(db.Detailed):
     name: str
     parent_parcel_group_id: Optional[db.TableId] = None
-    external_id: Optional[str] = None
     created: Optional[datetime] = None
 
 
 @dataclass(frozen=True)
 class Field(db.Detailed):
     parcel_id: db.TableId
-
     name: str
-    external_id: Optional[str]
-
-    start: Optional[datetime] = None
-    end: Optional[datetime] = None
-
     created: Optional[datetime] = None
-
-
-@dataclass(frozen=True)
-class FieldGroup(db.Detailed):
-    name: str
-    parent_field_group_id: Optional[db.TableId] = None
-    external_id: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -125,7 +111,7 @@ class CropStage(db.TypeTable):
 @dataclass(frozen=True)
 class PlantingKey(db.TableKey):
     crop_type_id: db.TableId
-    field_id: db.TableId
+    parcel_id: db.TableId
     planted: datetime
 
 

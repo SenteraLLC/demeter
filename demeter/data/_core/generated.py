@@ -8,6 +8,7 @@ from .types import (
     CropProgressKey,
     CropStage,
     CropType,
+    Field,
     Parcel,
     ParcelGroup,
     Geom,
@@ -28,6 +29,7 @@ g = SQLGenerator(
 
 getMaybeParcelId = g.getMaybeIdFunction(Parcel)
 getMaybeParcelGroupId = g.getMaybeIdFunction(ParcelGroup)
+getMaybeFieldId = g.getMaybeIdFunction(Parcel)
 getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)
 getMaybeTemporalKeyId: GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
@@ -36,10 +38,12 @@ getMaybeReportTypeId: GetId[ReportType] = g.getMaybeIdFunction(ReportType)
 
 getParcel: GetTable[Parcel] = g.getTableFunction(Parcel)
 getParcelGroup: GetTable[ParcelGroup] = g.getTableFunction(ParcelGroup)
+getField: GetTable[Field] = g.getTableFunction(Field)
 getGeom: GetTable[Geom] = g.getTableFunction(Geom)
 
 insertParcel: ReturnId[Parcel] = g.getInsertReturnIdFunction(Parcel)
 insertParcelGroup: ReturnId[ParcelGroup] = g.getInsertReturnIdFunction(ParcelGroup)
+insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
 insertGeoSpatialKey: ReturnId[GeoSpatialKey] = g.getInsertReturnIdFunction(
     GeoSpatialKey
 )
@@ -61,6 +65,7 @@ insertOrGetParcel = g.partialInsertOrGetId(getMaybeParcelId, insertParcel)
 insertOrGetParcelGroup = g.partialInsertOrGetId(
     getMaybeParcelGroupId, insertParcelGroup
 )
+insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
 

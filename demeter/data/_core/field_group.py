@@ -1,12 +1,22 @@
-from typing import Any, Sequence, Dict, Set
+from typing import Any, Sequence, Dict, Set, Optional
 
 from ... import db
 
-from .types import FieldGroup, Field
+from .types import Field, ParcelGroup
+from .generated import insertParcelGroup
 
 from collections import OrderedDict
 
 from dataclasses import dataclass
+
+
+from typing import TypeAlias
+
+FieldGroup: TypeAlias = ParcelGroup
+insertFieldGroup = insertParcelGroup
+
+
+# TODO: Fix the inherited type, it shouldnt be a db.Table
 
 
 @dataclass(frozen=True)

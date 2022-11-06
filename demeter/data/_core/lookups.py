@@ -8,6 +8,7 @@ from .types import (
     Geom,
     Parcel,
     ParcelGroup,
+    Field,
     GeoSpatialKey,
     TemporalKey,
     Planting,
@@ -24,6 +25,7 @@ data_table_lookup: TableLookup = {
     Geom: "geom",
     Parcel: "parcel",
     ParcelGroup: "parcel_group",
+    Field: "field",
     GeoSpatialKey: "geospatial_key",
     TemporalKey: "temporal_key",
 }

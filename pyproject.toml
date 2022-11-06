@@ -24,6 +24,12 @@ python-dotenv = "^0.21.0"
 joblib = "^1.2.0"
 pre-commit = "^2.20.0"
 pg-diagram = "^0.1.2"
+types-jsonschema = "^4.4.1"
+types-psycopg2 = "^2.9.7"
+types-requests = "^2.27.10"
+types-urllib3 = "^1.26.9"
+types-boto3 = "^1.0.1"
+
 
 [tool.poetry.group.docs]
 optional = true
@@ -50,11 +56,6 @@ flake8 = "^5.0.4"
 black = {version = "^22.6", allow-prereleases = true}
 
 [tool.poetry.dev-dependencies]
-types-jsonschema = "^4.4.1"
-types-psycopg2 = "^2.9.7"
-types-requests = "^2.27.10"
-types-urllib3 = "^1.26.9"
-types-boto3 = "^1.0.1"
 pandas-stubs = "^1.2.0"
 mypy = "^0.950"
 mypy-extensions = "^0.4.3"

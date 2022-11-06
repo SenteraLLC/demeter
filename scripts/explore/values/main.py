@@ -24,11 +24,11 @@ get_action_planting_stmt = open_sql("get_action_planting.sql").read()
 def main(
     cursor: Any,
     field_ids: Set[TableId],
-    local_type_ids: Set[TableId],
+    observation_type_ids: Set[TableId],
 ) -> None:
     args = {
         "field_ids": list(field_ids),
-        "local_type_ids": list(local_type_ids),
+        "observation_type_ids": list(observation_type_ids),
     }
     print("ARGS: ", args)
     cursor.execute(get_features_stmt, args)
@@ -54,12 +54,12 @@ def main(
         columns_to_keep = {
             "unit_name",
             "acquired",
-            "local_type_name",
-            "local_type_id",
+            "observation_type_name",
+            "observation_type_id",
             "unit_type_id",
         }
 
-        l = r.local_value_id
+        _ = r.observation_value_id
 
         c = r.column
         f = c["field_id"]
@@ -106,15 +106,15 @@ if __name__ == "__main__":
 
     parser.add_argument("--field_ids", type=int, nargs="+", help="list of field ids")
     parser.add_argument(
-        "--local_type_ids", type=int, nargs="+", help="list of local type ids"
+        "--observation_type_ids", type=int, nargs="+", help="list of observation type ids"
     )
     args = parser.parse_args()
 
-    # connection = psycopg2.connect(host="localhost", database="postgres", options="-c search_path=test_mlops,public")
+    # connection = psycopg2.connect(host="observationhost", database="postgres", options="-c search_path=test_mlops,public")
     connection = demeter.db.getConnection()
 
     field_ids = set(args.field_ids)
-    local_ids = set(args.local_type_ids)
+    observation_ids = set(args.observation_type_ids)
 
     # root_id = 60986
     # whitelist = { 68, 80, 64, 65, 81 }
@@ -123,6 +123,6 @@ if __name__ == "__main__":
 
     cursor = connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    main(cursor, field_ids, local_ids)
+    main(cursor, field_ids, observation_ids)
 
     print("Done.")

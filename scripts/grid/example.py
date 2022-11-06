@@ -60,7 +60,7 @@ def getPoints(cursor: Any) -> List[Point]:
 
 from shapely.geometry import MultiPoint
 
-from demeter.data import LocalType, insertOrGetGeom, insertOrGetLocalType
+from demeter.data import ObservationType, insertOrGetGeom, insertOrGetObservationType
 from demeter.db import TableId
 from demeter.grid import (
     Ancestry,
@@ -128,19 +128,19 @@ def pointsToBound(points: List[Point]) -> Poly:
 THIS_SCRIPT_TOKEN = "meteo-grid-example"
 
 
-def getLocalTypeName(stat: str) -> str:
+def getObservationTypeName(stat: str) -> str:
     return "_".join([THIS_SCRIPT_TOKEN, stat.lower()])
 
 
-def getLocalType(cursor: Any, stat: str) -> TableId:
+def getObservationType(cursor: Any, stat: str) -> TableId:
     type_category = "meteomatics grid test category"
-    type_name = getLocalTypeName(stat)
-    l = LocalType(
+    type_name = getObservationTypeName(stat)
+    l = ObservationType(
         type_name=type_name,
         type_category=type_category,
     )
-    local_type_id = insertOrGetLocalType(cursor, l)
-    return local_type_id
+    observation_type_id = insertOrGetObservationType(cursor, l)
+    return observation_type_id
 
 
 def getStartingGeoms(
@@ -166,9 +166,9 @@ def getStartingGeoms(
         coordinates=(polygon_bounds,),
     )
     bound_geom_id = insertOrGetGeom(cursor, geom)
-    local_type_id = getLocalType(cursor, stat)
+    observation_type_id = getObservationType(cursor, stat)
     r = Root(
-        local_type_id=local_type_id,
+        observation_type_id=observation_type_id,
         time=time,
         root_node_id=root_node_id,
     )

@@ -17,8 +17,8 @@ class UnitSummary(Summary):
 
 
 @dataclass(frozen=True)
-class LocalGroupSummary(Summary):
-    local_group_id: TableId
+class ObservationGroupSummary(Summary):
+    observation_group_id: TableId
     name: str
     category: Optional[str]
     count: int
@@ -28,7 +28,7 @@ class LocalGroupSummary(Summary):
 
 @dataclass(frozen=True)
 class TypeSummary(Summary):
-    local_type_id: TableId
+    observation_type_id: TableId
     type_name: str
     type_category: Optional[str]
 
@@ -36,7 +36,7 @@ class TypeSummary(Summary):
 
     units: Sequence[UnitSummary]
     unit_count: int
-    groups: Sequence[LocalGroupSummary]
+    groups: Sequence[ObservationGroupSummary]
     group_count: int
 
 
@@ -51,16 +51,16 @@ def getTypeSummaries(
         args = {"field_ids": field_ids}
     stmt = f"""with field_value as (
               select F.field_id,
-                     V.local_value_id,
+                     V.observation_value_id,
                      V.unit_type_id,
-                     V.local_group_id,
+                     V.observation_group_id,
                      V.acquired
               from test_mlops.field F
-              join test_mlops.local_value V on F.field_id = V.field_id
+              join test_mlops.observation_value V on F.field_id = V.field_id
               {search_part}
 
             ), units as (
-              select local_type_id,
+              select observation_type_id,
                      jsonb_object_agg(
                        unit_type_id,
                        jsonb_build_object(
@@ -72,7 +72,7 @@ def getTypeSummaries(
                        )
                      ) as id_to_unit
               from (
-                select T.local_type_id,
+                select T.observation_type_id,
                        U.unit_type_id,
                        U.unit,
                        min(FV.acquired)::date as earliest,
@@ -80,17 +80,17 @@ def getTypeSummaries(
                        count(*) as unit_count
                 from field_value FV
                 natural join test_mlops.unit_type U
-                natural join test_mlops.local_type T
-                group by T.local_type_id, U.unit_type_id, U.unit
+                natural join test_mlops.observation_type T
+                group by T.observation_type_id, U.unit_type_id, U.unit
               ) x
-              group by local_type_id
+              group by observation_type_id
 
             ), groups as (
-              select local_type_id,
+              select observation_type_id,
                      jsonb_object_agg(
-                       local_group_id,
+                       observation_group_id,
                        jsonb_build_object(
-                         'local_group_id', local_group_id,
+                         'observation_group_id', observation_group_id,
                          'name', group_name,
                          'category', group_category,
                          'count', group_count,
@@ -99,8 +99,8 @@ def getTypeSummaries(
                        )
                      ) as id_to_group
               from (
-                select US.local_type_id,
-                       G.local_group_id,
+                select US.observation_type_id,
+                       G.observation_group_id,
                        G.group_name,
                        G.group_category,
                        min(FV.acquired)::date as earliest,
@@ -108,20 +108,20 @@ def getTypeSummaries(
                        count(*) as group_count
                 from field_value FV
                 natural join units US
-                natural join test_mlops.local_group G
-                group by US.local_type_id, G.local_group_id
+                natural join test_mlops.observation_group G
+                group by US.observation_type_id, G.observation_group_id
 
               ) x
-              group by local_type_id
+              group by observation_type_id
 
-            ) select T.local_type_id,
+            ) select T.observation_type_id,
                      T.type_name,
                      T.type_category,
                      value_count,
                      units,
                      groups
 
-              from test_mlops.local_type T
+              from test_mlops.observation_type T
               natural join units U
               natural left join groups GS,
               lateral (
@@ -144,7 +144,7 @@ def getTypeSummaries(
 
     return [
         TypeSummary(
-            local_type_id=r.local_type_id,
+            observation_type_id=r.observation_type_id,
             type_name=r.type_name,
             type_category=r.type_category,
             value_count=r.value_count,

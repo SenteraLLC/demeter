@@ -1,8 +1,7 @@
-import curses
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Sequence, Set, cast
+from typing import Any, Dict, List, Optional, Sequence
 
-from demeter.data import LocalType, LocalValue
+from demeter.data import ObservationType, ObservationValue
 from demeter.db import Table, TableId, getConnection
 
 from ..curses import FilterBy, SelectedResult, setup_curses
@@ -44,14 +43,14 @@ def select(
     field_ids = getFieldIds(filter_by)
     logger.warn("Field IDs are: %s\n", field_ids)
 
-    local_type_summaries = getTypeSummaries(cursor, list(field_ids))
+    observation_type_summaries = getTypeSummaries(cursor, list(field_ids))
 
-    id_to_summaries = OrderedDict((t.local_type_id, t) for t in local_type_summaries)
+    id_to_summaries = OrderedDict((t.observation_type_id, t) for t in observation_type_summaries)
 
     separation_width = 3
     separator = " " * separation_width
 
-    picker = Picker("Local Type Summary", local_type_summaries, margins, LAYOUT)
+    picker = Picker("Observation Type Summary", observation_type_summaries, margins, LAYOUT)
 
     while picker.step():
         logger.warn("Type picker step.")

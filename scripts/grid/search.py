@@ -42,7 +42,7 @@ def getNodeIdLookup(
 def findRootByPoint(
     cursor: Any,
     points: List[Point],
-    local_type_id: Optional[TableId],
+    observation_type_id: Optional[TableId],
 ) -> Dict[TableId, List[Point]]:
     # TODO: Postgres 3 has native support for Point so we will be able to remove this hack
     stmt = """
@@ -50,16 +50,16 @@ def findRootByPoint(
       select ST_SetSRID(ST_MakePoint(x, y), 4326) as point
       from unnest(%(xs)s, %(ys)s) as u(x, y)
     ) select R.root_id, jsonb_agg(P.point) as points
-      from root R, node N, fix_point_hack P, local_type T
-      where T.local_type_id = %(local_type_id)s and
-            R.local_type_id = T.local_type_id and
+      from root R, node N, fix_point_hack P, observation_type T
+      where T.observation_type_id = %(observation_type_id)s and
+            R.observation_type_id = T.observation_type_id and
             R.root_node_id = N.node_id and
             ST_Contains(N.geom, P.point)
       group by R.root_id
   """
     xs, ys = zip(*((p.x, p.y) for p in points))
     cursor.execute(
-        stmt, {"xs": list(xs), "ys": list(ys), "local_type_id": local_type_id}
+        stmt, {"xs": list(xs), "ys": list(ys), "observation_type_id": observation_type_id}
     )
     results = cursor.fetchall()
     out: Dict[TableId, List[Point]] = {}

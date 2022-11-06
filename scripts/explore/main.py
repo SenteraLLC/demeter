@@ -23,7 +23,7 @@ def main(
 
     for t in targets:
         logger.warn("TARGET: %s", t)
-        if t == DataOption.LOCAL_TYPE:
+        if t == DataOption.OBSERVATION_TYPE:
             maybe_types = types.interactive_select(cursor, results)
             logger.warn("TYPES: %s", maybe_types)
             if ts := maybe_types:
@@ -41,11 +41,11 @@ def main(
         for x in s:
             print(x)
 
-    local_type_ids: Set[TableId] = set()
-    if (lt := results.get(DataOption.LOCAL_TYPE)) is not None:
-        local_type_ids = {s.local_type_id for s in lt.selected}
+    observation_type_ids: Set[TableId] = set()
+    if (lt := results.get(DataOption.OBSERVATION_TYPE)) is not None:
+        observation_type_ids = {s.observation_type_id for s in lt.selected}
 
     # field_group_ids : Set[TableId] = set(results.get(DataOption.FIELD_GROUP, []))
     field_ids = getFieldIds(results)
 
-    getValues(cursor, field_ids, local_type_ids)
+    getValues(cursor, field_ids, observation_type_ids)

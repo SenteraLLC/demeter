@@ -69,12 +69,12 @@ from ._core.geom import (
 
 from ._core.field_group import (
     FieldGroup,
-    insertFieldGroup,
     getFieldGroupAncestors,
     getOrgFields,
     FieldGroupFields,
     getFields,
     searchFieldGroup,
+    make_field_group,
 )
 
 from ._local.types import (
@@ -128,7 +128,7 @@ __all__ = (
     "getField",
     "getMaybeFieldId",
     "FieldGroup",
-    "insertFieldGroup",  # TODO: Replace with 'make_field_group'
+    "make_field_group",
     "FieldGroupFields",
     "getFieldGroupAncestors",
     "getOrgFields",

@@ -1,8 +1,32 @@
+exclude: >
+  (?x)^(
+      demeter/task/|
+      demeter/work/
+      demeter/grid/|
+      scripts/explore/|
+      scripts/grid/
+
+  )
 repos:
-  - repo: https://github.com/python-poetry/poetry
-    rev: '1.2.1'  # add version here
-    hooks:
-      - id: poetry-check
-      - id: poetry-lock
+- repo: https://github.com/ambv/black
+  rev: '22.10.0'
+  hooks:
+    - id: black
+- repo: https://gitlab.com/pycqa/flake8
+  rev: '5.0.4'
+  hooks:
+    - id: flake8
+      exclude: (tests|doc)
+      additional_dependencies: [
+          'flake8-builtins',
+          'flake8-logging-format',
+          'flake8-rst-docstrings',
+          'pygments',
+          'pep8-naming'
+      ]
+- repo: https://github.com/python-poetry/poetry
+  rev: '1.2.2'
+  hooks:
+    - id: poetry-check
 default_language_version:
     python: python3

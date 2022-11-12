@@ -11,20 +11,22 @@ from collections import OrderedDict
 
 from . import _json_type as json_type
 
-D = TypeVar('D')
+D = TypeVar("D")
+
 
 @dataclass(frozen=True)
 class Table:
-  def names(self) -> Sequence[str]:
-    return [f.name for f in fields(self)]
+    def names(self) -> Sequence[str]:
+        return [f.name for f in fields(self)]
 
-  # TODO: Simplify this and the register_adapter for Table and OrderedDict
-  def __call__(self) -> OrderedDict[str, Any]:
-    out = [(f.name, getattr(self, f.name)) for f in fields(self)]
-    return OrderedDict(out)
+    # TODO: Simplify this and the register_adapter for Table and OrderedDict
+    def __call__(self) -> OrderedDict[str, Any]:
+        out = [(f.name, getattr(self, f.name)) for f in fields(self)]
+        return OrderedDict(out)
 
-  def get(self, k : str) -> D:
-    return cast(D, self.__getattribute__(k))
+    def get(self, k: str) -> D:
+        return cast(D, self.__getattribute__(k))
+
 
 #  class Encoder(json.JSONEncoder):
 #    def default(self, obj : Any) -> Any:
@@ -36,29 +38,35 @@ class Table:
 #       Waiting on Python 3.11 feature: dataclass transforms
 #       For now, we have to copy-paste these decorators
 
+
 @dataclass(frozen=True)
 class Detailed(Table):
-  last_updated : datetime = field(default_factory=datetime.now, hash=False, kw_only=True)
-  details : json_type.JSON = field(default_factory=lambda : json_type.EMPTY_JSON,
-                                   hash=False,
-                                   kw_only=True
-                                  )
+    last_updated: datetime = field(
+        default_factory=datetime.now, hash=False, kw_only=True
+    )
+    details: json_type.JSON = field(
+        default_factory=lambda: json_type.EMPTY_JSON, hash=False, kw_only=True
+    )
+
 
 @dataclass(frozen=True)
 class TypeTable(Table):
-  pass
+    pass
+
 
 @dataclass(frozen=True)
 class TableKey(Table):
-  @classmethod
-  def names(cls) -> Sequence[str]:
-    return [f.name for f in fields(cls)]
+    @classmethod
+    def names(cls) -> Sequence[str]:
+        return [f.name for f in fields(cls)]
 
-TableId = NewType('TableId', int)
+
+TableId = NewType("TableId", int)
+
 
 @dataclass(frozen=True)
 class SelfKey(TableKey):
-  pass
+    pass
+
 
 SomeKey = Union[SelfKey, TableKey, TableId]
-

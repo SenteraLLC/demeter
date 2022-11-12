@@ -4,10 +4,8 @@ from . import work
 from . import db
 
 __all__ = [
-  'data',
-  'task',
-  'work',
-
-  'db',
+    "data",
+    "task",
+    "work",
+    "db",
 ]
-

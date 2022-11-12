@@ -1,25 +1,15 @@
-from collections import OrderedDict
 from functools import partial, wraps
 from typing import (
     Any,
     Callable,
-    Dict,
-    Mapping,
     Optional,
-    Sequence,
-    Tuple,
     Type,
     TypeVar,
-    Union,
     cast,
 )
 
-from psycopg2 import sql
-from psycopg2.sql import SQL, Composed, Identifier, Placeholder
-
 from .. import TableId
 from .._generic_types import (
-    RTTI,
     SK,
     GetId,
     GetTableByKey,
@@ -34,7 +24,6 @@ from .._lookup_types import TableLookup
 from .._union_types import AnyIdTable
 from .get import getMaybeId, getMaybeTable, getMaybeTableByKey
 from .insert import insertAndReturnId, insertAndReturnKey, insertOrGetId, insertOrGetKey
-from .tools import doPgFormat, doPgJoin
 
 C = TypeVar("C")
 

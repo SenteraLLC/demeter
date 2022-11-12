@@ -1,12 +1,7 @@
-import json
-import os
-import uuid
-from typing import Any, Tuple, Union
+from typing import Tuple, Union
 
 import geopandas as gpd  # type: ignore
 import pandas as pd
-import psycopg2
-import psycopg2.extras
 from scoping import scoping  # type: ignore
 
 from demeter.db import TableId

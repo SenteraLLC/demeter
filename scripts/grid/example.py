@@ -8,6 +8,25 @@ from . import StopState
 from .spatial_utils import getNodeKey
 from .valuer import Value, Valuer
 
+from shapely import wkb  # type: ignore
+
+from demeter.data import Geom
+
+from shapely.geometry import MultiPoint
+
+from demeter.data import ObservationType, insertOrGetGeom, insertOrGetObservationType
+from demeter.db import TableId
+from demeter.grid import (
+    Ancestry,
+    Node,
+    Root,
+    insertAncestry,
+    insertNode,
+    insertOrGetRoot,
+)
+
+from shapely.geometry import CAP_STYLE, JOIN_STYLE
+
 
 def do_stop(
     p: Poly,
@@ -33,11 +52,6 @@ def do_stop(
     return total_diff or 1e-4
 
 
-from shapely import wkb  # type: ignore
-
-from demeter.data import Geom
-
-
 def getPoints(cursor: Any) -> List[Point]:
     cursor.execute(
         "select G.* from geom G, field F where F.owner_id = 2 and F.geom_id = G.geom_id limit 50 offset 10"
@@ -56,20 +70,6 @@ def getPoints(cursor: Any) -> List[Point]:
             continue
 
     return out
-
-
-from shapely.geometry import MultiPoint
-
-from demeter.data import ObservationType, insertOrGetGeom, insertOrGetObservationType
-from demeter.db import TableId
-from demeter.grid import (
-    Ancestry,
-    Node,
-    Root,
-    insertAncestry,
-    insertNode,
-    insertOrGetRoot,
-)
 
 
 def insertNodes(
@@ -109,14 +109,9 @@ def insertNodes(
     return still_pending, table_ids
 
 
-from shapely.geometry import CAP_STYLE, JOIN_STYLE
-
-from demeter.data import Polygon
-
-
 def pointsToBound(points: List[Point]) -> Poly:
     mp = MultiPoint(points)
-    x1, y1, x2, y2 = bounds = mp.bounds
+    x1, y1, x2, y2 = mp.bounds
     unbuffered_polygon_bounds = ((x1, y1), (x2, y1), (x2, y2), (x1, y2))
     unbuffered_polygon = Poly(unbuffered_polygon_bounds)
     b = unbuffered_polygon.buffer(

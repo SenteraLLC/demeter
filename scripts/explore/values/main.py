@@ -3,9 +3,8 @@ import json
 import os
 from collections import OrderedDict
 from io import TextIOWrapper
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Set
 
-import pandas
 import psycopg2.extras
 from dotenv import load_dotenv
 
@@ -51,7 +50,7 @@ def main(
 
     name_to_column: OrderedDict[int, OrderedDict[int, Any]] = OrderedDict()
     for r in feature_results:
-        columns_to_keep = {
+        _ = {
             "unit_name",
             "acquired",
             "observation_type_name",
@@ -106,7 +105,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--field_ids", type=int, nargs="+", help="list of field ids")
     parser.add_argument(
-        "--observation_type_ids", type=int, nargs="+", help="list of observation type ids"
+        "--observation_type_ids",
+        type=int,
+        nargs="+",
+        help="list of observation type ids",
     )
     args = parser.parse_args()
 

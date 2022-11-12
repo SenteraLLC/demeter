@@ -45,12 +45,16 @@ def select(
 
     observation_type_summaries = getTypeSummaries(cursor, list(field_ids))
 
-    id_to_summaries = OrderedDict((t.observation_type_id, t) for t in observation_type_summaries)
+    id_to_summaries = OrderedDict(
+        (t.observation_type_id, t) for t in observation_type_summaries
+    )
 
     separation_width = 3
     separator = " " * separation_width
 
-    picker = Picker("Observation Type Summary", observation_type_summaries, margins, LAYOUT)
+    picker = Picker(
+        "Observation Type Summary", observation_type_summaries, margins, LAYOUT
+    )
 
     while picker.step():
         logger.warn("Type picker step.")

@@ -1,6 +1,6 @@
-from typing import Dict, Mapping, Tuple, Type, cast
+from typing import Dict, Mapping, Type
 
-from . import Table, TableKey
+from . import Table
 
 TableLookup = Mapping[Type[Table], str]
 

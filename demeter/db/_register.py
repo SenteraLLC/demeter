@@ -1,7 +1,3 @@
-from collections import OrderedDict
-from types import MappingProxyType
-from typing import Callable
-
 import psycopg2
 from psycopg2.extensions import register_adapter
 

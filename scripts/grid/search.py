@@ -59,7 +59,8 @@ def findRootByPoint(
   """
     xs, ys = zip(*((p.x, p.y) for p in points))
     cursor.execute(
-        stmt, {"xs": list(xs), "ys": list(ys), "observation_type_id": observation_type_id}
+        stmt,
+        {"xs": list(xs), "ys": list(ys), "observation_type_id": observation_type_id},
     )
     results = cursor.fetchall()
     out: Dict[TableId, List[Point]] = {}
@@ -88,8 +89,6 @@ def findRootByGeom(
     for r in results:
         out[r.root_id] = r.geom_ids
     return out
-
-
 
 
 class NodeMeta(TypedDict):

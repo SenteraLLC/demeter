@@ -57,7 +57,6 @@ def yieldTimeRange(
 from typing import List
 
 
-
 from dotenv import load_dotenv
 
 if __name__ == "__main__":

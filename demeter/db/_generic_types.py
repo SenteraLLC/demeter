@@ -3,9 +3,10 @@ from typing import Any, Callable, Mapping, Optional, Type, TypeVar, Union
 from . import _base_types as base_types
 from . import _union_types as union_types
 
-T = TypeVar("T", bound=base_types.Table)
+from typing import Generic
 
-from typing import Generic, Tuple
+
+T = TypeVar("T", bound=base_types.Table)
 
 
 # TODO: MyPy can't resolve some generics at runtime

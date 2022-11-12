@@ -1,9 +1,7 @@
-import json
-from abc import ABC
 from collections import OrderedDict
 from dataclasses import dataclass, field, fields
 from datetime import datetime
-from typing import Any, NewType, Optional, Sequence, Set, TypeVar, Union, cast
+from typing import Any, NewType, Sequence, TypeVar, Union, cast
 
 from . import _json_type as json_type
 

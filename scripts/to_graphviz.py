@@ -18,17 +18,23 @@ from pyparsing import (
     Word,
     ZeroOrMore,
     alphanums,
-    alphas,
 )
 
 
 def field_act(s, loc, tok):
-    fieldName = tok[0].replace('"', "")
-    fieldSpec = html.escape(" ".join(tok[1::]).replace('"', '\\"'))
+    field_name = tok[0].replace('"', "")
+    field_spec = html.escape(" ".join(tok[1::]).replace('"', '\\"'))
     # Don't try and format this HTML text string - DOT files are whitespace sensitive
-    return """<tr><td bgcolor="grey96" align="left" port="{0}"><font face="Times-bold"> {0} </font></td><td align="left" port="{0}_right"><font color="#535353"> {1} </font></td></tr>""".format(
-        fieldName, fieldSpec
-    )
+    row = """<tr>
+               <td bgcolor="grey96" align="left" port="{0}">
+                 <font face="Times-bold"> {0} </font>
+                /td>
+                <td align="left" port="{0}_right">
+                  <font color="#535353"> {1} </font>
+                </td>
+              </tr>
+          """
+    return row.format(field_name, field_spec)
 
 
 def field_list_act(s, loc, tok):

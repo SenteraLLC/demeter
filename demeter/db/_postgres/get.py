@@ -1,5 +1,5 @@
-from collections import OrderedDict, namedtuple
-from typing import Any, NamedTuple, Optional, Sequence, Tuple, cast
+from collections import OrderedDict
+from typing import Any, NamedTuple, Optional, Tuple, cast
 
 from psycopg2.sql import Identifier, Placeholder
 
@@ -64,7 +64,7 @@ def getMaybeTableByKey(
     key: SK,
 ) -> Optional[Tuple[SK, S]]:
     key_parts = set(key.__dataclass_fields__.keys())
-    table_id_name = "_".join([table_name, "id"])
+    # table_id_name = "_".join([table_name, "id"])
     conditions = [doPgJoin(" = ", [Identifier(k), Placeholder(k)]) for k in key_parts]
     stmt = doPgFormat(
         "select * from {0} where {1}",

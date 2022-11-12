@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Dict, Optional, Sequence, Type, Union, cast
+from typing import Any, Dict, Optional, Sequence, Type, cast
 
 from psycopg2 import sql
 from psycopg2.sql import SQL, Composed, Identifier, Placeholder
@@ -96,7 +96,7 @@ def insertOrGetKey(
     key_fields = set(key_type.__dataclass_fields__.keys())
     key_parts = {k: v for k, v in table().items() if k in key_fields}
     key = key_type(**key_parts)
-    if (x := get_by_key(cursor, key)) is not None:
+    if get_by_key(cursor, key) is not None:
         return key
     k = return_key(cursor, table)
     return k

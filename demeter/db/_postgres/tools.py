@@ -1,4 +1,4 @@
-from typing import Sequence, Union, cast
+from typing import Sequence, cast
 
 from psycopg2.sql import SQL, Composable, Composed
 

@@ -19,11 +19,12 @@ class FieldGroup:
     created: Optional[datetime] = None
 
 
-def make_field_group(cursor: Any,
-                     name: str,
-                     parent_field_group_id: Optional[db.TableId] = None,
-                     created: Optional[datetime] = None
-                     ) -> FieldGroup:
+def make_field_group(
+    cursor: Any,
+    name: str,
+    parent_field_group_id: Optional[db.TableId] = None,
+    created: Optional[datetime] = None,
+) -> FieldGroup:
     n = name
     p = parent_field_group_id
     c = created
@@ -180,9 +181,7 @@ def getFields(
     return OrderedDict(
         (
             db.TableId(r.parcel_group_id),
-            FieldGroupFields(
-                fields_by_depth=r.fields_by_depth, ancestors=r.ancestors
-            ),
+            FieldGroupFields(fields_by_depth=r.fields_by_depth, ancestors=r.ancestors),
         )
         for r in results
     )

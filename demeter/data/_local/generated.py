@@ -12,21 +12,35 @@ g = SQLGenerator(
 )
 
 
-getMaybeObservationValue: GetId[ObservationValue] = g.getMaybeIdFunction(ObservationValue)
+getMaybeObservationValue: GetId[ObservationValue] = g.getMaybeIdFunction(
+    ObservationValue
+)
 getMaybeUnitTypeId: GetId[UnitType] = g.getMaybeIdFunction(UnitType)
-getMaybeObservationTypeId: GetId[ObservationType] = g.getMaybeIdFunction(ObservationType)
-getMaybeObservationValueId: GetId[ObservationValue] = g.getMaybeIdFunction(ObservationValue)
+getMaybeObservationTypeId: GetId[ObservationType] = g.getMaybeIdFunction(
+    ObservationType
+)
+getMaybeObservationValueId: GetId[ObservationValue] = g.getMaybeIdFunction(
+    ObservationValue
+)
 getMaybeOperationId = g.getMaybeIdFunction(Operation)
 
 getObservationType: GetTable[ObservationType] = g.getTableFunction(ObservationType)
 
-insertObservationValue: ReturnId[ObservationValue] = g.getInsertReturnIdFunction(ObservationValue)
+insertObservationValue: ReturnId[ObservationValue] = g.getInsertReturnIdFunction(
+    ObservationValue
+)
 insertUnitType: ReturnId[UnitType] = g.getInsertReturnIdFunction(UnitType)
-insertObservationType: ReturnId[ObservationType] = g.getInsertReturnIdFunction(ObservationType)
+insertObservationType: ReturnId[ObservationType] = g.getInsertReturnIdFunction(
+    ObservationType
+)
 insertOperation = g.getInsertReturnIdFunction(Operation)
 
 
 insertOrGetUnitType = g.partialInsertOrGetId(getMaybeUnitTypeId, insertUnitType)
-insertOrGetObservationType = g.partialInsertOrGetId(getMaybeObservationTypeId, insertObservationType)
-insertOrGetObservationValue = g.partialInsertOrGetId(getMaybeObservationValueId, insertObservationValue)
+insertOrGetObservationType = g.partialInsertOrGetId(
+    getMaybeObservationTypeId, insertObservationType
+)
+insertOrGetObservationValue = g.partialInsertOrGetId(
+    getMaybeObservationValueId, insertObservationValue
+)
 insertOrGetOperation = g.partialInsertOrGetId(getMaybeOperationId, insertOperation)

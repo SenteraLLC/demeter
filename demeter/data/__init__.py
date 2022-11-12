@@ -8,7 +8,6 @@ from ._core.types import (
     CRS,
     GeomImpl,
     Geom,
-
     Parcel,
     ParcelGroup,
     Field,
@@ -17,13 +16,11 @@ from ._core.types import (
     CropProgress,
     CropProgressKey,
     Planting,
-
     PlantingKey,
     GeoSpatialKey,
     TemporalKey,
     Key,
     KeyIds,
-
     ReportType,
 )
 
@@ -88,7 +85,6 @@ from ._local.generated import (
     insertOperation,
     insertOrGetOperation,
     getMaybeOperationId,
-
     insertObservationValue,
     insertOrGetObservationValue,
     getMaybeObservationValue,

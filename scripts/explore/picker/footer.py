@@ -1,11 +1,9 @@
 import curses
 from dataclasses import asdict
-from typing import Sequence
 
 from ..formatting import Margins
 from ..summary import RawRowType
 from ..theme import ColorScheme
-from .table import Row
 
 
 class Footer:

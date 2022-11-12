@@ -4,7 +4,12 @@ from dotenv import load_dotenv
 
 # Core Types
 from demeter.data import Parcel, Field, FieldGroup, Geom, MultiPolygon, Point
-from demeter.data import insertField, insertFieldGroup, insertOrGetGeom, insertOrGetParcel
+from demeter.data import (
+    insertField,
+    insertFieldGroup,
+    insertOrGetGeom,
+    insertOrGetParcel,
+)
 
 # Observation Types
 from demeter.data import UnitType, ObservationType, ObservationValue

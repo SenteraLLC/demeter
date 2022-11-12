@@ -1,11 +1,10 @@
+from typing import Set, NamedTuple
 from collections import OrderedDict
-from typing import Dict, Set
 
 from .column import ColumnFormat
 
-ColumnTitleToFormat = OrderedDict[str, ColumnFormat]
 
-from typing import NamedTuple
+ColumnTitleToFormat = OrderedDict[str, ColumnFormat]
 
 
 class KeyAndSpecifier(NamedTuple):
@@ -34,7 +33,7 @@ def getSpecifiers(
 
         candidate_titles: Set[str] = set()
         for t, f in title_to_format.items():
-            is_not_selected = not t in selected_titles
+            is_not_selected = t not in selected_titles
 
             do_not_skip = not f.shouldSkip(selected_titles)
             is_required = f.isRequired()

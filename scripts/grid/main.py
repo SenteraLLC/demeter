@@ -45,7 +45,9 @@ async def main(
     seed_polys: List[Tuple[Poly, List[Poly], List[Point]]] = []
 
     if not len(existing_roots):
-        root_id, root_node_id = getStartingGeoms(cursor, points, start_polygon, keep_unused, d, s)
+        root_id, root_node_id = getStartingGeoms(
+            cursor, points, start_polygon, keep_unused, d, s
+        )
         k = getNodeKey(start_polygon, 0)
         node_id_lookup[k] = root_node_id
 
@@ -103,10 +105,10 @@ async def main(
             if getNodeKey(p, n["level"]) not in v.existing_keys:
                 seed_polys.append((p, my_ancestry, points))
 
-    branches, leaves = await main_loop(start_polygon, do_stop, keep_unused, v, seed_polys)
+    branches, leaves = await main_loop(
+        start_polygon, do_stop, keep_unused, v, seed_polys
+    )
 
     # TODO: Child geoms need to be clipped to parent, then we can add constraint
     insertTree(cursor, branches, leaves, node_id_lookup, root_id)
     running.cancel()
-
-

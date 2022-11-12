@@ -44,7 +44,8 @@ def yieldSplitBuffer(p: Poly, buffer_size: int = 999) -> Iterator[List[Poly]]:
 
 def getCentroid(p: Poly) -> Tuple[float, float]:
     x1, y1, x2, y2 = p.bounds
-    cx, cy = centroid = ((x1 + x2) / 2, (y1 + y2) / 2)
+    # centroid
+    cx, cy = ((x1 + x2) / 2, (y1 + y2) / 2)
     return cx, cy
 
 

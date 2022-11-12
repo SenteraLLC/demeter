@@ -1,7 +1,11 @@
 exclude: >
   (?x)^(
+      demeter/data/__init__.py|
+      demeter/data/_local/|
+      demeter/data/_core/|
+      demeter/db/|
       demeter/task/|
-      demeter/work/
+      demeter/work/|
       demeter/grid/|
       scripts/explore/|
       scripts/grid/

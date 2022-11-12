@@ -1,7 +1,10 @@
 exclude: >
   (?x)^(
       demeter/task/|
-      demeter/work/
+      demeter/work/|
+      demeter/grid/|
+      scripts/explore/|
+      scripts/grid/
   )
 repos:
 - repo: https://github.com/ambv/black

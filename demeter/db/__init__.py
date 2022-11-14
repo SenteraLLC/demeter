@@ -9,26 +9,25 @@ from ._postgres import getConnection as getConnection
 from psycopg2.extensions import connection
 
 from typing import TypeAlias
-Connection : TypeAlias = connection
+
+Connection: TypeAlias = connection
 
 
 __all__ = [
-  'getConnection',
-  'Connection',
-
-  'JSON',
-  'EMPTY_JSON',
-
-  # Base Types
-  'Table',
-  'Detailed',
-  'TypeTable',
-  'TableKey',
-  'TableId',
-  'SelfKey',
-  'SomeKey',
+    "getConnection",
+    "Connection",
+    "JSON",
+    "EMPTY_JSON",
+    # Base Types
+    "Table",
+    "Detailed",
+    "TypeTable",
+    "TableKey",
+    "TableId",
+    "SelfKey",
+    "SomeKey",
 ]
 
 from ._register import register_sql_adapters
-register_sql_adapters()
 
+register_sql_adapters()

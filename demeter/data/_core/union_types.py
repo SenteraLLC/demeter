@@ -9,4 +9,3 @@ AnyTypeTable = Union[CropType, CropStage, ReportType]
 AnyKeyTable = Union[Planting, CropProgress]
 
 AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]
-

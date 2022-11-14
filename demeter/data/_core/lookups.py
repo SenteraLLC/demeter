@@ -2,10 +2,10 @@ from ...db._lookup_types import TableLookup
 
 from .types import *
 
-type_table_lookup : TableLookup = {
-  CropType   : "crop_type",
-  CropStage  : "crop_stage",
-  ReportType : "report_type",
+type_table_lookup: TableLookup = {
+    CropType: "crop_type",
+    CropStage: "crop_stage",
+    ReportType: "report_type",
 }
 
 data_table_lookup : TableLookup = {
@@ -21,9 +21,8 @@ from ...db._lookup_types import sumMappings
 
 id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
 
-key_table_lookup : TableLookup = {
-  Planting     : "planting",
-  Act          : "act",
-  CropProgress : "crop_progress",
+key_table_lookup: TableLookup = {
+    Planting: "planting",
+    Act: "act",
+    CropProgress: "crop_progress",
 }
-

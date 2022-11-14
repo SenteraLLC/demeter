@@ -88,6 +88,4 @@ __all__ = [
   'Planting',
   'Act',
   'CropProgress',
-
 ]
-

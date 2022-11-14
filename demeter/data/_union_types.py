@@ -5,11 +5,23 @@ from ._core import union_types as core
 
 AnyTypeTable = Union[local.AnyTypeTable, core.AnyTypeTable]
 
-AnyDataTable = Union[local.AnyDataTable, core.AnyDataTable, ]
+AnyDataTable = Union[
+    local.AnyDataTable,
+    core.AnyDataTable,
+]
 
-AnyKeyTable = Union[core.AnyKeyTable, ]
+AnyKeyTable = Union[
+    core.AnyKeyTable,
+]
 
-AnyIdTable = Union[AnyTypeTable, AnyDataTable, ]
+AnyIdTable = Union[
+    AnyTypeTable,
+    AnyDataTable,
+]
 
-AnyTable = Union[AnyTypeTable, AnyDataTable, AnyKeyTable, AnyIdTable, ]
-
+AnyTable = Union[
+    AnyTypeTable,
+    AnyDataTable,
+    AnyKeyTable,
+    AnyIdTable,
+]

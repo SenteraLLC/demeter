@@ -129,3 +129,6 @@ Note: You may need to provide additional credentials or configuration parameters
 - Guide for setting up user account postgres using `postgres` account and `read_and_write` role and password `<user>`
 - Grant `read_and_write` to `<user>`
 
+
+#### Example Schema
+![Example Schema](./schema.png)

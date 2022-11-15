@@ -132,10 +132,9 @@ def getObservationType(cursor: Any, stat: str) -> TableId:
     type_name = getObservationTypeName(stat)
     l = ObservationType(
         type_name=type_name,
-        type_category=type_category,
     )
     observation_type_id = insertOrGetObservationType(cursor, l)
-    return observation_type_id
+    return observation_type_id  # type: ignore
 
 
 def getStartingGeoms(

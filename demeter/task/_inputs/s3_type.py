@@ -1,4 +1,4 @@
-from typing import Any, Callable, Mapping, Optional, Tuple, Type
+from typing import Any, Callable, Mapping, Optional, Tuple, Type, cast
 
 from ...db import SomeKey, TableId
 from .generated import (
@@ -8,6 +8,7 @@ from .generated import (
     insertS3TypeDataFrame,
 )
 from .types import S3SubType, S3Type, S3TypeDataFrame, TaggedS3SubType
+
 
 
 def insertOrGetS3TypeDataFrame(

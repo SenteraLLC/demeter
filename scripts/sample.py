@@ -3,10 +3,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Core Types
-from demeter.data import Parcel, Field, FieldGroup, Geom, MultiPolygon, Point
+from demeter.data import Parcel, Field, ParcelGroup, Geom, MultiPolygon, Point
 from demeter.data import (
     insertField,
-    insertFieldGroup,
+    insertParcelGroup,
     insertOrGetGeom,
     insertOrGetParcel,
 )
@@ -24,18 +24,18 @@ if __name__ == "__main__":
     c = getConnection()
     cursor = c.cursor()
 
-    root_group = FieldGroup(
+    root_group = ParcelGroup(
         name="ABC Group INC",
         parent_parcel_group_id=None,
     )
-    root_group_id = insertFieldGroup(cursor, root_group)
+    root_group_id = insertParcelGroup(cursor, root_group)
     print(f"Root group id: {root_group_id}")
 
-    argentina_group = FieldGroup(
+    argentina_group = ParcelGroup(
         name="Argentina",
         parent_parcel_group_id=root_group_id,
     )
-    argentina_group_id = insertFieldGroup(cursor, argentina_group)
+    argentina_group_id = insertParcelGroup(cursor, argentina_group)
     print(f"Argentina group id: {argentina_group_id}")
 
     # NOTE: Use MultiPolygon instead of Polygon

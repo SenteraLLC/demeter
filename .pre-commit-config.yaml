@@ -4,7 +4,8 @@ exclude: >
       demeter/work/|
       demeter/grid/|
       scripts/explore/|
-      scripts/grid/
+      scripts/grid/|
+      scripts/to_graphviz.py
   )
 repos:
 - repo: https://github.com/ambv/black
@@ -15,6 +16,7 @@ repos:
   rev: '5.0.4'
   hooks:
     - id: flake8
+      exclude: (tests|doc)
       additional_dependencies: [
           'flake8-builtins',
           'flake8-logging-format',

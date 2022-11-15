@@ -1,6 +1,6 @@
 from typing import Type, cast
 
-from ..db._postgres import SQLGenerator
+from ..db import SQLGenerator
 from ._types import Ancestry, Node, Root, id_table_lookup, key_table_lookup
 
 g = SQLGenerator(

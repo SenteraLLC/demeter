@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from ... import db
 
 
+
 @dataclass(frozen=True)
 class ExecutionKey(data.KeyIds, db.SelfKey):
     execution_id: db.TableId

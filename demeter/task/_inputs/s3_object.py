@@ -3,8 +3,8 @@ from typing import Any, List, Optional, Tuple, Union
 from psycopg2 import sql
 
 from ... import data, db
-from ...db._postgres import doPgFormat, doPgJoin
-from ...db._postgres.insert import generateInsertMany
+from ...db import doPgFormat, doPgJoin
+from ...db import generateInsertMany
 from .types import S3Object, S3ObjectKey
 
 

@@ -3,7 +3,7 @@ from typing import Any, Callable, Tuple
 
 import boto3
 
-from ..db._postgres import getEnv
+from ..db._postgres.connection import getEnv
 
 
 def getS3Connection() -> Tuple[Any, str]:

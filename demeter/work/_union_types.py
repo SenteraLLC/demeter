@@ -12,7 +12,6 @@ AnyKeyTable = Union[
     ExecutionKey,
 ]
 
-
 class _Ignore(TypeTable):
     pass
 

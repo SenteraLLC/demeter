@@ -58,7 +58,6 @@ def loadType(
     results: List[Tuple[data.ObservationValue, data.UnitType]] = []
     for k in keys:
         partial_results = queryObservationByKey(cursor, k, local_type_id)
-
         results.extend(partial_results)
     return results
 
@@ -84,7 +83,6 @@ def loadObservationRaw(
             number_of_observations=len(results_for_type),
         )
         execution_summary.inputs["observation"].append(o)
-
         results.extend(results_for_type)
     return results
 

@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Tuple, Type, cast
 from ... import data
 from . import keys
 
-
 def parseCLIArguments(
     name: str,
     major: int,

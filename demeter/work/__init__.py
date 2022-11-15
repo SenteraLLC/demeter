@@ -1,4 +1,4 @@
-from ..db._postgres import SQLGenerator
+from ..db import SQLGenerator
 from . import _lookups as lookups
 
 g = SQLGenerator(

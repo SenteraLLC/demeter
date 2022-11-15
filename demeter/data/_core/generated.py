@@ -1,7 +1,7 @@
 from . import lookups as _lookups
 
 from ...db._generic_types import GetId, GetTable, GetTableByKey, ReturnId
-from ...db._postgres import SQLGenerator
+from ...db import SQLGenerator
 
 from .types import (
     CropProgress,

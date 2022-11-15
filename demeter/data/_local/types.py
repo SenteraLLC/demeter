@@ -31,3 +31,4 @@ class Operation(db.Detailed):
     parcel_id: db.TableId
     observation_type_id: db.TableId
     performed: date
+

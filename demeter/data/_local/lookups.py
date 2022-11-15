@@ -1,16 +1,16 @@
-from .types import UnitType, ObservationType, ObservationValue, Operation
+from .types import UnitType, LocalType, LocalValue, Act
 
 from ...db._lookup_types import TableLookup
 from ...db._lookup_types import sumMappings
 
 type_table_lookup: TableLookup = {
     UnitType: "unit_type",
-    ObservationType: "observation_type",
+    LocalType: "local_type",
 }
 
 data_table_lookup: TableLookup = {
-    ObservationValue: "observation_value",
-    Operation: "operation",
+    LocalValue: "local_value",
+    Act: "act",
 }
 
 id_table_lookup: TableLookup = sumMappings(type_table_lookup, data_table_lookup)

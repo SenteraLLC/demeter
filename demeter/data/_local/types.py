@@ -7,7 +7,7 @@ from ... import db
 
 
 @dataclass(frozen=True)
-class ObservationValue(db.Detailed):
+class LocalValue(db.Detailed):
     parcel_id: db.TableId
     unit_type_id: db.TableId
     acquired: date
@@ -16,7 +16,7 @@ class ObservationValue(db.Detailed):
 
 
 @dataclass(frozen=True)
-class ObservationType(db.TypeTable):
+class LocalType(db.TypeTable):
     type_name: str
 
 
@@ -27,7 +27,7 @@ class UnitType(db.TypeTable):
 
 
 @dataclass(frozen=True)
-class Operation(db.Detailed):
+class Act(db.Detailed):
     parcel_id: db.TableId
     observation_type_id: db.TableId
     performed: date

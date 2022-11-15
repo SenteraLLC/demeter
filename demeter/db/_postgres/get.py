@@ -64,7 +64,6 @@ def getMaybeTableByKey(
     key: SK,
 ) -> Optional[Tuple[SK, S]]:
     key_parts = set(key.__dataclass_fields__.keys())
-    table_id_name = "_".join([table_name, "id"])
     conditions = [doPgJoin(" = ", [Identifier(k), Placeholder(k)]) for k in key_parts]
     stmt = doPgFormat(
         "select * from {0} where {1}",

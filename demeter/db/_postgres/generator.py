@@ -27,6 +27,7 @@ from .insert import insertAndReturnId, insertAndReturnKey, insertOrGetId, insert
 
 C = TypeVar("C")
 
+
 class SQLGenerator:
     def __init__(
         self,

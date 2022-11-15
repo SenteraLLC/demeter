@@ -36,6 +36,5 @@ __all__ = [
     "SomeKey",
 ]
 
-from ._register import register_sql_adapters
 
 register_sql_adapters()

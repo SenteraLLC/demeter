@@ -113,9 +113,22 @@ Observation geom id:  105669
 Local value id: 228730
 ```
 
+
+## Scripts
+
+1) Generate Graphviz chart of Postgres database
+Make sure that you have dev-dependencies installed via Poetry.
+```pg_dump --schema-only --schema test_mlops --host localhost --dbname postgres | python3 -m scripts.to_graphviz | dot -Tpng > schema.png```
+Note: You may need to provide additional credentials or configuration parameters to the 'pg_dump' command. For example, you may need to specify a different 'user' or 'dbname'. You may also be prompted for a password. Entering your password should not affect execution of the piped commands.
+
+
 ## Troubleshooting References
 - [Installing GeoPandas for M1](https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1)
 
 ## TODO
 - Guide for setting up user account postgres using `postgres` account and `read_and_write` role and password `<user>`
 - Grant `read_and_write` to `<user>`
+
+
+#### Example Schema
+![Example Schema](./schema.png)

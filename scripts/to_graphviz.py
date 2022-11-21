@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Source: https://github.com/rm-hull/sql_graphviz
+
 import html
 import sys
 from datetime import datetime
@@ -88,7 +90,7 @@ def grammar():
     )
     field_def.setParseAction(field_act)
 
-    tablename_def = ZeroOrMore(Word(alphanums + "`_.")) + Optional(QuotedString('"'))
+    tablename_def = Word(alphanums + "`_.")
 
     field_list_def = field_def + ZeroOrMore(Suppress(",") + field_def)
     field_list_def.setParseAction(field_list_act)

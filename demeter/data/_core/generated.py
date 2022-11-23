@@ -8,9 +8,11 @@ from .types import (
     CropProgressKey,
     CropStage,
     CropType,
-    Field,
     Parcel,
     ParcelGroup,
+    Field,
+    GeoSpatialKey,
+    TemporalKey,
     Geom,
     GeoSpatialKey,
     Planting,
@@ -75,6 +77,4 @@ getCropProgress: GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKeyF
 )
 
 insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
-insertOrGetCropProgress = g.partialInsertOrGetKey(
-    CropProgressKey, getCropProgress, insertCropProgress
-)
+insertOrGetCropProgress = g.partialInsertOrGetKey(CropProgressKey, getCropProgress, insertCropProgress)

@@ -21,7 +21,7 @@ type_table_lookup: TableLookup = {
     ReportType: "report_type",
 }
 
-data_table_lookup: TableLookup = {
+data_table_lookup : TableLookup = {
     Geom: "geom",
     Parcel: "parcel",
     ParcelGroup: "parcel_group",

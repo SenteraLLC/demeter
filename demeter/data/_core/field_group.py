@@ -1,158 +1,181 @@
-from typing import Any, Sequence, Dict, Set, Optional
+from typing import Any, List, Optional, Sequence, Dict, Set, Tuple
 
 from ... import db
 
-from .types import Field, ParcelGroup
-from .generated import insertParcelGroup
+from .generated import g, getMaybeParcelGroupId, insertParcelGroup, getParcelGroup
+from .types import ParcelGroup
 
 from collections import OrderedDict
+from datetime import datetime
 
 from dataclasses import dataclass
-from datetime import datetime
 
 
 @dataclass(frozen=True)
-class FieldGroup:
+class FieldGroup(db.Detailed):
     field_group_id: db.TableId
     name: str
     parent_field_group_id: Optional[db.TableId] = None
     created: Optional[datetime] = None
 
 
-def make_field_group(
-    cursor: Any,
-    name: str,
-    parent_field_group_id: Optional[db.TableId] = None,
-    created: Optional[datetime] = None,
-) -> FieldGroup:
-    n = name
-    p = parent_field_group_id
-    c = created
-    parcel_group = ParcelGroup(
-        name=n,
-        parent_parcel_group_id=p,
-        created=c,
-    )
-    maybe_field_group_id = insertParcelGroup(cursor, parcel_group)
-    if (f := maybe_field_group_id) is not None:
-        return FieldGroup(
-            name=n,
-            field_group_id=f,
-            created=c,
-        )
+# TODO: Temporary, replace with 'make_field_group' style functions
+insertFieldGroup = insertParcelGroup
 
 
-# TODO: Fix the inherited type, it shouldnt be a db.Table
+FieldGroupAncestors = Sequence[Tuple[db.TableId, FieldGroup]]
 
 
-@dataclass(frozen=True)
-class FieldGroupFields(db.Table):
-    fields_by_depth: Dict[int, Sequence[Field]]
-    ancestors: Sequence[FieldGroup]
-
-
+# TODO: Support multiple
 def getFieldGroupAncestors(
     cursor: Any,
-    field_group: FieldGroup,
-) -> OrderedDict[db.TableId, Sequence[FieldGroup]]:
+    field_group_id: db.TableId,
+) -> FieldGroupAncestors:
     stmt = """
-    with recursive leaf as (
-      select G.parent_parcel_group_id,
-             G.parcel_group_id
-      from test_mlops.parcel_group G
-      where G.parcel_group_id = %(parcel_group_id)s
-
-    ), ancestry as (
-      select L.parcel_group_id as leaf_id,
-             L.parent_parcel_group_id,
-             L.parcel_group_id,
+    with recursive field_group as (
+      select FG.field_group_id as field_group_id,
+             FG.parent_field_group_id,
+             FG.field_group_id,
              0 as distance
-      from leaf L
+      from field_group FG
+      where FG.field_group_id = %(field_group_id)s
+
+    ), ancestors as (
+      select * from field_group FG
       UNION ALL
-      select A.leaf_id,
-             FG.parent_parcel_group_id,
-             FG.parcel_group_id,
+      select A.field_group_id,
+             FG.parent_field_group_id,
+             FG.field_group_id,
              distance + 1
       from ancestry A
-      join test_mlops.parcel_group FG on FG.parcel_group_id = A.parent_parcel_group_id
-    ) select A.leaf_id as parcel_group_id,
-             jsonb_agg(to_jsonb(FG.*) order by A.distance asc) as leaf_to_root
-      from ancestry A
-      join test_mlops.parcel_group FG on FG.parcel_group_id = A.parcel_group_id
-      group by A.leaf_id
-  """
-    cursor.execute(stmt, {"parcel_group_id": field_group.field_group_id})
+      join field_group FG on FG.field_group_id = A.parent_field_group_id
+    ) select A.field_group_id,
+             jsonb_agg(to_jsonb(FG.*) order by A.distance asc) as ancestors,
+      from ancestors A
+      join descendents D on D.field_group_id = A.field_group_id
+      join field_group FG on FG.field_group_id = A.field_group_id
+      group by A.field_group_id
+    """
+    cursor.execute(stmt, {"field_group_id": field_group_id})
     results = cursor.fetchall()
-    return OrderedDict((r["leaf_id"], r["leaf_to_root"]) for r in results)
+    if len(results) != 1:
+        raise Exception(f"Failed to get field group ancestors for: {field_group_id}")
+    r = results[0]
+    # _id = db.TableId(r["field_group_id"])
+    ancestors = [_row_to_field_group(a) for a in r["ancestors"]]
+    return ancestors
 
 
-def getOrgFields(
-    cursor: Any,
-    field_group_id: db.TableId,
-) -> Dict[db.TableId, Set[db.TableId]]:
-    stmt = """
+# TODO: Deprecated by 'getFieldGroupFields'
+def getOrgFields(cursor : Any,
+                 field_group_id : db.TableId,
+                ) -> Dict[db.TableId, Set[db.TableId]]:
+  stmt = """
     with recursive ancestry as (
-      select parent_parcel_group_id,
-             parcel_group_id,
+      select parent_field_group_id,
+             field_group_id,
              0 as depth
-      from test_mlops.parcel_group
-      where parcel_group_id = %(parcel_group_id)s
+      from field_group
+      where field_group_id = %(field_group_id)s
       UNION ALL
-      select F.parent_parcel_group_id,
-             F.parcel_group_id,
+      select F.parent_field_group_id,
+             F.field_group_id,
              A.depth + 1
       from ancestry A
-      join test_mlops.parcel_group F on F.parent_parcel_group_id = A.parcel_group_id
+      join field_group F on F.parent_field_group_id = A.field_group_id
 
    ), leaf as (
      select A1.*
      from ancestry A1
-     where not exists (select * from ancestry A2 where A2.parent_parcel_group_id = A1.parcel_group_id)
+     where not exists (select * from ancestry A2 where A2.parent_field_group_id = A1.field_group_id)
 
-   ) select L.parcel_group_id as leaf_parcel_group_id,
+   ) select L.field_group_id as leaf_field_group_id,
             L.depth,
-            coalesce(jsonb_agg(F.parcel_id) filter (where F.parcel_id is not null), '[]'::jsonb) as parcel_ids
+            coalesce(jsonb_agg(F.field_id) filter (where F.field_id is not null), '[]'::jsonb) as field_ids
      from leaf L
-     left join test_mlops.field F on F.parcel_group_id = L.parcel_group_id
-     group by L.parent_parcel_group_id, L.parcel_group_id;
+     left join field F on F.field_group_id = L.field_group_id
+     group by L.parent_field_group_id, L.field_group_id;
   """
-    cursor.execute(stmt, {"parcel_group_id": field_group_id})
-    results = cursor.fetchall()
-    return {r.leaf_field_group_id: r.field_ids for r in results}
+  cursor.execute(stmt, {'field_group_id' : field_group_id})
+  results = cursor.fetchall()
+  depths = {r["depth"] for r in results}
+  return { r.leaf_field_group_id : r.field_ids for r in results}
 
 
-def getFields(
+from .types import Field
+
+# TODO: How to deal with Demeter table classes vs Demeter table result classes? (IE w/ and w/o TableId)
+
+
+@dataclass(frozen=True)
+class FieldSummary(db.Detailed):
+    field_id    : db.TableId
+    geom_id     : db.TableId
+    name : str
+    external_id    : Optional[str]
+    field_group_id : Optional[db.TableId]
+    created     : Optional[datetime] = None
+
+
+@dataclass(frozen=True)
+class FieldGroupFields():
+  fields_by_depth : Dict[int, Sequence[FieldSummary]]
+  ancestors : Sequence[FieldGroup]
+
+
+def _row_to_field_group(
+    row: Dict[str, Any],
+    name: Optional[str] = None,
+    id_name: str = "field_group_id",
+) -> Tuple[db.TableId, FieldGroup]:
+    r = row
+    _id = r[id_name]
+    parent_id_name = "_".join(["parent", id_name])
+    f = FieldGroup(
+        field_group_id=r["parcel_group_id"],
+        name=r["name"],
+        parent_field_group_id=r[parent_id_name],
+        last_updated=r["last_updated"],
+        details=r["details"],
+    )
+    return (_id, f)
+
+
+def getFieldGroupFields(
     cursor: Any,
     field_group_ids: Sequence[db.TableId],
 ) -> OrderedDict[db.TableId, FieldGroupFields]:
+    """Get the descendants of the provided field groups.
+       Rename to 'get_descendant_fields' or 'get_descendants'?
+    """
     stmt = """
   with recursive ancestor as (
      select *,
             0 as distance
-     from test_mlops.parcel_group
-     where parcel_group_id = any(%(parcel_group_ids)s::bigint[])
+     from field_group
+     where field_group_id = any(%(field_group_ids)s::bigint[])
      UNION ALL
      select G.*,
             distance + 1
      from ancestor A
-     join test_mlops.parcel_group G on A.parent_parcel_group_id = G.parcel_group_id
+     join field_group G on A.parent_field_group_id = G.field_group_id
 
   ), descendant as (
-    select parcel_group_id as root_parcel_group_id,
+    select field_group_id as root_field_group_id,
            *,
            (select max(distance) from ancestor) as depth
     from ancestor
     where distance = 0
     UNION ALL
-    select G.parcel_group_id as root_parcel_group_id,
+    select G.field_group_id as root_field_group_id,
            G.*,
            D.distance,
            depth + 1
     from descendant D
-    join test_mlops.parcel_group G on D.parcel_group_id = G.parent_parcel_group_id
+    join field_group G on D.field_group_id = G.parent_field_group_id
 
-  ), parcel_group_fields as (
-    select D.root_parcel_group_id,
+  ), field_group_fields as (
+    select D.root_field_group_id,
            D.depth,
            coalesce(
              jsonb_agg(
@@ -161,26 +184,26 @@ def getFields(
              '[]'::jsonb
            ) as fields
     from descendant D
-    left join test_mlops.field F on D.parcel_group_id = F.parcel_group_id
-    group by D.root_parcel_group_id, D.depth
+    left join field F on D.field_group_id = F.field_group_id
+    group by D.root_field_group_id, D.depth
 
-  ) select F.root_parcel_group_id as parcel_group_id,
+  ) select F.root_field_group_id as field_group_id,
            jsonb_object_agg(
              F.depth,
              F.fields
            ) as fields_by_depth,
-           jsonb_agg(to_jsonb(A) order by A.parcel_group_id asc) as ancestors
-           from parcel_group_fields F
-           join ancestor A on A.parcel_group_id = F.root_parcel_group_id
-           group by F.root_parcel_group_id
+           jsonb_agg(to_jsonb(A) order by A.field_group_id asc) as ancestors
+           from field_group_fields F
+           join ancestor A on A.field_group_id = F.root_field_group_id
+           group by F.root_field_group_id
   """
 
-    cursor.execute(stmt, {"parcel_group_ids": field_group_ids})
+    cursor.execute(stmt, {"field_group_ids": field_group_ids})
     results = cursor.fetchall()
 
     return OrderedDict(
         (
-            db.TableId(r.parcel_group_id),
+            db.TableId(r.field_group_id),
             FieldGroupFields(fields_by_depth=r.fields_by_depth, ancestors=r.ancestors),
         )
         for r in results
@@ -189,9 +212,11 @@ def getFields(
 
 def searchFieldGroup(
     cursor: Any,
-    field_group: FieldGroup,
+    field_group_name: str,
+    parent_field_group_id: Optional[db.TableId] = None,
+    ancestor_field_group_id: Optional[db.TableId] = None,
     do_fuzzy_search: bool = False,
-) -> Sequence[FieldGroup]:
+) -> Optional[Tuple[db.TableId, FieldGroup]]:
     search_part = "where name = %(name)s"
     if do_fuzzy_search:
         search_part = "where name like concat('%', %(name)s, '%')"
@@ -199,11 +224,42 @@ def searchFieldGroup(
     stmt = f"""
     with candidate as (
       select *
-      from parcel_group
+      from field_group
       {search_part}
 
     ) select * from candidate;
-  """
-    cursor.execute(stmt, {"name": field_group.name})
+    """
+    args: Dict[str, Any] = {"name": field_group_name}
+    cursor.execute(stmt, args)
     results = cursor.fetchall()
-    return [r for r in results]
+
+    maybe_result: Optional[Tuple[db.TableId, FieldGroup]] = None
+    for r in results:
+        _id = r["field_group_id"]
+        f = FieldGroup(
+            field_group_id=r["parcel_group_id"],
+            parent_field_group_id=r["parent_field_group_id"],
+            name=r["name"],
+            details=r["details"],
+            last_updated=r["last_updated"],
+        )
+
+        if (p_id := parent_field_group_id) or (a_id := ancestor_field_group_id):
+            ancestors = getFieldGroupAncestors(cursor, _id)
+            ancestor_ids = [a[0] for a in ancestors]
+            if p_id is not None:
+                if p_id != ancestor_ids[0]:
+                    continue
+            if a_id is not None:
+                if a_id not in ancestor_ids:
+                    continue
+
+        if maybe_result is not None:
+            raise Exception(
+                f"Ambiguous field group search: {field_group_name},{p_id},{a_id}"
+            )
+
+        _id = r["field_group_id"]
+        maybe_result = (_id, f)
+
+    return maybe_result

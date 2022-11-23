@@ -12,9 +12,8 @@ from demeter.data import (
 )
 
 # Observation Types
-from demeter.data import UnitType, ObservationType, ObservationValue
-from demeter.data import insertUnitType, insertObservationType, insertObservationValue
-
+from demeter.data import UnitType, ObservationType, ObservationValue, FieldGroup
+from demeter.data import insertUnitType, insertObservationType, insertObservationValue, insertFieldGroup
 from demeter.db import getConnection
 
 
@@ -49,6 +48,12 @@ if __name__ == "__main__":
             (-65.45449008889159, -35.18596793795566),
         ),
     )
+
+    test_field_group = ParcelGroup(
+        name="grupo de prueba",
+    )
+    field_group_id = insertFieldGroup(cursor, test_field_group)
+    print(f"Field group id: {field_group_id}")
 
     field_geom = Geom(
         type="Polygon",

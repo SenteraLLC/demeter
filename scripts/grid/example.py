@@ -128,13 +128,12 @@ def getObservationTypeName(stat: str) -> str:
 
 
 def getObservationType(cursor: Any, stat: str) -> TableId:
-    type_category = "meteomatics grid test category"
     type_name = getObservationTypeName(stat)
     l = ObservationType(
         type_name=type_name,
     )
     observation_type_id = insertOrGetObservationType(cursor, l)
-    return observation_type_id  # type: ignore
+    return observation_type_id
 
 
 def getStartingGeoms(

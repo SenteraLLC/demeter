@@ -38,6 +38,8 @@ poetry install
 ## Requirements
 - Python `3.10.4`+
 - Access to a Postgres database (with connection credentials)
+- A local installation of PostgresQL
+- OSX Users may need to manually install the 'gdal' system requirement (e.g. brew install gdal)
 
 ## Configure `.env` file
 Your `.env` file holds the credentials necessary to connect to the desired Postgres server (see [python-dotenv](https://github.com/theskumar/python-dotenv) for more information). It should never be committed to Github (i.e., should be part of the `.gitignore`). See [`.env.template`](https://github.com/SenteraLLC/demeter/blob/main/.env.template) for an example, and ask @Joel-Larson or @tnigon if you have questions about credentials.

@@ -12,8 +12,15 @@ from demeter.data import (
 )
 
 # Observation Types
-from demeter.data import UnitType, ObservationType, ObservationValue, FieldGroup
-from demeter.data import insertUnitType, insertObservationType, insertObservationValue, insertFieldGroup
+from demeter.data import UnitType, ObservationType, ObservationValue
+
+# , FieldGroup
+from demeter.data import (
+    insertUnitType,
+    insertObservationType,
+    insertObservationValue,
+    insertFieldGroup,
+)
 from demeter.db import getConnection
 
 

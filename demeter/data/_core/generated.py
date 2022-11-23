@@ -14,11 +14,9 @@ from .types import (
     GeoSpatialKey,
     TemporalKey,
     Geom,
-    GeoSpatialKey,
     Planting,
     PlantingKey,
     ReportType,
-    TemporalKey,
 )
 
 g = SQLGenerator(
@@ -77,4 +75,6 @@ getCropProgress: GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKeyF
 )
 
 insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
-insertOrGetCropProgress = g.partialInsertOrGetKey(CropProgressKey, getCropProgress, insertCropProgress)
+insertOrGetCropProgress = g.partialInsertOrGetKey(
+    CropProgressKey, getCropProgress, insertCropProgress
+)

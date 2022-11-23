@@ -123,7 +123,6 @@ __all__ = (
     "insertOrGetField",
     "getField",
     "getMaybeFieldId",
-
     "FieldGroup",
     "getFieldGroupAncestors",
     "getOrgFields",
@@ -131,7 +130,6 @@ __all__ = (
     "searchFieldGroup",
     "getFieldGroupFields",
     "insertFieldGroup",
-
     "Planting",
     "PlantingKey",
     "getPlanting",

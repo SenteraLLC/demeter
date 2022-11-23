@@ -700,6 +700,19 @@ pyproj = ">=2.2.0"
 shapely = ">=1.6"
 
 [[package]]
+name = "graphviz"
+version = "0.20.1"
+description = "Simple Python interface for Graphviz"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+dev = ["flake8", "pep8-naming", "tox (>=3)", "twine", "wheel"]
+docs = ["sphinx (>=5)", "sphinx-autodoc-typehints", "sphinx-rtd-theme"]
+test = ["coverage", "mock (>=4)", "pytest (>=7)", "pytest-cov", "pytest-mock (>=3)"]
+
+[[package]]
 name = "html-section"
 version = "0.2.0.post1"
 description = "Sphinx extension to hide section headers with non-HTML builders."
@@ -943,6 +956,19 @@ python-versions = ">=3.8,<3.11"
 
 [package.dependencies]
 types-pytz = ">=2022.1.1"
+
+[[package]]
+name = "pg-diagram"
+version = "0.1.2"
+description = "A tool for creating ER diagrams from postgresql database schemas"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+click = "*"
+graphviz = "*"
+sqlparse = "*"
 
 [[package]]
 name = "piccolo-theme"
@@ -1393,6 +1419,14 @@ lint = ["docutils-stubs", "flake8", "mypy"]
 test = ["pytest"]
 
 [[package]]
+name = "sqlparse"
+version = "0.4.3"
+description = "A non-validating SQL parser."
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[[package]]
 name = "tabulate"
 version = "0.9.0"
 description = "Pretty-print tabular data"
@@ -1573,7 +1607,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10.4"
-content-hash = "4bdd5beb845119f4cab00b766e4ed9acfcd207758513c685eb63a49f3767100c"
+content-hash = "151e3ac3419e299fc151d272b32bb8a93788d522235992ad09a9ab649375cd75"
 
 [metadata.files]
 alabaster = [
@@ -1708,6 +1742,10 @@ fiona = [
 geopandas = [
     {file = "geopandas-0.10.2-py2.py3-none-any.whl", hash = "sha256:1722853464441b603d9be3d35baf8bde43831424a891e82a8545eb8997b65d6c"},
     {file = "geopandas-0.10.2.tar.gz", hash = "sha256:efbf47e70732e25c3727222019c92b39b2e0a66ebe4fe379fbe1aa43a2a871db"},
+]
+graphviz = [
+    {file = "graphviz-0.20.1-py3-none-any.whl", hash = "sha256:587c58a223b51611c0cf461132da386edd896a029524ca61a1462b880bf97977"},
+    {file = "graphviz-0.20.1.zip", hash = "sha256:8c58f14adaa3b947daf26c19bc1e98c4e0702cdc31cf99153e6f06904d492bf8"},
 ]
 html-section = [
     {file = "html_section-0.2.0.post1-py3-none-any.whl", hash = "sha256:323634efa390d35a658602be5a9fcedc5fd607c857da1cf34d01fc9e31c0dede"},
@@ -1956,6 +1994,10 @@ pandas = [
 pandas-stubs = [
     {file = "pandas-stubs-1.5.1.221024.tar.gz", hash = "sha256:a756ea4c7f2f973b9f9dfd64d724ba911e82e8ffa2e0188f56fadfdd9345771a"},
     {file = "pandas_stubs-1.5.1.221024-py3-none-any.whl", hash = "sha256:363e3833137375aebd6ab272fe89d94e88a443891a48d536c905e16ce2800cf6"},
+]
+pg-diagram = [
+    {file = "pg-diagram-0.1.2.tar.gz", hash = "sha256:6981894e5502683530870bcde952ee1f7a6afb8e515922f13c591244d191d693"},
+    {file = "pg_diagram-0.1.2-py3-none-any.whl", hash = "sha256:6e4202b3d830fb6a11397ad43b70e528ad1b733f68535ac8ba8dfd214265883a"},
 ]
 piccolo-theme = [
     {file = "piccolo_theme-0.11.1-py3-none-any.whl", hash = "sha256:3d1203573d052acc5239f83d3520a6baf200036dc69118380bf5d2d9e9f67725"},
@@ -2306,6 +2348,10 @@ sphinxcontrib-qthelp = [
 sphinxcontrib-serializinghtml = [
     {file = "sphinxcontrib-serializinghtml-1.1.5.tar.gz", hash = "sha256:aa5f6de5dfdf809ef505c4895e51ef5c9eac17d0f287933eb49ec495280b6952"},
     {file = "sphinxcontrib_serializinghtml-1.1.5-py2.py3-none-any.whl", hash = "sha256:352a9a00ae864471d3a7ead8d7d79f5fc0b57e8b3f95e9867eb9eb28999b92fd"},
+]
+sqlparse = [
+    {file = "sqlparse-0.4.3-py3-none-any.whl", hash = "sha256:0323c0ec29cd52bceabc1b4d9d579e311f3e4961b98d174201d5622a23b85e34"},
+    {file = "sqlparse-0.4.3.tar.gz", hash = "sha256:69ca804846bb114d2ec380e4360a8a340db83f0ccf3afceeb1404df028f57268"},
 ]
 tabulate = [
     {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},

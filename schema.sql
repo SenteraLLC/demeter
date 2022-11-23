@@ -271,37 +271,6 @@ create table crop_progress (
 );
 
 
-create table act (
-  act_id bigserial primary key,
-  field_id      bigint
-                not null
-                references field(field_id),
-  name          text not null,
-
-  crop_type_id  bigint
-                references crop_type(crop_type_id),
-  local_value_id bigint
-                 references local_value(local_value_id),
-  unique (field_id, local_value_id),
-
-  performed     timestamp without time zone
-                not null,
-  unique (field_id, name, performed),
-
-  last_updated  timestamp without time zone
-                not null
-                default now(),
-
-  details       jsonb
-                not null
-                default '{}'::jsonb
-);
-
-CREATE TRIGGER update_act_last_updated BEFORE UPDATE
-ON act FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
-
-
 -----------------
 -- Type Tables --
 -----------------
@@ -499,6 +468,39 @@ create table local_value (
                  not null
                  default '{}'::jsonb
 );
+
+
+create table act (
+  act_id bigserial primary key,
+  field_id      bigint
+                not null
+                references field(field_id),
+  name          text not null,
+
+  crop_type_id  bigint
+                references crop_type(crop_type_id),
+  local_value_id bigint
+                 references local_value(local_value_id),
+  unique (field_id, local_value_id),
+
+  performed     timestamp without time zone
+                not null,
+  unique (field_id, name, performed),
+
+  last_updated  timestamp without time zone
+                not null
+                default now(),
+
+  details       jsonb
+                not null
+                default '{}'::jsonb
+);
+
+CREATE TRIGGER update_act_last_updated BEFORE UPDATE
+ON act FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
+
 
 
 CREATE TRIGGER update_local_last_updated BEFORE INSERT or UPDATE

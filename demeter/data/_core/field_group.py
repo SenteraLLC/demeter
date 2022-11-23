@@ -9,9 +9,8 @@ from collections import OrderedDict
 
 from dataclasses import dataclass
 
-from typing import NamedTuple
-
 FieldGroupAncestors = Sequence[Tuple[db.TableId, FieldGroup]]
+
 
 # TODO: Support multiple
 def getFieldGroupAncestors(
@@ -19,8 +18,8 @@ def getFieldGroupAncestors(
     field_group_id: db.TableId,
 ) -> FieldGroupAncestors:
     stmt = """
-    with recursive field_group as (
-      select FG.field_group_id as field_group_id,
+    with recursive leaf_group as (
+      select FG.field_group_id as leaf_field_group_id,
              FG.parent_field_group_id,
              FG.field_group_id,
              0 as distance
@@ -28,13 +27,13 @@ def getFieldGroupAncestors(
       where FG.field_group_id = %(field_group_id)s
 
     ), ancestors as (
-      select * from field_group FG
+      select * from leaf_group FG
       UNION ALL
-      select A.field_group_id,
+      select A.leaf_field_group_id,
              FG.parent_field_group_id,
              FG.field_group_id,
              distance + 1
-      from ancestry A
+      from ancestors A
       join field_group FG on FG.field_group_id = A.parent_field_group_id
     ) select A.field_group_id,
              jsonb_agg(to_jsonb(FG.*) order by A.distance asc) as ancestors,

@@ -71,13 +71,13 @@ from ._local.types import (
     ObservationValue,
     ObservationType,
     UnitType,
-    Operation,
+    Act,
 )
 
 from ._local.generated import (
-    insertOperation,
-    insertOrGetOperation,
-    getMaybeOperationId,
+    insertAct,
+    insertOrGetAct,
+    getMaybeActId,
     insertObservationValue,
     insertOrGetObservationValue,
     getMaybeObservationValue,
@@ -164,8 +164,8 @@ __all__ = (
     "insertUnitType",
     "insertOrGetUnitType",
     "getMaybeUnitTypeId",
-    "Operation",
-    "insertOperation",
-    "insertOrGetOperation",
-    "getMaybeOperationId",
+    "Act",
+    "insertAct",
+    "insertOrGetAct",
+    "getMaybeActId",
 )

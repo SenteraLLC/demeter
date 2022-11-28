@@ -27,7 +27,7 @@ class UnitType(db.TypeTable):
 
 
 @dataclass(frozen=True)
-class Operation(db.Detailed):
+class Act(db.Detailed):
     field_id: db.TableId
     observation_type_id: db.TableId
     performed: date

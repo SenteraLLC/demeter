@@ -81,7 +81,7 @@ def loadLocalRaw(
             function_id=execution_summary.function_id,
             execution_id=execution_summary.execution_id,
             local_type_id=local_type_id,
-            number_of_locals=len(results_for_type),
+            number_of_observations=len(results_for_type),
         )
         execution_summary.inputs["local"].append(o)
         results.extend(results_for_type)

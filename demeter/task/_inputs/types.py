@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, Mapping, Optional, Sequence, Type, Union, cast
 
 from ... import data, db
-from ...data import ObservationType as ObservationType
+from ...data import LocalType as LocalType
 
 # HTTP
 

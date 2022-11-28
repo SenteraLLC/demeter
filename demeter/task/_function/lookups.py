@@ -14,7 +14,7 @@ from ...db._lookup_types import sumMappings
 id_table_lookup: TableLookup = sumMappings(type_table_lookup, data_table_lookup)
 
 key_table_lookup: TableLookup = {
-    ObservationParameter: "observation_parameter",
+    LocalParameter: "local_parameter",
     HTTPParameter: "http_parameter",
     S3InputParameter: "s3_input_parameter",
     S3OutputParameter: "s3_output_parameter",

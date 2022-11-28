@@ -31,8 +31,8 @@ class Parameter(FunctionId):
 
 
 @dataclass(frozen=True)
-class ObservationParameter(Parameter, db.SelfKey):
-    observation_type_id: db.TableId
+class LocalParameter(Parameter, db.SelfKey):
+    local_type_id: db.TableId
 
 
 @dataclass(frozen=True)
@@ -66,7 +66,7 @@ S3TypeSignature = Tuple[S3Type, Optional[S3TypeDataFrame]]
 class FunctionSignature(object):
     name: str
     major: int
-    observation_inputs: Sequence[data.ObservationType]
+    local_inputs: Sequence[data.LocalType]
     keyword_inputs: Sequence[Keyword]
     s3_inputs: Sequence[S3TypeSignature]
     http_inputs: Sequence[HTTPType]

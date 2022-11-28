@@ -1,4 +1,4 @@
-from .types import Act, ObservationType, ObservationValue, UnitType
+from .types import Act, LocalType, LocalValue, UnitType
 from . import lookups as _lookups
 
 from ...db._generic_types import GetId, GetTable, ReturnId
@@ -12,35 +12,21 @@ g = SQLGenerator(
 )
 
 
-getMaybeObservationValue: GetId[ObservationValue] = g.getMaybeIdFunction(
-    ObservationValue
-)
+getMaybeLocalValue: GetId[LocalValue] = g.getMaybeIdFunction(LocalValue)
 getMaybeUnitTypeId: GetId[UnitType] = g.getMaybeIdFunction(UnitType)
-getMaybeObservationTypeId: GetId[ObservationType] = g.getMaybeIdFunction(
-    ObservationType
-)
-getMaybeObservationValueId: GetId[ObservationValue] = g.getMaybeIdFunction(
-    ObservationValue
-)
+getMaybeLocalTypeId: GetId[LocalType] = g.getMaybeIdFunction(LocalType)
+getMaybeLocalValueId: GetId[LocalValue] = g.getMaybeIdFunction(LocalValue)
 getMaybeActId = g.getMaybeIdFunction(Act)
 
-getObservationType: GetTable[ObservationType] = g.getTableFunction(ObservationType)
+getLocalType: GetTable[LocalType] = g.getTableFunction(LocalType)
 
-insertObservationValue: ReturnId[ObservationValue] = g.getInsertReturnIdFunction(
-    ObservationValue
-)
+insertLocalValue: ReturnId[LocalValue] = g.getInsertReturnIdFunction(LocalValue)
 insertUnitType: ReturnId[UnitType] = g.getInsertReturnIdFunction(UnitType)
-insertObservationType: ReturnId[ObservationType] = g.getInsertReturnIdFunction(
-    ObservationType
-)
+insertLocalType: ReturnId[LocalType] = g.getInsertReturnIdFunction(LocalType)
 insertAct = g.getInsertReturnIdFunction(Act)
 
 
 insertOrGetUnitType = g.partialInsertOrGetId(getMaybeUnitTypeId, insertUnitType)
-insertOrGetObservationType = g.partialInsertOrGetId(
-    getMaybeObservationTypeId, insertObservationType
-)
-insertOrGetObservationValue = g.partialInsertOrGetId(
-    getMaybeObservationValueId, insertObservationValue
-)
+insertOrGetLocalType = g.partialInsertOrGetId(getMaybeLocalTypeId, insertLocalType)
+insertOrGetLocalValue = g.partialInsertOrGetId(getMaybeLocalValueId, insertLocalValue)
 insertOrGetAct = g.partialInsertOrGetId(getMaybeActId, insertAct)

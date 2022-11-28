@@ -7,7 +7,7 @@ from .. import (
     insertExecutionKey,
     insertHTTPArgument,
     insertKeywordArgument,
-    insertObservationArgument,
+    insertLocalArgument,
     insertS3InputArgument,
     insertS3OutputArgument,
 )
@@ -23,8 +23,8 @@ def insertExecutionArguments(
 ) -> None:
     execution_id = execution_summary.execution_id
     function_id = execution_summary.function_id
-    for o in execution_summary.inputs["observation"]:
-        insertObservationArgument(cursor, o)
+    for o in execution_summary.inputs["local"]:
+        insertLocalArgument(cursor, o)
     for h in execution_summary.inputs["http"]:
         insertHTTPArgument(cursor, h)
     for s in execution_summary.inputs["s3"]:

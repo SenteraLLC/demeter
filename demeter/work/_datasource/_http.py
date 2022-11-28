@@ -129,7 +129,7 @@ def getHTTPRows(
         function_id=execution_summary.function_id,
         execution_id=execution_summary.execution_id,
         http_type_id=http_type_id,
-        number_of_observations=len(http_result),
+        number_of_locals=len(http_result),
     )
     execution_summary.inputs["http"].append(h)
 

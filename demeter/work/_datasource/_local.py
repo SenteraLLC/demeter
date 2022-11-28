@@ -1,7 +1,7 @@
 from typing import Any, Iterable, List, Tuple, Type, TypeVar, cast
 
 from ... import data
-from .._types import ExecutionSummary, ObservationArgument
+from .._types import ExecutionSummary, LocalArgument
 
 T = TypeVar("T")
 
@@ -24,11 +24,11 @@ def sqlToTypedDict(
     )
 
 
-def queryObservationByKey(
+def queryLocalByKey(
     cursor: Any,
     key: data.Key,
     local_type_id: int,
-) -> Iterable[Tuple[data.ObservationValue, data.UnitType]]:
+) -> Iterable[Tuple[data.LocalValue, data.UnitType]]:
     stmt = """select V.*, U.unit, U.local_type_id
             from local_value V, unit_type U
             where V.unit_type_id = U.unit_type_id and U.local_type_id = %s and
@@ -45,7 +45,7 @@ def queryObservationByKey(
     cursor.execute(stmt, args)
     results = cursor.fetchall()
 
-    local_value: List[data.ObservationValue] = sqlToTypedDict(results, data.ObservationValue)
+    local_value: List[data.LocalValue] = sqlToTypedDict(results, data.LocalValue)
     unit_type: List[data.UnitType] = sqlToTypedDict(results, data.UnitType)
 
     return zip(local_value, unit_type)
@@ -55,54 +55,54 @@ def loadType(
     cursor: Any,
     keys: List[data.Key],
     local_type_id: int,
-) -> List[Tuple[data.ObservationValue, data.UnitType]]:
-    results: List[Tuple[data.ObservationValue, data.UnitType]] = []
+) -> List[Tuple[data.LocalValue, data.UnitType]]:
+    results: List[Tuple[data.LocalValue, data.UnitType]] = []
     for k in keys:
-        partial_results = queryObservationByKey(cursor, k, local_type_id)
+        partial_results = queryLocalByKey(cursor, k, local_type_id)
         results.extend(partial_results)
     return results
 
 
-def loadObservationRaw(
+def loadLocalRaw(
     cursor: Any,
     keys: List[data.Key],
-    observation_types: List[data.ObservationType],
+    local_types: List[data.LocalType],
     execution_summary: ExecutionSummary,
-) -> List[Tuple[data.ObservationValue, data.UnitType]]:
-    results: List[Tuple[data.ObservationValue, data.UnitType]] = []
-    for observation_type in observation_types:
-        maybe_observation_type_id = data.getMaybeObservationTypeId(cursor, observation_type)
-        if maybe_observation_type_id is None:
-            raise Exception(f"Failed to find ID for observation type: {observation_type}")
-        observation_type_id = maybe_observation_type_id
-        results_for_type = loadType(cursor, keys, observation_type_id)
+) -> List[Tuple[data.LocalValue, data.UnitType]]:
+    results: List[Tuple[data.LocalValue, data.UnitType]] = []
+    for local_type in local_types:
+        maybe_local_type_id = data.getMaybeLocalTypeId(cursor, local_type)
+        if maybe_local_type_id is None:
+            raise Exception(f"Failed to find ID for local type: {local_type}")
+        local_type_id = maybe_local_type_id
+        results_for_type = loadType(cursor, keys, local_type_id)
 
-        o = ObservationArgument(
+        o = LocalArgument(
             function_id=execution_summary.function_id,
             execution_id=execution_summary.execution_id,
-            observation_type_id=observation_type_id,
-            number_of_observations=len(results_for_type),
+            local_type_id=local_type_id,
+            number_of_locals=len(results_for_type),
         )
-        execution_summary.inputs["observation"].append(o)
+        execution_summary.inputs["local"].append(o)
         results.extend(results_for_type)
     return results
 
 
-def getObservationRows(
+def getLocalRows(
     cursor: Any,
     keys: List[data.Key],
-    observation_types: List[data.ObservationType],
+    local_types: List[data.LocalType],
     execution_summary: ExecutionSummary,
 ) -> List[Any]:
     rows: List[Any] = []
-    for t in observation_types:
-        maybe_observation_type_id = data.getMaybeObservationTypeId(cursor, t)
-        if maybe_observation_type_id is None:
-            raise Exception(f"data.Observation Type does not exist: {t}")
+    for t in local_types:
+        maybe_local_type_id = data.getMaybeLocalTypeId(cursor, t)
+        if maybe_local_type_id is None:
+            raise Exception(f"data.Local Type does not exist: {t}")
         else:
-            observation_type_id = maybe_observation_type_id
+            local_type_id = maybe_local_type_id
 
-    raw = loadObservationRaw(cursor, keys, observation_types, execution_summary)
-    for observation_value, unit_type in raw:
-        rows.append(dict(**observation_value, **unit_type))
+    raw = loadLocalRaw(cursor, keys, local_types, execution_summary)
+    for local_value, unit_type in raw:
+        rows.append(dict(**local_value, **unit_type))
     return rows

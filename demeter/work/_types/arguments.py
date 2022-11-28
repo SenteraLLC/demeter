@@ -11,15 +11,15 @@ class Argument(task.FunctionId):
 
 
 @dataclass(frozen=True)
-class ObservationArgument(Argument, db.SelfKey):
-    observation_type_id: db.TableId
-    number_of_observations: int
+class LocalArgument(Argument, db.SelfKey):
+    local_type_id: db.TableId
+    number_of_locals: int
 
 
 @dataclass(frozen=True)
 class HTTPArgument(Argument, db.SelfKey):
     http_type_id: db.TableId
-    number_of_observations: int
+    number_of_locals: int
 
 
 @dataclass(frozen=True)

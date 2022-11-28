@@ -103,12 +103,12 @@ class PlantingKey(db.TableKey):
 
 @dataclass(frozen=True)
 class Planting(PlantingKey, db.Detailed):
-    observation_type_id: Optional[db.TableId]
+    local_type_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)
 class Harvest(PlantingKey, db.Detailed):
-    observation_type_id: Optional[db.TableId]
+    local_type_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)
@@ -118,7 +118,7 @@ class CropProgressKey(PlantingKey):
 
 @dataclass(frozen=True)
 class CropProgress(CropProgressKey, db.Detailed):
-    observation_type_id: Optional[db.TableId]
+    local_type_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)

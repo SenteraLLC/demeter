@@ -13,7 +13,7 @@ id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
 
 key_table_lookup: TableLookup = {
     ExecutionKey: "execution_key",
-    ObservationArgument: "observation_argument",
+    LocalArgument: "local_argument",
     HTTPArgument: "http_argument",
     KeywordArgument: "keyword_argument",
     S3InputArgument: "s3_input_argument",

@@ -9,7 +9,7 @@ from ._types import (
     ExecutionSummary,
     HTTPArgument,
     KeywordArgument,
-    ObservationArgument,
+    LocalArgument,
     S3InputArgument,
     S3OutputArgument,
 )
@@ -95,11 +95,11 @@ def getExistingExecutions(
             execution_id=r.execution_id,
             function_id=r.function_id,
             inputs=ExecutionArguments(
-                observation=[
-                    ObservationArgument(
+                local=[
+                    LocalArgument(
                         **l,
                     )
-                    for l in r.inputs["observation"]
+                    for l in r.inputs["local"]
                 ],
                 keyword=[
                     KeywordArgument(

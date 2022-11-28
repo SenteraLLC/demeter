@@ -11,7 +11,7 @@ from ... import data
 
 
 class ExecutionArguments(TypedDict):
-    observation: List[ObservationArgument]
+    local: List[LocalArgument]
     keyword: List[KeywordArgument]
     http: List[HTTPArgument]
     s3: List[S3InputArgument]

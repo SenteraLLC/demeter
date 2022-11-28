@@ -4,7 +4,7 @@ from ..db import TypeTable
 from ._types import *
 
 AnyKeyTable = Union[
-    ObservationArgument,
+    LocalArgument,
     HTTPArgument,
     S3InputArgument,
     S3OutputArgument,

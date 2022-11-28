@@ -3,8 +3,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Core Types
-from demeter.data import Field, Geom, MultiPolygon, Point
-from demeter.data import insertField, insertOrGetGeom
+from demeter.data import Field, Geom, MultiPolygon, Point, FieldGroup
+from demeter.data import insertField, insertOrGetGeom, insertFieldGroup
 
 # Local Types
 from demeter.data import UnitType, LocalType, LocalValue
@@ -31,6 +31,13 @@ if __name__ == "__main__":
         ),
     )
 
+    test_field_group = FieldGroup(
+        name="grupo de prueba",
+        external_id="ABCDEFG",
+    )
+    field_group_id = insertFieldGroup(cursor, test_field_group)
+    print(f"Field group id: {field_group_id}")
+
     field_geom = Geom(
         type="Polygon",
         coordinates=bound,
@@ -44,6 +51,7 @@ if __name__ == "__main__":
         name="campo de prueba",
         external_id="123456789",
         geom_id=field_geom_id,
+        field_group_id=field_group_id,
     )
     field_id = insertField(cursor, test_field)
     print(f"Field id: {field_id}")

@@ -14,6 +14,7 @@ from ...db._generic_types import GetId, GetTable, ReturnId, ReturnKey, GetTableB
 
 from .types import (
     Field,
+    FieldGroup,
     GeoSpatialKey,
     TemporalKey,
     Geom,
@@ -36,6 +37,7 @@ from .types import (
 
 
 getMaybeFieldId = g.getMaybeIdFunction(Field)
+getMaybeFieldGroupId = g.getMaybeIdFunction(FieldGroup)
 getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)
 getMaybeTemporalKeyId: GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
@@ -44,9 +46,11 @@ getMaybeReportTypeId: GetId[ReportType] = g.getMaybeIdFunction(ReportType)
 getMaybeActId = g.getMaybeIdFunction(Act)
 
 getField: GetTable[Field] = g.getTableFunction(Field)
+getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
 getGeom: GetTable[Geom] = g.getTableFunction(Geom)
 
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
+insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
 insertGeoSpatialKey: ReturnId[GeoSpatialKey] = g.getInsertReturnIdFunction(
     GeoSpatialKey
 )
@@ -66,6 +70,7 @@ insertOrGetTemporalKey = g.partialInsertOrGetId(
     getMaybeTemporalKeyId, insertTemporalKey
 )
 insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
+insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
 insertOrGetAct = g.partialInsertOrGetId(getMaybeActId, insertAct)
@@ -76,6 +81,4 @@ getCropProgress: GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKeyF
 )
 
 insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
-insertOrGetCropProgress = g.partialInsertOrGetKey(
-    CropProgressKey, getCropProgress, insertCropProgress
-)
+insertOrGetCropProgress = g.partialInsertOrGetKey(CropProgressKey, getCropProgress, insertCropProgress)

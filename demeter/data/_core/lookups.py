@@ -8,12 +8,13 @@ type_table_lookup: TableLookup = {
     ReportType: "report_type",
 }
 
-data_table_lookup: TableLookup = {
-    Geom: "geom",
-    Act: "act",
-    Field: "field",
-    GeoSpatialKey: "geospatial_key",
-    TemporalKey: "temporal_key",
+data_table_lookup : TableLookup = {
+    Geom          : "geom",
+    Act           : "act",
+    Field         : "field",
+    FieldGroup    : "field_group",
+    GeoSpatialKey : "geospatial_key",
+    TemporalKey   : "temporal_key",
 }
 
 from ...db._lookup_types import sumMappings

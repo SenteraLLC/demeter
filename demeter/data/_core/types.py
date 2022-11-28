@@ -57,13 +57,21 @@ class Geom(db.Table):
 
 
 @dataclass(frozen=True)
+class FieldGroup(db.Detailed):
+    name : str
+    parent_field_group_id : Optional[db.TableId] = None
+    external_id : Optional[str] = None
+
+
+@dataclass(frozen=True)
 class Field(db.Detailed):
     geom_id: db.TableId
+    name : str
+    external_id    : Optional[str]
 
-    name: str
-    external_id: Optional[str]
+    field_group_id : Optional[db.TableId]
 
-    created: Optional[datetime] = None
+    created     : Optional[datetime] = None
 
 
 @dataclass(frozen=True)

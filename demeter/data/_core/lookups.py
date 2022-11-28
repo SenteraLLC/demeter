@@ -6,14 +6,14 @@ from .types import (
     CropStage,
     ReportType,
     Geom,
-    Parcel,
-    ParcelGroup,
     Field,
     GeoSpatialKey,
     TemporalKey,
     Planting,
     CropProgress,
 )
+
+from .field_group import FieldGroup
 
 type_table_lookup: TableLookup = {
     CropType: "crop_type",
@@ -23,8 +23,7 @@ type_table_lookup: TableLookup = {
 
 data_table_lookup: TableLookup = {
     Geom: "geom",
-    Parcel: "parcel",
-    ParcelGroup: "parcel_group",
+    FieldGroup: "field_group",
     Field: "field",
     GeoSpatialKey: "geospatial_key",
     TemporalKey: "temporal_key",

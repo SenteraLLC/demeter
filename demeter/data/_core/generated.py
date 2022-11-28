@@ -8,8 +8,6 @@ from .types import (
     CropProgressKey,
     CropStage,
     CropType,
-    Parcel,
-    ParcelGroup,
     Field,
     GeoSpatialKey,
     TemporalKey,
@@ -19,6 +17,8 @@ from .types import (
     ReportType,
 )
 
+from .field_group import FieldGroup
+
 g = SQLGenerator(
     "demeter.data",
     type_table_lookup=_lookups.type_table_lookup,
@@ -27,22 +27,19 @@ g = SQLGenerator(
     key_table_lookup=_lookups.key_table_lookup,
 )
 
-getMaybeParcelId = g.getMaybeIdFunction(Parcel)
-getMaybeParcelGroupId = g.getMaybeIdFunction(ParcelGroup)
-getMaybeFieldId = g.getMaybeIdFunction(Parcel)
+getMaybeFieldGroupId = g.getMaybeIdFunction(FieldGroup)
+getMaybeFieldId = g.getMaybeIdFunction(Field)
 getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)
 getMaybeTemporalKeyId: GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeCropStageId: GetId[CropStage] = g.getMaybeIdFunction(CropStage)
 getMaybeReportTypeId: GetId[ReportType] = g.getMaybeIdFunction(ReportType)
 
-getParcel: GetTable[Parcel] = g.getTableFunction(Parcel)
-getParcelGroup: GetTable[ParcelGroup] = g.getTableFunction(ParcelGroup)
+getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
 getField: GetTable[Field] = g.getTableFunction(Field)
 getGeom: GetTable[Geom] = g.getTableFunction(Geom)
 
-insertParcel: ReturnId[Parcel] = g.getInsertReturnIdFunction(Parcel)
-insertParcelGroup: ReturnId[ParcelGroup] = g.getInsertReturnIdFunction(ParcelGroup)
+insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
 insertGeoSpatialKey: ReturnId[GeoSpatialKey] = g.getInsertReturnIdFunction(
     GeoSpatialKey
@@ -61,10 +58,7 @@ insertOrGetGeoSpatialKey = g.partialInsertOrGetId(
 insertOrGetTemporalKey = g.partialInsertOrGetId(
     getMaybeTemporalKeyId, insertTemporalKey
 )
-insertOrGetParcel = g.partialInsertOrGetId(getMaybeParcelId, insertParcel)
-insertOrGetParcelGroup = g.partialInsertOrGetId(
-    getMaybeParcelGroupId, insertParcelGroup
-)
+insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
 insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)

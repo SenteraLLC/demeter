@@ -8,9 +8,8 @@ from ._core.types import (
     CRS,
     GeomImpl,
     Geom,
-    Parcel,
-    ParcelGroup,
     Field,
+    FieldGroup,
     CropType,
     CropStage,
     CropProgress,
@@ -27,12 +26,8 @@ from ._core.types import (
 
 from ._core.generated import (
     getGeom,
-    insertParcel,
-    insertOrGetParcel,
-    getParcel,
-    getMaybeParcelId,
-    insertParcelGroup,
-    insertOrGetParcelGroup,
+    insertFieldGroup,
+    insertOrGetFieldGroup,
     insertField,
     insertOrGetField,
     getField,
@@ -65,13 +60,11 @@ from ._core.geom import (
 )
 
 from ._core.field_group import (
-    FieldGroup,
     getFieldGroupAncestors,
     getOrgFields,
     FieldGroupFields,
     searchFieldGroup,
     getFieldGroupFields,
-    insertFieldGroup,
 )
 
 from ._local.types import (
@@ -110,14 +103,9 @@ __all__ = (
     "getGeom",
     "getMaybeGeomId",
     "insertOrGetGeom",
-    "Parcel",
-    "insertParcel",
-    "insertOrGetParcel",
-    "ParcelGroup",
-    "insertParcelGroup",
-    "insertOrGetParcelGroup",
-    "getParcel",
-    "getMaybeParcelId",
+    "FieldGroup",
+    "insertFieldGroup",
+    "insertOrGetFieldGroup",
     "Field",
     "insertField",
     "insertOrGetField",

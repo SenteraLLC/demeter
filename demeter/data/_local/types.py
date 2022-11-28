@@ -8,7 +8,7 @@ from ... import db
 
 @dataclass(frozen=True)
 class ObservationValue(db.Detailed):
-    parcel_id: db.TableId
+    field_id: db.TableId
     unit_type_id: db.TableId
     acquired: date
     quantity: float
@@ -28,6 +28,6 @@ class UnitType(db.TypeTable):
 
 @dataclass(frozen=True)
 class Operation(db.Detailed):
-    parcel_id: db.TableId
+    field_id: db.TableId
     observation_type_id: db.TableId
     performed: date

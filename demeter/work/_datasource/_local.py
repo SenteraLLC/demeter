@@ -5,6 +5,7 @@ from .._types import ExecutionSummary, ObservationArgument
 
 T = TypeVar("T")
 
+
 # TODO: Does this get nested annotations?
 def sqlToTypedDict(
     rows: List[Any],
@@ -31,15 +32,15 @@ def queryObservationByKey(
     stmt = """select V.*, U.unit, U.local_type_id
             from local_value V, unit_type U
             where V.unit_type_id = U.unit_type_id and U.local_type_id = %s and
-              V.geom_id = %s and V.parcel_id = %s and (V.acquired > %s and V.acquired < %s)
+              V.geom_id = %s and V.field_id = %s and (V.acquired > %s and V.acquired < %s)
           """
 
     geom_id = key.geom_id
-    parcel_id = key.parcel_id
+    field_id = key.field_id
     start_date = key.start_date
     end_date = key.end_date
 
-    args = (local_type_id, geom_id, parcel_id, start_date, end_date)
+    args = (local_type_id, geom_id, field_id, start_date, end_date)
 
     cursor.execute(stmt, args)
     results = cursor.fetchall()

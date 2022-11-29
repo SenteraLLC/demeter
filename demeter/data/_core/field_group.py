@@ -10,7 +10,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FieldGroup(db.Detailed):
-    field_group_id: db.TableId
     name: str
     parent_field_group_id: Optional[db.TableId] = None
     created: Optional[datetime] = None
@@ -123,7 +122,6 @@ def _row_to_field_group(
     _id = r[id_name]
     parent_id_name = "_".join(["parent", id_name])
     f = FieldGroup(
-        field_group_id=r["field_group_id"],
         name=r["name"],
         parent_field_group_id=r[parent_id_name],
         last_updated=r["last_updated"],

@@ -65,8 +65,6 @@ def wrap_requests_fn(
 
     return wrapped
 
-    return wrapped
-
 
 # TODO: Handle responses besides JSON
 # TODO: Bulk requests with related keys

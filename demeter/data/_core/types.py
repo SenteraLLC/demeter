@@ -120,7 +120,7 @@ class CropProgressKey(PlantingKey):
 
 @dataclass(frozen=True)
 class CropProgress(CropProgressKey, db.Detailed):
-    local_type_id: Optional[db.TableId]
+    pass
 
 
 @dataclass(frozen=True)

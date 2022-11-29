@@ -1,13 +1,19 @@
-from typing import Any, List, Optional, Sequence, Dict, Set, Tuple, NamedTuple
+from typing import Any, Optional, Sequence, Dict, Set, Tuple
 
 from ... import db
 
-from .generated import g, getMaybeFieldGroupId, insertFieldGroup, getFieldGroup
-from .types import FieldGroup
-
 from collections import OrderedDict
+from datetime import datetime
 
 from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class FieldGroup(db.Detailed):
+    name: str
+    parent_field_group_id: Optional[db.TableId] = None
+    created: Optional[datetime] = None
+
 
 FieldGroupAncestors = Sequence[Tuple[db.TableId, FieldGroup]]
 
@@ -53,10 +59,11 @@ def getFieldGroupAncestors(
 
 
 # TODO: Deprecated by 'getFieldGroupFields'
-def getOrgFields(cursor : Any,
-                 field_group_id : db.TableId,
-                ) -> Dict[db.TableId, Set[db.TableId]]:
-  stmt = """
+def getOrgFields(
+    cursor: Any,
+    field_group_id: db.TableId,
+) -> Dict[db.TableId, Set[db.TableId]]:
+    stmt = """
     with recursive ancestry as (
       select parent_field_group_id,
              field_group_id,
@@ -82,30 +89,28 @@ def getOrgFields(cursor : Any,
      left join field F on F.field_group_id = L.field_group_id
      group by L.parent_field_group_id, L.field_group_id;
   """
-  cursor.execute(stmt, {'field_group_id' : field_group_id})
-  results = cursor.fetchall()
-  depths = {r["depth"] for r in results}
-  return { r.leaf_field_group_id : r.field_ids for r in results}
+    cursor.execute(stmt, {"field_group_id": field_group_id})
+    results = cursor.fetchall()
+    return {r.leaf_field_group_id: r.field_ids for r in results}
 
-
-from datetime import datetime
-from .types import Field, FieldGroup
 
 # TODO: How to deal with Demeter table classes vs Demeter table result classes? (IE w/ and w/o TableId)
+
+
 @dataclass(frozen=True)
 class FieldSummary(db.Detailed):
-  field_id    : db.TableId
-  geom_id     : db.TableId
-  name : str
-  external_id    : Optional[str]
-  field_group_id : Optional[db.TableId]
-  created     : Optional[datetime] = None
+    field_id: db.TableId
+    geom_id: db.TableId
+    name: str
+    external_id: Optional[str]
+    field_group_id: Optional[db.TableId]
+    created: Optional[datetime] = None
 
 
 @dataclass(frozen=True)
-class FieldGroupFields():
-  fields_by_depth : Dict[int, Sequence[FieldSummary]]
-  ancestors : Sequence[FieldGroup]
+class FieldGroupFields:
+    fields_by_depth: Dict[int, Sequence[FieldSummary]]
+    ancestors: Sequence[FieldGroup]
 
 
 def _row_to_field_group(
@@ -130,7 +135,7 @@ def getFieldGroupFields(
     field_group_ids: Sequence[db.TableId],
 ) -> OrderedDict[db.TableId, FieldGroupFields]:
     """Get the descendants of the provided field groups.
-       Rename to 'get_descendant_fields' or 'get_descendants'?
+    Rename to 'get_descendant_fields' or 'get_descendants'?
     """
     stmt = """
   with recursive ancestor as (
@@ -221,6 +226,7 @@ def searchFieldGroup(
     for r in results:
         _id = r["field_group_id"]
         f = FieldGroup(
+            field_group_id=r["field_group_id"],
             parent_field_group_id=r["parent_field_group_id"],
             name=r["name"],
             details=r["details"],

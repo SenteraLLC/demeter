@@ -1,8 +1,7 @@
 from typing import Union
 
-from ._types import *
-
 from ..db import TypeTable
+from ._types import *
 
 AnyKeyTable = Union[
     LocalArgument,
@@ -12,7 +11,6 @@ AnyKeyTable = Union[
     KeywordArgument,
     ExecutionKey,
 ]
-
 
 class _Ignore(TypeTable):
     pass

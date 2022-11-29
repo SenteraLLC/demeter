@@ -1,5 +1,5 @@
-from ._types import Root, Node, Ancestry
 from ._generated import *
+from ._types import Ancestry, Node, Root
 
 __all__ = (
     # Grid Types

@@ -1,6 +1,5 @@
-from typing import Any, TypedDict, Dict
-
 from enum import Enum
+from typing import Any, Dict, TypedDict
 
 
 class ExecutionMode(Enum):

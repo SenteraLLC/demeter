@@ -1,13 +1,9 @@
-from typing import Dict, Type, Tuple, Any, List
-from typing import cast
-
-import json
 import argparse
+import json
+from typing import Any, Dict, List, Tuple, Type, cast
 
 from ... import data
-
 from . import keys
-
 
 def parseCLIArguments(
     name: str,

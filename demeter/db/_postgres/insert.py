@@ -1,18 +1,15 @@
-from typing import Any, Union, Optional, Sequence, Dict, Type
-from typing import cast
-
 from collections import OrderedDict
+from typing import Any, Dict, Optional, Sequence, Type, cast
 
 from psycopg2 import sql
 from psycopg2.sql import SQL, Composed, Identifier, Placeholder
 
 from .. import TableId
-from .._union_types import AnyTable, AnyIdTable, AnyKeyTable
-from .._generic_types import ReturnKey, GetId, ReturnId, GetTableByKey
-from .._generic_types import I, S, SK
-
+from .._generic_types import SK, GetId, GetTableByKey, I, ReturnId, ReturnKey, S
+from .._union_types import AnyIdTable, AnyKeyTable, AnyTable
 from .helpers import is_none, is_optional
-from .tools import doPgJoin, doPgFormat
+from .tools import doPgFormat, doPgJoin
+
 
 # TODO: Add options for 'is_none' and 'is_optional'
 def generateInsertStmt(
@@ -99,7 +96,7 @@ def insertOrGetKey(
     key_fields = set(key_type.__dataclass_fields__.keys())
     key_parts = {k: v for k, v in table().items() if k in key_fields}
     key = key_type(**key_parts)
-    if (x := get_by_key(cursor, key)) is not None:
+    if get_by_key(cursor, key) is not None:
         return key
     k = return_key(cursor, table)
     return k

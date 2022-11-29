@@ -1,7 +1,7 @@
-from typing import Sequence, Union
-from typing import cast
+from typing import Sequence, cast
 
-from psycopg2.sql import Composable, Composed, SQL
+from psycopg2.sql import SQL, Composable, Composed
+
 
 # NOTE: Psycopg2.sql method stubs are untyped
 #   These 'overrides' will have to do for now

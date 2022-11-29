@@ -1,10 +1,8 @@
-from typing import Mapping, Union, Callable, Any, TypeVar, Protocol
+from typing import Any, Callable, Mapping, Protocol, TypeVar, Union
 
 import geopandas as gpd  # type: ignore
 
-from .._datasource import S3File, LocalFile
-from .._datasource import DataSourceBase
-
+from .._datasource import DataSourceBase, LocalFile, S3File
 from .._types import ExecutionOutputs
 
 SupportedOutputFile = Union[S3File, LocalFile]

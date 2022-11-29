@@ -1,30 +1,22 @@
-from typing import List, Optional, Tuple, Any, Dict, Callable, Set, Type, Mapping
-
-from typing import cast
-
-from io import BytesIO
 import uuid
-
-from ... import data
-from ... import task
-from ... import db
-
 from collections import OrderedDict
+from io import BytesIO
+from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Tuple, Type, cast
 
-from ._util import createKeywordArguments
-from ._local import getLocalRows
-from ._http import getHTTPRows
-from ._s3 import getRawS3, rawToDataFrame
-from ._s3_file import SupportedS3DataType, S3FileMeta
-from ._s3_file import AnyDataFrame
-from ._base import DataSourceBase
-
-from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
-
-import pandas as pd
 import geopandas as gpd  # type: ignore
+import pandas as pd
+
+from ... import data, db, task
+from ._base import DataSourceBase
+from ._http import getHTTPRows
+from ._local import getLocalRows
+from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
+from ._s3 import getRawS3, rawToDataFrame
+from ._s3_file import AnyDataFrame, S3FileMeta, SupportedS3DataType
+from ._util import createKeywordArguments
 
 JoinResults = Dict[frozenset[str], AnyDataFrame]
+
 
 # TODO: Defer S3 downloads until joining or manually altered
 class DataSource(DataSourceBase):
@@ -55,12 +47,12 @@ class DataSource(DataSourceBase):
         ] = {}
 
     def _local(self, local_types: List[data.LocalType]) -> pd.DataFrame:
-        if self.LOCAL in self.dataframes:
+        if self.OBSERVATION in self.dataframes:
             raise Exception("Local data can only be acquired once.")
 
         rows = getLocalRows(self.cursor, self.keys, local_types, self.execution_summary)
         df = pd.DataFrame(rows)
-        self.dataframes[self.LOCAL] = df
+        self.dataframes[self.OBSERVATION] = df
         return df
 
     # Does not support GeoDataFrames via http
@@ -171,7 +163,7 @@ class DataSource(DataSourceBase):
         **kwargs: Any,
     ) -> None:
         dataframe_names = set(self.dataframes.keys()).union(self.geodataframes.keys())
-        dataframe_names.add(self.LOCAL)
+        dataframe_names.add(self.OBSERVATION)
         dataframe_names.add(self.GEOM)
 
         if left_type_name not in dataframe_names:

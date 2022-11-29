@@ -1,20 +1,18 @@
-from typing import Optional, Sequence, Any, Callable, Tuple, Mapping, List
-from typing import cast
-
-from .. import data
-from .. import db
-
-from ._types import ExecutionSummary, ExecutionArguments, ExecutionOutputs
-from ._types import (
-    LocalArgument,
-    HTTPArgument,
-    S3InputArgument,
-    KeywordArgument,
-    S3OutputArgument,
-)
-
 import os
 from io import TextIOWrapper
+from typing import Any, Callable, List, Mapping, Optional, Sequence, cast
+
+from .. import data, db
+from ._types import (
+    ExecutionArguments,
+    ExecutionOutputs,
+    ExecutionSummary,
+    HTTPArgument,
+    KeywordArgument,
+    LocalArgument,
+    S3InputArgument,
+    S3OutputArgument,
+)
 
 this_dir = os.path.dirname(__file__)
 open_sql: Callable[[str], TextIOWrapper] = lambda filename: open(

@@ -1,5 +1,4 @@
 from ..db._lookup_types import TableLookup
-
 from ._types import *
 
 type_table_lookup: TableLookup = {}

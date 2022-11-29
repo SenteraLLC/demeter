@@ -1,5 +1,4 @@
 import os.path
-
 from io import TextIOWrapper
 
 

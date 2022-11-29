@@ -3,13 +3,24 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Core Types
-from demeter.data import Field, Geom, MultiPolygon, Point, FieldGroup
-from demeter.data import insertField, insertOrGetGeom, insertFieldGroup
+from demeter.data import Parcel, Field, ParcelGroup, Geom, MultiPolygon, Point
+from demeter.data import (
+    insertField,
+    insertParcelGroup,
+    insertOrGetGeom,
+    insertOrGetParcel,
+)
 
-# Local Types
-from demeter.data import UnitType, LocalType, LocalValue
-from demeter.data import insertUnitType, insertLocalType, insertLocalValue
+# Observation Types
+from demeter.data import UnitType, ObservationType, ObservationValue
 
+# , FieldGroup
+from demeter.data import (
+    insertUnitType,
+    insertObservationType,
+    insertObservationValue,
+    insertFieldGroup,
+)
 from demeter.db import getConnection
 
 
@@ -18,6 +29,20 @@ if __name__ == "__main__":
 
     c = getConnection()
     cursor = c.cursor()
+
+    root_group = ParcelGroup(
+        name="ABC Group INC",
+        parent_parcel_group_id=None,
+    )
+    root_group_id = insertParcelGroup(cursor, root_group)
+    print(f"Root group id: {root_group_id}")
+
+    argentina_group = ParcelGroup(
+        name="Argentina",
+        parent_parcel_group_id=root_group_id,
+    )
+    argentina_group_id = insertParcelGroup(cursor, argentina_group)
+    print(f"Argentina group id: {argentina_group_id}")
 
     # NOTE: Use MultiPolygon instead of Polygon
     #       There isn't support for lone Polygons yet
@@ -31,9 +56,8 @@ if __name__ == "__main__":
         ),
     )
 
-    test_field_group = FieldGroup(
+    test_field_group = ParcelGroup(
         name="grupo de prueba",
-        external_id="ABCDEFG",
     )
     field_group_id = insertFieldGroup(cursor, test_field_group)
     print(f"Field group id: {field_group_id}")
@@ -42,25 +66,30 @@ if __name__ == "__main__":
         type="Polygon",
         coordinates=bound,
         crs_name="urn:ogc:def:crs:EPSG::4326",
-        container_geom_id=None,
     )
     field_geom_id = insertOrGetGeom(cursor, field_geom)
     print(f"Field Geom id: {field_geom_id}")
 
+    parcel = Parcel(
+        geom_id=field_geom_id,
+        parcel_group_id=argentina_group_id,
+    )
+    parcel_id = insertOrGetParcel(cursor, parcel)
+
     test_field = Field(
         name="campo de prueba",
-        external_id="123456789",
-        geom_id=field_geom_id,
-        field_group_id=field_group_id,
+        parcel_id=parcel_id,
     )
     field_id = insertField(cursor, test_field)
     print(f"Field id: {field_id}")
 
-    irrigation_type = LocalType(type_name="my_irrigation_type", type_category=None)
-    irrigation_type_id = insertLocalType(cursor, irrigation_type)
+    irrigation_type = ObservationType(
+        type_name="my_irrigation_type",
+    )
+    irrigation_type_id = insertObservationType(cursor, irrigation_type)
     print(f"Irrigation type id: {irrigation_type_id}")
 
-    gallons_unit = UnitType(unit="gallons", local_type_id=irrigation_type_id)
+    gallons_unit = UnitType(unit="gallons", observation_type_id=irrigation_type_id)
     gallons_unit_id = insertUnitType(cursor, gallons_unit)
     print(f"Gallons type id: {gallons_unit_id}")
 
@@ -69,22 +98,20 @@ if __name__ == "__main__":
         type="Polygon",
         coordinates=obs,
         crs_name="urn:ogc:def:crs:EPSG::4326",
-        container_geom_id=None,
     )
     obs_geom_id = insertOrGetGeom(cursor, field_geom)
     print("Observation geom id: ", obs_geom_id)
 
-    v = LocalValue(
+    o = ObservationValue(
         geom_id=obs_geom_id,
-        field_id=field_id,
+        parcel_id=field_id,
         unit_type_id=gallons_unit_id,
         quantity=1234.567,
-        local_group_id=None,
         acquired=datetime.now(),
     )
 
-    local_value_id = insertLocalValue(cursor, v)
-    print(f"Local value id: {local_value_id}")
+    observation_value_id = insertObservationValue(cursor, o)
+    print(f"Observation value id: {observation_value_id}")
 
     # NOTE SQL transaction intentionally left uncommitted
     # cursor.commit()

@@ -1,4 +1,4 @@
-from typing import List, TypedDict, Sequence
+from typing import List, Sequence, TypedDict
 
 from .arguments import *
 
@@ -18,9 +18,10 @@ class ExecutionArguments(TypedDict):
     keys: Sequence[data.Key]
 
 
+from dataclasses import dataclass
+
 from ... import db
 
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)

@@ -1,18 +1,13 @@
-from typing import Optional, Tuple, Any, Union, List
-from typing import cast
-
 from io import BytesIO
+from typing import Any, List, Optional, Tuple, Union, cast
 
 import botocore.exceptions
-import pandas as pd
 import geopandas as gpd  # type: ignore
+import pandas as pd
 
-from ... import data
-from ... import task
-
-from .._types import S3InputArgument, ExecutionSummary
-
-from ._s3_file import toPandasFileType, FILETYPE_TO_PANDAS_READ_FN
+from ... import data, task
+from .._types import ExecutionSummary, S3InputArgument
+from ._s3_file import FILETYPE_TO_PANDAS_READ_FN, toPandasFileType
 
 
 def download(

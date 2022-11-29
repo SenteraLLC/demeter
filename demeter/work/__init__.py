@@ -1,5 +1,4 @@
-from ..db._postgres import SQLGenerator
-
+from ..db import SQLGenerator
 from . import _lookups as lookups
 
 g = SQLGenerator(
@@ -10,17 +9,16 @@ g = SQLGenerator(
 )
 
 
-from ..db._generic_types import ReturnId, ReturnSameKey, ReturnKey
-
+from ..db._generic_types import ReturnId, ReturnKey, ReturnSameKey
 from ._types import (
+    Argument,
     Execution,
-    LocalArgument,
+    ExecutionKey,
     HTTPArgument,
     KeywordArgument,
+    LocalArgument,
     S3InputArgument,
     S3OutputArgument,
-    ExecutionKey,
-    Argument,
 )
 
 insertExecution: ReturnId[Execution] = g.getInsertReturnIdFunction(Execution)
@@ -32,12 +30,16 @@ insertKeywordArgument = g.getInsertReturnSameKeyFunction(KeywordArgument)
 insertS3InputArgument = g.getInsertReturnSameKeyFunction(S3InputArgument)
 insertS3OutputArgument = g.getInsertReturnSameKeyFunction(S3OutputArgument)
 
+from ._datasource import (
+    DataSource,
+    LocalFile,
+    OneToManyResponseFunction,
+    OneToOneResponseFunction,
+    S3File,
+)
 from ._existing import getExecutionSummaries, getExistingExecutions
-from ._types import *
 from ._transformation import Transformation
-from ._datasource import OneToOneResponseFunction, OneToManyResponseFunction
-
-from ._datasource import DataSource, S3File, LocalFile
+from ._types import *
 
 __all__ = [
     "insertExecution",

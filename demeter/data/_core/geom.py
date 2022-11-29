@@ -1,11 +1,10 @@
-from typing import Optional, Any
+from typing import Any, Optional
 
 from ... import db
-
 from .types import Geom
 
 
-def getMaybeDuplicateGeom(
+def getMaybeGeomId(
     cursor: Any,
     geom: Geom,
 ) -> Optional[db.TableId]:
@@ -25,13 +24,12 @@ def getMaybeDuplicateGeom(
 def insertOrGetGeom(
     cursor: Any,
     geom: Geom,
-    container_geom_id: Optional[int] = None,
 ) -> db.TableId:
-    maybe_geom_id = getMaybeDuplicateGeom(cursor, geom)
+    maybe_geom_id = getMaybeGeomId(cursor, geom)
     if maybe_geom_id is not None:
         return maybe_geom_id
-    stmt = """insert into geom(container_geom_id, geom)
-            values(%(container_geom_id)s, ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)))
+    stmt = """insert into geom(geom)
+            values(ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)))
             returning geom_id"""
     cursor.execute(stmt, geom())
     result = cursor.fetchone()

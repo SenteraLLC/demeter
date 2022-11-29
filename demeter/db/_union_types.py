@@ -2,9 +2,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..data import _union_types as data
+    from ..grid import _union_types as grid
     from ..task import _union_types as task
     from ..work import _union_types as work
-    from ..grid import _union_types as grid
 else:
 
     class DummyModule:

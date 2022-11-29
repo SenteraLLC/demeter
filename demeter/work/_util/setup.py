@@ -1,12 +1,8 @@
-from typing import Any, List, Optional, Sequence, Mapping, Dict, Tuple, Type
-
 import inspect
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Type
 
-from ... import db
-from ... import task
-
-from .._types import ExecutionSummary, ExecutionKey
-
+from ... import db, task
+from .._types import ExecutionKey, ExecutionSummary
 from . import wrapper_types
 
 

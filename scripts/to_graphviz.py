@@ -1,31 +1,40 @@
 #!/usr/bin/env python
+# type: ignore
 
 # Source: https://github.com/rm-hull/sql_graphviz
 
 import html
 import sys
 from datetime import datetime
+
 from pyparsing import (
-    alphanums,
     CaselessLiteral,
-    Word,
+    CharsNotIn,
     Forward,
     OneOrMore,
-    ZeroOrMore,
-    CharsNotIn,
-    Suppress,
-    QuotedString,
     Optional,
+    QuotedString,
+    Suppress,
+    Word,
+    ZeroOrMore,
+    alphanums,
 )
 
 
-def field_act(s, loc, tok) -> str:
+def field_act(s, loc, tok):
     field_name = tok[0].replace('"', "")
     field_spec = html.escape(" ".join(tok[1::]).replace('"', '\\"'))
     # Don't try and format this HTML text string - DOT files are whitespace sensitive
-    return """<tr><td bgcolor="grey96" align="left" port="{0}"><font face="Times-bold"> {0} </font></td><td align="left" port="{0}_right"><font color="#535353"> {1} </font></td></tr>""".format(
-        field_name, field_spec
-    )
+    row = """<tr>
+               <td bgcolor="grey96" align="left" port="{0}">
+                 <font face="Times-bold"> {0} </font>
+                /td>
+                <td align="left" port="{0}_right">
+                  <font color="#535353"> {1} </font>
+                </td>
+              </tr>
+          """
+    return row.format(field_name, field_spec)
 
 
 def field_list_act(s, loc, tok):

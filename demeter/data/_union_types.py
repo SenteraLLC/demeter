@@ -1,7 +1,7 @@
 from typing import Union
 
-from ._local import union_types as local
 from ._core import union_types as core
+from ._local import union_types as local
 
 AnyTypeTable = Union[local.AnyTypeTable, core.AnyTypeTable]
 

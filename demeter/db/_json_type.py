@@ -1,4 +1,4 @@
-from typing import Union, Mapping, Optional, NewType, TypeVar
+from typing import Mapping, NewType, Optional, TypeVar, Union
 
 V = TypeVar("V")
 _JsonPrimitive = Union[int, float, str, bool, None]

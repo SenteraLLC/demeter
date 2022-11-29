@@ -1,11 +1,7 @@
-from typing import Optional, Union, Generator
-from typing import Literal, Mapping, Tuple
-from typing import cast
-
 import json
+from dataclasses import InitVar, asdict, dataclass, field
 from datetime import date, datetime
-from dataclasses import InitVar
-from dataclasses import dataclass, field, asdict
+from typing import Literal, Mapping, Optional, Tuple, Union
 
 from ... import db
 
@@ -17,16 +13,18 @@ MultiPolygon = Tuple[Polygon, ...]
 Coordinates = Union[Point, Line, MultiPolygon]
 
 
+# TODO: Replace these with their proper geospatial library equivalents
+
+
 @dataclass(frozen=True)
 class CRS:
-    type: Literal["name"]
-    # TODO: What other properties are available?
+    type: Literal["name"]  # noqa
     properties: Mapping[Literal["name"], str]
 
 
 @dataclass(frozen=True)
 class GeomImpl:
-    type: str
+    type: str  # noqa
     coordinates: Coordinates
     crs: CRS
 
@@ -34,17 +32,15 @@ class GeomImpl:
 @dataclass(frozen=True)
 class Geom(db.Table):
     crs_name: InitVar[str]
-    type: InitVar[str]
+    type: InitVar[str]  # noqa
     coordinates: InitVar[Coordinates]
-    container_geom_id: Optional[db.TableId] = None
 
-    # TODO: Should store the wkb, not some serialized dict
     geom: str = field(init=False)
 
     def __post_init__(
         self,
         crs_name: str,
-        type: str,
+        type: str,  # noqa
         coordinates: Coordinates,
     ) -> None:
         crs = CRS(
@@ -57,21 +53,11 @@ class Geom(db.Table):
 
 
 @dataclass(frozen=True)
-class FieldGroup(db.Detailed):
-    name : str
-    parent_field_group_id : Optional[db.TableId] = None
-    external_id : Optional[str] = None
-
-
-@dataclass(frozen=True)
 class Field(db.Detailed):
     geom_id: db.TableId
-    name : str
-    external_id    : Optional[str]
-
-    field_group_id : Optional[db.TableId]
-
-    created     : Optional[datetime] = None
+    name: str
+    field_group_id: Optional[db.TableId] = None
+    created: Optional[datetime] = None
 
 
 @dataclass(frozen=True)
@@ -112,41 +98,29 @@ class CropStage(db.TypeTable):
 
 @dataclass(frozen=True)
 class PlantingKey(db.TableKey):
-    field_id: db.TableId
     crop_type_id: db.TableId
-    geom_id: db.TableId
+    field_id: db.TableId
+    planted: datetime
 
 
 @dataclass(frozen=True)
 class Planting(PlantingKey, db.Detailed):
-    performed: Optional[date]
+    local_type_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)
-class Act(db.Detailed):
-    field_id: db.TableId
-    name: str
-    performed: date
-    geom_id: Optional[db.TableId] = None
-    crop_type_id: Optional[db.TableId] = None
-    local_value_id: Optional[db.TableId] = None
+class Harvest(PlantingKey, db.Detailed):
+    local_type_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)
-class CropProgressKey(db.TableKey):
-    field_id: db.TableId
-    crop_type_id: db.TableId
-    planting_geom_id: db.TableId
+class CropProgressKey(PlantingKey):
     crop_stage_id: db.TableId
-    geom_id: Optional[db.TableId]
 
 
 @dataclass(frozen=True)
-class CropProgress(CropProgressKey):
-    day: Optional[date]
-
-
-#  x               : InitVar[int]
+class CropProgress(CropProgressKey, db.Detailed):
+    pass
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,4 @@
-from typing import Callable, List, Dict, Any
-from typing import cast
+from typing import Any, Callable, Dict, List, cast
 
 from ... import data
 

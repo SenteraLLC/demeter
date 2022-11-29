@@ -1,9 +1,7 @@
-from typing import Type
-from typing import cast
+from typing import Type, cast
 
-from ..db._postgres import SQLGenerator
-from ._types import Root, Ancestry, Node
-from ._types import key_table_lookup, id_table_lookup
+from ..db import SQLGenerator
+from ._types import Ancestry, Node, Root, id_table_lookup, key_table_lookup
 
 g = SQLGenerator(
     "demeter.data",
@@ -23,8 +21,10 @@ getRoot: GetTable[Root] = g.getTableFunction(Root)
 getAncestry = g.getTableByKeyFunction(Ancestry, Ancestry)
 
 from typing import Any
+
 from shapely import wkb  # type: ignore
 from shapely.geometry import Polygon as Poly  # type: ignore
+
 from demeter.db import TableId
 
 
@@ -41,6 +41,7 @@ insertRoot: ReturnId[Root] = g.getInsertReturnIdFunction(Root)
 insertAncestry: ReturnSameKey[Ancestry] = g.getInsertReturnSameKeyFunction(Ancestry)
 
 from typing import Any
+
 
 # TODO: Warn the user when the geometry is modified by ST_MakeValid
 def insertNode(

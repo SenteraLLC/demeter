@@ -1,7 +1,5 @@
-from typing import List, Any, Callable, Optional, Mapping
-
-import psycopg2
 from functools import wraps
+from typing import Any, Callable, List, Mapping, Optional
 
 from .. import task
 from .. import data
@@ -20,18 +18,25 @@ from ._types import (
 )
 from ._existing import getExistingExecutions, getExistingDuplicate
 
+from .. import data, db, task, work
 from . import insertExecution
-
-from ._util.register import registerFunction, makeDummyArguments
-from ._util.keys import loadKeys
+from ._datasource import DataSource, DataSourceRegister
+from ._existing import getExistingDuplicate, getExistingExecutions
+from ._types import (
+    Execution,
+    ExecutionKey,
+    ExecutionOutputs,
+    ExecutionSummary,
+    S3OutputArgument,
+)
 from ._util.cli import parseCLIArguments
-from ._util.mode import getModeFromKwargs
-from ._util.mode import ExecutionMode
-from ._util.setup import getOutputTypes, getKeywordParameterTypes, createFunction
+from ._util.keys import loadKeys
+from ._util.mode import ExecutionMode, getModeFromKwargs
+from ._util.register import makeDummyArguments, registerFunction
+from ._util.setup import createFunction, getKeywordParameterTypes, getOutputTypes
+from ._util.teardown import insertInitFile, insertRawOutputs
 from ._util.wrapper_types import OutputLoadFunction, WrappableFunction
 from ._util.wrapper_types import WrappedTransformation as WrappedTransformation
-from ._util.teardown import insertRawOutputs, insertInitFile
-
 
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Local) -> (S3, Local)

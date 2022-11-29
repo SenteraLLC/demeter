@@ -1,12 +1,8 @@
-from typing import Type, Any, Dict, Tuple, Optional, Any, Mapping
-from typing import cast
+from typing import Any, Dict, Mapping, Optional, Tuple, Type, cast
 
 import dictdiffer  # type: ignore
 
-from ... import db
-from ... import data
-from ... import task
-
+from ... import data, db, task
 from .._datasource import DataSourceTypes
 
 

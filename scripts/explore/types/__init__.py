@@ -1,12 +1,8 @@
-
-from .summary import TypeSummary
-from .summary import getTypeSummaries
-
 from .interactive import select as interactive_select
+from .summary import TypeSummary, getTypeSummaries
 
 __all__ = [
-  'TypeSummary',
-  'getTypeSummaries',
-
-  'interactive_select',
+    "TypeSummary",
+    "getTypeSummaries",
+    "interactive_select",
 ]

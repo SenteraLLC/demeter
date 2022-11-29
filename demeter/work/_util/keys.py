@@ -1,6 +1,5 @@
-from typing import Sequence, Any, Mapping, Iterable
-
 import json
+from typing import Any, Iterable, Mapping, Sequence
 
 from ... import data
 

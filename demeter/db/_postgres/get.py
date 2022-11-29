@@ -1,16 +1,13 @@
-from typing import Any, Optional, NamedTuple, Sequence, Tuple
-from typing import cast
-
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
+from typing import Any, NamedTuple, Optional, Tuple, cast
 
 from psycopg2.sql import Identifier, Placeholder
 
 from .. import TableId
+from .._generic_types import SK, S
 from .._union_types import AnyIdTable
-from .._generic_types import S, SK
-
-from .tools import doPgJoin, doPgFormat
-from .helpers import is_none, is_optional, is_date_or_time
+from .helpers import is_date_or_time, is_none, is_optional
+from .tools import doPgFormat, doPgJoin
 
 
 def getMaybeId(
@@ -67,7 +64,6 @@ def getMaybeTableByKey(
     key: SK,
 ) -> Optional[Tuple[SK, S]]:
     key_parts = set(key.__dataclass_fields__.keys())
-    table_id_name = "_".join([table_name, "id"])
     conditions = [doPgJoin(" = ", [Identifier(k), Placeholder(k)]) for k in key_parts]
     stmt = doPgFormat(
         "select * from {0} where {1}",

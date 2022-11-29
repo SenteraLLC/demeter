@@ -1,11 +1,10 @@
-from typing import List, Tuple, Any, Type, TypeVar, Iterable
-from typing import cast
+from typing import Any, Iterable, List, Tuple, Type, TypeVar, cast
 
 from ... import data
-
 from .._types import ExecutionSummary, LocalArgument
 
 T = TypeVar("T")
+
 
 # TODO: Does this get nested annotations?
 def sqlToTypedDict(
@@ -60,7 +59,6 @@ def loadType(
     results: List[Tuple[data.LocalValue, data.UnitType]] = []
     for k in keys:
         partial_results = queryLocalByKey(cursor, k, local_type_id)
-
         results.extend(partial_results)
     return results
 
@@ -79,14 +77,13 @@ def loadLocalRaw(
         local_type_id = maybe_local_type_id
         results_for_type = loadType(cursor, keys, local_type_id)
 
-        l = LocalArgument(
+        o = LocalArgument(
             function_id=execution_summary.function_id,
             execution_id=execution_summary.execution_id,
             local_type_id=local_type_id,
             number_of_observations=len(results_for_type),
         )
-        execution_summary.inputs["local"].append(l)
-
+        execution_summary.inputs["local"].append(o)
         results.extend(results_for_type)
     return results
 

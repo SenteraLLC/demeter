@@ -1,11 +1,9 @@
-from typing import Optional, Dict, TypedDict, Union, Any, Callable
-from typing import cast
-
-from enum import Enum
-from io import BytesIO, BufferedIOBase, IOBase
-import uuid
 import os.path
 import tarfile
+import uuid
+from enum import Enum
+from io import BufferedIOBase, BytesIO, IOBase
+from typing import Any, Callable, Dict, Optional, TypedDict, Union, cast
 
 import geopandas as gpd  # type: ignore
 import pandas as pd

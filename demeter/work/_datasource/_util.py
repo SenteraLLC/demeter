@@ -1,8 +1,7 @@
-from typing import Dict, Optional, List, Any, Type, Union, Mapping, Callable
-
-from .._types import KeywordArgument
+from typing import Any, Callable, Dict, List, Mapping, Optional, Type, Union
 
 from ... import db
+from .._types import KeywordArgument
 
 
 def createKeywordArguments(

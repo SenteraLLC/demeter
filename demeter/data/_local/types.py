@@ -1,25 +1,23 @@
-from typing import TypedDict, Optional, Union, Dict, Literal, Tuple, Generator
+from typing import Optional
+
+from dataclasses import dataclass
 from datetime import date
 
 from ... import db
 
-from dataclasses import dataclass
-
 
 @dataclass(frozen=True)
 class LocalValue(db.Detailed):
-    geom_id: Optional[db.TableId]
     field_id: db.TableId
     unit_type_id: db.TableId
-    quantity: float
-    local_group_id: Optional[db.TableId]
     acquired: date
+    quantity: float
+    geom_id: Optional[db.TableId] = None
 
 
 @dataclass(frozen=True)
 class LocalType(db.TypeTable):
     type_name: str
-    type_category: Optional[str]
 
 
 @dataclass(frozen=True)
@@ -29,6 +27,7 @@ class UnitType(db.TypeTable):
 
 
 @dataclass(frozen=True)
-class LocalGroup(db.TypeTable):
-    group_name: str
-    group_category: Optional[str]
+class Act(db.Detailed):
+    field_id: db.TableId
+    local_type_id: db.TableId
+    performed: date

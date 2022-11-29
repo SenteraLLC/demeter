@@ -1,7 +1,4 @@
-from . import data
-from . import task
-from . import work
-from . import db
+from . import data, db, task, work
 
 __all__ = [
     "data",

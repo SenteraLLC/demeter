@@ -1,10 +1,8 @@
-from typing import Sequence, Union, Optional, List, Generator, TypeVar, Any
-
-from ... import db
-from ... import task
-
-from dataclasses import dataclass
 from collections import OrderedDict
+from dataclasses import dataclass
+from typing import Any, Generator, List, Optional, Sequence, TypeVar, Union
+
+from ... import db, task
 
 
 @dataclass(frozen=True, order=True)

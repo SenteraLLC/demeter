@@ -1,21 +1,16 @@
 from abc import ABC, abstractmethod
-
-from typing import Dict, Any, TypedDict, List, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 
 import pandas as pd
 
-from ... import db
-from ... import data
-from ... import task
-
+from ... import data, db, task
 from .._types import (
-    ExecutionSummary,
     ExecutionArguments,
-    ExecutionOutputs,
     ExecutionKey,
+    ExecutionOutputs,
+    ExecutionSummary,
 )
-
-from ._response import ResponseFunction, OneToOneResponseFunction, KeyToArgsFunction
+from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 from ._s3_file import SupportedS3DataType
 
 
@@ -32,7 +27,7 @@ class DataSourceBase(ABC):
         function_id: db.TableId,
         execution_id: db.TableId,
     ):
-        self.LOCAL = "__LOCAL"
+        self.OBSERVATION = "__OBSERVATION"
         self.GEOM = "__PRIMARY_GEOMETRY"
         self.types = DataSourceTypes(
             s3_type_ids={},

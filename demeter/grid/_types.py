@@ -1,13 +1,11 @@
-from typing import List, Tuple, Optional
-
-from dataclasses import dataclass, field
-from dataclasses import InitVar
+from dataclasses import InitVar, dataclass, field
 from datetime import datetime
-
-from demeter.db import Table, SelfKey, TableId, Detailed
-from demeter.data import Polygon, Geom
+from typing import List, Optional, Tuple
 
 from shapely.geometry import Polygon as Poly  # type: ignore
+
+from demeter.data import Geom, Polygon
+from demeter.db import Detailed, SelfKey, Table, TableId
 
 
 @dataclass(frozen=True)
@@ -23,7 +21,6 @@ class Node(Table):
             crs_name="urn:ogc:def:crs:EPSG::4326",
             type="Polygon",
             coordinates=(coords,),
-            container_geom_id=None,
         )
         object.__setattr__(self, "geom", g.geom)
 

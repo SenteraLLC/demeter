@@ -1,27 +1,29 @@
-from typing import Any, Callable, Optional, Sequence, Type, Union, Dict, Mapping
-from typing import cast
-
-from collections import OrderedDict
 from functools import partial, wraps
-
-from psycopg2 import sql
-from psycopg2.sql import SQL, Composed, Identifier, Placeholder
+from typing import (
+    Any,
+    Callable,
+    Optional,
+    Type,
+    TypeVar,
+    cast,
+)
 
 from .. import TableId
-from .._generic_types import ReturnKey, ReturnSameKey, ReturnId, GetId, GetTableByKey
-from .._generic_types import RTTI
-
-from .._union_types import AnyIdTable
+from .._generic_types import (
+    SK,
+    GetId,
+    GetTableByKey,
+    I,
+    ReturnId,
+    ReturnKey,
+    ReturnSameKey,
+    S,
+    T,
+)
 from .._lookup_types import TableLookup
-
-from .insert import insertAndReturnId, insertAndReturnKey, insertOrGetId, insertOrGetKey
+from .._union_types import AnyIdTable
 from .get import getMaybeId, getMaybeTable, getMaybeTableByKey
-
-from .tools import doPgJoin, doPgFormat
-
-from .._generic_types import I, S, SK, T
-
-from typing import Tuple, TypeVar
+from .insert import insertAndReturnId, insertAndReturnKey, insertOrGetId, insertOrGetKey
 
 C = TypeVar("C")
 

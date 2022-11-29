@@ -55,8 +55,8 @@ class Geom(db.Table):
 @dataclass(frozen=True)
 class Field(db.Detailed):
     geom_id: db.TableId
-    name : str
-    field_group_id : Optional[db.TableId] = None
+    name: str
+    field_group_id: Optional[db.TableId] = None
     created: Optional[datetime] = None
 
 

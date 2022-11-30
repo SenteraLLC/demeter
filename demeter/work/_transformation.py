@@ -39,7 +39,7 @@ from ._util.wrapper_types import OutputLoadFunction, WrappableFunction
 from ._util.wrapper_types import WrappedTransformation as WrappedTransformation
 
 # TODO: Function types limit function signatures, argument types
-#       Transformation (S3, HTTP, Local) -> (S3, Local)
+#       Transformation (S3, HTTP, Observation) -> (S3, Observation)
 
 
 def Transformation(

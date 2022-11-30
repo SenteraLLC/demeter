@@ -226,7 +226,6 @@ def searchFieldGroup(
     for r in results:
         _id = r["field_group_id"]
         f = FieldGroup(
-            field_group_id=r["field_group_id"],
             parent_field_group_id=r["parent_field_group_id"],
             name=r["name"],
             details=r["details"],

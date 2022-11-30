@@ -120,13 +120,13 @@ def writeS3FileToDisk(
 
 
 # Temporary location: not fully supported
-class LocalFile(object):
+class ObservationFile(object):
     def __init__(
         self,
         type_name: str,
         value: float,
-        local_group_id: Optional[int],
+        observation_group_id: Optional[int],
     ):
         self.type_name = type_name
         self.value = value
-        self.local_group_id = local_group_id
+        self.observation_group_id = observation_group_id

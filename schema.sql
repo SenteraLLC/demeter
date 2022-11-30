@@ -455,8 +455,9 @@ create table observation_value (
 );
 
 
-CREATE TRIGGER update_observation_last_updated BEFORE INSERT or UPDATE
+CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
 ON observation_value FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
 
 create table s3_object (

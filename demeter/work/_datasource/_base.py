@@ -16,7 +16,7 @@ from ._s3_file import SupportedS3DataType
 
 class DataSourceTypes(TypedDict):
     s3_type_ids: Dict[db.TableId, str]
-    local_type_ids: Dict[db.TableId, data.LocalType]
+    observation_type_ids: Dict[db.TableId, data.ObservationType]
     http_type_ids: Dict[db.TableId, str]
 
 
@@ -31,7 +31,7 @@ class DataSourceBase(ABC):
         self.GEOM = "__PRIMARY_GEOMETRY"
         self.types = DataSourceTypes(
             s3_type_ids={},
-            local_type_ids={},
+            observation_type_ids={},
             http_type_ids={},
         )
         self.cursor = cursor
@@ -40,7 +40,7 @@ class DataSourceBase(ABC):
             function_id=function_id,
             execution_id=execution_id,
             inputs=ExecutionArguments(
-                local=[],
+                observation=[],
                 keyword=[],
                 http=[],
                 s3=[],
@@ -72,25 +72,25 @@ class DataSourceBase(ABC):
         self._track_s3(type_name)
         return self._s3(type_name)
 
-    def _track_local(
+    def _track_observation(
         self,
-        local_types: List[data.LocalType],
+        observation_types: List[data.ObservationType],
     ) -> None:
-        for t in local_types:
-            maybe_local_type_id = data.getMaybeLocalTypeId(self.cursor, t)
-            if maybe_local_type_id is None:
-                raise Exception(f"Local Type does not exist: {t}")
+        for t in observation_types:
+            maybe_observation_type_id = data.getMaybeObservationTypeId(self.cursor, t)
+            if maybe_observation_type_id is None:
+                raise Exception(f"Observation Type does not exist: {t}")
             else:
-                local_type_id = maybe_local_type_id
-                self.types["local_type_ids"][local_type_id] = t
+                observation_type_id = maybe_observation_type_id
+                self.types["observation_type_ids"][observation_type_id] = t
 
     @abstractmethod
-    def _local(self, local_types: List[data.LocalType]) -> pd.DataFrame:
+    def _observation(self, observation_types: List[data.ObservationType]) -> pd.DataFrame:
         raise NotImplemented
 
-    def local(self, local_types: List[data.LocalType]) -> pd.DataFrame:
-        self._track_local(local_types)
-        return self._local(local_types)
+    def observation(self, observation_types: List[data.ObservationType]) -> pd.DataFrame:
+        self._track_observation(observation_types)
+        return self._observation(observation_types)
 
     def _track_http(
         self,

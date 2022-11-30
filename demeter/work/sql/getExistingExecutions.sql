@@ -1,11 +1,11 @@
-with local_arguments as (
+with observation_arguments as (
       select execution_id,
              coalesce(
                jsonb_agg(A),
                '[]'::jsonb
              ) as arguments
-      from local_argument A
-      join local_type T on T.local_type_id = A.local_type_id
+      from observation_argument A
+      join observation_type T on T.observation_type_id = A.observation_type_id
       where A.function_id = %(function_id)s
       group by A.execution_id
 
@@ -74,7 +74,7 @@ with local_arguments as (
 
     ) select K.execution_id,
              K.function_id,
-             jsonb_build_object('local',   coalesce(L.arguments, '[]'::jsonb),
+             jsonb_build_object('observation',   coalesce(O.arguments, '[]'::jsonb),
                                 'keyword', coalesce(KW.arguments, '[]'::jsonb),
                                 's3',      coalesce(S3I.arguments, '[]'::jsonb),
                                 'http',    coalesce(H.arguments, '[]'::jsonb),
@@ -82,10 +82,10 @@ with local_arguments as (
                                ) as inputs,
              jsonb_build_object('s3', S3O.outputs) as outputs
       from s3_outputs S3O
-      left join local_arguments L on S3O.execution_id = L.execution_id
+      left join observation_arguments O on S3O.execution_id = O.execution_id
       left join keyword_arguments KW on S3O.execution_id = KW.execution_id
       left join http_arguments H on S3O.execution_id = H.execution_id
       left join s3_arguments S3I on S3O.execution_id = S3I.execution_id
       join keys K on S3O.execution_id = K.execution_id
-      order by L.execution_id desc
+      order by O.execution_id desc
 

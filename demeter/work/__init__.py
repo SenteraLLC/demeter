@@ -16,7 +16,7 @@ from ._types import (
     ExecutionKey,
     HTTPArgument,
     KeywordArgument,
-    LocalArgument,
+    ObservationArgument,
     S3InputArgument,
     S3OutputArgument,
 )
@@ -24,7 +24,7 @@ from ._types import (
 insertExecution: ReturnId[Execution] = g.getInsertReturnIdFunction(Execution)
 insertExecutionKey = g.getInsertReturnSameKeyFunction(ExecutionKey)
 
-insertLocalArgument = g.getInsertReturnSameKeyFunction(LocalArgument)
+insertObservationArgument = g.getInsertReturnSameKeyFunction(ObservationArgument)
 insertHTTPArgument = g.getInsertReturnSameKeyFunction(HTTPArgument)
 insertKeywordArgument = g.getInsertReturnSameKeyFunction(KeywordArgument)
 insertS3InputArgument = g.getInsertReturnSameKeyFunction(S3InputArgument)
@@ -32,7 +32,7 @@ insertS3OutputArgument = g.getInsertReturnSameKeyFunction(S3OutputArgument)
 
 from ._datasource import (
     DataSource,
-    LocalFile,
+    ObservationFile,
     OneToManyResponseFunction,
     OneToOneResponseFunction,
     S3File,
@@ -44,7 +44,7 @@ from ._types import *
 __all__ = [
     "insertExecution",
     "insertExecutionKey",
-    "insertLocalArgument",
+    "insertObservationArgument",
     "insertHTTPArgument",
     "insertKeywordArgument",
     "insertS3InputArgument",
@@ -54,9 +54,9 @@ __all__ = [
     # datasource
     "DataSource",
     "S3File",
-    "LocalFile",
+    "ObservationFile",
     "Argument",
-    "LocalArgument",
+    "ObservationArgument",
     "HTTPArgument",
     "S3InputArgument",
     "S3OutputArgument",

@@ -9,7 +9,6 @@ from ._core.types import (
     GeomImpl,
     Geom,
     Field,
-    FieldGroup,
     CropType,
     CropStage,
     CropProgress,
@@ -21,6 +20,11 @@ from ._core.types import (
     Key,
     KeyIds,
     ReportType,
+)
+
+
+from ._core.field_group import (
+    FieldGroup,
 )
 
 
@@ -67,25 +71,25 @@ from ._core.field_group import (
     getFieldGroupFields,
 )
 
-from ._local.types import (
-    LocalValue,
-    LocalType,
+from ._observation.types import (
+    ObservationValue,
+    ObservationType,
     UnitType,
     Act,
 )
 
-from ._local.generated import (
+from ._observation.generated import (
     insertAct,
     insertOrGetAct,
     getMaybeActId,
-    insertLocalValue,
-    insertOrGetLocalValue,
-    getMaybeLocalValue,
-    getMaybeLocalValueId,
-    insertLocalType,
-    insertOrGetLocalType,
-    getMaybeLocalTypeId,
-    getLocalType,
+    insertObservationValue,
+    insertOrGetObservationValue,
+    getMaybeObservationValue,
+    getMaybeObservationValueId,
+    insertObservationType,
+    insertOrGetObservationType,
+    getMaybeObservationTypeId,
+    getObservationType,
     insertUnitType,
     insertOrGetUnitType,
     getMaybeUnitTypeId,
@@ -149,17 +153,17 @@ __all__ = (
     "ReportType",
     "insertReportType",
     "getMaybeReportTypeId",
-    # Locals
-    "LocalValue",
-    "insertLocalValue",
-    "insertOrGetLocalValue",
-    "getMaybeLocalValue",
-    "getMaybeLocalValueId",
-    "LocalType",
-    "insertLocalType",
-    "insertOrGetLocalType",
-    "getMaybeLocalTypeId",
-    "getLocalType",
+    # Observations
+    "ObservationValue",
+    "insertObservationValue",
+    "insertOrGetObservationValue",
+    "getMaybeObservationValue",
+    "getMaybeObservationValueId",
+    "ObservationType",
+    "insertObservationType",
+    "insertOrGetObservationType",
+    "getMaybeObservationTypeId",
+    "getObservationType",
     "UnitType",
     "insertUnitType",
     "insertOrGetUnitType",

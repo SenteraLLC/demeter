@@ -5,12 +5,15 @@ from .types import (
     CropType,
     CropStage,
     ReportType,
-    Geom,
     Field,
-    GeoSpatialKey,
-    TemporalKey,
     Planting,
     CropProgress,
+)
+
+from .st_types import (
+    GeoSpatialKey,
+    TemporalKey,
+    Geom,
 )
 
 from .field_group import FieldGroup
@@ -28,7 +31,6 @@ data_table_lookup: TableLookup = {
     GeoSpatialKey: "geospatial_key",
     TemporalKey: "temporal_key",
 }
-
 
 id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
 

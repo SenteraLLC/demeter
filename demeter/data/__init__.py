@@ -1,31 +1,32 @@
 from ._core.types import (
-    # TODO: Replace these with their library counterparts
-    Point,
-    Line,
-    Polygon,
-    MultiPolygon,
-    Coordinates,
-    CRS,
-    GeomImpl,
-    Geom,
     Field,
-    FieldGroup,
+    # FieldGroup,
     CropType,
     CropStage,
     CropProgress,
     CropProgressKey,
     Planting,
     PlantingKey,
+    ReportType,
+)
+
+from ._core.st_types import (
+    CRS,
+    LineString,
+    Point,
+    Polygon,
+    MultiLineString,
+    MultiPoint,
+    MultiPolygon,
+    GeometryCollection,
     GeoSpatialKey,
     TemporalKey,
     Key,
     KeyIds,
-    ReportType,
+    Geom,
 )
 
-
 from ._core.generated import (
-    getGeom,
     insertFieldGroup,
     insertOrGetFieldGroup,
     insertField,
@@ -44,19 +45,15 @@ from ._core.generated import (
     insertCropProgress,
     insertOrGetCropProgress,
     getCropProgress,
+    insertReportType,
+    getMaybeReportTypeId,
+    getGeom,
     insertGeoSpatialKey,
     insertOrGetGeoSpatialKey,
     getMaybeGeoSpatialKeyId,
     insertTemporalKey,
     insertOrGetTemporalKey,
     getMaybeTemporalKeyId,
-    insertReportType,
-    getMaybeReportTypeId,
-)
-
-from ._core.geom import (
-    getMaybeGeomId,
-    insertOrGetGeom,
 )
 
 from ._core.field_group import (
@@ -65,6 +62,11 @@ from ._core.field_group import (
     FieldGroupFields,
     searchFieldGroup,
     getFieldGroupFields,
+)
+
+from ._core.geom import (
+    getMaybeGeomId,
+    insertOrGetGeom,
 )
 
 from ._local.types import (
@@ -91,18 +93,9 @@ from ._local.generated import (
     getMaybeUnitTypeId,
 )
 
+
 __all__ = (
-    "Point",
-    "Line",
-    "Polygon",
-    "MultiPolygon",
-    "Coordinates",
-    "CRS",
-    "GeomImpl",
-    "Geom",
-    "getGeom",
-    "getMaybeGeomId",
-    "insertOrGetGeom",
+    # Core
     "FieldGroup",
     "insertFieldGroup",
     "insertOrGetFieldGroup",
@@ -136,19 +129,32 @@ __all__ = (
     "insertCropProgress",
     "insertOrGetCropProgress",
     "getCropProgress",
-    "Key",
-    "KeyIds",
-    "GeoSpatialKey",
-    "insertGeoSpatialKey",
-    "insertOrGetGeoSpatialKey",
-    "getMaybeGeoSpatialKeyId",
-    "TemporalKey",
-    "insertTemporalKey",
-    "insertOrGetTemporalKey",
-    "getMaybeTemporalKeyId",
     "ReportType",
     "insertReportType",
     "getMaybeReportTypeId",
+    # Core spatiotemporal
+    "CRS",
+    "LineString",
+    "Point",
+    "Polygon",
+    "MultiLineString",
+    "MultiPoint",
+    "MultiPolygon",
+    "GeometryCollection",
+    "GeoSpatialKey",
+    "TemporalKey",
+    "Key",
+    "KeyIds",
+    "Geom",
+    "insertGeoSpatialKey",
+    "insertOrGetGeoSpatialKey",
+    "getMaybeGeoSpatialKeyId",
+    "insertTemporalKey",
+    "insertOrGetTemporalKey",
+    "getMaybeTemporalKeyId",
+    "getGeom",
+    "getMaybeGeomId",
+    "insertOrGetGeom",
     # Locals
     "LocalValue",
     "insertLocalValue",

@@ -1,4 +1,4 @@
-from . import lookups as _lookups
+from .._core import lookups as _lookups
 
 from ...db._generic_types import GetId, GetTable, GetTableByKey, ReturnId
 from ...db import SQLGenerator
@@ -9,12 +9,15 @@ from .types import (
     CropStage,
     CropType,
     Field,
-    GeoSpatialKey,
-    TemporalKey,
-    Geom,
     Planting,
     PlantingKey,
     ReportType,
+)
+
+from .st_types import (
+    GeoSpatialKey,
+    TemporalKey,
+    Geom,
 )
 
 from .field_group import FieldGroup
@@ -29,22 +32,15 @@ g = SQLGenerator(
 
 getMaybeFieldGroupId = g.getMaybeIdFunction(FieldGroup)
 getMaybeFieldId = g.getMaybeIdFunction(Field)
-getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)
-getMaybeTemporalKeyId: GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeCropStageId: GetId[CropStage] = g.getMaybeIdFunction(CropStage)
 getMaybeReportTypeId: GetId[ReportType] = g.getMaybeIdFunction(ReportType)
 
 getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
 getField: GetTable[Field] = g.getTableFunction(Field)
-getGeom: GetTable[Geom] = g.getTableFunction(Geom)
 
 insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
-insertGeoSpatialKey: ReturnId[GeoSpatialKey] = g.getInsertReturnIdFunction(
-    GeoSpatialKey
-)
-insertTemporalKey: ReturnId[TemporalKey] = g.getInsertReturnIdFunction(TemporalKey)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 insertCropStage = g.getInsertReturnIdFunction(CropStage)
 insertReportType: ReturnId[ReportType] = g.getInsertReturnIdFunction(ReportType)
@@ -52,12 +48,6 @@ insertReportType: ReturnId[ReportType] = g.getInsertReturnIdFunction(ReportType)
 insertPlanting = g.getInsertReturnKeyFunction(Planting, PlantingKey)
 insertCropProgress = g.getInsertReturnKeyFunction(CropProgress, CropProgressKey)
 
-insertOrGetGeoSpatialKey = g.partialInsertOrGetId(
-    getMaybeGeoSpatialKeyId, insertGeoSpatialKey
-)
-insertOrGetTemporalKey = g.partialInsertOrGetId(
-    getMaybeTemporalKeyId, insertTemporalKey
-)
 insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
 insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
@@ -71,4 +61,22 @@ getCropProgress: GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKeyF
 insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
 insertOrGetCropProgress = g.partialInsertOrGetKey(
     CropProgressKey, getCropProgress, insertCropProgress
+)
+
+# spatiotemporal
+getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)
+getMaybeTemporalKeyId: GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey)
+
+getGeom: GetTable[Geom] = g.getTableFunction(Geom)
+
+insertGeoSpatialKey: ReturnId[GeoSpatialKey] = g.getInsertReturnIdFunction(
+    GeoSpatialKey
+)
+insertTemporalKey: ReturnId[TemporalKey] = g.getInsertReturnIdFunction(TemporalKey)
+
+insertOrGetGeoSpatialKey = g.partialInsertOrGetId(
+    getMaybeGeoSpatialKeyId, insertGeoSpatialKey
+)
+insertOrGetTemporalKey = g.partialInsertOrGetId(
+    getMaybeTemporalKeyId, insertTemporalKey
 )

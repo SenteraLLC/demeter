@@ -11,14 +11,6 @@ from ._core.types import (
 )
 
 from ._core.st_types import (
-    CRS,
-    LineString,
-    Point,
-    Polygon,
-    MultiLineString,
-    MultiPoint,
-    MultiPolygon,
-    GeometryCollection,
     GeoSpatialKey,
     TemporalKey,
     Key,
@@ -133,14 +125,6 @@ __all__ = (
     "insertReportType",
     "getMaybeReportTypeId",
     # Core spatiotemporal
-    "CRS",
-    "LineString",
-    "Point",
-    "Polygon",
-    "MultiLineString",
-    "MultiPoint",
-    "MultiPolygon",
-    "GeometryCollection",
     "GeoSpatialKey",
     "TemporalKey",
     "Key",

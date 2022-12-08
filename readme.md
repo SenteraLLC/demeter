@@ -79,9 +79,19 @@ psql --host localhost --port 5433 --user postgres postgres
 ### Method 2: Create your own database locally
 #### Step 1: [Download Postgres](https://www.postgresql.org/download/)
 #### Step 2: Initialize a Postgres database cluster on disk with `initdb`
+You will need to be logged into your "postgres" user first, which is demonstrated in the first line. 
+You will also need to create the folder '/usr/local/pgsql' and give ownership to the "postgres" user. 
+For example:
 ``` bash
-initdb -D /usr/local/pgsql/data
+sudo mkdir /usr/local/pgsql
+sudo chown postgres /usr/local/pgsql
 ```
+
+``` bash
+sudo -i -u postgres
+initdb -D /usr/local/pgsql/data
+``` 
+
 
 #### Step 3: Start the server process
 ``` bash
@@ -90,7 +100,7 @@ postgres -D /usr/local/pgsql/data
 
 #### Step 4: Connect to your new database
 ``` bash
-psql --host localhost --user my_username -f schema.sql postgres
+psql --host localhost --user postgres -f schema.sql postgres
 ```
 
 ## Demeter Background References

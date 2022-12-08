@@ -9,7 +9,6 @@ from ._core.types import (
     GeomImpl,
     Geom,
     Field,
-    FieldGroup,
     CropType,
     CropStage,
     CropProgress,
@@ -60,6 +59,7 @@ from ._core.geom import (
 )
 
 from ._core.field_group import (
+    FieldGroup,
     getFieldGroupAncestors,
     getOrgFields,
     FieldGroupFields,

@@ -29,6 +29,9 @@ END;
 $$ language 'plpgsql';
 
 -- Geometry Tables
+-- TODO: Enforce SRID like this:
+--  ALTER xxxx ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 28355)
+-- TODO: Table for geometries that get 'repaired' with their 'IsValidMessage' and 'IsValidDetails'
 
 create table geom (
   geom_id bigserial primary key,
@@ -37,17 +40,11 @@ create table geom (
   check (ST_IsValid(geom))
 );
 
--- TODO: Enforce SRID like this:
---  ALTER xxxx ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 28355)
-
--- TODO: Table for geometries that get 'repaired' with their 'IsValidMessage' and 'IsValidDetails'
-
 CREATE INDEX CONCURRENTLY geom_idx on geom using SPGIST(geom);
 
 CREATE TRIGGER update_geom_last_updated BEFORE UPDATE
 ON geom FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
-
 
 create function geom_must_be_unique() RETURNS trigger
   LANGUAGE plpgsql AS
@@ -71,19 +68,21 @@ create constraint trigger geom_must_be_unique
        for each row execute procedure geom_must_be_unique();
 
 
-create table parcel_group (
-  parcel_group_id bigserial primary key,
+-- FIELD GROUP
+
+create table field_group (
+  field_group_id bigserial primary key,
   -- TODO: Add cycle detection constraint
-  parent_parcel_group_id bigint
-                        references parcel_group(parcel_group_id),
-  unique (parcel_group_id, parent_parcel_group_id),
+  parent_field_group_id bigint
+                        references field_group(field_group_id),
+  unique (field_group_id, parent_field_group_id),
 
   name text,
 
   constraint roots_must_be_named check (
-    not (parent_parcel_group_id is null and name is null)
+    not (parent_field_group_id is null and name is null)
   ),
-  unique(parent_parcel_group_id, name),
+  unique(parent_field_group_id, name),
 
   details jsonb
           not null
@@ -93,26 +92,23 @@ create table parcel_group (
                 default now()
 );
 
-CREATE UNIQUE INDEX unique_name_for_null_roots_idx on parcel_group (name) where parent_parcel_group_id is null;
+CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;
 
-create table parcel (
-  parcel_id bigserial
+-- FIELD
+
+create table field (
+  field_id bigserial
            primary key,
 
   geom_id   bigint
             not null
             references geom(geom_id),
-  parcel_group_id bigint
-                  references parcel_group(parcel_group_id)
-);
-
-
-create table field (
-  field_id bigserial primary key,
-  parcel_id bigint
-            references parcel(parcel_id),
 
   name text,
+  external_id text,
+
+  field_group_id bigint
+                  references field_group(field_group_id),
 
   created  timestamp without time zone
               not null
@@ -125,6 +121,8 @@ create table field (
                 not null
                 default now()
 );
+
+-- CROP TYPE
 
 create table crop_type (
   crop_type_id bigserial
@@ -174,15 +172,18 @@ CREATE UNIQUE INDEX crop_variety_null_unique_idx
 alter table crop_type add constraint fk_parent1_crop_type foreign key (parent_id_1) references crop_type(crop_type_id);
 alter table crop_type add constraint fk_parent2_crop_type foreign key (parent_id_2) references crop_type(crop_type_id);
 
+-- LOCAL TYPE
 
-create table observation_type (
-  observation_type_id bigserial primary key,
+create table local_type (
+  local_type_id bigserial primary key,
   type_name     text unique not null
 );
-ALTER TABLE observation_type
-  ADD CONSTRAINT observation_type_lowercase_ck
+ALTER TABLE local_type
+  ADD CONSTRAINT local_type_lowercase_ck
   CHECK (type_name = lower(type_name));
 
+
+-- PLANTING
 
 create table planting (
   crop_type_id  bigint
@@ -192,8 +193,8 @@ create table planting (
   planted       timestamp without time zone not null,
   primary key(crop_type_id, field_id, planted),
 
-  observation_type_id bigint
-                      references observation_type(observation_type_id),
+  local_type_id bigint
+                      references local_type(local_type_id),
 
   last_updated  timestamp without time zone
                 not null
@@ -207,6 +208,7 @@ CREATE TRIGGER update_planting_last_updated BEFORE UPDATE
 ON planting FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
+-- HARVEST
 
 create table harvest (
   crop_type_id  bigint
@@ -217,10 +219,10 @@ create table harvest (
 
   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
 
-  observation_type_id bigint
-                      references observation_type(observation_type_id),
+  local_type_id bigint
+                      references local_type(local_type_id),
 
-  primary key (crop_type_id, field_id, planted, observation_type_id),
+  primary key (crop_type_id, field_id, planted, local_type_id),
 
   last_updated  timestamp without time zone
                 not null
@@ -234,6 +236,7 @@ CREATE TRIGGER update_harvest_last_updated BEFORE UPDATE
 ON planting FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
+-- CROP STAGE
 
 create table crop_stage (
   crop_stage_id bigserial primary key,
@@ -247,8 +250,8 @@ create table crop_progress (
   field_id      bigint references field(field_id) not null,
   planted timestamp without time zone not null,
 
-  observation_type_id bigint
-                      references observation_type(observation_type_id),
+  local_type_id bigint
+                      references local_type(local_type_id),
 
   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
 
@@ -257,48 +260,21 @@ create table crop_progress (
   primary key (crop_type_id, field_id, planted, crop_stage_id)
 );
 
-
-create table operation (
-  operation_id bigserial primary key,
-
-  parcel_id    bigint
-               not null
-               references parcel(parcel_id),
-  observation_type_id bigint
-                      references observation_type(observation_type_id),
-  unique (parcel_id, observation_type_id),
-
-  last_updated  timestamp without time zone
-                not null
-                default now(),
-
-  details       jsonb
-                not null
-                default '{}'::jsonb
-);
-
-
-CREATE TRIGGER update_operation_last_updated BEFORE UPDATE
-ON operation FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
-
-
 -----------------
 -- Type Tables --
 -----------------
 
 -- Raw Input Types
 
-
 create table unit_type (
   unit_type_id   bigserial
                  primary key,
-  observation_type_id  bigint
+  local_type_id  bigint
                  not null
-                 references observation_type(observation_type_id),
+                 references local_type(local_type_id),
   unit           text
                  not null,
-  unique (observation_type_id, unit)
+  unique (local_type_id, unit)
 );
 ALTER TABLE unit_type
   ADD CONSTRAINT unit_type_start_end_w_alphanumeric_ck
@@ -325,7 +301,6 @@ create table s3_type_dataframe (
   driver       text not null,
   has_geometry boolean not null
 );
-
 
 
 -- HTTP Input Type
@@ -410,8 +385,8 @@ create table geospatial_key (
   geom_id    bigint
              not null
              references geom(geom_id),
-  parcel_id   bigint
-             references parcel(parcel_id)
+  field_id   bigint
+             references field(field_id)
 );
 
 
@@ -425,13 +400,13 @@ create table temporal_key (
 );
 
 
-create table observation_value (
-  observation_value_id bigserial
+create table local_value (
+  local_value_id bigserial
                  primary key,
 
-  parcel_id      bigint
+  field_id      bigint
                  not null
-                 references parcel(parcel_id),
+                 references field(field_id),
   unit_type_id   bigint
                  references unit_type(unit_type_id)
                  not null,
@@ -455,9 +430,41 @@ create table observation_value (
 );
 
 
-CREATE TRIGGER update_observation_last_updated BEFORE INSERT or UPDATE
-ON observation_value FOR EACH ROW EXECUTE PROCEDURE
+CREATE TRIGGER update_local_last_updated BEFORE INSERT or UPDATE
+ON local_value FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
+-- ACT
+
+create table act (
+  act_id         bigserial primary key, 
+  field_id       bigint 
+                  not null
+                  references field(field_id),
+
+  name           text not null,
+
+  crop_type_id   bigint 
+                  references crop_type(crop_type_id),
+
+  local_value_id bigint
+                  references local_value(local_value_id),
+  unique (field_id, local_value_id), 
+
+  performed      timestamp without time zone
+                  not null 
+                  default now(),
+
+  details        jsonb
+                  not null
+                  default '{}'::jsonb
+);
+
+CREATE TRIGGER update_act_last_updated BEFORE UPDATE
+ON act FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
+-- S3 OBJECT
 
 create table s3_object (
   s3_object_id bigserial primary key,
@@ -487,15 +494,15 @@ create table s3_object_key (
 -- Parameter Tables --
 ----------------------
 
-create table observation_parameter (
+create table local_parameter (
   function_id        bigint
                      references function(function_id),
 
-  observation_type_id      bigserial
+  local_type_id      bigserial
                      not null
-                     references observation_type(observation_type_id),
+                     references local_type(local_type_id),
 
-  primary key(function_id, observation_type_id)
+  primary key(function_id, local_type_id)
 
 );
 
@@ -580,7 +587,7 @@ create table execution_key (
 );
 
 
-create table observation_argument (
+create table local_argument (
   execution_id  bigint
                 not null
                 references execution(execution_id),
@@ -588,13 +595,13 @@ create table observation_argument (
   function_id   bigint
                 not null
                 references function(function_id),
-  observation_type_id bigserial
+  local_type_id bigserial
                 not null
-                references observation_type(observation_type_id),
-  foreign key (function_id, observation_type_id)
-    references observation_parameter(function_id, observation_type_id),
+                references local_type(local_type_id),
+  foreign key (function_id, local_type_id)
+    references local_parameter(function_id, local_type_id),
 
-  primary key (execution_id, function_id, observation_type_id),
+  primary key (execution_id, function_id, local_type_id),
 
   -- TODO: Is this heuristic good enough?
   number_of_observations bigint
@@ -750,8 +757,8 @@ create table root (
   root_node_id bigint
                references node(node_id)
                not null,
-  observation_type_id bigint
-                references observation_type(observation_type_id)
+  local_type_id bigint
+                references local_type(local_type_id)
                 not null,
 
   time          timestamp without time zone

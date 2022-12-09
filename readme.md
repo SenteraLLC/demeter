@@ -98,9 +98,27 @@ initdb -D /usr/local/pgsql/data
 postgres -D /usr/local/pgsql/data
 ```
 
-#### Step 4: Connect to your new database
+#### Step 4: Initialize the database schema
 ``` bash
 psql --host localhost --user postgres -f schema.sql postgres
+```
+
+#### Step 5: Connect to the database
+You can do this in one of the following ways:
+1. PGAdmin
+2. Python/Jupyter notebook: See code below.
+
+Be sure to add appropriate credentials to your .env file. You will need to set the following variables:
+DEMETER_PG_HOST=localhost
+DEMETER_PG_DATABASE=postgres
+DEMETER_PG_OPTIONS=-c search_path=test_mlops,public
+DEMETER_PG_USER=postgres
+DEMETER_PG_PASSWORD
+DEMETER_PG_PORT=5432
+
+``` python
+from demeter.db import getConnection
+c = getConnection()
 ```
 
 ## Demeter Background References

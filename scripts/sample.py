@@ -4,23 +4,32 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Core Types
-from demeter.data import Field, Geom, MultiPolygon, Point, FieldGroup, PlantingKey, Planting, Harvest, CropType
+from demeter.data import (
+    Field,
+    Geom,
+    MultiPolygon,
+    Point,
+    FieldGroup,
+    Planting,
+    Harvest,
+    CropType,
+)
 from demeter.data import (
     insertOrGetField,
     insertOrGetGeom,
-    insertOrGetCropType, 
+    insertOrGetCropType,
     insertOrGetPlanting,
     insertOrGetHarvest,
 )
 
 # Observation Types
-from demeter.data import UnitType, LocalType, LocalValue, Act
+from demeter.data import UnitType, LocalType, LocalValue
 
 # , FieldGroup
 from demeter.data import (
     insertOrGetUnitType,
     insertOrGetFieldGroup,
-    insertOrGetLocalType, 
+    insertOrGetLocalType,
     insertOrGetLocalValue,
 )
 from demeter.db import getConnection
@@ -76,29 +85,29 @@ print(f"Field Geom id: {field_geom_id}")
 
 field = Field(
     geom_id=field_geom_id,
-    name = 'Test field',
+    name="Test field",
     field_group_id=argentina_group_id,
 )
 field_id = insertOrGetField(cursor, field)
 
-# %% 
-crop_type = CropType(species = "barley")
+# %%
+crop_type = CropType(species="barley")
 crop_type_id = insertOrGetCropType(cursor, crop_type)
 
 field_planting = Planting(
-    crop_type_id = crop_type_id, 
-    field_id = field_id, 
-    planted = datetime(2022,6,1),
+    crop_type_id=crop_type_id,
+    field_id=field_id,
+    planted=datetime(2022, 6, 1),
 )
 
 planting_key = insertOrGetPlanting(cursor, field_planting)
 
 # %%
-field_harvest = Harvest(    crop_type_id = crop_type_id, 
-    field_id = field_id, 
-    planted = datetime(2022,6,1))
+field_harvest = Harvest(
+    crop_type_id=crop_type_id, field_id=field_id, planted=datetime(2022, 6, 1)
+)
 
-harvest_id = insertOrGetHarvest(cursor, field_harvest) 
+harvest_id = insertOrGetHarvest(cursor, field_harvest)
 
 # %%
 irrigation_type = LocalType(
@@ -134,10 +143,10 @@ print(f"Observation value id: {observation_value_id}")
 
 
 # %%
-    # NOTE SQL transaction intentionally left uncommitted
+# NOTE SQL transaction intentionally left uncommitted
 c.commit()
-    # If you uncomment this, the script is no longer idempotent.
-    #  That is, any function 'insertFoo' will throw integrity errors when run a second time.
-    #  This can be remedied by swapping them with their 'insertOrGetFoo' counterparts
+# If you uncomment this, the script is no longer idempotent.
+#  That is, any function 'insertFoo' will throw integrity errors when run a second time.
+#  This can be remedied by swapping them with their 'insertOrGetFoo' counterparts
 
 # %%

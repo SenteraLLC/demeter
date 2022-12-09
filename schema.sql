@@ -6,19 +6,19 @@
 
 -- Database Setup
 
-drop schema if exists test_mlops cascade;
-create schema test_mlops;
-set schema 'test_mlops';
+drop schema if exists dem_local cascade;
+create schema dem_local;
+set schema 'dem_local';
 
 create extension postgis with schema public;
 create extension postgis_raster with schema public;
 -- TODO: Fix this extension
 -- create extension "postgres-json-schema" with schema public;
 
-set search_path = test_mlops, public;
+set search_path = dem_local, public;
 create role read_and_write;
-grant select, insert on all tables in schema test_mlops to read_and_write;
-grant usage on schema test_mlops to read_and_write;
+grant select, insert on all tables in schema dem_local to read_and_write;
+grant usage on schema dem_local to read_and_write;
 
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$
@@ -32,7 +32,6 @@ $$ language 'plpgsql';
 
 create table geom (
   geom_id bigserial primary key,
-
   geom geometry(Geometry, 4326) not null,
   check (ST_IsValid(geom))
 );

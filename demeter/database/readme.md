@@ -2,7 +2,7 @@
 
 ## Connect to WSL's PostgreSQL via both WSL and Windows
 
-#### Step 1: Install PostgreSQL 14 (in WSL)
+### Step 1: Install PostgreSQL 14 (in WSL)
 
 In WSL terminal:
 
@@ -13,7 +13,7 @@ sudo service postgresql status
 sudo service postgresql start
 ```
 
-#### Step 2: Edit Postgres Config Files (in WSL)
+### Step 2: Edit Postgres Config Files (in WSL)
 Each of these changes ensures that the Postgres installation on WSL2 is accessibel to Windows.
 
 **postgresql.conf**
@@ -23,7 +23,8 @@ sudo nano /etc/postgresql/14/main/postgresql.conf
 ```
 
 Confirm that the following line is uncommented:
-postgresql.conf
+
+`postgresql.conf`
 ```bash
 listen_addresses = '*'
 ```
@@ -36,7 +37,7 @@ sudo nano /etc/postgresql/14/main/pg_hba.conf
 
 Add the following to the bottom of the `pg_hba.conf` file ([as described here](https://www.cybertec-postgresql.com/en/postgresql-on-wsl2-for-windows-install-and-setup/)).
 
-pg_hba.conf
+`pg_hba.conf`
 ```bash
 host    all             all              0.0.0.0/0                       scram-sha-256
 host    all             all              ::/0                            scram-sha-256
@@ -47,9 +48,9 @@ host    all             all              ::/0                            scram-s
 sudo service postgresql restart
 ```
 
-#### Step 3: Set `postgres` user's password (in WSL)
+### Step 3: Set `postgres` user's password (in WSL)
 
-Login via `psql`:
+Login to `psql` with superuser access:
 ```bash
 sudo -u postgres psql
 ```
@@ -68,7 +69,7 @@ Exit the `psql` client using the `\q` command:
 postgres=# \q
 ```
 
-#### Step 4: Get WSL hostname/IP address (in either WSL or Windows)
+### Step 4: Get WSL hostname/IP address (in either WSL or Windows)
 
 From WSL:
 ```bash
@@ -82,7 +83,7 @@ PS C:\Users\Tyler> wsl -- hostname -I
 172.27.90.212
 ```
 
-#### Step 5: Connect to WSL's Postgres
+### Step 5: Connect to WSL's Postgres
 
 When prompted, enter the password you just created for the `postgres` user in Step 3.
 
@@ -104,4 +105,4 @@ Connect via Windows PGAdmin:
   - Port: `5432`
   - Username: `postgres`
   - Password: `<your_password>`
-- Save!
+- Save and use!

@@ -6,19 +6,19 @@
 
 -- Database Setup
 
-drop schema if exists dem_local cascade;
-create schema dem_local;
-set schema 'dem_local';
+drop schema if exists dem_test cascade;
+create schema dem_test;
+set schema 'dem_test';
 
 create extension postgis with schema public;
 create extension postgis_raster with schema public;
 -- TODO: Fix this extension
 -- create extension "postgres-json-schema" with schema public;
 
-set search_path = dem_local, public;
+set search_path = dem_test, public;
 create role read_and_write;
-grant select, insert on all tables in schema dem_local to read_and_write;
-grant usage on schema dem_local to read_and_write;
+grant select, insert on all tables in schema dem_test to read_and_write;
+grant usage on schema dem_test to read_and_write;
 
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$
@@ -436,22 +436,22 @@ update_last_updated_column();
 -- ACT
 
 create table act (
-  act_id         bigserial primary key, 
-  field_id       bigint 
+  act_id         bigserial primary key,
+  field_id       bigint
                   not null
                   references field(field_id),
 
   name           text not null,
 
-  crop_type_id   bigint 
+  crop_type_id   bigint
                   references crop_type(crop_type_id),
 
   local_value_id bigint
                   references local_value(local_value_id),
-  unique (field_id, local_value_id), 
+  unique (field_id, local_value_id),
 
   performed      timestamp without time zone
-                  not null 
+                  not null
                   default now(),
 
   details        jsonb

@@ -79,8 +79,8 @@ psql --host localhost --port 5433 --user postgres postgres
 ### Method 2: Create your own database locally
 #### Step 1: [Download Postgres](https://www.postgresql.org/download/)
 #### Step 2: Initialize a Postgres database cluster on disk with `initdb`
-You will need to be logged into your "postgres" user first, which is demonstrated in the first line. 
-You will also need to create the folder '/usr/local/pgsql' and give ownership to the "postgres" user. 
+You will need to be logged into your "postgres" user first, which is demonstrated in the first line.
+You will also need to create the folder '/usr/local/pgsql' and give ownership to the "postgres" user.
 For example:
 ``` bash
 sudo mkdir /usr/local/pgsql
@@ -90,7 +90,7 @@ sudo chown postgres /usr/local/pgsql
 ``` bash
 sudo -i -u postgres
 initdb -D /usr/local/pgsql/data
-``` 
+```
 
 
 #### Step 3: Start the server process

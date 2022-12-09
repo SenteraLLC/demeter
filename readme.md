@@ -79,18 +79,46 @@ psql --host localhost --port 5433 --user postgres postgres
 ### Method 2: Create your own database locally
 #### Step 1: [Download Postgres](https://www.postgresql.org/download/)
 #### Step 2: Initialize a Postgres database cluster on disk with `initdb`
+You will need to be logged into your "postgres" user first, which is demonstrated in the first line. 
+You will also need to create the folder '/usr/local/pgsql' and give ownership to the "postgres" user. 
+For example:
 ``` bash
-initdb -D /usr/local/pgsql/data
+sudo mkdir /usr/local/pgsql
+sudo chown postgres /usr/local/pgsql
 ```
+
+``` bash
+sudo -i -u postgres
+initdb -D /usr/local/pgsql/data
+``` 
+
 
 #### Step 3: Start the server process
 ``` bash
 postgres -D /usr/local/pgsql/data
 ```
 
-#### Step 4: Connect to your new database
+#### Step 4: Initialize the database schema
 ``` bash
-psql --host localhost --user my_username -f schema.sql postgres
+psql --host localhost --user postgres -f schema.sql postgres
+```
+
+#### Step 5: Connect to the database
+You can do this in one of the following ways:
+1. PGAdmin
+2. Python/Jupyter notebook: See code below.
+
+Be sure to add appropriate credentials to your .env file. You will need to set the following variables:
+DEMETER_PG_HOST=localhost
+DEMETER_PG_DATABASE=postgres
+DEMETER_PG_OPTIONS=-c search_path=test_mlops,public
+DEMETER_PG_USER=postgres
+DEMETER_PG_PASSWORD
+DEMETER_PG_PORT=5432
+
+``` python
+from demeter.db import getConnection
+c = getConnection()
 ```
 
 ## Demeter Background References

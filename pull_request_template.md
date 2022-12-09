@@ -14,4 +14,5 @@ Goal: guide the reviewer through the code
 - [ ] Updated version number
 - [ ] Version numbers match between package `_version.py` and `pyproject.toml`
 - [ ] Ran `poetry update` and committed `pyproject.toml` and `poetry.lock`
+- [ ] Initialized new local version of database and tested `sample.py`
 ## Breaking Changes

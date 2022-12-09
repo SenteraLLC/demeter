@@ -9,6 +9,7 @@ from .types import (
     GeoSpatialKey,
     TemporalKey,
     Planting,
+    Harvest,
     CropProgress,
     Key,
 )
@@ -21,6 +22,6 @@ AnyDataTable = Union[Geom, Field, FieldGroup, GeoSpatialKey, TemporalKey, Key]
 
 AnyTypeTable = Union[CropType, CropStage, ReportType]
 
-AnyKeyTable = Union[Planting, CropProgress]
+AnyKeyTable = Union[Planting, Harvest, CropProgress]
 
 AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]

@@ -7,6 +7,7 @@ from ._core.types import (
     CropProgressKey,
     Planting,
     PlantingKey,
+    Harvest,
     ReportType,
 )
 
@@ -19,7 +20,7 @@ from ._core.st_types import (
 )
 
 from ._core.generated import (
-    insertFieldGroup,
+    # insertFieldGroup,
     insertOrGetFieldGroup,
     # insertField,
     insertOrGetField,
@@ -28,6 +29,9 @@ from ._core.generated import (
     getPlanting,
     # insertPlanting,
     insertOrGetPlanting,
+    getHarvest,
+    # insertHarvest,
+    insertOrGetHarvest,
     # insertCropType,
     insertOrGetCropType,
     getMaybeCropTypeId,
@@ -49,6 +53,7 @@ from ._core.generated import (
 )
 
 from ._core.field_group import (
+    FieldGroup,
     getFieldGroupAncestors,
     getOrgFields,
     FieldGroupFields,
@@ -102,12 +107,15 @@ __all__ = (
     "FieldGroupFields",
     "searchFieldGroup",
     "getFieldGroupFields",
-    "insertFieldGroup",
     "Planting",
     "PlantingKey",
     "getPlanting",
     # "insertPlanting",
     "insertOrGetPlanting",
+    "Harvest",
+    "getHarvest",
+    # "insertHarvest",
+    "insertOrGetHarvest",
     "CropType",
     # "insertCropType",
     "insertOrGetCropType",

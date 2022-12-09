@@ -11,6 +11,7 @@ from .types import (
     Field,
     Planting,
     PlantingKey,
+    Harvest,
     ReportType,
 )
 
@@ -46,6 +47,7 @@ insertCropStage = g.getInsertReturnIdFunction(CropStage)
 insertReportType: ReturnId[ReportType] = g.getInsertReturnIdFunction(ReportType)
 
 insertPlanting = g.getInsertReturnKeyFunction(Planting, PlantingKey)
+insertHarvest = g.getInsertReturnKeyFunction(Harvest, PlantingKey)
 insertCropProgress = g.getInsertReturnKeyFunction(CropProgress, CropProgressKey)
 
 insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
@@ -54,11 +56,13 @@ insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
 
 getPlanting = g.getTableByKeyFunction(Planting, PlantingKey)
+getHarvest = g.getTableByKeyFunction(Harvest, PlantingKey)
 getCropProgress: GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKeyFunction(
     CropProgress, CropProgressKey
 )
 
 insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
+insertOrGetHarvest = g.partialInsertOrGetKey(PlantingKey, getHarvest, insertHarvest)
 insertOrGetCropProgress = g.partialInsertOrGetKey(
     CropProgressKey, getCropProgress, insertCropProgress
 )

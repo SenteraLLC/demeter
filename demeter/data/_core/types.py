@@ -16,7 +16,7 @@ class Field(db.Detailed):
 @dataclass(frozen=True)
 class CropType(db.TypeTable, db.Detailed):
     species: str
-    cultivar: Optional[str]
+    cultivar: Optional[str] = None
     parent_id_1: Optional[db.TableId] = None
     parent_id_2: Optional[db.TableId] = None
 
@@ -35,12 +35,12 @@ class PlantingKey(db.TableKey):
 
 @dataclass(frozen=True)
 class Planting(PlantingKey, db.Detailed):
-    local_type_id: Optional[db.TableId]
+    local_type_id: Optional[db.TableId] = None
 
 
 @dataclass(frozen=True)
 class Harvest(PlantingKey, db.Detailed):
-    local_type_id: Optional[db.TableId]
+    local_type_id: Optional[db.TableId] = None
 
 
 @dataclass(frozen=True)

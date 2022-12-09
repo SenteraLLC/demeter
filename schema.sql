@@ -194,7 +194,7 @@ create table planting (
   primary key(crop_type_id, field_id, planted),
 
   local_type_id bigint
-                      references local_type(local_type_id),
+                references local_type(local_type_id),
 
   last_updated  timestamp without time zone
                 not null
@@ -220,9 +220,9 @@ create table harvest (
   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
 
   local_type_id bigint
-                      references local_type(local_type_id),
+                references local_type(local_type_id),
 
-  primary key (crop_type_id, field_id, planted, local_type_id),
+  primary key (crop_type_id, field_id, planted),
 
   last_updated  timestamp without time zone
                 not null

@@ -4,14 +4,17 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Core Types
-from demeter.data import Field, Geom, MultiPolygon, Point, FieldGroup
+from demeter.data import Field, Geom, MultiPolygon, Point, FieldGroup, PlantingKey, Planting, Harvest, CropType
 from demeter.data import (
     insertOrGetField,
     insertOrGetGeom,
+    insertOrGetCropType, 
+    insertOrGetPlanting,
+    insertOrGetHarvest,
 )
 
 # Observation Types
-from demeter.data import UnitType, LocalType, LocalValue
+from demeter.data import UnitType, LocalType, LocalValue, Act
 
 # , FieldGroup
 from demeter.data import (
@@ -78,6 +81,26 @@ field = Field(
 )
 field_id = insertOrGetField(cursor, field)
 
+# %% 
+crop_type = CropType(species = "barley")
+crop_type_id = insertOrGetCropType(cursor, crop_type)
+
+field_planting = Planting(
+    crop_type_id = crop_type_id, 
+    field_id = field_id, 
+    planted = datetime(2022,6,1),
+)
+
+planting_key = insertOrGetPlanting(cursor, field_planting)
+
+# %%
+field_harvest = Harvest(    crop_type_id = crop_type_id, 
+    field_id = field_id, 
+    planted = datetime(2022,6,1))
+
+harvest_id = insertOrGetHarvest(cursor, field_harvest) 
+
+# %%
 irrigation_type = LocalType(
     type_name="my_irrigation_type",
 )
@@ -88,6 +111,7 @@ gallons_unit = UnitType(unit="gallons", local_type_id=irrigation_type_id)
 gallons_unit_id = insertOrGetUnitType(cursor, gallons_unit)
 print(f"Gallons type id: {gallons_unit_id}")
 
+# %%
 obs: Point = (-63.4545335800795, -35.59686410451283)
 obs_geom = Geom(
     type="Polygon",
@@ -108,6 +132,8 @@ o = LocalValue(
 observation_value_id = insertOrGetLocalValue(cursor, o)
 print(f"Observation value id: {observation_value_id}")
 
+
+# %%
     # NOTE SQL transaction intentionally left uncommitted
 c.commit()
     # If you uncomment this, the script is no longer idempotent.

@@ -8,6 +8,9 @@ In WSL terminal:
 
 ```bash
 sudo apt-get update
+```
+
+```bash
 sudo apt-get -y install postgresql-14
 sudo service postgresql status
 sudo service postgresql start
@@ -56,7 +59,7 @@ sudo -u postgres psql
 ```
 
 Change password:
-```bash
+```sql
 postgres=# ALTER USER postgres PASSWORD 'your_password';
 ALTER ROLE
 ```
@@ -65,7 +68,7 @@ If successful, Postgres will output a confirmation of ALTER ROLE as seen above.
 
 Exit the `psql` client using the `\q` command:
 
-```bash
+```sql
 postgres=# \q
 ```
 
@@ -106,3 +109,45 @@ Connect via Windows PGAdmin:
   - Username: `postgres`
   - Password: `<your_password>`
 - Save and use!
+
+
+### Step 6: Install PostGIS
+Upgrade apt (a reboot is ncessary after an upgrade)
+```bash
+sudo apt update
+sudo apt -y upgrade
+sudo reboot
+```
+
+Install PostGIS
+```bash
+sudo apt install postgis postgresql-14-postgis-3
+```
+
+#### Connect to a test database to ensure PostGIS successfully installed.
+First, create a new test database
+```bash
+sudo -u postgres psql -c 'CREATE DATABASE postgis_test;'
+```
+
+Connect to the new test database via `psql`:
+```bash
+# sudo -u postgres psql
+# psql -d postgis_test
+psql -h localhost -U postgres -d postgis_test
+```
+
+Create the PostGIS extention in the database
+```sql
+postgres=# CREATE EXTENSION postgis;
+CREATE EXTENSION
+```
+
+Finally, verify it's working
+```sql
+postgres=# SELECT PostGIS_version();
+            postgis_version
+---------------------------------------
+ 3.3 USE_GEOS=1 USE_PROJ=1 USE_STATS=1
+(1 row)
+```

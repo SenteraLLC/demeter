@@ -1,6 +1,8 @@
 # demeter
 
-The database schema for agronomic modeling and supporting data science activities.
+The database schema and API that supports agronomic modeling and data science activities.
+
+> See [README_db_setup](https://github.com/SenteraLLC/demeter/blob/main/README_db_setup.md) and [README_wsl](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md) for further information about how to set up PostgreSQL and PostGIS (a prerequisite to use `demeter`).
 
 ## Setup and Installation (for development)
 1) [Set up SSH](https://github.com/SenteraLLC/install-instructions/blob/master/ssh_setup.md)
@@ -31,108 +33,26 @@ demeter = { git = "ssh://git@github.com/SenteraLLC/demeter.git", branch = "main"
 
 Install `demeter` and all its dependencies via `poetry install`.
 
-``` console
+``` bash
 poetry install
 ```
 
 ## Requirements
 - Python `3.10.4`+
 - Access to a Postgres database (with connection credentials)
-- A local installation of PostgresQL
+- A local installation of PostgreSQL (i.e., `psql`)
 - OSX Users may need to manually install the 'gdal' system requirement (e.g. brew install gdal)
 
-## Configure `.env` file
-Your `.env` file holds the credentials necessary to connect to the desired Postgres server (see [python-dotenv](https://github.com/theskumar/python-dotenv) for more information). It should never be committed to Github (i.e., should be part of the `.gitignore`). See [`.env.template`](https://github.com/SenteraLLC/demeter/blob/main/.env.template) for an example, and ask @Joel-Larson or @tnigon if you have questions about credentials.
+## Demeter Data Types
+See these Confluence pages for some background on data types and tables that the `demeter` database uses:
+- [Demeter Data Types](https://sentera.atlassian.net/wiki/spaces/GML/pages/3172270107/Demeter+Data+Types)
+- [Demeter Schema (for v1.2.0)](https://sentera.atlassian.net/wiki/spaces/GML/pages/3198156837/Proposed+Demeter+Schema+v1.2.0+ABI)
 
-**Environment Variables**
-- `DEMETER_PG_HOST`
-- `DEMETER_PG_DATABASE`
-- `DEMETER_PG_OPTIONS`
-- `DEMETER_PG_USER`
-- `DEMETER_PG_PORT` (optional)
-- `DEMETER_PG_PASSWORD` (optional)
+## Tests
+**scripts/sample.py**
+```bash
+$ poetry run python scripts/sample.py
 
-
-## Postgres Server Setup
-If you haven't done so already, add an `.env` file at the project root with connection credentials.
-
-### Method 1: Use an existing database
-
-#### Step 1: Connect to an SSH Tunnel
-**IMPORTANT**: Your account on the bastion machine exists only to hold the public portion of your cryptographic key(s). See [Connecting to a Database (safely)](https://sentera.atlassian.net/wiki/spaces/GML/pages/3173416965/Connecting+to+a+Database+safely#The-General-Problem) for more information.
-
-``` bash
-ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:<DEMETER_PG_PORT>:<DATABASE_NAME>:<SSH_PORT><AWS_ANALYTICS_BASTION_USERNAME>@<SSH_HOST>
-```
-
-**For example**:
-
-``` bash
-ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 myname@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com
-```
-
-#### Step 2: Test your database connection
-``` bash
-psql --host localhost --port 5433 --user postgres postgres
-```
-
-### Method 2: Create your own database locally
-#### Step 1: [Download Postgres](https://www.postgresql.org/download/)
-#### Step 2: Initialize a Postgres database cluster on disk with `initdb`
-You will need to be logged into your "postgres" user first, which is demonstrated in the first line.
-You will also need to create the folder '/usr/local/pgsql' and give ownership to the "postgres" user.
-For example:
-``` bash
-sudo mkdir /usr/local/pgsql
-sudo chown postgres /usr/local/pgsql
-```
-
-``` bash
-sudo -i -u postgres
-initdb -D /usr/local/pgsql/data
-```
-
-
-#### Step 3: Start the server process
-``` bash
-postgres -D /usr/local/pgsql/data
-```
-
-#### Step 4: Initialize the database schema
-``` bash
-psql --host localhost --user postgres -f schema.sql postgres
-```
-
-#### Step 5: Connect to the database
-You can do this in one of the following ways:
-1. PGAdmin
-2. Python/Jupyter notebook: See code below.
-
-Be sure to add appropriate credentials to your .env file. You will need to set the following variables:
-DEMETER_PG_HOST=localhost
-DEMETER_PG_DATABASE=postgres
-DEMETER_PG_OPTIONS=-c search_path=test_mlops,public
-DEMETER_PG_USER=postgres
-DEMETER_PG_PASSWORD
-DEMETER_PG_PORT=5432
-
-``` python
-from demeter.db import getConnection
-c = getConnection()
-```
-
-## Demeter Background References
-- [Demeter Data Types](https://sentera.atlassian.net/wiki/spaces/GML/pages/3172270107/Demeter+Data+Types+use+this)
-
-## Example Usage
-
-### Using Demeter data classes and functions
-
-``` bash
-python3 -m scripts.sample
-```
-
-```
 Root group id: 75910
 Argentina group id: 75911
 Field Geom id: 105669
@@ -143,17 +63,21 @@ Observation geom id:  105669
 Local value id: 228730
 ```
 
+## Troubleshooting
+### Installing `geopandas` on Mac
+[See this SO thread](https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1)
 
-## Scripts
+### Installing PostgreSQL on WSL2
+[See README_wsl](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md)
 
-1) Generate Graphviz chart of Postgres database
-Make sure that you have dev-dependencies installed via Poetry.
-```pg_dump --schema-only --schema test_mlops --host localhost --dbname postgres | python3 -m scripts.to_graphviz | dot -Tpng > schema.png```
-Note: You may need to provide additional credentials or configuration parameters to the 'pg_dump' command. For example, you may need to specify a different 'user' or 'dbname'. You may also be prompted for a password. Entering your password should not affect execution of the piped commands.
+## Diagram Generation
+Graphviz is required for automatic diagram generation. Ensure `graphviz` is installed (note that it's present in the `dev-dependencies`).
 
+A `schema-dem_test.png` can be automatically generated with the following:
 
-## Troubleshooting References
-- [Installing GeoPandas for M1](https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1)
+```bash
+pg_dump --schema-only --schema dem_test -h localhost -U postgres -d postgres | poetry run python -m scripts.to_graphviz | dot -Tpng > schema-dem_test.png
+```
 
 ## TODO
 - Guide for setting up user account postgres using `postgres` account and `read_and_write` role and password `<user>`

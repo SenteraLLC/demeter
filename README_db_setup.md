@@ -39,24 +39,6 @@ psql --host localhost --port 5433 --user postgres postgres
 ```
 
 ## Method 2: Create your own database locally (Mac)
-### Step 1: Install PostgreSQL
-```bash
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-```
-
-
-### Step 2: Add yourself as a user
-```bash
-sudo -u postgres createuser --interactive
-```
-
-### Step 3: Create and add tables to the analytics databas
-
-
-### Step 3:
-
-## Method 2: Create your own database locally
 Note: This method should work for Mac (did not work with WSL2).
 
 ### Step 1: [Download](https://www.postgresql.org/download/)/Install PostgreSQL
@@ -90,19 +72,19 @@ sudo -i -u postgres
 initdb -D /usr/local/pgsql/data
 ```
 
-#### Step 4: Start the server process
+### Step 4: Start the server process
 ``` bash
 postgres -D /usr/local/pgsql/data
 ```
 
-#### Step 5: Initialize the database schema
+### Step 5: Initialize the database schema
 ``` bash
 psql --host localhost --user postgres -f schema.sql postgres
 ```
 
-#### Step 6: Connect to the database
+### Step 6: Connect to the database
 You can do this in one of the following ways:
-1. PGAdmin (see [README_wsl Step 5](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md#step-5-connect-to-wsls-postgres))
+1. PGAdmin (see ["Step 5" of README_wsl.md](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md#step-5-connect-to-wsls-postgres))
 2. Python/Jupyter notebook (via `demeter`):
 
 
@@ -111,4 +93,4 @@ from demeter.db import getConnection
 c = getConnection()
 ```
 
-Be sure to you've added a `.env` file with appropriate credentials ([see example above](https://github.com/SenteraLLC/demeter/blob/main/README_db_setup.md#before-you-begin)).
+Be sure to you've added a `.env` file with appropriate credentials ([see .env.template example above](https://github.com/SenteraLLC/demeter/blob/main/README_db_setup.md#before-you-begin)).

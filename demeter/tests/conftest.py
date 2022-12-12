@@ -127,6 +127,7 @@ def clear_tables():
 
 @pytest.fixture(scope="session")
 def test_db_session():
+    # clear_tables()  # Do we want to ensure tables are empty before tests run?
     yield engine
     engine.dispose()
     clear_tables()

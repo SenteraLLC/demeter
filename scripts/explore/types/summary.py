@@ -41,9 +41,7 @@ class TypeSummary(Summary):
 
 
 # TODO: Filter on fields
-def getTypeSummaries(
-    cursor: Any, field_ids: List[TableId] = []
-) -> Sequence[TypeSummary]:
+def getTypeSummaries(cursor: Any, field_ids: List[TableId] = []) -> Sequence[TypeSummary]:
     search_part = ""
     args: Dict[str, List[TableId]] = {}
     if len(field_ids) > 0:
@@ -55,8 +53,8 @@ def getTypeSummaries(
                      V.unit_type_id,
                      V.observation_group_id,
                      V.acquired
-              from test_mlops.field F
-              join test_mlops.observation_value V on F.field_id = V.field_id
+              from test_demeter.field F
+              join test_demeter.observation_value V on F.field_id = V.field_id
               {search_part}
 
             ), units as (
@@ -79,8 +77,8 @@ def getTypeSummaries(
                        max(FV.acquired)::date as latest,
                        count(*) as unit_count
                 from field_value FV
-                natural join test_mlops.unit_type U
-                natural join test_mlops.observation_type T
+                natural join test_demeter.unit_type U
+                natural join test_demeter.observation_type T
                 group by T.observation_type_id, U.unit_type_id, U.unit
               ) x
               group by observation_type_id
@@ -108,7 +106,7 @@ def getTypeSummaries(
                        count(*) as group_count
                 from field_value FV
                 natural join units US
-                natural join test_mlops.observation_group G
+                natural join test_demeter.observation_group G
                 group by US.observation_type_id, G.observation_group_id
 
               ) x
@@ -121,7 +119,7 @@ def getTypeSummaries(
                      units,
                      groups
 
-              from test_mlops.observation_type T
+              from test_demeter.observation_type T
               natural join units U
               natural left join groups GS,
               lateral (

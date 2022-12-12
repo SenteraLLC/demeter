@@ -43,13 +43,13 @@ def getFieldGroupSummaries(
   with recursive descendent as (
     select *,
            0 as depth
-    from test_mlops.field_group G
+    from test_demeter.field_group G
     where parent_field_group_id is null
     UNION ALL
     select G.*,
            depth + 1
     from descendent D
-    join test_mlops.field_group G on D.field_group_id = G.parent_field_group_id
+    join test_demeter.field_group G on D.field_group_id = G.parent_field_group_id
 
   ), fields as (
     select D.field_group_id,
@@ -60,7 +60,7 @@ def getFieldGroupSummaries(
              '[]'
            ) as fields
     from descendent D
-    left join test_mlops.field F on D.field_group_id = F.field_group_id
+    left join test_demeter.field F on D.field_group_id = F.field_group_id
     group by D.field_group_id
 
   ), ancestor_counts as (

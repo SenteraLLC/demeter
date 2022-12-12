@@ -106,7 +106,9 @@ def session_scope():
     From: https://stackoverflow.com/questions/67255653/how-to-set-up-and-tear-down-a-database-between-tests-in-fastapi
     """
     session = Session()
-    session.execute("SET search_path TO test_demeter")
+    session.execute(
+        "SET search_path TO test_demeter,public"
+    )  # public needed because that's where PostGIS ext lives
 
     try:
         yield session
@@ -127,7 +129,7 @@ def clear_tables():
 
 @pytest.fixture(scope="session")
 def test_db_session():
-    # clear_tables()  # Do we want to ensure tables are empty before tests run?
+    clear_tables()  # Do we want to ensure tables are empty before tests run?
     yield engine
     engine.dispose()
     clear_tables()

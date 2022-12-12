@@ -1,42 +1,90 @@
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
-from ... import db
-from .st_types import Geom
+from shapely.geometry import LineString, Point, Polygon
+from shapely.geometry import MultiLineString, MultiPoint, MultiPolygon
+from shapely.geometry import GeometryCollection
+
+from demeter.db import TableId
 
 
 def getMaybeGeomId(
     cursor: Any,
-    geom: Geom,
-) -> Optional[db.TableId]:
+    geometry: Union[
+        LineString,
+        Point,
+        Polygon,
+        MultiLineString,
+        MultiPoint,
+        MultiPolygon,
+        GeometryCollection,
+    ],
+) -> Optional[TableId]:
     """
-    Use https://postgis.net/docs/ST_ReducePrecision.html for querying geometries.
+    Because ST_QuantizeCoordinates was used for upserting geometries, it must also be used for checking for duplicates.
+
+    ST_ReducePrecision is to be used for reducing further than was actually stored.
     """
-    stmt = """select G.geom_id
-              FROM geom G
-              where ST_Equals(G.geom, ST_ReducePrecision(ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)), 7)
-         """
-    args = {"geom": geom.geom}
+    stmt = """
+    select G.geom_id
+    FROM geom G
+    where ST_Equals(
+        G.geom, ST_QuantizeCoordinates(
+            ST_MakeValid(
+                ST_Transform(
+                    ST_SetSRID(%(geom)s::geometry, %(srid)s),
+                    4326
+                )
+            ), %(precision)s
+        )
+    )
+    """
+    # args = {"geom": geom}
+    args = {"geom": geometry.wkb_hex, "srid": 4326, "precision": 7}
     cursor.execute(stmt, args)
     result = cursor.fetchall()
     if len(result) >= 1:
-        return db.TableId(result[0].geom_id)
+        return TableId(result[0].geom_id)
     return None
 
 
 # TODO: Warn the user when the geometry is modified by ST_MakeValid
 def insertOrGetGeom(
     cursor: Any,
-    geom: Geom,
-) -> db.TableId:
+    geometry: Union[
+        LineString,
+        Point,
+        Polygon,
+        MultiLineString,
+        MultiPoint,
+        MultiPolygon,
+        GeometryCollection,
+    ],
+) -> TableId:
     """
     Use https://postgis.net/docs/ST_QuantizeCoordinates.html for upserting geometries.
     """
-    maybe_geom_id = getMaybeGeomId(cursor, geom)
+    maybe_geom_id = getMaybeGeomId(cursor, geometry)
     if maybe_geom_id is not None:
         return maybe_geom_id
-    stmt = """insert into geom(geom)
-            values(ST_QuantizeCoordinates(ST_MakeValid(ST_Transform(%(geom)s::geometry, 4326)), 7)
-            returning geom_id"""
-    cursor.execute(stmt, geom())
+    stmt = """
+    insert into geom(geom)
+    values(
+        ST_QuantizeCoordinates(
+            ST_MakeValid(
+                ST_Transform(
+                    ST_SetSRID(%(geom)s::geometry, %(srid)s),
+                    4326
+                )
+            ), %(precision)s
+        )
+    )
+    returning geom_id
+    """
+    args = {
+        "geom": geometry.wkb_hex,
+        "srid": 4326,
+        "precision": 7,
+    }  # 7 digits has 1.11 cm accuracy at the equator
+    cursor.execute(stmt, args)
     result = cursor.fetchone()
-    return db.TableId(result.geom_id)
+    return TableId(result.geom_id)

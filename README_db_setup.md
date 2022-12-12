@@ -11,7 +11,7 @@ The `.env` file holds the credentials necessary to connect to the desired Postgr
 ```bash
 DEMETER_PG_HOST=localhost
 DEMETER_PG_DATABASE=postgres
-DEMETER_PG_OPTIONS=-c search_path=dem_test,public
+DEMETER_PG_OPTIONS=-c search_path=test_demeter,public
 DEMETER_PG_USER=postgres
 DEMETER_PG_PASSWORD=abc123
 DEMETER_PG_PORT=5433

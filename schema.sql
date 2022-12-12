@@ -6,19 +6,19 @@
 
 -- Database Setup
 
-drop schema if exists dem_test cascade;
-create schema dem_test;
-set schema 'dem_test';
+drop schema if exists test_demeter cascade;
+create schema test_demeter;
+set schema 'test_demeter';
 
-create extension postgis with schema public;
-create extension postgis_raster with schema public;
+create extension if not exists postgis with schema public;
+create extension if not exists postgis_raster with schema public;
 -- TODO: Fix this extension
 -- create extension "postgres-json-schema" with schema public;
 
-set search_path = dem_test, public;
+set search_path = test_demeter, public;
 create role read_and_write;
-grant select, insert on all tables in schema dem_test to read_and_write;
-grant usage on schema dem_test to read_and_write;
+grant select, insert on all tables in schema test_demeter to read_and_write;
+grant usage on schema test_demeter to read_and_write;
 
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$

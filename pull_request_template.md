@@ -13,6 +13,6 @@ Goal: guide the reviewer through the code. For example, should reviewer run demo
 - [ ] Updated version number
 - [ ] Version numbers match between package `_version.py` and `pyproject.toml`
 - [ ] Ran `poetry update` and committed `pyproject.toml` and `poetry.lock`
-- [ ] Initialized `schema.sql` locally and tested `sample.py`
+- [ ] Initialized `schema.sql` locally and tests ran successfully `poetry run pytest demeter/tests/`
 ## Breaking Changes
 -

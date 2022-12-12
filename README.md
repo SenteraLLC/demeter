@@ -49,6 +49,13 @@ See these Confluence pages for some background on data types and tables that the
 - [Demeter Schema (for v1.2.0)](https://sentera.atlassian.net/wiki/spaces/GML/pages/3198156837/Proposed+Demeter+Schema+v1.2.0+ABI)
 
 ## Tests
+
+Before running tests, you must initialize the schema
+
+``` bash
+psql --host localhost --user postgres -f schema.sql postgres
+```
+
 **scripts/sample.py**
 ```bash
 $ poetry run python scripts/sample.py
@@ -73,10 +80,10 @@ Local value id: 228730
 ## Diagram Generation
 Graphviz is required for automatic diagram generation. Ensure `graphviz` is installed (note that it's present in the `dev-dependencies`).
 
-A `schema-dem_test.png` can be automatically generated with the following:
+A `schema-test_demeter.png` can be automatically generated with the following:
 
 ```bash
-pg_dump --schema-only --schema dem_test -h localhost -U postgres -d postgres | poetry run python -m scripts.to_graphviz | dot -Tpng > schema-dem_test.png
+pg_dump --schema-only --schema test_demeter -h localhost -U postgres -d postgres | poetry run python -m scripts.to_graphviz | dot -Tpng > schema-test_demeter.png
 ```
 
 ## TODO

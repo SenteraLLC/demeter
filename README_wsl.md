@@ -151,3 +151,6 @@ postgres=# SELECT PostGIS_version();
  3.3 USE_GEOS=1 USE_PROJ=1 USE_STATS=1
 (1 row)
 ```
+
+### Step 7: Upgrade GEOS (some PostGIS functions require v3.9+)
+Update GEOS (refer to the [README_update_geos.md guide](https://github.com/SenteraLLC/demeter/blob/main/README_update_geos.md)).

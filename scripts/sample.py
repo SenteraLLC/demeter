@@ -2,13 +2,12 @@
 from datetime import datetime
 
 from dotenv import load_dotenv
+from shapely.geometry import Point, Polygon
 
 # Core Types
 from demeter.data import (
     Field,
-    Geom,
-    MultiPolygon,
-    Point,
+    # Geom,
     FieldGroup,
     Planting,
     Harvest,
@@ -38,8 +37,23 @@ from demeter.db import getConnection
 # if __name__ == "__main__":
 load_dotenv()
 
-c = getConnection()
-cursor = c.cursor()
+c = getConnection(
+    host_key="DEMETER_HOST_WSL",
+    port_key="DEMETER_PORT_WSL",
+    pw_key="DEMETER_PASSWORD_WSL",
+    user_key="DEMETER_USER_WSL",
+    db_key="DEMETER_DATABASE_WSL",
+    schema_search_path="test_demeter,public",
+)
+conn = c.connect()
+cursor = conn.connection.cursor()
+
+# from sqlalchemy import MetaData
+
+# metadata_obj = MetaData(schema="test_demeter")
+# metadata_obj.reflect(conn.engine)
+# metadata_obj.tables["test_demeter.geom"]
+
 
 # %%
 root_group = FieldGroup(
@@ -57,29 +71,26 @@ argentina_group_id = insertOrGetFieldGroup(cursor, argentina_group)
 print(f"Argentina group id: {argentina_group_id}")
 
 # %%
-# NOTE: Use MultiPolygon instead of Polygon
-#       There isn't support for lone Polygons yet
-bound: MultiPolygon = (
-    (
-        (-65.4545335800795, -35.19686410451283),
-        (-62.702558113583365, -35.193663907793265),
-        (-62.78401558669485, -36.94324941995089),
-        (-65.55755160251499, -36.87451965566409),
-        (-65.45449008889159, -35.18596793795566),
-    ),
-)
-
 test_field_group = FieldGroup(
     name="grupo de prueba",
 )
 field_group_id = insertOrGetFieldGroup(cursor, test_field_group)
 print(f"Field group id: {field_group_id}")
 
-field_geom = Geom(
-    type="Polygon",
-    coordinates=bound,
-    crs_name="urn:ogc:def:crs:EPSG::4326",
+# NOTE: Be sure to use WGS-84 CRS (EPSG:4326) - `demeter` assumes geoms get entered in that format
+# TODO: Add -180 to +180 and -90 to +90 coord constraint for Geom table?
+field_geom = Polygon(
+    [
+        Point(-65.45453358, -36.19686410),
+        Point(-65.70255811, -36.19366390),
+        Point(-65.78401558, -35.94324941),
+        Point(-65.55755160, -35.87451965),
+        Point(-65.45449008, -36.18596793),
+        Point(-65.45453358, -36.19686410),
+    ]
 )
+
+# field_geom = Geom(geom=geometry)
 field_geom_id = insertOrGetGeom(cursor, field_geom)
 print(f"Field Geom id: {field_geom_id}")
 
@@ -121,13 +132,8 @@ gallons_unit_id = insertOrGetUnitType(cursor, gallons_unit)
 print(f"Gallons type id: {gallons_unit_id}")
 
 # %%
-obs: Point = (-63.4545335800795, -35.59686410451283)
-obs_geom = Geom(
-    type="Polygon",
-    coordinates=obs,
-    crs_name="urn:ogc:def:crs:EPSG::4326",
-)
-obs_geom_id = insertOrGetGeom(cursor, field_geom)
+obs_geom = Point(-65.645145335822, -36.052968641022)
+obs_geom_id = insertOrGetGeom(cursor, obs_geom)
 print("Observation geom id: ", obs_geom_id)
 
 o = LocalValue(
@@ -144,7 +150,7 @@ print(f"Observation value id: {observation_value_id}")
 
 # %%
 # NOTE SQL transaction intentionally left uncommitted
-c.commit()
+conn.commit()
 # If you uncomment this, the script is no longer idempotent.
 #  That is, any function 'insertFoo' will throw integrity errors when run a second time.
 #  This can be remedied by swapping them with their 'insertOrGetFoo' counterparts

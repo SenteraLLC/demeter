@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "demeter"
 version = "1.1.31"
-description = "The database schema for agronomic modeling and supporting data science activities."
+description = "The database schema and API that supports agronomic modeling and data science activities."
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [
   {include = "demeter"},
@@ -10,52 +10,54 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "~3.10.4"
+boto3 = "^1.20.48"
+dictdiffer = "^0.9.0"
+geopandas = "^0.12.1"
+joblib = "^1.2.0"
+jsonschema = "^4.4.0"
+pg-diagram = "^0.1.2"
 psycopg2 = "^2.9.3"
+python-dotenv = "^0.21.0"
+requests = "^2.27.1"
+Rtree = "^1.0.0"
+scoping = "^0.1.2"
 typing_extensions = "^4.0.1"
 typing_inspect = "^0.8.0"
-jsonschema = "^4.4.0"
-geopandas = "^0.12.1"
-boto3 = "^1.20.48"
-requests = "^2.27.1"
-scoping = "^0.1.2"
-dictdiffer = "^0.9.0"
-Rtree = "^1.0.0"
-python-dotenv = "^0.21.0"
-joblib = "^1.2.0"
-pre-commit = "^2.20.0"
-pg-diagram = "^0.1.2"
+types-boto3 = "^1.0.1"
 types-jsonschema = "^4.4.1"
 types-psycopg2 = "^2.9.7"
 types-requests = "^2.27.10"
 types-urllib3 = "^1.26.9"
-types-boto3 = "^1.0.1"
-
+sqlalchemy_schemadisplay = {git = "https://github.com/fschulze/sqlalchemy_schemadisplay.git", branch = "master"}
+SQLAlchemy = "^1.4.45"
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-sphinx-autodoc-typehints = "^1.18.3"
-piccolo-theme = "^0.11.1"
-# Candidate
-autoclasstoc = "^1.5.1"
-Sphinx = "^4.0.0"
-sphinx-toolbox = "^3.1.2"
-sphinx-rtd-theme = "^1.0.0"
-html-section = "^0.2.0"
-domdf-sphinx-theme = "^22.1.2"
-# TODO: Fix this once PR is merged
-toctree-plus = {git = "https://github.com/sphinx-toolbox/toctree_plus.git", rev = "dependabot/pip/sphinx-gte-3.0.3-and-lt-5.2.0"}
 autodocsumm = "^0.2.9"
-
-
-[tool.poetry.group.dev.dependencies]
-graphviz = "^0.20.1"
-pyparsing = "^3.0.9"
-flake8 = "^5.0.4"
-black = {version = "^22.6", allow-prereleases = true}
+autoclasstoc = "^1.5.1"
+html-section = "^0.2.0"
+piccolo-theme = "^0.11.1"
+Sphinx = "^4.0.0"
+domdf-sphinx-theme = "^22.1.2"
+sphinx-autodoc-typehints = "^1.18.3"
+sphinx-rtd-theme = "^1.0.0"
+sphinx-toolbox = "^3.1.2"
+toctree-plus = {git = "https://github.com/sphinx-toolbox/toctree_plus.git", rev = "dependabot/pip/sphinx-gte-3.0.3-and-lt-5.2.0"}
 
 [tool.poetry.dev-dependencies]
+pytest = "*"
+pre-commit = "*"
+sure = "^2.0"
+flake8 = "^5.0.4"
+black = {version = "^22.6", allow-prereleases = true}
+ipywidgets = "^7.7"
+ipykernel = "^6.15"
+pyppeteer = "^1.0.2"
+jupyterlab = "^3.4.3"
+graphviz = "^0.20.1"
+pyparsing = "^3.0.9"
 types-jsonschema = "^4.4.1"
 types-requests = "^2.28.11.5"
 types-psycopg2 = "^2.9.21.2"

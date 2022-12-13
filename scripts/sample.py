@@ -45,8 +45,9 @@ c = getConnection(
     db_key="DEMETER_DATABASE_WSL",
     schema_search_path="test_demeter,public",
 )
-conn = c.connect()
-cursor = conn.connection.cursor()
+# conn = c.connect()# this line is redundant seeing as engine.connect() is returned by function
+trans = c.begin()
+cursor = c.connection.cursor()
 
 # from sqlalchemy import MetaData
 
@@ -150,7 +151,8 @@ print(f"Observation value id: {observation_value_id}")
 
 # %%
 # NOTE SQL transaction intentionally left uncommitted
-conn.commit()
+trans.commit()
+c.close()
 # If you uncomment this, the script is no longer idempotent.
 #  That is, any function 'insertFoo' will throw integrity errors when run a second time.
 #  This can be remedied by swapping them with their 'insertOrGetFoo' counterparts

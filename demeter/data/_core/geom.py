@@ -42,7 +42,8 @@ def getMaybeGeomId(
     args = {"geom": geometry.wkb_hex, "srid": 4326, "precision": 7}
     cursor.execute(stmt, args)
     result = cursor.fetchall()
-    if len(result) >= 1:
+    assert len(result) <= 1, "Returned result is expected to be <= 1"
+    if len(result) == 1:
         return TableId(result[0].geom_id)
     return None
 

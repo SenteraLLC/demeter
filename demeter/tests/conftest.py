@@ -1,10 +1,11 @@
-from os.path import join
-
+from os.path import dirname, join, realpath
 import pytest
 
+from contextlib import contextmanager
 from dotenv import load_dotenv
-from os.path import dirname, join, realpath
+from sqlalchemy import MetaData
 from sqlalchemy.engine import Connection
+from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.sql import text
 
 from demeter.db import getConnection
@@ -17,6 +18,59 @@ SCHEMA_NAME = "test_demeter"
 ROOT_DIR = realpath(join(dirname(__file__), "..", ".."))
 DEMETER_DIR = realpath(join(dirname(__file__), ".."))
 TEST_DIR = realpath(dirname(__file__))
+
+# engine = create_engine('postgresql://...')
+conn = getConnection(
+    host_key="DEMETER_HOST_TEST",
+    port_key="DEMETER_PORT_TEST",
+    pw_key="DEMETER_PASSWORD_TEST",
+    user_key="DEMETER_USER_TEST",
+    db_key="DEMETER_DATABASE_TEST",
+    schema_search_path=f"{SCHEMA_NAME},public",
+)
+engine = conn.engine
+Session = sessionmaker(bind=engine)
+Base = declarative_base()
+
+
+metadata_obj = MetaData(schema="test_demeter")
+metadata_obj.reflect(conn.engine)
+# metadata_obj.tables["test_demeter.geom"]
+
+
+@contextmanager
+def session_scope():
+    """Provide a transactional scope around a series of operations.
+    From: https://stackoverflow.com/questions/67255653/how-to-set-up-and-tear-down-a-database-between-tests-in-fastapi
+    """
+    session = Session()
+    session.execute(
+        "SET search_path TO test_demeter,public"
+    )  # public needed because that's where PostGIS ext lives
+
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def clear_tables():
+    with session_scope() as conn:
+        for table in metadata_obj.sorted_tables:
+            conn.execute(f"TRUNCATE {table.name} RESTART IDENTITY CASCADE;")
+        conn.commit()
+
+
+@pytest.fixture(scope="session")
+def test_db_session():
+    clear_tables()  # Ensure tables are empty before beginning the tests
+    yield engine
+    engine.dispose()
+    clear_tables()
 
 
 # @pytest.fixture(autouse=True, scope="session")
@@ -75,61 +129,3 @@ TEST_DIR = realpath(dirname(__file__))
 #     setup_db(CONNECTION_FIXTURE)
 #     yield None
 #     teardown_db(CONNECTION_FIXTURE_PUBLIC)
-
-import pytest
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy import MetaData
-from contextlib import contextmanager
-
-# engine = create_engine('postgresql://...')
-conn = getConnection(
-    host_key="DEMETER_HOST_TEST",
-    port_key="DEMETER_PORT_TEST",
-    pw_key="DEMETER_PASSWORD_TEST",
-    user_key="DEMETER_USER_TEST",
-    db_key="DEMETER_DATABASE_TEST",
-    schema_search_path=f"{SCHEMA_NAME},public",
-)
-engine = conn.engine
-Session = sessionmaker(bind=engine)
-Base = declarative_base()
-
-
-metadata_obj = MetaData(schema="test_demeter")
-metadata_obj.reflect(conn.engine)
-# metadata_obj.tables["test_demeter.geom"]
-
-
-@contextmanager
-def session_scope():
-    """Provide a transactional scope around a series of operations.
-    From: https://stackoverflow.com/questions/67255653/how-to-set-up-and-tear-down-a-database-between-tests-in-fastapi
-    """
-    session = Session()
-    session.execute(
-        "SET search_path TO test_demeter,public"
-    )  # public needed because that's where PostGIS ext lives
-
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
-
-
-def clear_tables():
-    with session_scope() as conn:
-        for table in metadata_obj.sorted_tables:
-            conn.execute(f"TRUNCATE {table.name} RESTART IDENTITY CASCADE;")
-        conn.commit()
-
-
-@pytest.fixture(scope="session")
-def test_db_session():
-    clear_tables()  # Ensure tables are empty before beginning the tests
-    yield engine
-    engine.dispose()
-    clear_tables()

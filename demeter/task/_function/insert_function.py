@@ -51,7 +51,7 @@ def getLatestFunctionSignature(
         FunctionSignature(
             name=result.function_name,
             major=result.major,
-            local_inputs=result.local_inputs,
+            observation_inputs=result.observation_inputs,
             keyword_inputs=keyword_inputs,
             s3_inputs=list(zip(result.s3_inputs, result.s3_dataframe_inputs)),
             http_inputs=result.http_inputs,

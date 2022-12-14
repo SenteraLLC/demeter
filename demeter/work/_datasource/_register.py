@@ -25,7 +25,9 @@ class DataSourceRegister(DataSourceBase):
     ) -> SupportedS3DataType:
         return pd.DataFrame()
 
-    def _local(self, local_types: List[data.LocalType]) -> pd.DataFrame:
+    def _observation(
+        self, observation_types: List[data.ObservationType]
+    ) -> pd.DataFrame:
         return pd.DataFrame()
 
     def _http(

@@ -34,8 +34,8 @@ async def main(
     keep_unused: bool,
 ) -> None:
     s = stat
-    local_type_id = getObservationType(cursor, s)
-    existing_roots = findRootByPoint(cursor, points, local_type_id)
+    observation_type_id = getObservationType(cursor, s)
+    existing_roots = findRootByPoint(cursor, points, observation_type_id)
 
     d = date
     v = Valuer(d, s)

@@ -5,16 +5,16 @@ with latest_function as (
   order by minor desc
   limit 1
 
-), local_inputs as (
+), observation_inputs as (
   select F.function_id,
          jsonb_agg(
            jsonb_build_object('type_name', LT.type_name,
                               'type_category', LT.type_category
                              )
-         ) as local_types
+         ) as observation_types
   from latest_function F
-  join local_parameter LP on F.function_id = LP.function_id
-  join local_type LT on LP.local_type_id = LT.local_type_id
+  join observation_parameter LP on F.function_id = LP.function_id
+  join observation_type LT on LP.observation_type_id = LT.observation_type_id
   group by F.function_id
 
 ), keyword_inputs as (
@@ -76,7 +76,7 @@ with latest_function as (
   group by F.function_id
 
 ) select F.function_id, F.function_name, F.major, F.minor,
-         coalesce(LI.local_types, '[]'::jsonb) as local_inputs,
+         coalesce(LI.observation_types, '[]'::jsonb) as observation_inputs,
          coalesce(K.keyword_types, '[]'::jsonb) as keyword_inputs,
          coalesce(S3I.s3_types, '[]'::jsonb) as s3_inputs,
          coalesce(S3I.s3_dataframe_types, '[]'::jsonb) as s3_dataframe_inputs,
@@ -84,7 +84,7 @@ with latest_function as (
          coalesce(S3O.s3_types, '[]'::jsonb) as s3_outputs,
          coalesce(S3I.s3_dataframe_types, '[]'::jsonb) as s3_dataframe_outputs
   from latest_function F
-  left join local_inputs LI on F.function_id = LI.function_id
+  left join observation_inputs LI on F.function_id = LI.function_id
   left join keyword_inputs K on F.function_id = K.function_id
   left join http_inputs HI on F.function_id = HI.function_id
   left join s3_inputs S3I on F.function_id = S3I.function_id

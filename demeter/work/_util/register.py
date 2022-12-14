@@ -68,8 +68,9 @@ def getSignature(
     return task.FunctionSignature(
         name=function.function_name,
         major=function.major,
-        local_inputs=[
-            data.getLocalType(cursor, i) for i in input_types["local_type_ids"]
+        observation_inputs=[
+            data.getObservationType(cursor, i)
+            for i in input_types["observation_type_ids"]
         ],
         keyword_inputs=keyword_inputs,
         http_inputs=[task.getHTTPType(cursor, i) for i in input_types["http_type_ids"]],
@@ -87,12 +88,12 @@ def insertFunctionTypes(
 ) -> Tuple[db.TableId, int]:
     function_id, minor = task.insertFunction(cursor, function)
 
-    for i in input_types["local_type_ids"]:
-        task.insertLocalParameter(
+    for i in input_types["observation_type_ids"]:
+        task.insertObservationParameter(
             cursor,
-            task.LocalParameter(
+            task.ObservationParameter(
                 function_id=function_id,
-                local_type_id=i,
+                observation_type_id=i,
             ),
         )
     for i in input_types["s3_type_ids"]:

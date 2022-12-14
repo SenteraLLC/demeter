@@ -4,13 +4,14 @@ from ..db import TypeTable
 from ._types import *
 
 AnyKeyTable = Union[
-    LocalArgument,
+    ObservationArgument,
     HTTPArgument,
     S3InputArgument,
     S3OutputArgument,
     KeywordArgument,
     ExecutionKey,
 ]
+
 
 class _Ignore(TypeTable):
     pass

@@ -1,12 +1,12 @@
 from typing import Union
 
 from ._core import union_types as core
-from ._local import union_types as local
+from ._observation import union_types as observation
 
-AnyTypeTable = Union[local.AnyTypeTable, core.AnyTypeTable]
+AnyTypeTable = Union[observation.AnyTypeTable, core.AnyTypeTable]
 
 AnyDataTable = Union[
-    local.AnyDataTable,
+    observation.AnyDataTable,
     core.AnyDataTable,
 ]
 

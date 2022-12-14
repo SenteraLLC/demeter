@@ -16,7 +16,7 @@ from ._types import (
     ExecutionKey,
     HTTPArgument,
     KeywordArgument,
-    LocalArgument,
+    ObservationArgument,
     S3InputArgument,
     S3OutputArgument,
 )
@@ -24,7 +24,7 @@ from ._types import (
 insertExecution: ReturnId[Execution] = g.getInsertReturnIdFunction(Execution)
 insertExecutionKey = g.getInsertReturnSameKeyFunction(ExecutionKey)
 
-insertLocalArgument = g.getInsertReturnSameKeyFunction(LocalArgument)
+insertObservationArgument = g.getInsertReturnSameKeyFunction(ObservationArgument)
 insertHTTPArgument = g.getInsertReturnSameKeyFunction(HTTPArgument)
 insertKeywordArgument = g.getInsertReturnSameKeyFunction(KeywordArgument)
 insertS3InputArgument = g.getInsertReturnSameKeyFunction(S3InputArgument)
@@ -44,7 +44,7 @@ from ._types import *
 __all__ = [
     "insertExecution",
     "insertExecutionKey",
-    "insertLocalArgument",
+    "insertObservationArgument",
     "insertHTTPArgument",
     "insertKeywordArgument",
     "insertS3InputArgument",
@@ -56,7 +56,7 @@ __all__ = [
     "S3File",
     "LocalFile",
     "Argument",
-    "LocalArgument",
+    "ObservationArgument",
     "HTTPArgument",
     "S3InputArgument",
     "S3OutputArgument",

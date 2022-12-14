@@ -171,14 +171,15 @@ CREATE UNIQUE INDEX crop_variety_null_unique_idx
 alter table crop_type add constraint fk_parent1_crop_type foreign key (parent_id_1) references crop_type(crop_type_id);
 alter table crop_type add constraint fk_parent2_crop_type foreign key (parent_id_2) references crop_type(crop_type_id);
 
--- LOCAL TYPE
+-- OBSERVATION TYPE
 
-create table local_type (
-  local_type_id bigserial primary key,
-  type_name     text unique not null
+create table observation_type (
+  observation_type_id bigserial primary key,
+  type_name     text unique not null,
+  type_category text
 );
-ALTER TABLE local_type
-  ADD CONSTRAINT local_type_lowercase_ck
+ALTER TABLE observation_type
+  ADD CONSTRAINT observation_type_lowercase_ck
   CHECK (type_name = lower(type_name));
 
 
@@ -192,8 +193,8 @@ create table planting (
   planted       timestamp without time zone not null,
   primary key(crop_type_id, field_id, planted),
 
-  local_type_id bigint
-                references local_type(local_type_id),
+  observation_type_id bigint
+                references observation_type(observation_type_id),
 
   last_updated  timestamp without time zone
                 not null
@@ -218,8 +219,8 @@ create table harvest (
 
   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
 
-  local_type_id bigint
-                references local_type(local_type_id),
+  observation_type_id bigint
+                references observation_type(observation_type_id),
 
   primary key (crop_type_id, field_id, planted),
 
@@ -249,8 +250,8 @@ create table crop_progress (
   field_id      bigint references field(field_id) not null,
   planted timestamp without time zone not null,
 
-  local_type_id bigint
-                      references local_type(local_type_id),
+  observation_type_id bigint
+                      references observation_type(observation_type_id),
 
   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
 
@@ -268,12 +269,12 @@ create table crop_progress (
 create table unit_type (
   unit_type_id   bigserial
                  primary key,
-  local_type_id  bigint
-                 not null
-                 references local_type(local_type_id),
-  unit           text
+  unit_name     text
                  not null,
-  unique (local_type_id, unit)
+  observation_type_id  bigint
+                 not null
+                 references observation_type(observation_type_id)
+  unique (unit_name, observation_type_id)
 );
 ALTER TABLE unit_type
   ADD CONSTRAINT unit_type_start_end_w_alphanumeric_ck
@@ -399,8 +400,8 @@ create table temporal_key (
 );
 
 
-create table local_value (
-  local_value_id bigserial
+create table observation (
+  observation_id bigserial
                  primary key,
 
   field_id      bigint
@@ -409,15 +410,23 @@ create table local_value (
   unit_type_id   bigint
                  references unit_type(unit_type_id)
                  not null,
-
-  acquired       timestamp without time zone
+  observation_type_id bigint
+                not null
+                references observation_type(observation_type_id)
+  date_observed timestamp without time zone
                  not null,
 
-  quantity       float
+  value_observed float
                  not null,
+  
+  created        timestamp without time zone
+                  not null,
 
   geom_id        bigint
                  references geom(geom_id),
+
+  act_id         bigint
+                  references act(act_id),
 
   last_updated   timestamp without time zone
                  not null
@@ -429,8 +438,8 @@ create table local_value (
 );
 
 
-CREATE TRIGGER update_local_last_updated BEFORE INSERT or UPDATE
-ON local_value FOR EACH ROW EXECUTE PROCEDURE
+CREATE TRIGGER update_observation_last_updated BEFORE INSERT or UPDATE
+ON observation FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 -- ACT
@@ -445,10 +454,6 @@ create table act (
 
   crop_type_id   bigint
                   references crop_type(crop_type_id),
-
-  local_value_id bigint
-                  references local_value(local_value_id),
-  unique (field_id, local_value_id),
 
   performed      timestamp without time zone
                   not null
@@ -493,15 +498,15 @@ create table s3_object_key (
 -- Parameter Tables --
 ----------------------
 
-create table local_parameter (
+create table observation_parameter (
   function_id        bigint
                      references function(function_id),
 
-  local_type_id      bigserial
+  observation_type_id      bigserial
                      not null
-                     references local_type(local_type_id),
+                     references observation_type(observation_type_id),
 
-  primary key(function_id, local_type_id)
+  primary key(function_id, observation_type_id)
 
 );
 
@@ -586,7 +591,7 @@ create table execution_key (
 );
 
 
-create table local_argument (
+create table observation_argument (
   execution_id  bigint
                 not null
                 references execution(execution_id),
@@ -594,13 +599,13 @@ create table local_argument (
   function_id   bigint
                 not null
                 references function(function_id),
-  local_type_id bigserial
+  observation_type_id bigserial
                 not null
-                references local_type(local_type_id),
-  foreign key (function_id, local_type_id)
-    references local_parameter(function_id, local_type_id),
+                references observation_type(observation_type_id),
+  foreign key (function_id, observation_type_id)
+    references observation_parameter(function_id, observation_type_id),
 
-  primary key (execution_id, function_id, local_type_id),
+  primary key (execution_id, function_id, observation_type_id),
 
   -- TODO: Is this heuristic good enough?
   number_of_observations bigint
@@ -721,7 +726,7 @@ create table published_workflow (
 
 
 -- TODO: This needs to be factored out to its own repo
---       Maybe also with LocalValue and LocalType?
+--       Maybe also with Observation and ObservationType?
 -- Grid Base Schema
 
 create table node (
@@ -756,8 +761,8 @@ create table root (
   root_node_id bigint
                references node(node_id)
                not null,
-  local_type_id bigint
-                references local_type(local_type_id)
+  observation_type_id bigint
+                references observation_type(observation_type_id)
                 not null,
 
   time          timestamp without time zone

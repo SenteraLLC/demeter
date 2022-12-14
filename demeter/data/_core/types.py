@@ -35,12 +35,12 @@ class PlantingKey(db.TableKey):
 
 @dataclass(frozen=True)
 class Planting(PlantingKey, db.Detailed):
-    local_type_id: Optional[db.TableId] = None
+    observation_type_id: Optional[db.TableId] = None
 
 
 @dataclass(frozen=True)
 class Harvest(PlantingKey, db.Detailed):
-    local_type_id: Optional[db.TableId] = None
+    observation_type_id: Optional[db.TableId] = None
 
 
 @dataclass(frozen=True)

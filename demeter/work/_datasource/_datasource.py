@@ -9,7 +9,7 @@ import pandas as pd
 from ... import data, db, task
 from ._base import DataSourceBase
 from ._http import getHTTPRows
-from ._local import getLocalRows
+from ._observation import getObservationRows
 from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 from ._s3 import getRawS3, rawToDataFrame
 from ._s3_file import AnyDataFrame, S3FileMeta, SupportedS3DataType
@@ -46,11 +46,15 @@ class DataSource(DataSourceBase):
             Tuple[Optional[Callable[..., AnyDataFrame]], Dict[str, Any]],
         ] = {}
 
-    def _local(self, local_types: List[data.LocalType]) -> pd.DataFrame:
+    def _observation(
+        self, observation_types: List[data.ObservationType]
+    ) -> pd.DataFrame:
         if self.OBSERVATION in self.dataframes:
-            raise Exception("Local data can only be acquired once.")
+            raise Exception("Observation data can only be acquired once.")
 
-        rows = getLocalRows(self.cursor, self.keys, local_types, self.execution_summary)
+        rows = getObservationRows(
+            self.cursor, self.keys, observation_types, self.execution_summary
+        )
         df = pd.DataFrame(rows)
         self.dataframes[self.OBSERVATION] = df
         return df

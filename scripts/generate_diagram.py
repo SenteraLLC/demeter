@@ -12,7 +12,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--show_datatypes", action="store_true")
     parser.add_argument("-i", "--show_indexes", action="store_true")
-    parser.add_argument("-o", "--output_path", default="schema-dem_test.png")
+    parser.add_argument("-o", "--output_path", default="schema-test_demeter.png")
     args = parser.parse_args()
 
     load_dotenv()
@@ -26,10 +26,10 @@ if __name__ == "__main__":
     )
     metadata = MetaData(
         f"postgresql://{c.info.user}:{c.info.password}@{c.info.host}/{c.info.dbname}",
-        schema="dem_test",
+        schema="test_demeter",
     )
 
-    # restrict_tables = metadata.tables.keys() - ["dem_test.node_raster"]
+    # restrict_tables = metadata.tables.keys() - ["test_demeter.node_raster"]
     # graph = create_schema_graph(metadata=metadata, show_datatypes=False, show_indexes=False, rankdir="LR", concentrate=False)
 
     graph = create_schema_graph(
@@ -40,4 +40,4 @@ if __name__ == "__main__":
         rankdir="LR",
         concentrate=False,
     )
-    graph.write_png("schema-dem_test.png")
+    graph.write_png("schema-test_demeter.png")

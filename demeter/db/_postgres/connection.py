@@ -27,7 +27,7 @@ def getEnv(
 
 
 def getConnection(
-    env_name: str,
+    env_name: str = "TEST",
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
     dialect: str = "postgresql+psycopg2",
 ) -> Connection:
@@ -52,7 +52,7 @@ def getConnection(
 
 
 def getConnection_psycopg2(
-    env_name: str,
+    env_name: str = "TEST",
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
 ) -> connection:
     register_adapter(set, lambda s: adapt(list(s)))  # type: ignore - not sure what this does?

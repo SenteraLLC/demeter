@@ -4,6 +4,8 @@ You will need to upgrade GEOS because some PostGIS functions (e.g., [ST_ReducePr
 
 Note: Please follow [this helpful cybertec guide](https://www.cybertec-postgresql.com/en/postgis-upgrade-geos-with-ubuntu-in-3-steps/) during the upgrade. The comments and code below are simply documentation to show what versions I'm using.
 
+To upgrade GEOS successfully, you may need to have a PostgreSQL from a specific source to "talk to" PostGIS (i.e., homebrew may not work).
+
 ## Step 1 ([of the cybertec guide](https://www.cybertec-postgresql.com/en/postgis-upgrade-geos-with-ubuntu-in-3-steps/))
 
 Use this query to check your version of GEOS (before the upgrade, I have a flavor of version `3.8.0` installed), and make note of your version of PostGIS:

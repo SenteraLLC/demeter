@@ -31,11 +31,10 @@ def getConnection(
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
     dialect: str = "postgresql+psycopg2",
 ) -> Connection:
-
     db_meta = literal_eval(getEnv(env_name))  # make into dictionary
-
+    schema_name = db_meta["schema_name"] if "schema_name" in db_meta.keys() else ""
     connect_args = {
-        "options": "-csearch_path={},public".format(db_meta["schema_name"]),
+        "options": "-csearch_path={},public".format(schema_name),
         "cursor_factory": cursor_type,
     }
 
@@ -43,7 +42,7 @@ def getConnection(
         dialect,
         host=db_meta["host"],
         port=db_meta["port"],
-        username=db_meta["user"],
+        username=db_meta["username"],
         password=db_meta["password"],
         database=db_meta["database"],
     )
@@ -52,13 +51,14 @@ def getConnection(
 
 
 def getConnection_psycopg2(
-    env_name: str = "TEST",
+    env_name: str = "DEMETER_TEST",
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
 ) -> connection:
     register_adapter(set, lambda s: adapt(list(s)))  # type: ignore - not sure what this does?
 
     db_meta = literal_eval(getEnv(env_name))  # make into dictionary
-    options = "-c search_path={},public".format(db_meta["schema_name"])
+    schema_name = db_meta["schema_name"] if "schema_name" in db_meta.keys() else ""
+    options = "-c search_path={},public".format(schema_name)
 
     return psycopg2.connect(
         host=db_meta["host"],
@@ -66,6 +66,6 @@ def getConnection_psycopg2(
         password=db_meta["password"],
         options=options,
         database=db_meta["database"],
-        user=db_meta["user"],
+        username=db_meta["username"],
         cursor_factory=cursor_type,
     )

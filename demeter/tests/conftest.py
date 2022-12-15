@@ -73,8 +73,15 @@ def test_db_session():
 #     yield CONNECTION_FIXTURE.connection.cursor()
 
 
-# def setup_db(conn: Connection):
-#     """Loads schema.sql from repo's root directory and runs it in test_demeter schema."""
+# def setup_db(conn: Connection, schema):
+#     """Loads and runs schema.sql from repo's root directory, setting schema based on user argument.
+#
+#        Note: This function does 4 things:
+#            1. Loads schema.sql
+#            2. Replaces all instances of "test_demeter" with `schema`
+#            3. Saves to a temporary file (deleted as soon as function finishes).
+#            4. Executes the temporary file, creating the new schema and all tables defined in schema.sql.
+#     """
 #     import subprocess
 #     from tempfile import NamedTemporaryFile
 
@@ -82,8 +89,8 @@ def test_db_session():
 #         with open(join(ROOT_DIR, "schema.sql"), "r") as schema_f:
 #             schema_sql = schema_f.read()
 #             # Change schema name in SQL script if needed.
-#             if SCHEMA_NAME != "test_demeter":
-#                 schema_sql = schema_sql.replace("test_demeter", SCHEMA_NAME)
+#             if schema != "test_demeter":
+#                 schema_sql = schema_sql.replace("test_demeter", schema)
 #         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
 #         host = conn.engine.url.host
 #         username = conn.engine.url.username

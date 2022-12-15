@@ -1,9 +1,6 @@
 import os
 from ast import literal_eval
-
-from typing import Any, Optional
-
-from typing import Type
+from typing import Any, Optional, Type
 
 import psycopg2
 import psycopg2.extras
@@ -11,6 +8,7 @@ from psycopg2.extensions import adapt
 from psycopg2.extensions import connection
 from psycopg2.extensions import register_adapter
 from sqlalchemy.engine import Connection, create_engine, URL
+from sqlalchemy.orm import sessionmaker
 
 
 def getEnv(
@@ -31,10 +29,22 @@ def getConnection(
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
     dialect: str = "postgresql+psycopg2",
 ) -> Connection:
+    return getEngine(
+        env_name=env_name, cursor_type=cursor_type, dialect=dialect
+    ).connect()
+
+
+def getEngine(
+    env_name: str = "TEST",
+    cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
+    dialect: str = "postgresql+psycopg2",
+) -> Connection:
     db_meta = literal_eval(getEnv(env_name))  # make into dictionary
-    schema_name = db_meta["schema_name"] if "schema_name" in db_meta.keys() else ""
+    schema_name = (
+        db_meta["schema_name"] + "," if "schema_name" in db_meta.keys() else ""
+    )
     connect_args = {
-        "options": "-csearch_path={},public".format(schema_name),
+        "options": "-csearch_path={}public".format(schema_name),
         "cursor_factory": cursor_type,
     }
 
@@ -46,19 +56,30 @@ def getConnection(
         password=db_meta["password"],
         database=db_meta["database"],
     )
-    engine = create_engine(url_object, connect_args=connect_args)
-    return engine.connect()
+    return create_engine(url_object, connect_args=connect_args)
+
+
+def getSession(
+    env_name: str = "TEST",
+    cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
+    dialect: str = "postgresql+psycopg2",
+):
+    return sessionmaker(
+        getEngine(env_name=env_name, cursor_type=cursor_type, dialect=dialect).connect()
+    )
 
 
 def getConnection_psycopg2(
-    env_name: str = "DEMETER_TEST",
+    env_name: str = "TEST_DEMETER",
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
 ) -> connection:
     register_adapter(set, lambda s: adapt(list(s)))  # type: ignore - not sure what this does?
 
     db_meta = literal_eval(getEnv(env_name))  # make into dictionary
-    schema_name = db_meta["schema_name"] if "schema_name" in db_meta.keys() else ""
-    options = "-c search_path={},public".format(schema_name)
+    schema_name = (
+        db_meta["schema_name"] + "," if "schema_name" in db_meta.keys() else ""
+    )
+    options = "-c search_path={}public".format(schema_name)
 
     return psycopg2.connect(
         host=db_meta["host"],

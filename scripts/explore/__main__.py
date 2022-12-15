@@ -45,9 +45,7 @@ def check_dir(d: str) -> str:
 if __name__ == "__main__":
     load_dotenv()
 
-    parser = argparse.ArgumentParser(
-        description="Use interactive menus to get Demeter data"
-    )
+    parser = argparse.ArgumentParser(description="Use interactive menus to get Demeter data")
 
     parser.add_argument(
         "--output_directory",
@@ -78,6 +76,6 @@ if __name__ == "__main__":
 
     print("ARGS: ", args)
 
-    connection = getConnection()
+    connection = getConnection(env_name="TEST_DEMETER")
     cursor = connection.cursor()
     main(cursor, targets, output_directory)

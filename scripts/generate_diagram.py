@@ -16,16 +16,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     load_dotenv()
-    c = getConnection(
-        host_key="DEMETER_HOST_WSL",
-        port_key="DEMETER_PORT_WSL",
-        pw_key="DEMETER_PASSWORD_WSL",
-        user_key="DEMETER_USER_WSL",
-        options_key="DEMETER_OPTIONS_WSL",
-        db_key="DEMETER_DATABASE_WSL",
-    )
+    conn = getConnection(env_name="TEST_DEMETER")
     metadata = MetaData(
-        f"postgresql://{c.info.user}:{c.info.password}@{c.info.host}/{c.info.dbname}",
+        f"postgresql://{conn.info.user}:{conn.info.password}@{conn.info.host}/{conn.info.dbname}",
         schema="test_demeter",
     )
 

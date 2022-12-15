@@ -33,9 +33,7 @@ def parseTime(s: str) -> datetime:
             return datetime.strptime(s, f)
         except ValueError:
             pass
-    raise ValueError(
-        f"Invalid date string '{s}' does not match format: {DATE_FORMATS_STR}"
-    )
+    raise ValueError(f"Invalid date string '{s}' does not match format: {DATE_FORMATS_STR}")
 
 
 def parsePoly(s: str) -> Poly:
@@ -123,7 +121,7 @@ if __name__ == "__main__":
     if delta.total_seconds() <= 0:
         raise Exception(f'Invalid time delta "{delta}". Must be greater than zero.')
 
-    connection = getConnection()
+    connection = getConnection(env_name="TEST_DEMETER")
     cursor = connection.cursor()
 
     # TODO: Remove the 'or getPoints' expr when there is a better means of testing

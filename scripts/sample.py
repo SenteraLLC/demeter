@@ -37,17 +37,13 @@ from demeter.db import getConnection
 # if __name__ == "__main__":
 load_dotenv()
 
-c = getConnection(
-    host_key="DEMETER_HOST_WSL",
-    port_key="DEMETER_PORT_WSL",
-    pw_key="DEMETER_PASSWORD_WSL",
-    user_key="DEMETER_USER_WSL",
-    db_key="DEMETER_DATABASE_WSL",
-    schema_search_path="test_demeter,public",
-)
-# conn = c.connect()# this line is redundant seeing as engine.connect() is returned by function
-trans = c.begin()
-cursor = c.connection.cursor()
+conn = getConnection(env_name="TEST_DEMETER")
+# engine = getEngine(env_name="TEST_DEMETER")
+# Session = getSession(env_name="TEST_DEMETER")
+
+# cursor = Session().connection().connection.cursor()
+cursor = conn.connection.cursor()
+trans = conn.begin()
 
 # from sqlalchemy import MetaData
 
@@ -55,28 +51,37 @@ cursor = c.connection.cursor()
 # metadata_obj.reflect(conn.engine)
 # metadata_obj.tables["test_demeter.geom"]
 
+# %% Add data
 
 # %%
-root_group = FieldGroup(
-    name="ABC Group INC",
+sa_group = FieldGroup(
+    name="South America",
     parent_field_group_id=None,
 )
-root_group_id = insertOrGetFieldGroup(cursor, root_group)
-print(f"Root group id: {root_group_id}")
+sa_group_id = insertOrGetFieldGroup(cursor, sa_group)
+print(
+    f"Org name: {sa_group.name}\n  field_group_id: {sa_group_id}\n  parent_field_group_id: {sa_group.parent_field_group_id}"
+)
+
 
 argentina_group = FieldGroup(
     name="Argentina",
-    parent_field_group_id=root_group_id,
+    parent_field_group_id=sa_group_id,
 )
 argentina_group_id = insertOrGetFieldGroup(cursor, argentina_group)
-print(f"Argentina group id: {argentina_group_id}")
+print(
+    f"Org name: {argentina_group.name}\n  field_group_id: {argentina_group}\n  parent_field_group_id: {argentina_group.parent_field_group_id}"
+)
 
-# %%
 test_field_group = FieldGroup(
     name="grupo de prueba",
 )
 field_group_id = insertOrGetFieldGroup(cursor, test_field_group)
-print(f"Field group id: {field_group_id}")
+print(
+    f"Org name: {argentina_group.name}\n  field_group_id: {argentina_group}\n  parent_field_group_id: {argentina_group.parent_field_group_id}"
+)
+
+# %%
 
 # NOTE: Be sure to use WGS-84 CRS (EPSG:4326) - `demeter` assumes geoms get entered in that format
 # TODO: Add -180 to +180 and -90 to +90 coord constraint for Geom table?
@@ -152,7 +157,7 @@ print(f"Observation value id: {observation_value_id}")
 # %%
 # NOTE SQL transaction intentionally left uncommitted
 trans.commit()
-c.close()
+# c.close()
 # If you uncomment this, the script is no longer idempotent.
 #  That is, any function 'insertFoo' will throw integrity errors when run a second time.
 #  This can be remedied by swapping them with their 'insertOrGetFoo' counterparts

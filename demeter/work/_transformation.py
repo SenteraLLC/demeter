@@ -52,7 +52,7 @@ def Transformation(
         # TODO: How to handle aws credentials and role assuming?
         (s3_connection, bucket_name) = task.getS3Connection()
 
-        mlops_db_connection = db.getConnection()
+        mlops_db_connection = db.getConnection(env_name="TEST_DEMETER")
         cursor = mlops_db_connection.cursor()
 
         function = createFunction(cursor, name, major)
@@ -66,9 +66,7 @@ def Transformation(
         @wraps(fn)
         def add_datasource(*args: Any, **kwargs: Any) -> ExecutionOutputs:
             if len(args):
-                raise Exception(
-                    f"All arguments must be named. Found unnamed arguments: {args}"
-                )
+                raise Exception(f"All arguments must be named. Found unnamed arguments: {args}")
 
             mode = getModeFromKwargs(kwargs)
             outputs = ExecutionOutputs(
@@ -110,14 +108,10 @@ def Transformation(
 
                 keys: List[data.Key] = []
                 if mode == ExecutionMode.CLI:
-                    kwargs, default_cli_kwargs = parseCLIArguments(
-                        name, major, keyword_types
-                    )
+                    kwargs, default_cli_kwargs = parseCLIArguments(name, major, keyword_types)
                     geospatial_key_file = default_cli_kwargs["geospatial_key_file"]
                     temporal_key_file = default_cli_kwargs["temporal_key_file"]
-                    keys = list(
-                        loadKeys(cursor, geospatial_key_file, temporal_key_file)
-                    )
+                    keys = list(loadKeys(cursor, geospatial_key_file, temporal_key_file))
                 elif mode == ExecutionMode.DAEMON:
                     raise Exception("Key acquisition via daemon mode yet supported.")
 
@@ -135,18 +129,14 @@ def Transformation(
 
                 function_id = datasource.execution_summary.function_id
                 existing_executions = getExistingExecutions(cursor, function_id)
-                maybe_duplicate_execution = getExistingDuplicate(
-                    existing_executions, datasource.execution_summary
-                )
+                maybe_duplicate_execution = getExistingDuplicate(existing_executions, datasource.execution_summary)
                 if maybe_duplicate_execution is not None:
                     duplicate_execution = maybe_duplicate_execution
 
                     # TODO: Test this
                     outputs = duplicate_execution.outputs
                     duplicate_execution_id = duplicate_execution.execution_id
-                    print(
-                        f"Detected matching execution #{duplicate_execution_id} for {name} {major}"
-                    )
+                    print(f"Detected matching execution #{duplicate_execution_id} for {name} {major}")
 
                 else:
                     m = datasource.getMatrix()
@@ -163,9 +153,7 @@ def Transformation(
 
                     if maybe_execution_id is not None:
                         execution_id = maybe_execution_id
-                        print(
-                            f"Ran function {name} {major} as execution #{execution_id}"
-                        )
+                        print(f"Ran function {name} {major} as execution #{execution_id}")
             mlops_db_connection.commit()
             return outputs
 

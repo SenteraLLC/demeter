@@ -4,32 +4,20 @@ import pytest
 from contextlib import contextmanager
 from dotenv import load_dotenv
 from sqlalchemy import MetaData
-from sqlalchemy.engine import Connection
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.sql import text
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from demeter.db import getConnection
 
 load_dotenv()
 
 SCHEMA_NAME = "test_demeter"
-
-
 ROOT_DIR = realpath(join(dirname(__file__), "..", ".."))
 DEMETER_DIR = realpath(join(dirname(__file__), ".."))
 TEST_DIR = realpath(dirname(__file__))
 
 # engine = create_engine('postgresql://...')
-conn = getConnection(
-    host_key="DEMETER_HOST_TEST",
-    port_key="DEMETER_PORT_TEST",
-    pw_key="DEMETER_PASSWORD_TEST",
-    user_key="DEMETER_USER_TEST",
-    db_key="DEMETER_DATABASE_TEST",
-    schema_search_path=f"{SCHEMA_NAME},public",
-)
+conn = getConnection(env_name="TEST_DEMETER")
 engine = conn.engine
-Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
 
@@ -39,13 +27,15 @@ metadata_obj.reflect(conn.engine)
 
 
 @contextmanager
-def session_scope():
+def session_scope(engine, schema=None):
     """Provide a transactional scope around a series of operations.
     From: https://stackoverflow.com/questions/67255653/how-to-set-up-and-tear-down-a-database-between-tests-in-fastapi
     """
+    schema = "" if schema is None else schema
+    Session = sessionmaker(bind=engine)  # noqa
     session = Session()
     session.execute(
-        "SET search_path TO test_demeter,public"
+        "SET search_path TO :schema,public", {"schema": schema}
     )  # public needed because that's where PostGIS ext lives
 
     try:
@@ -59,7 +49,7 @@ def session_scope():
 
 
 def clear_tables():
-    with session_scope() as conn:
+    with session_scope(engine, schema=SCHEMA_NAME) as conn:
         for table in metadata_obj.sorted_tables:
             conn.execute(f"TRUNCATE {table.name} RESTART IDENTITY CASCADE;")
         conn.commit()
@@ -75,14 +65,7 @@ def test_db_session():
 
 # @pytest.fixture(autouse=True, scope="session")
 # def CONNECTION_FIXTURE():
-#     yield getConnection(
-#         host_key="DEMETER_HOST_TEST",
-#         port_key="DEMETER_PORT_TEST",
-#         pw_key="DEMETER_PASSWORD_TEST",
-#         user_key="DEMETER_USER_TEST",
-#         db_key="DEMETER_DATABASE_TEST",
-#         options={"-c search_path": f"{SCHEMA_NAME},public"},
-#     )
+#     yield getConnection(env_name="TEST_DEMETER")
 
 
 # @pytest.fixture(autouse=True, scope="session")

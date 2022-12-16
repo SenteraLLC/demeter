@@ -273,12 +273,12 @@ create table unit_type (
                  not null,
   observation_type_id  bigint
                  not null
-                 references observation_type(observation_type_id)
-  unique (unit_name, observation_type_id)
+                 references observation_type(observation_type_id),
+  unique(unit_name, observation_type_id)
 );
 ALTER TABLE unit_type
   ADD CONSTRAINT unit_type_start_end_w_alphanumeric_ck
-  CHECK (unit ~ '^[A-Za-z](.*[A-Za-z0-9])?$');
+  CHECK (unit_name ~ '^[A-Za-z](.*[A-Za-z0-9])?$');
 
 
 
@@ -399,6 +399,33 @@ create table temporal_key (
                   not null
 );
 
+-- ACT
+
+create table act (
+  act_id         bigserial primary key,
+  field_id       bigint
+                  not null
+                  references field(field_id),
+
+  name           text not null,
+
+  crop_type_id   bigint
+                  references crop_type(crop_type_id),
+
+  performed      timestamp without time zone
+                  not null
+                  default now(),
+
+  details        jsonb
+                  not null
+                  default '{}'::jsonb
+);
+
+CREATE TRIGGER update_act_last_updated BEFORE UPDATE
+ON act FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
+-- OBSERVATION
 
 create table observation (
   observation_id bigserial
@@ -412,7 +439,7 @@ create table observation (
                  not null,
   observation_type_id bigint
                 not null
-                references observation_type(observation_type_id)
+                references observation_type(observation_type_id),
   date_observed timestamp without time zone
                  not null,
 
@@ -440,32 +467,6 @@ create table observation (
 
 CREATE TRIGGER update_observation_last_updated BEFORE INSERT or UPDATE
 ON observation FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
-
--- ACT
-
-create table act (
-  act_id         bigserial primary key,
-  field_id       bigint
-                  not null
-                  references field(field_id),
-
-  name           text not null,
-
-  crop_type_id   bigint
-                  references crop_type(crop_type_id),
-
-  performed      timestamp without time zone
-                  not null
-                  default now(),
-
-  details        jsonb
-                  not null
-                  default '{}'::jsonb
-);
-
-CREATE TRIGGER update_act_last_updated BEFORE UPDATE
-ON act FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 -- S3 OBJECT

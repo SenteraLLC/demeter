@@ -6,7 +6,7 @@ from ._base_types import Detailed, SelfKey, SomeKey, Table, TableId, TableKey, T
 from ._json_type import JSON, EMPTY_JSON
 
 # It is unlikely that anything besides Postgres will ever be supported
-from ._postgres.connection import getConnection, getEnv
+from ._postgres.connection import getEnv, getConnection, getEngine, getSession
 from ._postgres.generator import SQLGenerator
 from ._postgres.insert import generateInsertMany
 from ._postgres.tools import doPgFormat, doPgJoin
@@ -18,6 +18,8 @@ Connection: TypeAlias = connection
 
 __all__ = [
     "getConnection",
+    "getEngine",
+    "getSession",
     "getEnv",
     "SQLGenerator",
     "generateInsertMany",

@@ -9,12 +9,7 @@ The `.env` file holds the credentials necessary to connect to the desired Postgr
 
 **.env.template**
 ```bash
-DEMETER_PG_HOST=localhost
-DEMETER_PG_DATABASE=postgres
-DEMETER_PG_OPTIONS=-c search_path=test_demeter,public
-DEMETER_PG_USER=postgres
-DEMETER_PG_PASSWORD=abc123
-DEMETER_PG_PORT=5433
+DEMETER_TEST = "{'host':'localhost', 'port':'5433', 'username':'postgres', 'password':'abc123', 'database':'postgres', 'schema_name':'test_demeter'}"
 ```
 
 ## Method 1: Connect to an existing database (via an SSH tunnel)
@@ -90,7 +85,7 @@ You can do this in one of the following ways:
 
 ```python
 from demeter.db import getConnection
-c = getConnection()
+conn = getConnection(env_name="TEST_DEMETER")
 ```
 
 Be sure to you've added a `.env` file with appropriate credentials ([see .env.template example above](https://github.com/SenteraLLC/demeter/blob/main/README_db_setup.md#before-you-begin)).

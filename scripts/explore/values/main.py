@@ -109,7 +109,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # connection = psycopg2.connect(host="observationhost", database="postgres", options="-c search_path=test_demeter,public")
-    connection = demeter.db.getConnection()
+    connection = demeter.db.getConnection(env_name="TEST_DEMETER")
 
     field_ids = set(args.field_ids)
     observation_ids = set(args.observation_type_ids)

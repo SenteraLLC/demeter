@@ -37,7 +37,7 @@ from demeter.db import getConnection
 # if __name__ == "__main__":
 load_dotenv()
 
-conn = getConnection(env_name="TEST_DEMETER")
+conn = getConnection(env_name="TEST")
 # engine = getEngine(env_name="TEST_DEMETER")
 # Session = getSession(env_name="TEST_DEMETER")
 
@@ -133,7 +133,7 @@ irrigation_type = ObservationType(
 irrigation_type_id = insertOrGetObservationType(cursor, irrigation_type)
 print(f"Irrigation type id: {irrigation_type_id}")
 
-gallons_unit = UnitType(unit="gallons", observation_type_id=irrigation_type_id)
+gallons_unit = UnitType(unit_name="gallons", observation_type_id=irrigation_type_id)
 gallons_unit_id = insertOrGetUnitType(cursor, gallons_unit)
 print(f"Gallons type id: {gallons_unit_id}")
 
@@ -144,10 +144,12 @@ print("Observation geom id: ", obs_geom_id)
 
 o = Observation(
     geom_id=obs_geom_id,
+    observation_type_id=irrigation_type_id,
     field_id=field_id,
     unit_type_id=gallons_unit_id,
-    quantity=1234.567,
-    acquired=datetime.now(),
+    date_observed=datetime(2022, 1, 1),
+    value_observed=1234.567,
+    created=datetime.now(),
 )
 
 observation_value_id = insertOrGetObservation(cursor, o)

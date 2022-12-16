@@ -32,7 +32,7 @@ insertS3OutputArgument = g.getInsertReturnSameKeyFunction(S3OutputArgument)
 
 from ._datasource import (
     DataSource,
-    LocalFile,
+    ObservationFile,
     OneToManyResponseFunction,
     OneToOneResponseFunction,
     S3File,
@@ -54,7 +54,7 @@ __all__ = [
     # datasource
     "DataSource",
     "S3File",
-    "LocalFile",
+    "ObservationFile",
     "Argument",
     "ObservationArgument",
     "HTTPArgument",

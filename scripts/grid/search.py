@@ -138,8 +138,8 @@ def getTree(
              '{}'::bigint[] as ancestry,
              P.point,
              0 as level
-      from test_mlops.root R
-      join test_mlops.node N on R.root_node_id = N.node_id
+      from test_demeter.root R
+      join test_demeter.node N on R.root_node_id = N.node_id
       natural full outer join fix_point_hack P
       where R.root_id = %(root_id)s and
             ST_Contains(N.geom, P.point)
@@ -154,8 +154,8 @@ def getTree(
              RA.point,
              (RA.level + 1) as level
       from rebuilt_ancestry RA
-      join test_mlops.node_ancestry A on RA.node_id = A.parent_node_id
-      join test_mlops.node N on N.node_id = A.node_id
+      join test_demeter.node_ancestry A on RA.node_id = A.parent_node_id
+      join test_demeter.node N on N.node_id = A.node_id
       where ST_Contains(N.geom, RA.point)
 
     ), node_id_to_meta as (
@@ -203,7 +203,7 @@ def debug() -> None:
                    ST_Covers(A.geom, B.geom),
                    ST_Overlaps(A.geom, B.geom),
                    ST_Area(ST_Intersection(A.geom, B.geom)) / ST_Area(B.geom)
-            from test_mlops.node A, test_mlops.node B
+            from test_demeter.node A, test_demeter.node B
             where A.node_id=36395 and B.node_id=36397;
   """
 
@@ -228,7 +228,7 @@ def debug() -> None:
          ST_Area(B.geom) as child_area,
          ST_Area(ST_Intersection(A.geom, B.geom)) / ST_Area(B.geom) as child_percent,
          ST_Area(ST_Intersection(A.geom, B.geom)) / ST_Area(A.geom) as parent_percent
-            from test_mlops.node A, test_mlops.node B, test_mlops.node_ancestry N
+            from test_demeter.node A, test_demeter.node B, test_demeter.node_ancestry N
             where A.node_id=N.parent_node_id and B.node_id=N.node_id
             order by B.node_id asc, A.node_id asc;
   """

@@ -6,19 +6,19 @@
 
 -- Database Setup
 
-drop schema if exists test_mlops cascade;
-create schema test_mlops;
-set schema 'test_mlops';
+drop schema if exists test_demeter cascade;
+create schema test_demeter;
+set schema 'test_demeter';
 
-create extension postgis with schema public;
-create extension postgis_raster with schema public;
+create extension if not exists postgis with schema public;
+create extension if not exists postgis_raster with schema public;
 -- TODO: Fix this extension
 -- create extension "postgres-json-schema" with schema public;
 
-set search_path = test_mlops, public;
+set search_path = test_demeter, public;
 create role read_and_write;
-grant select, insert on all tables in schema test_mlops to read_and_write;
-grant usage on schema test_mlops to read_and_write;
+grant select, insert on all tables in schema test_demeter to read_and_write;
+grant usage on schema test_demeter to read_and_write;
 
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$
@@ -35,7 +35,6 @@ $$ language 'plpgsql';
 
 create table geom (
   geom_id bigserial primary key,
-
   geom geometry(Geometry, 4326) not null,
   check (ST_IsValid(geom))
 );
@@ -437,22 +436,22 @@ update_last_updated_column();
 -- ACT
 
 create table act (
-  act_id         bigserial primary key, 
-  field_id       bigint 
+  act_id         bigserial primary key,
+  field_id       bigint
                   not null
                   references field(field_id),
 
   name           text not null,
 
-  crop_type_id   bigint 
+  crop_type_id   bigint
                   references crop_type(crop_type_id),
 
   local_value_id bigint
                   references local_value(local_value_id),
-  unique (field_id, local_value_id), 
+  unique (field_id, local_value_id),
 
   performed      timestamp without time zone
-                  not null 
+                  not null
                   default now(),
 
   details        jsonb

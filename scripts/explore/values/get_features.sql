@@ -11,11 +11,11 @@ with type_feature as (
          LG.group_name
   from field F
   inner join
-    (test_mlops.local_value LV
-     join test_mlops.unit_type U on U.unit_type_id = LV.unit_type_id
-     join test_mlops.local_type LT on LT.local_type_id = U.local_type_id
-     left join test_mlops.local_group LG on LG.local_group_id = LV.local_group_id
-     left join test_mlops.geom LVG on LV.geom_id = LVG.geom_id
+    (test_demeter.local_value LV
+     join test_demeter.unit_type U on U.unit_type_id = LV.unit_type_id
+     join test_demeter.local_type LT on LT.local_type_id = U.local_type_id
+     left join test_demeter.local_group LG on LG.local_group_id = LV.local_group_id
+     left join test_demeter.geom LVG on LV.geom_id = LVG.geom_id
     ) on LV.field_id = F.field_id
   where LV.acquired > '2000-01-01' and
           (array_length(%(local_type_ids)s::bigint[], 1) is null or

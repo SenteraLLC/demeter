@@ -3,16 +3,16 @@
 -
 ## Why?
 -
-## CR strategy
-Goal: guide the reviewer through the code
-### CR checklist
-- [ ] Scope of CR (does PR include "demo" code)?
-- [ ] Does CR require a technical understanding of another concept/repo? If so, what links?
-- [ ] Prioritization - are there files/functions that should be reviewed before others? Maybe due to algorithmic complexity, dependencies within the PR, etc.
+## CR strategy/checklist
+Goal: guide the reviewer through the code. For example, should reviewer run demo code, review other docs or dependencies?
+- [ ] Action item 1 (e.g., demo code)
+- [ ] Action item 2 (e.g., link to docs to read)
+- [ ] Action item 3 (e.g., review that proper tests are written)
 ## PR Checklist
 - [ ] Merged latest main
 - [ ] Updated version number
 - [ ] Version numbers match between package `_version.py` and `pyproject.toml`
 - [ ] Ran `poetry update` and committed `pyproject.toml` and `poetry.lock`
-- [ ] Initialized new local version of database and tested `sample.py`
+- [ ] Initialized `schema.sql` locally and tests ran successfully via `poetry run pytest`
 ## Breaking Changes
+-

@@ -6,7 +6,7 @@ with field_operation_maybe_dupe as (
                             order by performed asc
                             RANGE BETWEEN INTERVAL '6 hours' PRECEDING AND INTERVAL '6 hours' FOLLOWING
                            ) as dupe_id
-  from test_mlops.operation
+  from test_demeter.operation
   where performed > '2000-01-01' and
         field_id = any(%(field_ids)s::bigint[])
 
@@ -28,8 +28,8 @@ with field_operation_maybe_dupe as (
                             order by P.performed asc
                             RANGE BETWEEN INTERVAL '6 hours' PRECEDING AND INTERVAL '6 hours' FOLLOWING
                            ) as dupe_id
-  from test_mlops.planting P
-  join test_mlops.crop_type C on P.crop_type_id = C.crop_type_id
+  from test_demeter.planting P
+  join test_demeter.crop_type C on P.crop_type_id = C.crop_type_id
   where P.field_id = any(%(field_ids)s::bigint[]) and P.performed > '2000-01-01'
 
 ), planting as (
@@ -63,7 +63,7 @@ with field_operation_maybe_dupe as (
                'name', name,
                'performed', performed
              )
-           ) as operations 
+           ) as operations
     from field_operations
     where name is not null and performed is not null
     group by field_id

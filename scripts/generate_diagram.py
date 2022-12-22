@@ -9,6 +9,7 @@ from sqlalchemy_schemadisplay import create_schema_graph
 
 from demeter.db import getConnection
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate schema diagram.")
     # parser.add_argument("-d", "--show_datatypes", action="store_true", description="")
@@ -17,7 +18,7 @@ if __name__ == "__main__":
         "-o",
         "--output_path",
         default="schema-test_demeter.png",
-        description="Output path to save diagram.",
+        help="Output path to save diagram.",
     )
     args = parser.parse_args()
 

@@ -1,4 +1,3 @@
-from ... import data, db
 from ._base import DataSourceBase, DataSourceTypes
 from ._datasource import DataSource
 from ._register import DataSourceRegister

@@ -1,33 +1,13 @@
 from functools import wraps
 from typing import Any, Callable, List, Mapping, Optional
 
-from .. import task
-from .. import data
-from .. import work
-from .. import db
-
-from ._datasource import DataSource
-from ._datasource import DataSourceRegister
-
-from ._types import (
-    ExecutionSummary,
-    ExecutionKey,
-    ExecutionOutputs,
-    Execution,
-    S3OutputArgument,
-)
-from ._existing import getExistingExecutions, getExistingDuplicate
-
-from .. import data, db, task, work
+from .. import data, db, task
 from . import insertExecution
 from ._datasource import DataSource, DataSourceRegister
-from ._existing import getExistingDuplicate, getExistingExecutions
+from ._existing import getExistingExecutions, getExistingDuplicate
 from ._types import (
-    Execution,
-    ExecutionKey,
     ExecutionOutputs,
-    ExecutionSummary,
-    S3OutputArgument,
+    Execution,
 )
 from ._util.cli import parseCLIArguments
 from ._util.keys import loadKeys
@@ -35,8 +15,11 @@ from ._util.mode import ExecutionMode, getModeFromKwargs
 from ._util.register import makeDummyArguments, registerFunction
 from ._util.setup import createFunction, getKeywordParameterTypes, getOutputTypes
 from ._util.teardown import insertInitFile, insertRawOutputs
-from ._util.wrapper_types import OutputLoadFunction, WrappableFunction
-from ._util.wrapper_types import WrappedTransformation as WrappedTransformation
+from ._util.wrapper_types import (
+    OutputLoadFunction,
+    WrappableFunction,
+    WrappedTransformation as WrappedTransformation,
+)
 
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Observation) -> (S3, Observation)

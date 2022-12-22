@@ -44,6 +44,7 @@ def parseRequestSchema(
         request_body = json_fn(k)
         validator = jsonschema.Draft7Validator(request_body_schema)
         is_valid = validator.is_valid(request_body)
+        assert is_valid, "Must be valid."
         return request_body
     else:
         raise Exception("Expecting HTTP json request but no json function provided")

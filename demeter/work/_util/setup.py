@@ -1,8 +1,7 @@
 import inspect
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Type
+from typing import Any, Dict, Mapping, Tuple, Type
 
 from ... import db, task
-from .._types import ExecutionKey, ExecutionSummary
 from . import wrapper_types
 
 

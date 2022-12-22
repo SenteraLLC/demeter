@@ -6,7 +6,6 @@ import pandas as pd
 from ... import data, db, task
 from .._types import (
     ExecutionArguments,
-    ExecutionKey,
     ExecutionOutputs,
     ExecutionSummary,
 )
@@ -63,7 +62,7 @@ class DataSourceBase(ABC):
         self,
         type_name: str,
     ) -> SupportedS3DataType:
-        raise NotImplemented
+        raise NotImplementedError
 
     def s3(
         self,
@@ -88,7 +87,7 @@ class DataSourceBase(ABC):
     def _observation(
         self, observation_types: List[data.ObservationType]
     ) -> pd.DataFrame:
-        raise NotImplemented
+        raise NotImplementedError
 
     def observation(
         self, observation_types: List[data.ObservationType]
@@ -112,7 +111,7 @@ class DataSourceBase(ABC):
         response_fn: ResponseFunction = OneToOneResponseFunction,
         http_options: Dict[str, Any] = {},
     ) -> pd.DataFrame:
-        raise NotImplemented
+        raise NotImplementedError
 
     def http(
         self,

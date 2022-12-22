@@ -1,7 +1,7 @@
 import uuid
 from collections import OrderedDict
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Tuple, Type, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import geopandas as gpd  # type: ignore
 import pandas as pd
@@ -260,12 +260,12 @@ class DataSource(DataSourceBase):
         return explicit_join_results
 
     def getMatrix(self) -> gpd.GeoDataFrame:
-        all_dataframe_names = set(self.dataframes.keys()).union(
-            self.geodataframes.keys()
-        )
-        joined_dataframe_names: Set[str] = set()
+        # all_dataframe_names = set(self.dataframes.keys()).union(
+        #     self.geodataframes.keys()
+        # )
+        # joined_dataframe_names: Set[str] = set()
 
-        explicit_join_results = self.doExplicitJoins()
+        # explicit_join_results = self.doExplicitJoins()
 
         out: gpd.GeoDataFrame = self.getGeometry()
 

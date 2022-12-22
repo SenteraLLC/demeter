@@ -1,6 +1,6 @@
 import os
 from io import TextIOWrapper
-from typing import Any, Callable, List, Mapping, Optional, Sequence, cast
+from typing import Any, Callable, List, Optional, Sequence, cast
 
 from .. import data, db
 from ._types import (

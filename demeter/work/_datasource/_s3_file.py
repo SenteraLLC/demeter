@@ -38,7 +38,7 @@ class S3File(object):
         converter_args: Dict[str, Any] = {},
     ) -> S3FileMeta:
         tmp_filename = "/tmp/" + str(uuid.uuid4())
-        dataframe_has_geometry: Optional[bool] = None
+        # dataframe_has_geometry: Optional[bool] = None
 
         # TODO: Serialize S3 file in memory?
         writeS3FileToDisk(

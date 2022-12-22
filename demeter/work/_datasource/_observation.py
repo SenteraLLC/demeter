@@ -103,8 +103,8 @@ def getObservationRows(
         maybe_observation_type_id = data.getMaybeObservationTypeId(cursor, t)
         if maybe_observation_type_id is None:
             raise Exception(f"data.ObservationType does not exist: {t}")
-        else:
-            observation_type_id = maybe_observation_type_id
+        # else:
+        #     observation_type_id = maybe_observation_type_id
 
     raw = loadObservationRaw(cursor, keys, observation_types, execution_summary)
     for observation, unit_type in raw:

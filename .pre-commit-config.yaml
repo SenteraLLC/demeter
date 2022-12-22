@@ -1,7 +1,6 @@
 exclude: >
   (?x)^(
       demeter/task/|
-      demeter/work/|
       demeter/grid/|
       scripts/explore/|
       scripts/grid/|

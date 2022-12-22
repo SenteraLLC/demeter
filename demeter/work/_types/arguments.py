@@ -3,9 +3,6 @@ from typing import Optional
 
 from ... import db, task
 
-# from collections import OrderedDict
-# from typing import Any, Generator, List, Optional, Sequence, TypeVar, Union
-
 
 @dataclass(frozen=True, order=True)
 class Argument(task.FunctionId):

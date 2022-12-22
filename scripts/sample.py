@@ -37,7 +37,7 @@ from demeter.db import getConnection
 # if __name__ == "__main__":
 load_dotenv()
 
-conn = getConnection(env_name="TEST")
+conn = getConnection(env_name="TEST_DEMETER")
 # engine = getEngine(env_name="TEST_DEMETER")
 # Session = getSession(env_name="TEST_DEMETER")
 

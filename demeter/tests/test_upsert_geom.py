@@ -1,18 +1,20 @@
 import pytest
 from sure import expect
 
-from .conftest import SCHEMA_NAME
-from .constants import TABLES_LIST
-
 from geopandas import GeoDataFrame
 from pandas import read_sql_query
 from shapely.geometry import Point, Polygon
 from sqlalchemy.sql import text
 
 from demeter.data import insertOrGetGeom
+from demeter.tests.conftest import SCHEMA_NAME
+from demeter.tests.constants import TABLES_LIST
+
+# from demeter.db import getConnection
+# conn = getConnection(env_name="TEST_DEMETER")
 
 
-def test_if_tables_exist(test_db_session):
+def test_reconcile_tables_list(test_db_session):
     with test_db_session.connect() as conn:
         with conn.begin():
             # conn = test_db_session.connect()
@@ -25,9 +27,17 @@ def test_if_tables_exist(test_db_session):
             )
             df = read_sql_query(sql, conn, params={"schema_name": SCHEMA_NAME})
             # df = read_sql_query(sql, c, params={"schema_name": "dem_test"})
-            print(len(df))
-            for t in df["tablename"].unique():
-                t.should.be.within(TABLES_LIST)
+            # print(len(df))
+            db_tables_list = list(df["tablename"].unique())
+            for (
+                t1
+            ) in (
+                db_tables_list
+            ):  # check if all created tables are supposed to be created
+                t1.should.be.within(TABLES_LIST)
+            for t2 in TABLES_LIST:  # check if all expected tables are actually created
+                t2.should.be.within(db_tables_list)
+            # (set(db_tables_list) == set(TABLES_LIST)).should.be.true
 
 
 def test_upsert_point(test_db_session):

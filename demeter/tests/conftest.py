@@ -3,6 +3,7 @@ import pytest
 
 from contextlib import contextmanager
 from dotenv import load_dotenv
+from geoalchemy2 import Geometry  # Required import for sqlalchemy to use Geometry types
 from sqlalchemy import MetaData
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -55,12 +56,22 @@ def clear_tables():
         conn.commit()
 
 
-@pytest.fixture(scope="session")
-def test_db_session():
+@pytest.fixture(scope="class")
+def test_db_class():
+    """Class scope - do not use this after `test_db_session` has been used."""
     clear_tables()  # Ensure tables are empty before beginning the tests
     yield engine
     engine.dispose()
     clear_tables()
+
+
+# @pytest.fixture(scope="session")
+# def test_db_session():
+#     """Session scope - after using this, do not use any other db connection fixutre."""
+#     clear_tables()  # Ensure tables are empty before beginning the tests
+#     yield engine
+#     engine.dispose()
+#     clear_tables()
 
 
 # @pytest.fixture(autouse=True, scope="session")

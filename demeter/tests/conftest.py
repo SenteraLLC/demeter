@@ -3,6 +3,7 @@ import pytest
 
 from contextlib import contextmanager
 from dotenv import load_dotenv
+from geoalchemy2 import Geometry  # Required import for sqlalchemy to use Geometry types
 from sqlalchemy import MetaData
 from sqlalchemy.orm import declarative_base, sessionmaker
 

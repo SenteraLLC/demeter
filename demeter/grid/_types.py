@@ -41,7 +41,7 @@ class NodeRasterCell(Table):
 
 @dataclass(frozen=True)
 class Root(Detailed):
-    local_type_id: TableId
+    observation_type_id: TableId
     root_node_id: TableId
     time: datetime
 

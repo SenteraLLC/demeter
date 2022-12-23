@@ -1,7 +1,7 @@
 import uuid
 from collections import OrderedDict
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Tuple, Type, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import geopandas as gpd  # type: ignore
 import pandas as pd
@@ -9,7 +9,7 @@ import pandas as pd
 from ... import data, db, task
 from ._base import DataSourceBase
 from ._http import getHTTPRows
-from ._local import getLocalRows
+from ._observation import getObservationRows
 from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
 from ._s3 import getRawS3, rawToDataFrame
 from ._s3_file import AnyDataFrame, S3FileMeta, SupportedS3DataType
@@ -46,11 +46,15 @@ class DataSource(DataSourceBase):
             Tuple[Optional[Callable[..., AnyDataFrame]], Dict[str, Any]],
         ] = {}
 
-    def _local(self, local_types: List[data.LocalType]) -> pd.DataFrame:
+    def _observation(
+        self, observation_types: List[data.ObservationType]
+    ) -> pd.DataFrame:
         if self.OBSERVATION in self.dataframes:
-            raise Exception("Local data can only be acquired once.")
+            raise Exception("Observation data can only be acquired once.")
 
-        rows = getLocalRows(self.cursor, self.keys, local_types, self.execution_summary)
+        rows = getObservationRows(
+            self.cursor, self.keys, observation_types, self.execution_summary
+        )
         df = pd.DataFrame(rows)
         self.dataframes[self.OBSERVATION] = df
         return df
@@ -256,12 +260,12 @@ class DataSource(DataSourceBase):
         return explicit_join_results
 
     def getMatrix(self) -> gpd.GeoDataFrame:
-        all_dataframe_names = set(self.dataframes.keys()).union(
-            self.geodataframes.keys()
-        )
-        joined_dataframe_names: Set[str] = set()
+        # all_dataframe_names = set(self.dataframes.keys()).union(
+        #     self.geodataframes.keys()
+        # )
+        # joined_dataframe_names: Set[str] = set()
 
-        explicit_join_results = self.doExplicitJoins()
+        # explicit_join_results = self.doExplicitJoins()
 
         out: gpd.GeoDataFrame = self.getGeometry()
 

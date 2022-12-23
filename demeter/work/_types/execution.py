@@ -1,27 +1,27 @@
 from typing import List, Sequence, TypedDict
 
-from .arguments import *
+from ... import data
+from ... import db
+from .arguments import (
+    HTTPArgument,
+    KeywordArgument,
+    ObservationArgument,
+    S3InputArgument,
+    S3OutputArgument,
+)
+from dataclasses import dataclass
 
 
 class ExecutionOutputs(TypedDict):
     s3: List[S3OutputArgument]
 
 
-from ... import data
-
-
 class ExecutionArguments(TypedDict):
-    local: List[LocalArgument]
+    observation: List[ObservationArgument]
     keyword: List[KeywordArgument]
     http: List[HTTPArgument]
     s3: List[S3InputArgument]
     keys: Sequence[data.Key]
-
-
-from dataclasses import dataclass
-
-from ... import db
-
 
 
 @dataclass(frozen=True)

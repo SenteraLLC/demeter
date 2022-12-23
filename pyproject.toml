@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demeter"
-version = "1.1.31"
+version = "1.1.32"
 description = "The database schema and API that supports agronomic modeling and data science activities."
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [
@@ -21,7 +21,7 @@ python-dotenv = "^0.21.0"
 requests = "^2.27.1"
 Rtree = "^1.0.0"
 scoping = "^0.1.2"
-shapely = "1.8.4"
+shapely = "1.8.5.post1"
 typing_extensions = "^4.0.1"
 typing_inspect = "^0.8.0"
 types-boto3 = "^1.0.1"

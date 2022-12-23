@@ -1,13 +1,11 @@
 from typing import Any, List, Mapping, Optional
 
-import geopandas as gpd  # type: ignore
-
 from ... import data, db, task
 from .. import (
     insertExecutionKey,
     insertHTTPArgument,
     insertKeywordArgument,
-    insertLocalArgument,
+    insertObservationArgument,
     insertS3InputArgument,
     insertS3OutputArgument,
 )
@@ -22,9 +20,9 @@ def insertExecutionArguments(
     execution_summary: ExecutionSummary,
 ) -> None:
     execution_id = execution_summary.execution_id
-    function_id = execution_summary.function_id
-    for o in execution_summary.inputs["local"]:
-        insertLocalArgument(cursor, o)
+    # function_id = execution_summary.function_id
+    for o in execution_summary.inputs["observation"]:
+        insertObservationArgument(cursor, o)
     for h in execution_summary.inputs["http"]:
         insertHTTPArgument(cursor, h)
     for s in execution_summary.inputs["s3"]:
@@ -44,23 +42,22 @@ def insertExecutionArguments(
     print("Wrote for: ", execution_summary.execution_id)
 
 
-def insertInitFile(
-    cursor: Any,
-    datasource: DataSource,
-    input_matrix: gpd.GeoDataFrame,
-    bucket_name: str,
-) -> None:
-    s3_type_id = task.getS3TypeIdByName(cursor, "input_geodataframe_type")
-    s3_type, maybe_tagged_s3_sub_type = task.getS3Type(cursor, s3_type_id)
-    input_s3 = S3File(input_matrix, "input")
-    if isinstance(input_s3, S3File):
-        tagged_s3_sub_type = maybe_tagged_s3_sub_type
-        s3_file_meta = input_s3.to_file(tagged_s3_sub_type)
-
-        s3_type_name = s3_type.type_name
-        s3_object_id = datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
-    else:
-        raise Exception("Init file must be an S3 File")
+# def insertInitFile(
+#     cursor: Any,
+#     datasource: DataSource,
+#     input_matrix: gpd.GeoDataFrame,
+#     bucket_name: str,
+# ) -> None:
+#     s3_type_id = task.getS3TypeIdByName(cursor, "input_geodataframe_type")
+#     s3_type, maybe_tagged_s3_sub_type = task.getS3Type(cursor, s3_type_id)
+#     input_s3 = S3File(input_matrix, "input")
+#     if isinstance(input_s3, S3File):
+#         tagged_s3_sub_type = maybe_tagged_s3_sub_type
+#         s3_file_meta = input_s3.to_file(tagged_s3_sub_type)
+#         s3_type_name = s3_type.type_name
+#         s3_object_id = datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
+#     else:
+#         raise Exception("Init file must be an S3 File")
 
 
 def insertRawOutputs(
@@ -81,7 +78,7 @@ def insertRawOutputs(
             tagged_s3_sub_type = maybe_tagged_s3_sub_type
             s3_file_meta = output.to_file(tagged_s3_sub_type)
 
-            s3_type_name = s3_type.type_name
+            # s3_type_name = s3_type.type_name
             s3_object_id = datasource.upload_file(s3_type_id, bucket_name, s3_file_meta)
         else:
             raise Exception(f"Bad output provided: {output_name}")

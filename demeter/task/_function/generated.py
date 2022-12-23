@@ -17,7 +17,7 @@ from .types import (
     FunctionType,
     HTTPParameter,
     KeywordParameter,
-    LocalParameter,
+    ObservationParameter,
     S3InputParameter,
     S3OutputParameter,
 )
@@ -29,7 +29,7 @@ insertFunctionWithMinor: ReturnId[Function] = g.getInsertReturnIdFunction(Functi
 insertFunctionType: ReturnId[FunctionType] = g.getInsertReturnIdFunction(FunctionType)
 
 
-insertLocalParameter = g.getInsertReturnSameKeyFunction(LocalParameter)
+insertObservationParameter = g.getInsertReturnSameKeyFunction(ObservationParameter)
 insertHTTPParameter = g.getInsertReturnSameKeyFunction(HTTPParameter)
 insertS3InputParameter = g.getInsertReturnSameKeyFunction(S3InputParameter)
 insertS3OutputParameter = g.getInsertReturnSameKeyFunction(S3OutputParameter)

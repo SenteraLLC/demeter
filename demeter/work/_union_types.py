@@ -1,16 +1,25 @@
 from typing import Union
 
 from ..db import TypeTable
-from ._types import *
+from ._types.arguments import (
+    Execution,
+    HTTPArgument,
+    KeywordArgument,
+    ObservationArgument,
+    S3InputArgument,
+    S3OutputArgument,
+)
+from ._types.execution import ExecutionKey
 
 AnyKeyTable = Union[
-    LocalArgument,
+    ObservationArgument,
     HTTPArgument,
     S3InputArgument,
     S3OutputArgument,
     KeywordArgument,
     ExecutionKey,
 ]
+
 
 class _Ignore(TypeTable):
     pass

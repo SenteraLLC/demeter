@@ -38,7 +38,7 @@ class S3File(object):
         converter_args: Dict[str, Any] = {},
     ) -> S3FileMeta:
         tmp_filename = "/tmp/" + str(uuid.uuid4())
-        dataframe_has_geometry: Optional[bool] = None
+        # dataframe_has_geometry: Optional[bool] = None
 
         # TODO: Serialize S3 file in memory?
         writeS3FileToDisk(
@@ -120,13 +120,13 @@ def writeS3FileToDisk(
 
 
 # Temporary location: not fully supported
-class LocalFile(object):
+class ObservationFile(object):
     def __init__(
         self,
         type_name: str,
         value: float,
-        local_group_id: Optional[int],
+        observation_group_id: Optional[int],
     ):
         self.type_name = type_name
         self.value = value
-        self.local_group_id = local_group_id
+        self.observation_group_id = observation_group_id

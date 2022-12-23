@@ -22,14 +22,14 @@ from demeter.data import (
 )
 
 # Observation Types
-from demeter.data import UnitType, LocalType, LocalValue
+from demeter.data import UnitType, ObservationType, Observation
 
 # , FieldGroup
 from demeter.data import (
     insertOrGetUnitType,
     insertOrGetFieldGroup,
-    insertOrGetLocalType,
-    insertOrGetLocalValue,
+    insertOrGetObservationType,
+    insertOrGetObservation,
 )
 from demeter.db import getConnection
 
@@ -127,13 +127,13 @@ field_harvest = Harvest(
 harvest_id = insertOrGetHarvest(cursor, field_harvest)
 
 # %%
-irrigation_type = LocalType(
+irrigation_type = ObservationType(
     type_name="my_irrigation_type",
 )
-irrigation_type_id = insertOrGetLocalType(cursor, irrigation_type)
+irrigation_type_id = insertOrGetObservationType(cursor, irrigation_type)
 print(f"Irrigation type id: {irrigation_type_id}")
 
-gallons_unit = UnitType(unit="gallons", local_type_id=irrigation_type_id)
+gallons_unit = UnitType(unit_name="gallons", observation_type_id=irrigation_type_id)
 gallons_unit_id = insertOrGetUnitType(cursor, gallons_unit)
 print(f"Gallons type id: {gallons_unit_id}")
 
@@ -142,15 +142,17 @@ obs_geom = Point(-65.645145335822, -36.052968641022)
 obs_geom_id = insertOrGetGeom(cursor, obs_geom)
 print("Observation geom id: ", obs_geom_id)
 
-o = LocalValue(
+o = Observation(
     geom_id=obs_geom_id,
+    observation_type_id=irrigation_type_id,
     field_id=field_id,
     unit_type_id=gallons_unit_id,
-    quantity=1234.567,
-    acquired=datetime.now(),
+    date_observed=datetime(2022, 1, 1),
+    value_observed=1234.567,
+    created=datetime.now(),
 )
 
-observation_value_id = insertOrGetLocalValue(cursor, o)
+observation_value_id = insertOrGetObservation(cursor, o)
 print(f"Observation value id: {observation_value_id}")
 
 

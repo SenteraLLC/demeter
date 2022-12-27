@@ -1,4 +1,4 @@
-from .types import Act, ObservationType, Observation, UnitType
+from .types import ObservationType, Observation, UnitType
 from . import lookups as _lookups
 
 from ...db._generic_types import GetId, GetTable, ReturnId
@@ -18,7 +18,7 @@ getMaybeObservationTypeId: GetId[ObservationType] = g.getMaybeIdFunction(
     ObservationType
 )
 getMaybeObservationId: GetId[Observation] = g.getMaybeIdFunction(Observation)
-getMaybeActId = g.getMaybeIdFunction(Act)
+
 
 getObservationType: GetTable[ObservationType] = g.getTableFunction(ObservationType)
 
@@ -27,7 +27,6 @@ insertUnitType: ReturnId[UnitType] = g.getInsertReturnIdFunction(UnitType)
 insertObservationType: ReturnId[ObservationType] = g.getInsertReturnIdFunction(
     ObservationType
 )
-insertAct = g.getInsertReturnIdFunction(Act)
 
 insertOrGetUnitType = g.partialInsertOrGetId(getMaybeUnitTypeId, insertUnitType)
 insertOrGetObservationType = g.partialInsertOrGetId(
@@ -36,4 +35,3 @@ insertOrGetObservationType = g.partialInsertOrGetId(
 insertOrGetObservation = g.partialInsertOrGetId(
     getMaybeObservationId, insertObservation
 )
-insertOrGetAct = g.partialInsertOrGetId(getMaybeActId, insertAct)

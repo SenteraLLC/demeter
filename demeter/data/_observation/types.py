@@ -39,10 +39,3 @@ class UnitType(db.TypeTable):
     unit_name: str
     # aliases: list[str]
     observation_type_id: db.TableId
-
-
-@dataclass(frozen=True)
-class Act(db.Detailed):
-    field_id: db.TableId
-    observation_type_id: db.TableId
-    performed: datetime

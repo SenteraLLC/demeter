@@ -1,4 +1,4 @@
-from .types import UnitType, ObservationType, Observation, Act
+from .types import UnitType, ObservationType, Observation
 
 from ...db._lookup_types import TableLookup
 from ...db._lookup_types import sumMappings
@@ -10,7 +10,6 @@ type_table_lookup: TableLookup = {
 
 data_table_lookup: TableLookup = {
     Observation: "observation",
-    Act: "act",
 }
 
 id_table_lookup: TableLookup = sumMappings(type_table_lookup, data_table_lookup)

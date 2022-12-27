@@ -83,6 +83,10 @@ create table field_group (
   ),
   unique(parent_field_group_id, name),
 
+  created  timestamp without time zone
+              not null
+              default now(),
+
   details jsonb
           not null
           default '{}'::jsonb,
@@ -104,7 +108,6 @@ create table field (
             references geom(geom_id),
 
   name text,
-  external_id text,
 
   field_group_id bigint
                   references field_group(field_group_id),
@@ -127,17 +130,16 @@ create table crop_type (
   crop_type_id bigserial
                primary key,
 
-  species      text
+  crop        text
                not null,
 
-  cultivar     text,
+  product_name text,
 
-  unique (species, cultivar),
+  unique (crop, product_name),
 
-  parent_id_1  bigint,
-  parent_id_2  bigint,
-  unique (parent_id_1, parent_id_2),
-  check (parent_id_1 > parent_id_2),
+  created  timestamp without time zone
+              not null
+              default now(),
 
   details     jsonb
               not null
@@ -148,28 +150,21 @@ create table crop_type (
                 default now()
 );
 
-CREATE UNIQUE INDEX unique_species_cultivar_null_idx on crop_type (species, cultivar) where cultivar is null;
-
-CREATE UNIQUE INDEX crop_type_parent_idx ON crop_type (
-  LEAST(parent_id_1, parent_id_2)
-, GREATEST(parent_id_1, parent_id_2)
-);
+CREATE UNIQUE INDEX unique_crop_product_name_null_idx on crop_type (crop, product_name) where product_name is null;
 
 CREATE TRIGGER update_crop_type_last_updated BEFORE UPDATE
 ON crop_type FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 ALTER TABLE crop_type
-  ADD CONSTRAINT crop_type_species_lowercase_ck
-  CHECK (species = lower(species));
+  ADD CONSTRAINT crop_type_crop_lowercase_ck
+  CHECK (crop = lower(crop));
 ALTER TABLE crop_type
-  ADD CONSTRAINT crop_type_cultivar_lowercase_ck
-  CHECK (cultivar = lower(cultivar));
-CREATE UNIQUE INDEX crop_variety_null_unique_idx
-  ON crop_type(species)
-  WHERE (cultivar is NULL);
-alter table crop_type add constraint fk_parent1_crop_type foreign key (parent_id_1) references crop_type(crop_type_id);
-alter table crop_type add constraint fk_parent2_crop_type foreign key (parent_id_2) references crop_type(crop_type_id);
+  ADD CONSTRAINT crop_type_product_name_lowercase_ck
+  CHECK (product_name = lower(product_name));
+CREATE UNIQUE INDEX crop_product_name_null_unique_idx
+  ON crop_type(crop)
+  WHERE (product_name is NULL);
 
 -- OBSERVATION TYPE
 
@@ -236,29 +231,6 @@ CREATE TRIGGER update_harvest_last_updated BEFORE UPDATE
 ON planting FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
--- CROP STAGE
-
-create table crop_stage (
-  crop_stage_id bigserial primary key,
-  crop_stage text unique
-);
-
-create table crop_progress (
-  crop_type_id  bigint
-                not null
-                references crop_type(crop_type_id),
-  field_id      bigint references field(field_id) not null,
-  planted timestamp without time zone not null,
-
-  observation_type_id bigint
-                      references observation_type(observation_type_id),
-
-  foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
-
-  crop_stage_id bigint references crop_stage(crop_stage_id) not null,
-
-  primary key (crop_type_id, field_id, planted, crop_stage_id)
-);
 
 -----------------
 -- Type Tables --

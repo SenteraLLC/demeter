@@ -1,14 +1,10 @@
 from ._core.types import (
     Field,
-    # FieldGroup,
     CropType,
-    CropStage,
-    CropProgress,
-    CropProgressKey,
     Planting,
     PlantingKey,
     Harvest,
-    ReportType,
+    # ReportType,
 )
 
 from ._core.st_types import (
@@ -35,14 +31,8 @@ from ._core.generated import (
     # insertCropType,
     insertOrGetCropType,
     getMaybeCropTypeId,
-    # insertCropStage,
-    insertOrGetCropStage,
-    getMaybeCropStageId,
-    # insertCropProgress,
-    insertOrGetCropProgress,
-    getCropProgress,
-    insertReportType,
-    getMaybeReportTypeId,
+    # insertReportType,
+    # getMaybeReportTypeId,
     getGeom,
     # insertGeoSpatialKey,
     insertOrGetGeoSpatialKey,
@@ -50,6 +40,9 @@ from ._core.generated import (
     # insertTemporalKey,
     insertOrGetTemporalKey,
     getMaybeTemporalKeyId,
+    # insertAct,
+    insertOrGetAct,
+    getMaybeActId,
 )
 
 from ._core.field_group import (
@@ -70,13 +63,9 @@ from ._observation.types import (
     Observation,
     ObservationType,
     UnitType,
-    Act,
 )
 
 from ._observation.generated import (
-    # insertAct,
-    insertOrGetAct,
-    getMaybeActId,
     # insertObservation,
     insertOrGetObservation,
     getMaybeObservation,
@@ -120,18 +109,9 @@ __all__ = (
     # "insertCropType",
     "insertOrGetCropType",
     "getMaybeCropTypeId",
-    "CropStage",
-    # "insertCropStage",
-    "insertOrGetCropStage",
-    "getMaybeCropStageId",
-    "CropProgress",
-    "CropProgressKey",
-    # "insertCropProgress",
-    "insertOrGetCropProgress",
-    "getCropProgress",
-    "ReportType",
-    "insertReportType",
-    "getMaybeReportTypeId",
+    # "ReportType",
+    # "insertReportType",
+    # "getMaybeReportTypeId",
     # Core spatiotemporal
     "GeoSpatialKey",
     "TemporalKey",

@@ -3,12 +3,11 @@ from ...db._lookup_types import TableLookup
 
 from .types import (
     CropType,
-    CropStage,
-    ReportType,
+    # ReportType,
     Field,
     Planting,
     Harvest,
-    CropProgress,
+    Act,
 )
 
 from .st_types import (
@@ -21,8 +20,7 @@ from .field_group import FieldGroup
 
 type_table_lookup: TableLookup = {
     CropType: "crop_type",
-    CropStage: "crop_stage",
-    ReportType: "report_type",
+    # ReportType: "report_type",
 }
 
 data_table_lookup: TableLookup = {
@@ -31,6 +29,7 @@ data_table_lookup: TableLookup = {
     Field: "field",
     GeoSpatialKey: "geospatial_key",
     TemporalKey: "temporal_key",
+    Act: "act",
 }
 
 id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
@@ -38,5 +37,4 @@ id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
 key_table_lookup: TableLookup = {
     Planting: "planting",
     Harvest: "harvest",
-    CropProgress: "crop_progress",
 }

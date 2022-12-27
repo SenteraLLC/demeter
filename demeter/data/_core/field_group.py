@@ -10,6 +10,10 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FieldGroup(db.Detailed):
+    """Arbitrary collection of Field objects or other FieldGroup
+    objects which allows demeter to represent field organization
+    schemes for any customer."""
+
     name: str
     parent_field_group_id: Optional[db.TableId] = None
     created: Optional[datetime] = None
@@ -102,7 +106,6 @@ class FieldSummary(db.Detailed):
     field_id: db.TableId
     geom_id: db.TableId
     name: str
-    external_id: Optional[str]
     field_group_id: Optional[db.TableId]
     created: Optional[datetime] = None
 
@@ -115,7 +118,6 @@ class FieldGroupFields:
 
 def _row_to_field_group(
     row: Dict[str, Any],
-    name: Optional[str] = None,
     id_name: str = "field_group_id",
 ) -> Tuple[db.TableId, FieldGroup]:
     r = row

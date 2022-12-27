@@ -16,8 +16,6 @@ TABLES_LIST = [
     "planting",
     "observation_type",
     "harvest",
-    "crop_progress",
-    "crop_stage",
     "unit_type",
     "s3_type",
     "s3_type_dataframe",

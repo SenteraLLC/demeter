@@ -1,12 +1,22 @@
 from collections import OrderedDict
-from typing import Any, NamedTuple, Optional, Tuple, cast
+from typing import (
+    Any,
+    NamedTuple,
+    Optional,
+    Tuple,
+    cast,
+)
 
 from psycopg2.sql import Identifier, Placeholder
 
 from .. import TableId
 from .._generic_types import SK, S
 from .._union_types import AnyIdTable
-from .helpers import is_date_or_time, is_none, is_optional
+from .helpers import (
+    is_date_or_time,
+    is_none,
+    is_optional,
+)
 from .tools import doPgFormat, doPgJoin
 
 

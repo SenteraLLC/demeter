@@ -1,14 +1,25 @@
-from typing import Any, Callable, Mapping, Optional, Tuple, Type, cast
+from typing import (
+    Any,
+    Callable,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+)
 
 from ...db import SomeKey, TableId
+from .._inputs.types import (
+    S3SubType,
+    S3Type,
+    S3TypeDataFrame,
+    TaggedS3SubType,
+)
 from .generated import (
     getMaybeS3TypeDataFrame,
     getS3TypeBase,
     insertOrGetS3Type,
     insertS3TypeDataFrame,
 )
-from .types import S3SubType, S3Type, S3TypeDataFrame, TaggedS3SubType
-
 
 
 def insertOrGetS3TypeDataFrame(
@@ -47,7 +58,7 @@ def insertS3Type(
     s3_type_id = insertOrGetS3Type(cursor, s3_type)
     if s3_sub_type is not None:
         sub_type_insert_fn = s3_sub_type_insert_lookup[type(s3_sub_type)]
-        s3_sub_type_key = sub_type_insert_fn(cursor, s3_sub_type)
+        _ = sub_type_insert_fn(cursor, s3_sub_type)
     return s3_type_id
 
 
@@ -75,5 +86,5 @@ def getS3TypeIdByName(cursor: Any, type_name: str) -> TableId:
     cursor.execute(stmt, {"type_name": type_name})
     results = cursor.fetchall()
     if len(results) <= 0:
-        raise Exception(f"No type exists '%(type_name)s'", type_name)
+        raise Exception("No type exists '%(type_name)s'", type_name)
     return TableId(results[0].s3_type_id)

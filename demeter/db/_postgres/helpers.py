@@ -1,8 +1,11 @@
-from typing import Union, get_args, get_origin
+import datetime
+from typing import (
+    Union,
+    get_args,
+    get_origin,
+)
 
 from .._union_types import AnyTable
-
-import datetime
 
 
 def is_none(table: AnyTable, key: str) -> bool:

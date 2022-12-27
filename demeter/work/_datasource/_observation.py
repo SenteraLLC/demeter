@@ -1,4 +1,12 @@
-from typing import Any, Iterable, List, Tuple, Type, TypeVar, cast
+from typing import (
+    Any,
+    Iterable,
+    List,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+)
 
 from ... import data
 from .._types import ExecutionSummary, ObservationArgument

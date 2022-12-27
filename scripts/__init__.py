@@ -1,6 +1,8 @@
-from . import grid
-from . import to_graphviz
-from . import explore
+from . import (
+    explore,
+    grid,
+    to_graphviz,
+)
 
 __all__ = (
     "grid",

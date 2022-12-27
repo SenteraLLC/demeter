@@ -1,8 +1,18 @@
-from typing import Any, Optional, Union
+from typing import (
+    Any,
+    Optional,
+    Union,
+)
 
-from shapely.geometry import LineString, Point, Polygon
-from shapely.geometry import MultiLineString, MultiPoint, MultiPolygon
-from shapely.geometry import GeometryCollection
+from shapely.geometry import (
+    GeometryCollection,
+    LineString,
+    MultiLineString,
+    MultiPoint,
+    MultiPolygon,
+    Point,
+    Polygon,
+)
 
 from demeter.db import TableId
 

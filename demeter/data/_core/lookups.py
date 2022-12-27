@@ -1,22 +1,17 @@
-from ...db._lookup_types import sumMappings
-from ...db._lookup_types import TableLookup
-
-from .types import (
-    CropType,
-    # ReportType,
-    Field,
-    Planting,
-    Harvest,
-    Act,
-)
-
+from ...db._lookup_types import TableLookup, sumMappings
+from .field_group import FieldGroup
 from .st_types import (
+    Geom,
     GeoSpatialKey,
     TemporalKey,
-    Geom,
 )
-
-from .field_group import FieldGroup
+from .types import (  # ReportType,
+    Act,
+    CropType,
+    Field,
+    Harvest,
+    Planting,
+)
 
 type_table_lookup: TableLookup = {
     CropType: "crop_type",

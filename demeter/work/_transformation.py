@@ -1,25 +1,33 @@
 from functools import wraps
-from typing import Any, Callable, List, Mapping, Optional
+from typing import (
+    Any,
+    Callable,
+    List,
+    Mapping,
+    Optional,
+)
 
-from .. import data, db, task
+from .. import (
+    data,
+    db,
+    task,
+)
 from . import insertExecution
 from ._datasource import DataSource, DataSourceRegister
-from ._existing import getExistingExecutions, getExistingDuplicate
-from ._types import (
-    ExecutionOutputs,
-    Execution,
-)
+from ._existing import getExistingDuplicate, getExistingExecutions
+from ._types import Execution, ExecutionOutputs
 from ._util.cli import parseCLIArguments
 from ._util.keys import loadKeys
 from ._util.mode import ExecutionMode, getModeFromKwargs
 from ._util.register import makeDummyArguments, registerFunction
-from ._util.setup import createFunction, getKeywordParameterTypes, getOutputTypes
-from ._util.teardown import insertInitFile, insertRawOutputs
-from ._util.wrapper_types import (
-    OutputLoadFunction,
-    WrappableFunction,
-    WrappedTransformation as WrappedTransformation,
+from ._util.setup import (
+    createFunction,
+    getKeywordParameterTypes,
+    getOutputTypes,
 )
+from ._util.teardown import insertInitFile, insertRawOutputs
+from ._util.wrapper_types import OutputLoadFunction, WrappableFunction
+from ._util.wrapper_types import WrappedTransformation as WrappedTransformation
 
 # TODO: Function types limit function signatures, argument types
 #       Transformation (S3, HTTP, Observation) -> (S3, Observation)

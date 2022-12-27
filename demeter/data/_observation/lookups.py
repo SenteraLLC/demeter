@@ -1,7 +1,9 @@
-from .types import UnitType, ObservationType, Observation
-
-from ...db._lookup_types import TableLookup
-from ...db._lookup_types import sumMappings
+from ...db._lookup_types import TableLookup, sumMappings
+from .types import (
+    Observation,
+    ObservationType,
+    UnitType,
+)
 
 type_table_lookup: TableLookup = {
     UnitType: "unit_type",

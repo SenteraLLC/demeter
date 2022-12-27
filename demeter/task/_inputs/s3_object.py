@@ -1,11 +1,21 @@
-from typing import Any, List, Optional, Tuple, Union
+import sys
+from typing import (
+    Any,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from psycopg2 import sql
 
 from ... import data, db
-from ...db import doPgFormat, doPgJoin
-from ...db import generateInsertMany
-from .types import S3Object, S3ObjectKey
+from ...db import (
+    doPgFormat,
+    doPgJoin,
+    generateInsertMany,
+)
+from .._inputs.types import S3Object, S3ObjectKey
 
 
 def insertS3ObjectKeys(
@@ -24,7 +34,7 @@ def insertS3ObjectKeys(
             temporal_key_id=k.temporal_key_id,
         )
         args.extend(s3_object_key().values())
-    results = cursor.execute(stmt, args)
+    _ = cursor.execute(stmt, args)
     return True
 
 
@@ -48,13 +58,9 @@ def getS3ObjectByKey(
 
     result_with_id = results[0]
     s3_object_id = result_with_id.pop("s3_object_id")
-    s3_object = result_with_id
     s = S3Object(**result_with_id)
 
     return s3_object_id, s
-
-
-import sys
 
 
 def getS3ObjectByKeys(

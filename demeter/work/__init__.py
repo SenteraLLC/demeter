@@ -1,7 +1,15 @@
 from ..db import SQLGenerator
-from . import _lookups as lookups
-
 from ..db._generic_types import ReturnId
+from . import _lookups as lookups
+from ._datasource import (
+    DataSource,
+    ObservationFile,
+    OneToManyResponseFunction,
+    OneToOneResponseFunction,
+    S3File,
+)
+from ._existing import getExistingExecutions
+from ._transformation import Transformation
 from ._types import (
     Argument,
     Execution,
@@ -12,16 +20,6 @@ from ._types import (
     S3InputArgument,
     S3OutputArgument,
 )
-
-from ._datasource import (
-    DataSource,
-    ObservationFile,
-    OneToManyResponseFunction,
-    OneToOneResponseFunction,
-    S3File,
-)
-from ._existing import getExistingExecutions
-from ._transformation import Transformation
 
 g = SQLGenerator(
     type_table_lookup=lookups.type_table_lookup,

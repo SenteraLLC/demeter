@@ -1,5 +1,9 @@
 import json
-from typing import Any, Iterable, Sequence
+from typing import (
+    Any,
+    Iterable,
+    Sequence,
+)
 
 from ... import data
 

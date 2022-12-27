@@ -1,8 +1,14 @@
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    cast,
+)
+
 import requests
-from typing import Any, Callable, Dict, List, cast
 
 from ... import data
-
 
 KeyToArgsFunction = Callable[[data.Key], Dict[str, Any]]
 ResponseFunction = Callable[[requests.models.Response], List[Dict[str, Any]]]

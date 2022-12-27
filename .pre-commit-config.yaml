@@ -1,12 +1,15 @@
 exclude: >
   (?x)^(
-      demeter/task/|
-      demeter/grid/|
       scripts/explore/|
       scripts/grid/|
       scripts/to_graphviz.py
   )
 repos:
+- repo: https://github.com/pycqa/isort
+  rev: 5.11.4
+  hooks:
+    - id: isort
+      name: isort (python)
 - repo: https://github.com/ambv/black
   rev: '22.12.0'
   hooks:

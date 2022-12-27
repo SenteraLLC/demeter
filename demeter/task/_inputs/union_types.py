@@ -1,6 +1,15 @@
 from typing import Union
 
-from .types import *
+from demeter.data import ObservationType
+
+from .._inputs.types import (
+    HTTPType,
+    S3Object,
+    S3ObjectKey,
+    S3Output,
+    S3Type,
+    S3TypeDataFrame,
+)
 
 AnyDataTable = Union[S3Output, S3Object, S3ObjectKey]
 AnyKeyTable = Union[S3ObjectKey, S3TypeDataFrame]

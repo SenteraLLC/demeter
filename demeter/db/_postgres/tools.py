@@ -1,6 +1,10 @@
 from typing import Sequence, cast
 
-from psycopg2.sql import SQL, Composable, Composed
+from psycopg2.sql import (
+    SQL,
+    Composable,
+    Composed,
+)
 
 
 # NOTE: Psycopg2.sql method stubs are untyped

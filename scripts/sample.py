@@ -4,32 +4,27 @@ from datetime import datetime
 from dotenv import load_dotenv
 from shapely.geometry import Point, Polygon
 
-# Core Types
-from demeter.data import (
-    Field,
-    # Geom,
-    FieldGroup,
-    Planting,
-    Harvest,
-    CropType,
-)
-from demeter.data import (
-    insertOrGetField,
-    insertOrGetGeom,
-    insertOrGetCropType,
-    insertOrGetPlanting,
-    insertOrGetHarvest,
-)
-
-# Observation Types
-from demeter.data import UnitType, ObservationType, Observation
-
 # , FieldGroup
+# Observation Types
+# Core Types
+from demeter.data import Harvest  # Geom,
 from demeter.data import (
-    insertOrGetUnitType,
+    CropType,
+    Field,
+    FieldGroup,
+    Observation,
+    ObservationType,
+    Planting,
+    UnitType,
+    insertOrGetCropType,
+    insertOrGetField,
     insertOrGetFieldGroup,
-    insertOrGetObservationType,
+    insertOrGetGeom,
+    insertOrGetHarvest,
     insertOrGetObservation,
+    insertOrGetObservationType,
+    insertOrGetPlanting,
+    insertOrGetUnitType,
 )
 from demeter.db import getConnection
 

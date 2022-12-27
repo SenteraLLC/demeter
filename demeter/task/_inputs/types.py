@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping, Optional, Sequence, Type, Union, cast
+from typing import (
+    Optional,
+    Sequence,
+    Type,
+)
 
-from ... import data, db
-from ...data import ObservationType
+from ... import db
 
 # HTTP
 

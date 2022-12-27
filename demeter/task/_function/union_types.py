@@ -1,6 +1,14 @@
 from typing import Union
 
-from .types import *
+from .._function.types import (
+    Function,
+    FunctionType,
+    HTTPParameter,
+    KeywordParameter,
+    ObservationParameter,
+    S3InputParameter,
+    S3OutputParameter,
+)
 
 AnyParameter = Union[
     ObservationParameter,
@@ -11,6 +19,6 @@ AnyParameter = Union[
 ]
 
 AnyDataTable = Union[Function, AnyParameter]
-AnyTypeTable = Union[FunctionType]
-AnyKeyTable = Union[AnyParameter]
+AnyTypeTable = FunctionType
+AnyKeyTable = AnyParameter
 AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]

@@ -3,12 +3,9 @@ from .._core import lookups as _lookups
 from ...db._generic_types import GetId, GetTable, ReturnId
 from ...db import SQLGenerator
 
-from .types import (
+from .._core.types import (
     CropType,
     Field,
-    Planting,
-    PlantingKey,
-    Harvest,
     # ReportType,
     Act,
 )
@@ -26,7 +23,7 @@ g = SQLGenerator(
     type_table_lookup=_lookups.type_table_lookup,
     data_table_lookup=_lookups.data_table_lookup,
     id_table_lookup=_lookups.id_table_lookup,
-    key_table_lookup=_lookups.key_table_lookup,
+    # key_table_lookup=_lookups.key_table_lookup,
 )
 
 getMaybeFieldGroupId = g.getMaybeIdFunction(FieldGroup)
@@ -43,19 +40,19 @@ insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 # insertReportType: ReturnId[ReportType] = g.getInsertReturnIdFunction(ReportType)
 
-insertPlanting = g.getInsertReturnKeyFunction(Planting, PlantingKey)
-insertHarvest = g.getInsertReturnKeyFunction(Harvest, PlantingKey)
+# insertPlanting = g.getInsertReturnKeyFunction(Planting, PlantingKey)
+# insertHarvest = g.getInsertReturnKeyFunction(Harvest, PlantingKey)
 insertAct = g.getInsertReturnIdFunction(Act)
 
 insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
 insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
 insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
 
-getPlanting = g.getTableByKeyFunction(Planting, PlantingKey)
-getHarvest = g.getTableByKeyFunction(Harvest, PlantingKey)
+# getPlanting = g.getTableByKeyFunction(Planting, PlantingKey)
+# getHarvest = g.getTableByKeyFunction(Harvest, PlantingKey)
 
-insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
-insertOrGetHarvest = g.partialInsertOrGetKey(PlantingKey, getHarvest, insertHarvest)
+# insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
+# insertOrGetHarvest = g.partialInsertOrGetKey(PlantingKey, getHarvest, insertHarvest)
 insertOrGetAct = g.partialInsertOrGetId(getMaybeActId, insertAct)
 
 

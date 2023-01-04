@@ -1,40 +1,29 @@
 # %%
 from datetime import datetime
-
 from dotenv import load_dotenv
 from shapely.geometry import Point, Polygon
-
-# Core Types
 from demeter.data import (
-    Field,
-    # Geom,
-    FieldGroup,
-    Planting,
-    Harvest,
+    Act,
+    ActType,
     CropType,
-)
-from demeter.data import (
-    insertOrGetField,
-    insertOrGetGeom,
+    Field,
+    FieldGroup,
+    Observation,
+    ObservationType,
+    UnitType,
+    insertOrGetAct,
     insertOrGetCropType,
-    insertOrGetPlanting,
-    insertOrGetHarvest,
-)
-
-# Observation Types
-from demeter.data import UnitType, ObservationType, Observation
-
-# , FieldGroup
-from demeter.data import (
-    insertOrGetUnitType,
+    insertOrGetField,
     insertOrGetFieldGroup,
-    insertOrGetObservationType,
+    insertOrGetGeom,
     insertOrGetObservation,
+    insertOrGetObservationType,
+    insertOrGetUnitType,
 )
 from demeter.db import getConnection
 
-# %%
-# if __name__ == "__main__":
+# %% connect to database
+
 load_dotenv()
 
 conn = getConnection(env_name="TEST_DEMETER")
@@ -51,12 +40,10 @@ trans = conn.begin()
 # metadata_obj.reflect(conn.engine)
 # metadata_obj.tables["test_demeter.geom"]
 
-# %% Add data
+# %% Add field groups
 
-# %%
 sa_group = FieldGroup(
-    name="South America",
-    parent_field_group_id=None,
+    name="South America", parent_field_group_id=None, details={"external_id": 107}
 )
 sa_group_id = insertOrGetFieldGroup(cursor, sa_group)
 print(
@@ -65,8 +52,7 @@ print(
 
 
 argentina_group = FieldGroup(
-    name="Argentina",
-    parent_field_group_id=sa_group_id,
+    name="Argentina", parent_field_group_id=sa_group_id, details={"external_id": 1007}
 )
 argentina_group_id = insertOrGetFieldGroup(cursor, argentina_group)
 print(
@@ -74,14 +60,16 @@ print(
 )
 
 test_field_group = FieldGroup(
-    name="grupo de prueba",
+    name="Argonomist 1",
+    parent_field_group_id=argentina_group_id,
+    details={"external_id": 10007},
 )
 field_group_id = insertOrGetFieldGroup(cursor, test_field_group)
 print(
     f"Org name: {argentina_group.name}\n  field_group_id: {argentina_group}\n  parent_field_group_id: {argentina_group.parent_field_group_id}"
 )
 
-# %%
+# %% Add field data with geometry
 
 # NOTE: Be sure to use WGS-84 CRS (EPSG:4326) - `demeter` assumes geoms get entered in that format
 # TODO: Add -180 to +180 and -90 to +90 coord constraint for Geom table?
@@ -96,64 +84,103 @@ field_geom = Polygon(
     ]
 )
 
-# field_geom = Geom(geom=geometry)
 field_geom_id = insertOrGetGeom(cursor, field_geom)
 print(f"Field Geom id: {field_geom_id}")
 
 field = Field(
     geom_id=field_geom_id,
     name="Test field",
-    field_group_id=argentina_group_id,
+    field_group_id=field_group_id,
+    details={"external_id": 10736},
 )
 field_id = insertOrGetField(cursor, field)
 
-# %%
-crop_type = CropType(species="barley")
+# %% Add crop season information
+
+crop_type = CropType(crop="barley", product_name="abi voyager")
 crop_type_id = insertOrGetCropType(cursor, crop_type)
 
-field_planting = Planting(
-    crop_type_id=crop_type_id,
+field_planting = Act(
+    act_type=ActType.plant,
     field_id=field_id,
-    planted=datetime(2022, 6, 1),
+    date_performed=datetime(2022, 6, 1),
+    crop_type_id=crop_type_id,
 )
+planting_id = insertOrGetAct(cursor, field_planting)
 
-planting_key = insertOrGetPlanting(cursor, field_planting)
-
-# %%
-field_harvest = Harvest(
-    crop_type_id=crop_type_id, field_id=field_id, planted=datetime(2022, 6, 1)
+field_replanting = Act(
+    act_type=ActType.plant,
+    field_id=field_id,
+    date_performed=datetime(2022, 6, 15),
+    crop_type_id=crop_type_id,
 )
+replanting_id = insertOrGetAct(cursor, field_replanting)
 
-harvest_id = insertOrGetHarvest(cursor, field_harvest)
 
-# %%
-irrigation_type = ObservationType(
-    type_name="my_irrigation_type",
+field_harvest = Act(
+    act_type=ActType.harvest,
+    field_id=field_id,
+    date_performed=datetime(2022, 10, 1),
+    crop_type_id=crop_type_id,
 )
-irrigation_type_id = insertOrGetObservationType(cursor, irrigation_type)
-print(f"Irrigation type id: {irrigation_type_id}")
-
-gallons_unit = UnitType(unit_name="gallons", observation_type_id=irrigation_type_id)
-gallons_unit_id = insertOrGetUnitType(cursor, gallons_unit)
-print(f"Gallons type id: {gallons_unit_id}")
+harvest_id = insertOrGetAct(cursor, field_harvest)
 
 # %%
 obs_geom = Point(-65.645145335822, -36.052968641022)
 obs_geom_id = insertOrGetGeom(cursor, obs_geom)
 print("Observation geom id: ", obs_geom_id)
 
-o = Observation(
-    geom_id=obs_geom_id,
-    observation_type_id=irrigation_type_id,
+agronomic_yield_type = ObservationType(type_name="agronomic barley yield")
+ag_yield_id = insertOrGetObservationType(cursor, agronomic_yield_type)
+
+kg_ha_ag_yield_unit = UnitType(
+    unit_name="kilograms per hectare", observation_type_id=ag_yield_id
+)
+unit_1_id = insertOrGetUnitType(cursor, kg_ha_ag_yield_unit)
+
+malt_barley_yield_type = ObservationType(type_name="malt barley yield")
+malt_yield_id = insertOrGetObservationType(cursor, malt_barley_yield_type)
+
+kg_ha_malt_yield_unit = UnitType(
+    unit_name="kilograms per hectare", observation_type_id=malt_yield_id
+)
+unit_2_id = insertOrGetUnitType(cursor, kg_ha_malt_yield_unit)
+
+## FIXME: Do we want an observation to inherit date from `Act` if `act_id` is given?
+## FIXME: We also should be sure that the `observation_type_id` is the same as that in
+## the specified unit type.
+
+obs_agronomic = Observation(
     field_id=field_id,
-    unit_type_id=gallons_unit_id,
-    date_observed=datetime(2022, 1, 1),
-    value_observed=1234.567,
-    created=datetime.now(),
+    unit_type_id=unit_1_id,
+    observation_type_id=ag_yield_id,
+    date_observed=datetime(2022, 10, 1),
+    value_observed=5500,
+    geom_id=obs_geom_id,
+    act_id=harvest_id,
 )
 
-observation_value_id = insertOrGetObservation(cursor, o)
-print(f"Observation value id: {observation_value_id}")
+observation_value_id = insertOrGetObservation(cursor, obs_agronomic)
+
+
+obs_malt = Observation(
+    field_id=field_id,
+    unit_type_id=unit_2_id,
+    observation_type_id=malt_yield_id,
+    date_observed=datetime(2022, 10, 1),
+    value_observed=5000,
+    geom_id=obs_geom_id,
+    act_id=harvest_id,
+)
+observation_value_2_id = insertOrGetObservation(cursor, obs_malt)
+
+# %%
+field_irrigate = Act(
+    act_type=ActType.irrigate,
+    field_id=field_id,
+    date_performed=datetime(2022, 6, 1),
+)
+irrigate_id = insertOrGetAct(cursor, field_irrigate)
 
 
 # %%

@@ -51,10 +51,10 @@ class Act(Detailed):
     geom_id: Optional[TableId] = None
     created: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self, act_type):
         """Be sure that `crop_type_id` is set for "plant" or "harvest" activity"""
 
-        chk_act_type = object.__getattribute__(self, "act_type").value
+        chk_act_type = act_type.value
         object.__setattr__(self, "name", chk_act_type)
 
         if chk_act_type in ["plant", "harvest"]:

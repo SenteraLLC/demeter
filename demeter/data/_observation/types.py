@@ -17,7 +17,7 @@ class Observation(db.Detailed):
     observation_type_id: db.TableId
     date_observed: datetime
     value_observed: float
-    created: datetime
+    created: Optional[datetime] = None
     geom_id: Optional[db.TableId] = None
     act_id: Optional[db.TableId] = None
 

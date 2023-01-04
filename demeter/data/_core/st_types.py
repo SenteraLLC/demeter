@@ -11,7 +11,6 @@ from ... import db
 
 @dataclass(frozen=True)
 class Geom(db.Table):
-    # geom_id: db.TableId
     geom: Union[
         LineString,
         Point,

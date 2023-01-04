@@ -76,11 +76,13 @@ create table field_group (
                         references field_group(field_group_id),
   unique (field_group_id, parent_field_group_id),
 
-  name text,
+  name text
+        not null,
 
-  constraint roots_must_be_named check (
-    not (parent_field_group_id is null and name is null)
-  ),
+  -- constraint roots_must_be_named check (
+  --   not (parent_field_group_id is null and name is null)
+  -- ),
+
   unique(parent_field_group_id, name),
 
   created  timestamp without time zone
@@ -150,6 +152,7 @@ create table crop_type (
                 default now()
 );
 
+-- Is this really necessary given line 140?
 CREATE UNIQUE INDEX unique_crop_product_name_null_idx on crop_type (crop, product_name) where product_name is null;
 
 CREATE TRIGGER update_crop_type_last_updated BEFORE UPDATE
@@ -162,9 +165,11 @@ ALTER TABLE crop_type
 ALTER TABLE crop_type
   ADD CONSTRAINT crop_type_product_name_lowercase_ck
   CHECK (product_name = lower(product_name));
-CREATE UNIQUE INDEX crop_product_name_null_unique_idx
-  ON crop_type(crop)
-  WHERE (product_name is NULL);
+
+-- FIXME: IS THIS DOING THE SAME THING AS IN LINE 156? What's the difference?
+-- CREATE UNIQUE INDEX crop_product_name_null_unique_idx
+--   ON crop_type(crop)
+--   WHERE (product_name is NULL);
 
 -- OBSERVATION TYPE
 
@@ -178,58 +183,58 @@ ALTER TABLE observation_type
   CHECK (type_name = lower(type_name));
 
 
--- PLANTING
+-- -- PLANTING
 
-create table planting (
-  crop_type_id  bigint
-                not null
-                references crop_type(crop_type_id),
-  field_id      bigint references field(field_id) not null,
-  planted       timestamp without time zone not null,
-  primary key(crop_type_id, field_id, planted),
+-- create table planting (
+--   crop_type_id  bigint
+--                 not null
+--                 references crop_type(crop_type_id),
+--   field_id      bigint references field(field_id) not null,
+--   planted       timestamp without time zone not null,
+--   primary key(crop_type_id, field_id, planted),
 
-  observation_type_id bigint
-                references observation_type(observation_type_id),
+--   observation_type_id bigint
+--                 references observation_type(observation_type_id),
 
-  last_updated  timestamp without time zone
-                not null
-                default now(),
-  details       jsonb
-                not null
-                default '{}'::jsonb
-);
+--   last_updated  timestamp without time zone
+--                 not null
+--                 default now(),
+--   details       jsonb
+--                 not null
+--                 default '{}'::jsonb
+-- );
 
-CREATE TRIGGER update_planting_last_updated BEFORE UPDATE
-ON planting FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
+-- CREATE TRIGGER update_planting_last_updated BEFORE UPDATE
+-- ON planting FOR EACH ROW EXECUTE PROCEDURE
+-- update_last_updated_column();
 
 -- HARVEST
 
-create table harvest (
-  crop_type_id  bigint
-                not null
-                references crop_type(crop_type_id),
-  field_id      bigint references field(field_id) not null,
-  planted timestamp without time zone not null,
+-- create table harvest (
+--   crop_type_id  bigint
+--                 not null
+--                 references crop_type(crop_type_id),
+--   field_id      bigint references field(field_id) not null,
+--   planted timestamp without time zone not null,
 
-  foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
+--   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
 
-  observation_type_id bigint
-                references observation_type(observation_type_id),
+--   observation_type_id bigint
+--                 references observation_type(observation_type_id),
 
-  primary key (crop_type_id, field_id, planted),
+--   primary key (crop_type_id, field_id, planted),
 
-  last_updated  timestamp without time zone
-                not null
-                default now(),
-  details       jsonb
-                not null
-                default '{}'::jsonb
-);
+--   last_updated  timestamp without time zone
+--                 not null
+--                 default now(),
+--   details       jsonb
+--                 not null
+--                 default '{}'::jsonb
+-- );
 
-CREATE TRIGGER update_harvest_last_updated BEFORE UPDATE
-ON planting FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
+-- CREATE TRIGGER update_harvest_last_updated BEFORE UPDATE
+-- ON planting FOR EACH ROW EXECUTE PROCEDURE
+-- update_last_updated_column();
 
 
 -----------------
@@ -373,20 +378,51 @@ create table temporal_key (
 
 -- ACT
 
+-- create table harvest (
+--   crop_type_id  bigint
+--                 not null
+--                 references crop_type(crop_type_id),
+--   field_id      bigint references field(field_id) not null,
+--   planted timestamp without time zone not null,
+
+--   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
+
+--   observation_type_id bigint
+--                 references observation_type(observation_type_id),
+
+--   primary key (crop_type_id, field_id, planted),
+
+
+--   details       jsonb
+--                 not null
+--                 default '{}'::jsonb
+-- );
+
 create table act (
   act_id         bigserial primary key,
+
+  name           text not null,
+
   field_id       bigint
                   not null
                   references field(field_id),
 
-  name           text not null,
+  date_performed timestamp without time zone
+                  not null,
 
   crop_type_id   bigint
                   references crop_type(crop_type_id),
 
-  performed      timestamp without time zone
+  geom_id       bigint
+                  references geom(geom_id),
+
+  created       timestamp without time zone
                   not null
                   default now(),
+
+  last_updated  timestamp without time zone
+                not null
+                default now(),
 
   details        jsonb
                   not null
@@ -419,7 +455,8 @@ create table observation (
                  not null,
   
   created        timestamp without time zone
-                  not null,
+                  not null
+                  default now(),
 
   geom_id        bigint
                  references geom(geom_id),

@@ -29,6 +29,8 @@ C = TypeVar("C")
 
 
 class SQLGenerator:
+    """Constructor for functions that communicate between Demeter types and SQL database (i.e., "get" or "insert" functions)"""
+
     def __init__(
         self,
         module_name: str = "demeter",
@@ -60,6 +62,7 @@ class SQLGenerator:
         return c
 
     def getInsertReturnIdFunction(self, table: Type[I]) -> ReturnId[I]:
+        """Takes db.Table type, identifies SQL table name, inserts object into table, and returns TableId"""
         table_name = self.id_table_lookup[table]
         return self._fix_annotations(
             partial(insertAndReturnId, table_name), table.__name__
@@ -74,6 +77,7 @@ class SQLGenerator:
     def getInsertReturnKeyFunction(
         self, table: Type[S], key: Type[SK]
     ) -> ReturnKey[S, SK]:
+        """Takes db.Table type which is a KeyTable, identifies SQl table name, inserts the key, and returns TableKey."""
         table_name = self.key_table_lookup[table]
         fn = cast(ReturnKey[S, SK], insertAndReturnKey(table_name, key))
         return self._fix_annotations(fn, table.__name__, key.__name__)
@@ -81,6 +85,7 @@ class SQLGenerator:
     def getMaybeIdFunction(
         self, table: Type[T]
     ) -> Callable[[Any, AnyIdTable], Optional[TableId]]:
+        """Takes db.Table type, identifies appropriate table, checks for object in table, maybe inserts, and then returns TableId"""
         table_name = self.id_table_lookup[table]
         return self._fix_annotations(partial(getMaybeId, table_name), table.__name__)
 

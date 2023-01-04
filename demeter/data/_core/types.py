@@ -1,26 +1,28 @@
-from dataclasses import dataclass
+"""High-level API core Demeter data types"""
+
+from dataclasses import dataclass, InitVar, field
 from datetime import datetime
 from typing import Optional
 
-from ... import db
-
 from enum import Enum
+
+from ...db import TableId, Detailed, TypeTable
 
 
 @dataclass(frozen=True)
-class Field(db.Detailed):
+class Field(Detailed):
     """Arbitrary spatiotemporal unit representing an agronomically-relevant
     area that is generally, but not always, managed as a single unit within
     the defined spatial and temporal constraints."""
 
-    geom_id: db.TableId
+    geom_id: TableId
     name: str
-    field_group_id: Optional[db.TableId] = None
+    field_group_id: Optional[TableId] = None
     created: Optional[datetime] = None
 
 
 @dataclass(frozen=True)
-class CropType(db.TypeTable, db.Detailed):
+class CropType(TypeTable, Detailed):
     """Information related to the plant cultivated through a Planting activity."""
 
     crop: str
@@ -28,25 +30,39 @@ class CropType(db.TypeTable, db.Detailed):
     created: Optional[datetime] = None
 
 
-@dataclass(frozen=True)
 class ActType(Enum):
-    """ENUM to manage the types of `Acts` that can be inserted into Demeter."""
-
-    PLANT = 1
-    HARVEST = 2
-    FERTILIZE = 3
-    IRRIGATE = 4
+    plant = "plant"
+    harvest = "harvest"
+    fertilize = "fertilize"
+    irrigate = "irrigate"
 
 
 @dataclass(frozen=True)
-class Act(db.Detailed):
-    """Spatiotemporal information for a management activity on a field."""
+class Act(Detailed):
+    """Spatiotemporal information for a management activity on a field.
+    Types of management activities are limited to the types listed in `ActType`."""
 
-    field_id: db.TableId
-    act_type: ActType
+    act_type: InitVar[ActType]
+
+    name: str = field(init=False)
+    field_id: TableId
     date_performed: datetime
-    geom_id: Optional[db.TableId] = None
+    crop_type_id: Optional[TableId] = None
+    geom_id: Optional[TableId] = None
     created: Optional[datetime] = None
+
+    def __post_init__(self):
+        """Be sure that `crop_type_id` is set for "plant" or "harvest" activity"""
+
+        chk_act_type = object.__getattribute__(self, "act_type").value
+        object.__setattr__(self, "name", chk_act_type)
+
+        if chk_act_type in ["plant", "harvest"]:
+            chk_crop_type_id = object.__getattribute__(self, "crop_type_id")
+            if chk_crop_type_id is None:
+                raise AttributeError(
+                    f"Must pass `crop_type_id` with ActType {chk_act_type} "
+                )
 
 
 # @dataclass(frozen=True)

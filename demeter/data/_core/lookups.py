@@ -1,5 +1,4 @@
-from ...db._lookup_types import sumMappings
-from ...db._lookup_types import TableLookup
+from ...db._lookup_types import sumMappings, TableLookup
 
 from .._core.types import (
     CropType,

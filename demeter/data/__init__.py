@@ -2,6 +2,8 @@ from ._core.types import (
     Field,
     CropType,
     # ReportType,
+    ActType,
+    Act,
 )
 
 from ._core.st_types import (
@@ -12,6 +14,7 @@ from ._core.st_types import (
     Geom,
 )
 
+
 from ._core.generated import (
     # insertFieldGroup,
     insertOrGetFieldGroup,
@@ -19,12 +22,6 @@ from ._core.generated import (
     insertOrGetField,
     getField,
     getMaybeFieldId,
-    # getPlanting,
-    # insertPlanting,
-    # insertOrGetPlanting,
-    # getHarvest,
-    # insertHarvest,
-    # insertOrGetHarvest,
     # insertCropType,
     insertOrGetCropType,
     getMaybeCropTypeId,
@@ -124,6 +121,7 @@ __all__ = (
     "getGeom",
     "getMaybeGeomId",
     "insertOrGetGeom",
+    "ActType",
     "Act",
     # "insertAct",
     "insertOrGetAct",

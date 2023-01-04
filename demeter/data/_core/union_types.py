@@ -18,6 +18,7 @@ from .field_group import (
     FieldGroup,
 )
 
+
 AnyDataTable = Union[Geom, Field, FieldGroup, GeoSpatialKey, TemporalKey, Key, Act]
 
 AnyTypeTable = CropType

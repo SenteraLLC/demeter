@@ -40,7 +40,7 @@ trans = conn.begin()
 # metadata_obj.reflect(conn.engine)
 # metadata_obj.tables["test_demeter.geom"]
 
-# %% Add field groups
+# %% add field groups
 
 sa_group = FieldGroup(
     name="South America", parent_field_group_id=None, details={"external_id": 107}
@@ -69,7 +69,7 @@ print(
     f"Org name: {argentina_group.name}\n  field_group_id: {argentina_group}\n  parent_field_group_id: {argentina_group.parent_field_group_id}"
 )
 
-# %% Add field data with geometry
+# %% add field data with geometry
 
 # NOTE: Be sure to use WGS-84 CRS (EPSG:4326) - `demeter` assumes geoms get entered in that format
 # TODO: Add -180 to +180 and -90 to +90 coord constraint for Geom table?
@@ -95,7 +95,7 @@ field = Field(
 )
 field_id = insertOrGetField(cursor, field)
 
-# %% Add crop season information
+# %% add crop season information
 
 crop_type = CropType(crop="barley", product_name="abi voyager")
 crop_type_id = insertOrGetCropType(cursor, crop_type)
@@ -125,7 +125,8 @@ field_harvest = Act(
 )
 harvest_id = insertOrGetAct(cursor, field_harvest)
 
-# %%
+# %% add harvest observation information
+
 obs_geom = Point(-65.645145335822, -36.052968641022)
 obs_geom_id = insertOrGetGeom(cursor, obs_geom)
 print("Observation geom id: ", obs_geom_id)
@@ -162,7 +163,6 @@ obs_agronomic = Observation(
 
 observation_value_id = insertOrGetObservation(cursor, obs_agronomic)
 
-
 obs_malt = Observation(
     field_id=field_id,
     unit_type_id=unit_2_id,
@@ -174,7 +174,7 @@ obs_malt = Observation(
 )
 observation_value_2_id = insertOrGetObservation(cursor, obs_malt)
 
-# %%
+# %% and finally irrigation activities
 field_irrigate = Act(
     act_type=ActType.irrigate,
     field_id=field_id,

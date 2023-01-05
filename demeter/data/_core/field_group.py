@@ -16,7 +16,7 @@ class FieldGroup(db.Detailed):
 
     name: str
     parent_field_group_id: Optional[db.TableId] = None
-    created: Optional[datetime] = None
+    created: Optional[datetime] = datetime.now()
 
 
 FieldGroupAncestors = Sequence[Tuple[db.TableId, FieldGroup]]

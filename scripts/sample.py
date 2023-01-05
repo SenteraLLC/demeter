@@ -18,6 +18,14 @@ from demeter.data import (
     insertOrGetObservation,
     insertOrGetObservationType,
     insertOrGetUnitType,
+    getAct,
+    getCropType,
+    getField,
+    getFieldGroup,
+    getGeom,
+    getObservation,
+    getObservationType,
+    getUnitType,
 )
 from demeter.db import getConnection
 
@@ -49,6 +57,7 @@ print(
     f"Org name: {sa_group.name}\n  field_group_id: {sa_group_id}\n  parent_field_group_id: {sa_group.parent_field_group_id}"
 )
 
+assert sa_group == getFieldGroup(cursor, sa_group_id), "Error in FieldGroup insert"
 
 argentina_group = FieldGroup(
     name="Argentina", parent_field_group_id=sa_group_id, details={"external_id": 1007}
@@ -85,6 +94,7 @@ field_geom = Polygon(
 
 field_geom_id = insertOrGetGeom(cursor, field_geom)
 print(f"Field Geom id: {field_geom_id}")
+inserted_geom = getGeom(cursor, field_geom_id)
 
 field = Field(
     geom_id=field_geom_id,
@@ -94,10 +104,15 @@ field = Field(
 )
 field_id = insertOrGetField(cursor, field)
 
+assert field == getField(cursor, field_id), "Error in Field insert"
+
 # %% add crop season information
 
 crop_type = CropType(crop="barley", product_name="abi voyager")
 crop_type_id = insertOrGetCropType(cursor, crop_type)
+
+assert crop_type == getCropType(cursor, crop_type_id), "Error in CropType insert"
+
 
 field_planting = Act(
     act_type="plant",
@@ -106,6 +121,9 @@ field_planting = Act(
     crop_type_id=crop_type_id,
 )
 planting_id = insertOrGetAct(cursor, field_planting)
+
+
+assert field_planting == getAct(cursor, planting_id), "Error in Act insert"
 
 field_replanting = Act(
     act_type="plant",
@@ -133,10 +151,17 @@ print("Observation geom id: ", obs_geom_id)
 agronomic_yield_type = ObservationType(type_name="agronomic barley yield")
 ag_yield_id = insertOrGetObservationType(cursor, agronomic_yield_type)
 
+assert agronomic_yield_type == getObservationType(
+    cursor, ag_yield_id
+), "Error in ObservationType insert"
+
+
 kg_ha_ag_yield_unit = UnitType(
     unit_name="kilograms per hectare", observation_type_id=ag_yield_id
 )
 unit_1_id = insertOrGetUnitType(cursor, kg_ha_ag_yield_unit)
+
+assert kg_ha_ag_yield_unit == getUnitType(cursor, unit_1_id), "Error in UnitType insert"
 
 malt_barley_yield_type = ObservationType(type_name="malt barley yield")
 malt_yield_id = insertOrGetObservationType(cursor, malt_barley_yield_type)
@@ -146,15 +171,7 @@ kg_ha_malt_yield_unit = UnitType(
 )
 unit_2_id = insertOrGetUnitType(cursor, kg_ha_malt_yield_unit)
 
-## FIXME: Do we want an observation to inherit date from `Act` if `act_id` is given?
-## I did a bit of investigaton on this, and I think it should be a post-hoc constraint
-## since it requires that the Act is inserted or we have the transaction open still.
-## Perhaps, we should just only let users pass a `date_observed` or an `act_id`? Are there
-## exceptions to this idea?
-
-## FIXME: We also should be sure that the `observation_type_id` is the same as that in
-## the specified unit type. I think this also will have the same problems as before.
-
+# %%
 obs_agronomic = Observation(
     field_id=field_id,
     unit_type_id=unit_1_id,
@@ -166,6 +183,10 @@ obs_agronomic = Observation(
 )
 
 observation_value_id = insertOrGetObservation(cursor, obs_agronomic)
+
+assert obs_agronomic == getObservation(
+    cursor, observation_value_id
+), "Error in Observation insert"
 
 obs_malt = Observation(
     field_id=field_id,

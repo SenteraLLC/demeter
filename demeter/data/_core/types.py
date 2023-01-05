@@ -16,7 +16,7 @@ class Field(Detailed):
     geom_id: TableId
     name: str
     field_group_id: Optional[TableId] = None
-    created: Optional[datetime] = None
+    created: Optional[datetime] = datetime.now()
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class CropType(TypeTable, Detailed):
 
     crop: str
     product_name: Optional[str] = None
-    created: Optional[datetime] = None
+    created: Optional[datetime] = datetime.now()
 
 
 list_act_types = ("plant", "harvest", "fertilize", "irrigate")
@@ -41,7 +41,7 @@ class Act(Detailed):
     date_performed: datetime
     crop_type_id: Optional[TableId] = None
     geom_id: Optional[TableId] = None
-    created: Optional[datetime] = None
+    created: Optional[datetime] = datetime.now()
 
     def __post_init__(self):
         """Be sure that:

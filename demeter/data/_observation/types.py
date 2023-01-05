@@ -19,7 +19,7 @@ class Observation(db.Detailed):
     date_observed: Optional[datetime] = None
     geom_id: Optional[db.TableId] = None
     act_id: Optional[db.TableId] = None
-    created: Optional[datetime] = None
+    created: Optional[datetime] = datetime.now()
 
     def __post_init__(self):
 

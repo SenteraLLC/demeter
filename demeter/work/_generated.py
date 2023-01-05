@@ -1,8 +1,6 @@
 from ..db import SQLGenerator
-from . import _lookups as lookups
-
 from ..db._generic_types import ReturnId
-
+from . import _lookups as lookups
 from ._types import (
     Execution,
     ExecutionKey,

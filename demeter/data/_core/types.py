@@ -4,7 +4,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from ...db import TableId, Detailed, TypeTable
+from ...db import (
+    Detailed,
+    TableId,
+    TypeTable,
+)
 
 
 @dataclass(frozen=True)

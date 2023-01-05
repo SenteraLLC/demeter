@@ -344,18 +344,18 @@ dev = ["Sphinx (==4.3.2)", "black (==22.3.0)", "build (==0.8.0)", "flake8 (==4.0
 
 [[package]]
 name = "boto3"
-version = "1.26.42"
+version = "1.26.43"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "boto3-1.26.42-py3-none-any.whl", hash = "sha256:75c995a04723f23e35e16ea491ed91a1345e2fa6492678a216488512308dada1"},
-    {file = "boto3-1.26.42.tar.gz", hash = "sha256:4cfd7e05e4033dbca2cc59bcfdafbdaef9d83dc3c0448917569b301d85766d9d"},
+    {file = "boto3-1.26.43-py3-none-any.whl", hash = "sha256:0335af7a6deee3538672a6c6b2718a513e62070e84c7addfb610ee1aa45e664a"},
+    {file = "boto3-1.26.43.tar.gz", hash = "sha256:5c462ceddb3e51d1cd4239b4a84744b766a4f2db5afdc370f11d2d15f52a9a07"},
 ]
 
 [package.dependencies]
-botocore = ">=1.29.42,<1.30.0"
+botocore = ">=1.29.43,<1.30.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -364,14 +364,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.26.42"
-description = "Type annotations for boto3 1.26.42 generated with mypy-boto3-builder 7.12.2"
+version = "1.26.43"
+description = "Type annotations for boto3 1.26.43 generated with mypy-boto3-builder 7.12.2"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "boto3-stubs-1.26.42.tar.gz", hash = "sha256:b86b13ed1bbaca9ab875f0709bd24d75483092f789a8f35e1644297e41a99239"},
-    {file = "boto3_stubs-1.26.42-py3-none-any.whl", hash = "sha256:25c6ac57fa963625c6526c611bc81da675acf96f138ea3102aef0abdf3ef4af4"},
+    {file = "boto3-stubs-1.26.43.tar.gz", hash = "sha256:63c3aa855922478aa89fe2d3a3d88ca79a2a1ccae19e4191672f0597b809a81b"},
+    {file = "boto3_stubs-1.26.43-py3-none-any.whl", hash = "sha256:6eac6e60aac77e50ceea8d93f79d61fa61b74bf8d22dff7ff031ddaf5fbeb63d"},
 ]
 
 [package.dependencies]
@@ -414,7 +414,7 @@ backup-gateway = ["mypy-boto3-backup-gateway (>=1.26.0,<1.27.0)"]
 backupstorage = ["mypy-boto3-backupstorage (>=1.26.0,<1.27.0)"]
 batch = ["mypy-boto3-batch (>=1.26.0,<1.27.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.26.0,<1.27.0)"]
-boto3 = ["boto3 (==1.26.42)", "botocore (==1.29.42)"]
+boto3 = ["boto3 (==1.26.43)", "botocore (==1.29.43)"]
 braket = ["mypy-boto3-braket (>=1.26.0,<1.27.0)"]
 budgets = ["mypy-boto3-budgets (>=1.26.0,<1.27.0)"]
 ce = ["mypy-boto3-ce (>=1.26.0,<1.27.0)"]
@@ -722,14 +722,14 @@ xray = ["mypy-boto3-xray (>=1.26.0,<1.27.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.42"
+version = "1.29.43"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "botocore-1.29.42-py3-none-any.whl", hash = "sha256:f52f9dbd7ad42b3528c1052086c1a7b6122a018f919afdb604f2889caefe8092"},
-    {file = "botocore-1.29.42.tar.gz", hash = "sha256:d05c62f64e76194c40f598f5f7c804ec50d9820e9f03f6e0198558e4ace167c4"},
+    {file = "botocore-1.29.43-py3-none-any.whl", hash = "sha256:dc60385c56b960aa75ef05cdcf808e6c07ad04b1b392d1abd6fc405a16d85826"},
+    {file = "botocore-1.29.43.tar.gz", hash = "sha256:a801e40f5f14c1b2fb3c0b2c438b546f07805d53d57d8dc135ebce4fdce901bd"},
 ]
 
 [package.dependencies]
@@ -742,14 +742,14 @@ crt = ["awscrt (==0.15.3)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.29.42"
+version = "1.29.43"
 description = "Type annotations and code completion for botocore"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "botocore_stubs-1.29.42-py3-none-any.whl", hash = "sha256:996c8ab2ed4a1f5294f76766f1b1301955e747268e2f8208c18f953551e3bbe7"},
-    {file = "botocore_stubs-1.29.42.tar.gz", hash = "sha256:da88f1bcaa15540c382a128b40c053d6a19f1632622c7ca22a997bd8819ee522"},
+    {file = "botocore_stubs-1.29.43-py3-none-any.whl", hash = "sha256:b81ece4fe29a034335f7742d3cae522514f5998825592cdf78f216569b0d2909"},
+    {file = "botocore_stubs-1.29.43.tar.gz", hash = "sha256:f86c64a5240e590130fdf6ef883e3ea03386cd896a5a909bcdd0df2b9399bd05"},
 ]
 
 [package.dependencies]
@@ -2526,14 +2526,14 @@ test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 
 [[package]]
 name = "pandas-stubs"
-version = "1.5.2.221213"
+version = "1.5.2.230105"
 description = "Type annotations for pandas"
 category = "dev"
 optional = false
 python-versions = ">=3.8,<3.12"
 files = [
-    {file = "pandas_stubs-1.5.2.221213-py3-none-any.whl", hash = "sha256:3551177a44eec5945b4e47131b6a545a564b3d41dfd4e50e06ba1a736e7d695d"},
-    {file = "pandas_stubs-1.5.2.221213.tar.gz", hash = "sha256:0cbc1dbdf5dddb4d67ebc851b9cfb265bf62fe317b043bd37ee5a4a2659421f2"},
+    {file = "pandas_stubs-1.5.2.230105-py3-none-any.whl", hash = "sha256:b2874d26eabcaecb83aa8435d47e41f1b5f90ad04f3e1e70c3c8604027490225"},
+    {file = "pandas_stubs-1.5.2.230105.tar.gz", hash = "sha256:c78e433aca82577ce4a9fefc0d78cd26828dd95f8b1612416babff1b6957a22a"},
 ]
 
 [package.dependencies]

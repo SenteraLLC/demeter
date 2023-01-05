@@ -183,60 +183,6 @@ ALTER TABLE observation_type
   CHECK (type_name = lower(type_name));
 
 
--- -- PLANTING
-
--- create table planting (
---   crop_type_id  bigint
---                 not null
---                 references crop_type(crop_type_id),
---   field_id      bigint references field(field_id) not null,
---   planted       timestamp without time zone not null,
---   primary key(crop_type_id, field_id, planted),
-
---   observation_type_id bigint
---                 references observation_type(observation_type_id),
-
---   last_updated  timestamp without time zone
---                 not null
---                 default now(),
---   details       jsonb
---                 not null
---                 default '{}'::jsonb
--- );
-
--- CREATE TRIGGER update_planting_last_updated BEFORE UPDATE
--- ON planting FOR EACH ROW EXECUTE PROCEDURE
--- update_last_updated_column();
-
--- HARVEST
-
--- create table harvest (
---   crop_type_id  bigint
---                 not null
---                 references crop_type(crop_type_id),
---   field_id      bigint references field(field_id) not null,
---   planted timestamp without time zone not null,
-
---   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
-
---   observation_type_id bigint
---                 references observation_type(observation_type_id),
-
---   primary key (crop_type_id, field_id, planted),
-
---   last_updated  timestamp without time zone
---                 not null
---                 default now(),
---   details       jsonb
---                 not null
---                 default '{}'::jsonb
--- );
-
--- CREATE TRIGGER update_harvest_last_updated BEFORE UPDATE
--- ON planting FOR EACH ROW EXECUTE PROCEDURE
--- update_last_updated_column();
-
-
 -----------------
 -- Type Tables --
 -----------------
@@ -377,26 +323,6 @@ create table temporal_key (
 );
 
 -- ACT
-
--- create table harvest (
---   crop_type_id  bigint
---                 not null
---                 references crop_type(crop_type_id),
---   field_id      bigint references field(field_id) not null,
---   planted timestamp without time zone not null,
-
---   foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
-
---   observation_type_id bigint
---                 references observation_type(observation_type_id),
-
---   primary key (crop_type_id, field_id, planted),
-
-
---   details       jsonb
---                 not null
---                 default '{}'::jsonb
--- );
 
 create table act (
   act_id         bigserial primary key,

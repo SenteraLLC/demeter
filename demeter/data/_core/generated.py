@@ -30,13 +30,18 @@ g = SQLGenerator(
 getMaybeFieldGroupId: GetId[FieldGroup] = g.getMaybeIdFunction(FieldGroup)
 getMaybeFieldId: GetId[Field] = g.getMaybeIdFunction(Field)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
+getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
 
 getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
 getField: GetTable[Field] = g.getTableFunction(Field)
+getCropType: GetTable[CropType] = g.getTableFunction(CropType)
+getAct: GetTable[Act] = g.getTableFunction(Act)
 
 insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
+insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
+
 
 insertOrGetFieldGroup: ReturnId[FieldGroup] = g.partialInsertOrGetId(
     getMaybeFieldGroupId, insertFieldGroup
@@ -45,12 +50,6 @@ insertOrGetField: ReturnId[Field] = g.partialInsertOrGetId(getMaybeFieldId, inse
 insertOrGetCropType: ReturnId[CropType] = g.partialInsertOrGetId(
     getMaybeCropTypeId, insertCropType
 )
-
-
-# act types
-getAct: GetTable[Act] = g.getTableFunction(Act)
-getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
-insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
 insertOrGetAct: ReturnId[Act] = g.partialInsertOrGetId(getMaybeActId, insertAct)
 
 
@@ -71,15 +70,3 @@ insertOrGetGeoSpatialKey = g.partialInsertOrGetId(
 insertOrGetTemporalKey = g.partialInsertOrGetId(
     getMaybeTemporalKeyId, insertTemporalKey
 )
-
-# getMaybeReportTypeId: GetId[ReportType] = g.getMaybeIdFunction(ReportType)
-# insertReportType: ReturnId[ReportType] = g.getInsertReturnIdFunction(ReportType)
-
-# insertPlanting = g.getInsertReturnKeyFunction(Planting, PlantingKey)
-# insertHarvest = g.getInsertReturnKeyFunction(Harvest, PlantingKey)
-
-# getPlanting = g.getTableByKeyFunction(Planting, PlantingKey)
-# getHarvest = g.getTableByKeyFunction(Harvest, PlantingKey)
-
-# insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
-# insertOrGetHarvest = g.partialInsertOrGetKey(PlantingKey, getHarvest, insertHarvest)

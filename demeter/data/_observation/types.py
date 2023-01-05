@@ -17,9 +17,9 @@ class Observation(db.Detailed):
     observation_type_id: db.TableId
     value_observed: float
     date_observed: Optional[datetime] = None
-    created: Optional[datetime] = None
     geom_id: Optional[db.TableId] = None
     act_id: Optional[db.TableId] = None
+    created: Optional[datetime] = None
 
     def __post_init__(self):
 

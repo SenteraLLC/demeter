@@ -11,6 +11,8 @@ from ... import db
 
 @dataclass(frozen=True)
 class Geom(db.Table):
+    """Spatial object that is relevant to other data within demeter"""
+
     geom: Union[
         LineString,
         Point,

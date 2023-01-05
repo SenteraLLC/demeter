@@ -374,8 +374,7 @@ create table observation (
   observation_type_id bigint
                 not null
                 references observation_type(observation_type_id),
-  date_observed timestamp without time zone
-                 not null,
+  date_observed timestamp without time zone,
 
   value_observed float
                  not null,

@@ -2,7 +2,6 @@ from ._core.types import (
     Field,
     CropType,
     # ReportType,
-    ActType,
     Act,
 )
 
@@ -121,7 +120,6 @@ __all__ = (
     "getGeom",
     "getMaybeGeomId",
     "insertOrGetGeom",
-    "ActType",
     "Act",
     # "insertAct",
     "insertOrGetAct",

@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from shapely.geometry import Point, Polygon
 from demeter.data import (
     Act,
-    ActType,
     CropType,
     Field,
     FieldGroup,
@@ -101,7 +100,7 @@ crop_type = CropType(crop="barley", product_name="abi voyager")
 crop_type_id = insertOrGetCropType(cursor, crop_type)
 
 field_planting = Act(
-    act_type=ActType.plant,
+    act_type="plant",
     field_id=field_id,
     date_performed=datetime(2022, 6, 1),
     crop_type_id=crop_type_id,
@@ -109,7 +108,7 @@ field_planting = Act(
 planting_id = insertOrGetAct(cursor, field_planting)
 
 field_replanting = Act(
-    act_type=ActType.plant,
+    act_type="plant",
     field_id=field_id,
     date_performed=datetime(2022, 6, 15),
     crop_type_id=crop_type_id,
@@ -118,7 +117,7 @@ replanting_id = insertOrGetAct(cursor, field_replanting)
 
 
 field_harvest = Act(
-    act_type=ActType.harvest,
+    act_type="harvest",
     field_id=field_id,
     date_performed=datetime(2022, 10, 1),
     crop_type_id=crop_type_id,
@@ -148,8 +147,13 @@ kg_ha_malt_yield_unit = UnitType(
 unit_2_id = insertOrGetUnitType(cursor, kg_ha_malt_yield_unit)
 
 ## FIXME: Do we want an observation to inherit date from `Act` if `act_id` is given?
+## I did a bit of investigaton on this, and I think it should be a post-hoc constraint
+## since it requires that the Act is inserted or we have the transaction open still.
+## Perhaps, we should just only let users pass a `date_observed` or an `act_id`? Are there
+## exceptions to this idea?
+
 ## FIXME: We also should be sure that the `observation_type_id` is the same as that in
-## the specified unit type.
+## the specified unit type. I think this also will have the same problems as before.
 
 obs_agronomic = Observation(
     field_id=field_id,
@@ -176,7 +180,7 @@ observation_value_2_id = insertOrGetObservation(cursor, obs_malt)
 
 # %% and finally irrigation activities
 field_irrigate = Act(
-    act_type=ActType.irrigate,
+    act_type="irrigate",
     field_id=field_id,
     date_performed=datetime(2022, 6, 1),
 )

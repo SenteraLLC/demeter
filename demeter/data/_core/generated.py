@@ -48,6 +48,7 @@ insertOrGetCropType: ReturnId[CropType] = g.partialInsertOrGetId(
 
 
 # act types
+getAct: GetTable[Act] = g.getTableFunction(Act)
 getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
 insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
 insertOrGetAct: ReturnId[Act] = g.partialInsertOrGetId(getMaybeActId, insertAct)

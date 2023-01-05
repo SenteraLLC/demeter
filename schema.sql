@@ -401,7 +401,7 @@ create table temporal_key (
 create table act (
   act_id         bigserial primary key,
 
-  name           text not null,
+  act_type           text not null,
 
   field_id       bigint
                   not null

@@ -1,10 +1,8 @@
 """High-level API core Demeter data types"""
 
-from dataclasses import dataclass, InitVar, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
-
-from enum import Enum
 
 from ...db import TableId, Detailed, TypeTable
 
@@ -30,11 +28,7 @@ class CropType(TypeTable, Detailed):
     created: Optional[datetime] = None
 
 
-class ActType(Enum):
-    plant = "plant"
-    harvest = "harvest"
-    fertilize = "fertilize"
-    irrigate = "irrigate"
+list_act_types = ("plant", "harvest", "fertilize", "irrigate")
 
 
 @dataclass(frozen=True)
@@ -42,26 +36,29 @@ class Act(Detailed):
     """Spatiotemporal information for a management activity on a field.
     Types of management activities are limited to the types listed in `ActType`."""
 
-    act_type: InitVar[ActType]
-
-    name: str = field(init=False)
+    act_type: str
     field_id: TableId
     date_performed: datetime
     crop_type_id: Optional[TableId] = None
     geom_id: Optional[TableId] = None
     created: Optional[datetime] = None
 
-    def __post_init__(self, act_type):
-        """Be sure that `crop_type_id` is set for "plant" or "harvest" activity"""
+    def __post_init__(self):
+        """Be sure that:
+        - `act_type` is one of the correct possible values
+        - `crop_type_id` is set for `act_type` = "plant" or "harvest"""
 
-        chk_act_type = act_type.value
-        object.__setattr__(self, "name", chk_act_type)
+        chk_act_type = object.__getattribute__(self, "act_type")
+
+        if chk_act_type not in list_act_types:
+            raise AttributeError(
+                f"`act_type` must be one of the following: {str(list_act_types)}"
+            )
 
         if chk_act_type in ["plant", "harvest"]:
-            chk_crop_type_id = object.__getattribute__(self, "crop_type_id")
-            if chk_crop_type_id is None:
+            if object.__getattribute__(self, "crop_type_id") is None:
                 raise AttributeError(
-                    f"Must pass `crop_type_id` with ActType {chk_act_type} "
+                    f"Must pass `crop_type_id` with `act_type` = {chk_act_type} "
                 )
 
 

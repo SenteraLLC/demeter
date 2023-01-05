@@ -1,6 +1,6 @@
 from typing import Union
 
-from .types import (
+from .._observation.types import (
     Observation,
     ObservationType,
     UnitType,

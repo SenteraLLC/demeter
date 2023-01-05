@@ -1,16 +1,15 @@
+"""Use `TableLookup` objects to map types to SQL table names"""
 from ...db._lookup_types import TableLookup, sumMappings
+from .._core.types import (  # ReportType,
+    Act,
+    CropType,
+    Field,
+)
 from .field_group import FieldGroup
 from .st_types import (
     Geom,
     GeoSpatialKey,
     TemporalKey,
-)
-from .types import (  # ReportType,
-    Act,
-    CropType,
-    Field,
-    Harvest,
-    Planting,
 )
 
 type_table_lookup: TableLookup = {
@@ -29,7 +28,7 @@ data_table_lookup: TableLookup = {
 
 id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)
 
-key_table_lookup: TableLookup = {
-    Planting: "planting",
-    Harvest: "harvest",
-}
+# key_table_lookup: TableLookup = {
+#     # Planting: "planting",
+#     # Harvest: "harvest",
+# }

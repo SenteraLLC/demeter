@@ -4,12 +4,12 @@ from ...db._generic_types import (
     GetTable,
     ReturnId,
 )
-from . import lookups as _lookups
-from .types import (
+from .._observation.types import (
     Observation,
     ObservationType,
     UnitType,
 )
+from . import lookups as _lookups
 
 g = SQLGenerator(
     "demeter.data",
@@ -18,16 +18,15 @@ g = SQLGenerator(
     id_table_lookup=_lookups.id_table_lookup,
 )
 
+getUnitType: GetTable[UnitType] = g.getTableFunction(UnitType)
+getObservationType: GetTable[ObservationType] = g.getTableFunction(ObservationType)
+getObservation: GetTable[Observation] = g.getTableFunction(Observation)
 
-getMaybeObservation: GetId[Observation] = g.getMaybeIdFunction(Observation)
 getMaybeUnitTypeId: GetId[UnitType] = g.getMaybeIdFunction(UnitType)
 getMaybeObservationTypeId: GetId[ObservationType] = g.getMaybeIdFunction(
     ObservationType
 )
 getMaybeObservationId: GetId[Observation] = g.getMaybeIdFunction(Observation)
-
-
-getObservationType: GetTable[ObservationType] = g.getTableFunction(ObservationType)
 
 insertObservation: ReturnId[Observation] = g.getInsertReturnIdFunction(Observation)
 insertUnitType: ReturnId[UnitType] = g.getInsertReturnIdFunction(UnitType)
@@ -35,10 +34,12 @@ insertObservationType: ReturnId[ObservationType] = g.getInsertReturnIdFunction(
     ObservationType
 )
 
-insertOrGetUnitType = g.partialInsertOrGetId(getMaybeUnitTypeId, insertUnitType)
-insertOrGetObservationType = g.partialInsertOrGetId(
+insertOrGetUnitType: ReturnId[UnitType] = g.partialInsertOrGetId(
+    getMaybeUnitTypeId, insertUnitType
+)
+insertOrGetObservationType: ReturnId[ObservationType] = g.partialInsertOrGetId(
     getMaybeObservationTypeId, insertObservationType
 )
-insertOrGetObservation = g.partialInsertOrGetId(
+insertOrGetObservation: ReturnId[Observation] = g.partialInsertOrGetId(
     getMaybeObservationId, insertObservation
 )

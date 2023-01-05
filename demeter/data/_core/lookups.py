@@ -1,3 +1,4 @@
+"""Use `TableLookup` objects to map types to SQL table names"""
 from ...db._lookup_types import sumMappings, TableLookup
 
 from .._core.types import (

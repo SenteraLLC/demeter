@@ -9,6 +9,9 @@ from typing import (
     Tuple,
 )
 
+from pandas import DataFrame
+from pandas import concat as pd_concat
+
 from ... import db
 
 
@@ -22,46 +25,59 @@ class FieldGroup(db.Detailed):
     parent_field_group_id: Optional[db.TableId] = None
 
 
-FieldGroupAncestors = Sequence[Tuple[db.TableId, FieldGroup]]
+def _row_to_field_group(
+    row: Dict[str, Any],
+    id_name: str = "field_group_id",
+) -> Tuple[db.TableId, FieldGroup]:
+    r = row
+    _id = r[id_name]
+    parent_id_name = "_".join(["parent", id_name])
+    f = FieldGroup(
+        name=r["name"],
+        parent_field_group_id=r[parent_id_name],
+        last_updated=r["last_updated"],
+        details=r["details"],
+    )
+    return (_id, f)
 
 
-# TODO: Support multiple
 def getFieldGroupAncestors(
     cursor: Any,
     field_group_id: db.TableId,
-) -> FieldGroupAncestors:
+) -> DataFrame:
+    """Takes a `field_group_id` value and returns a dataframe of that FieldGroup's ancestors
+    sorted by their distance from the given child."""
     stmt = """
-    with recursive leaf_group as (
-      select FG.field_group_id as leaf_field_group_id,
-             FG.parent_field_group_id,
-             FG.field_group_id,
+    with recursive ancestry as (
+      select root.*,
              0 as distance
-      from field_group FG
-      where FG.field_group_id = %(field_group_id)s
-
-    ), ancestors as (
-      select * from leaf_group FG
+      from field_group root
+      where root.field_group_id = %(field_group_id)s
       UNION ALL
-      select A.leaf_field_group_id,
-             FG.parent_field_group_id,
-             FG.field_group_id,
+      select ancestor.*,
              distance + 1
-      from ancestors A
-      join field_group FG on FG.field_group_id = A.parent_field_group_id
-    ) select A.field_group_id,
-             jsonb_agg(to_jsonb(FG.*) order by A.distance asc) as ancestors,
-      from ancestors A
-      join descendents D on D.field_group_id = A.field_group_id
-      join field_group FG on FG.field_group_id = A.field_group_id
-      group by A.field_group_id
+      from ancestry descendant, field_group ancestor
+      where descendant.parent_field_group_id = ancestor.field_group_id
+    )
+    select * from ancestry
     """
     cursor.execute(stmt, {"field_group_id": field_group_id})
     results = cursor.fetchall()
-    if len(results) != 1:
+
+    if len(results) < 1:
         raise Exception(f"Failed to get field group ancestors for: {field_group_id}")
-    r = results[0]
-    # _id = db.TableId(r["field_group_id"])
-    ancestors = [_row_to_field_group(a) for a in r["ancestors"]]
+
+    df_results = DataFrame(results).sort_values(by="distance")
+    ancestors = DataFrame(columns=["distance", "field_group_id", "field_group"])
+    for _, row in df_results.iterrows():
+        dist = row["distance"]
+        fg_id, fg = _row_to_field_group(row.to_dict())
+
+        this_data = {"distance": [dist], "field_group_id": [fg_id], "field_group": [fg]}
+        ancestors = pd_concat(
+            [ancestors, DataFrame(this_data)], ignore_index=True, axis=0
+        )
+
     return ancestors
 
 
@@ -116,22 +132,6 @@ class FieldSummary(db.Detailed):
 class FieldGroupFields:
     fields_by_depth: Dict[int, Sequence[FieldSummary]]
     ancestors: Sequence[FieldGroup]
-
-
-def _row_to_field_group(
-    row: Dict[str, Any],
-    id_name: str = "field_group_id",
-) -> Tuple[db.TableId, FieldGroup]:
-    r = row
-    _id = r[id_name]
-    parent_id_name = "_".join(["parent", id_name])
-    f = FieldGroup(
-        name=r["name"],
-        parent_field_group_id=r[parent_id_name],
-        last_updated=r["last_updated"],
-        details=r["details"],
-    )
-    return (_id, f)
 
 
 def getFieldGroupFields(

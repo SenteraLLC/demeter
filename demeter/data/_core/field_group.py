@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from dataclasses import dataclass
-from datetime import datetime
 from typing import (
     Any,
     Dict,
@@ -21,7 +20,6 @@ class FieldGroup(db.Detailed):
 
     name: str
     parent_field_group_id: Optional[db.TableId] = None
-    created: Optional[datetime] = datetime.now()
 
 
 FieldGroupAncestors = Sequence[Tuple[db.TableId, FieldGroup]]
@@ -112,7 +110,6 @@ class FieldSummary(db.Detailed):
     geom_id: db.TableId
     name: str
     field_group_id: Optional[db.TableId]
-    created: Optional[datetime] = None
 
 
 @dataclass(frozen=True)

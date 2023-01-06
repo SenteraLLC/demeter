@@ -1,6 +1,6 @@
 """High-level API core Demeter data types"""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
@@ -18,9 +18,10 @@ class Field(Detailed):
     the defined spatial and temporal constraints."""
 
     geom_id: TableId
-    name: str
+    date_start: datetime
+    date_end: datetime = field(default=datetime.max)
+    name: str = None
     field_group_id: Optional[TableId] = None
-    created: Optional[datetime] = datetime.now()
 
 
 @dataclass(frozen=True)
@@ -28,8 +29,7 @@ class CropType(TypeTable, Detailed):
     """Information related to the plant cultivated through a Planting activity."""
 
     crop: str
-    product_name: Optional[str] = None
-    created: Optional[datetime] = datetime.now()
+    product_name: str = None
 
 
 list_act_types = ("plant", "harvest", "fertilize", "irrigate")
@@ -43,9 +43,8 @@ class Act(Detailed):
     act_type: str
     field_id: TableId
     date_performed: datetime
-    crop_type_id: Optional[TableId] = None
-    geom_id: Optional[TableId] = None
-    created: Optional[datetime] = datetime.now()
+    crop_type_id: TableId = None
+    geom_id: TableId = None
 
     def __post_init__(self):
         """Be sure that:
@@ -81,7 +80,6 @@ class Act(Detailed):
 #     act_id: db.TableId
 #     date_performed: datetime
 #     geom_id: Optional[db.TableId] = None
-#     created: Optional[datetime] = None
 
 
 # @dataclass(frozen=True)
@@ -91,7 +89,6 @@ class Act(Detailed):
 #     act_id: db.TableId
 #     date_performed: datetime
 #     geom_id: Optional[db.TableId] = None
-#     created: Optional[datetime] = None
 
 
 # @dataclass(frozen=True)

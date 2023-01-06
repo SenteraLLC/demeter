@@ -46,11 +46,12 @@ class Table:
 
 @dataclass(frozen=True)
 class Detailed(Table):
-    last_updated: datetime = field(
-        default_factory=datetime.now, hash=False, kw_only=True
-    )
     details: json_type.JSON = field(
         default_factory=lambda: json_type.EMPTY_JSON, hash=False, kw_only=True
+    )
+    created: datetime = field(default_factory=datetime.now, hash=False, kw_only=True)
+    last_updated: datetime = field(
+        default_factory=datetime.now, hash=False, kw_only=True
     )
 
 

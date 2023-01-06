@@ -72,26 +72,24 @@ create constraint trigger geom_must_be_unique
 create table field_group (
   field_group_id bigserial primary key,
   -- TODO: Add cycle detection constraint
-  parent_field_group_id bigint
-                        references field_group(field_group_id),
-  unique (field_group_id, parent_field_group_id),
 
   name text
         not null,
+  
+  parent_field_group_id bigint
+                        references field_group(field_group_id),
+                        
+  unique (field_group_id, parent_field_group_id),
+  unique (parent_field_group_id, name),
 
-  -- constraint roots_must_be_named check (
-  --   not (parent_field_group_id is null and name is null)
-  -- ),
-
-  unique(parent_field_group_id, name),
+  details jsonb
+          not null
+          default '{}'::jsonb,
 
   created  timestamp without time zone
               not null
               default (now() at time zone 'utc'),
 
-  details jsonb
-          not null
-          default '{}'::jsonb,
   last_updated  timestamp without time zone
                 not null
                 default (now() at time zone 'utc')
@@ -121,13 +119,13 @@ create table field (
   field_group_id bigint
                   references field_group(field_group_id),
 
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
-
   details jsonb
           not null
           default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
                 not null
@@ -147,21 +145,22 @@ create table crop_type (
 
   unique (crop, product_name),
 
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
   created  timestamp without time zone
               not null
               default (now() at time zone 'utc'),
-
-  details     jsonb
-              not null
-              default '{}'::jsonb,
 
   last_updated  timestamp without time zone
                 not null
                 default (now() at time zone 'utc')
 );
 
--- Is this really necessary given line 140?
-CREATE UNIQUE INDEX unique_crop_product_name_null_idx on crop_type (crop, product_name) where product_name is null;
+CREATE UNIQUE INDEX crop_product_name_null_unique_idx
+  ON crop_type(crop)
+  WHERE (product_name is NULL);
 
 CREATE TRIGGER update_crop_type_last_updated BEFORE UPDATE
 ON crop_type FOR EACH ROW EXECUTE PROCEDURE
@@ -173,11 +172,6 @@ ALTER TABLE crop_type
 ALTER TABLE crop_type
   ADD CONSTRAINT crop_type_product_name_lowercase_ck
   CHECK (product_name = lower(product_name));
-
--- FIXME: IS THIS DOING THE SAME THING AS IN LINE 156? What's the difference?
--- CREATE UNIQUE INDEX crop_product_name_null_unique_idx
---   ON crop_type(crop)
---   WHERE (product_name is NULL);
 
 -- OBSERVATION TYPE
 
@@ -289,17 +283,18 @@ create table function (
                    references function_type(function_type_id)
                    not null,
 
-  created          timestamp without time zone
-                   not null
-                   default (now() at time zone 'utc'),
+  details jsonb
+          not null
+          default '{}'::jsonb,
 
-  last_updated     timestamp without time zone
-                   not null
-                   default (now() at time zone 'utc'),
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
 
-  details          jsonb
-                   not null
-                   default '{}'::jsonb
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
 );
 ALTER TABLE function
   ADD CONSTRAINT function_name_lowercase_ck
@@ -353,17 +348,17 @@ create table act (
   geom_id       bigint
                   references geom(geom_id),
 
-  created       timestamp without time zone
-                  not null
-                  default (now() at time zone 'utc'),
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
-                  not null
-                  default (now() at time zone 'utc'),
-
-  details        jsonb
-                  not null
-                  default '{}'::jsonb
+                not null
+                default (now() at time zone 'utc')
 );
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
@@ -385,28 +380,25 @@ create table observation (
   observation_type_id bigint
                 not null
                 references observation_type(observation_type_id),
-  date_observed timestamp without time zone,
-
   value_observed float
                  not null,
-
-  created        timestamp without time zone
-                  not null
-                  default (now() at time zone 'utc'),
-
+  date_observed timestamp without time zone,
   geom_id        bigint
                  references geom(geom_id),
 
   act_id         bigint
                   references act(act_id),
+  details jsonb
+          not null
+          default '{}'::jsonb,
 
-  last_updated   timestamp without time zone
-                 not null
-                 default (now() at time zone 'utc'),
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
 
-  details        jsonb
-                 not null
-                 default '{}'::jsonb
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
 );
 
 
@@ -462,12 +454,18 @@ create table http_parameter (
   http_type_id bigint
                references http_type(http_type_id),
   primary key(function_id, http_type_id),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc'),
-  details      jsonb
-               not null
-               default '{}'::jsonb
+                default (now() at time zone 'utc')
 );
 
 create table s3_input_parameter (
@@ -476,12 +474,17 @@ create table s3_input_parameter (
   s3_type_id    bigint references s3_type(s3_type_id),
   primary key   (function_id, s3_type_id),
 
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc'),
-  details       jsonb
-                not null
-                default '{}'::jsonb
+                default (now() at time zone 'utc')
 );
 
 create table s3_output_parameter (
@@ -494,12 +497,17 @@ create table s3_output_parameter (
   s3_type_id     bigint references s3_type(s3_type_id),
   primary key    (s3_output_parameter_name, s3_type_id, function_id),
 
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc'),
-  details        jsonb
-                 not null
-                 default '{}'::jsonb
+                default (now() at time zone 'utc')
 );
 
 create type keyword_type as ENUM('STRING', 'INTEGER', 'FLOAT', 'JSON');
@@ -661,12 +669,18 @@ create table published_workflow (
   major       int    not null,
   minor       serial not null,
   unique (workflow_name, major, minor),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc'),
-  details     jsonb
-              not null
-              default '{}'::jsonb
+                default (now() at time zone 'utc')
 
 );
 
@@ -714,12 +728,17 @@ create table root (
   time          timestamp without time zone
                 not null,
 
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc'),
-  details       jsonb
-                not null
-                default '{}'::jsonb
+                default (now() at time zone 'utc')
 );
 
 create table node_ancestry (

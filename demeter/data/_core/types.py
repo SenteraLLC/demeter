@@ -15,7 +15,7 @@ class Field(Detailed):
 
     geom_id: TableId
     date_start: datetime
-    date_end: datetime = field(default_factory=lambda: datetime.max)
+    date_end: datetime = field(default=datetime.max)
     name: str = None
     field_group_id: Optional[TableId] = None
 

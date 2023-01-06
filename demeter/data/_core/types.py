@@ -1,6 +1,6 @@
 """High-level API core Demeter data types"""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
@@ -13,10 +13,14 @@ class Field(Detailed):
     area that is generally, but not always, managed as a single unit within
     the defined spatial and temporal constraints."""
 
-    geom_id: TableId
     name: str
+    geom_id: TableId
+    date_start: datetime
+    date_end: Optional[datetime] = field(default=datetime.max, hash=False, kw_only=True)
     field_group_id: Optional[TableId] = None
-    created: Optional[datetime] = datetime.now()
+    created: Optional[datetime] = field(
+        default=datetime.now(), hash=False, kw_only=True
+    )
 
 
 @dataclass(frozen=True)

@@ -96,15 +96,35 @@ field_geom_id = insertOrGetGeom(cursor, field_geom)
 print(f"Field Geom id: {field_geom_id}")
 inserted_geom = getGeom(cursor, field_geom_id)
 
+# A note on the date_end (and created) columns of Field
+#     1. `date_end=None` is NOT VALID because setting explicitly to `None` bypasses the default `datetime.max`
+#     2. When insertOrGetField() is called, date_end is assigned an infinity value because of the schema.sql default. I
+#        don't know how to reconcile the SQL default with the Field() class default if `None` is passed.
+#     So, DO NOT pass `None` to either the `date_end` or "Detailed" columns (i.e., `details`, `created`, `last_updated`).
+
 field = Field(
-    geom_id=field_geom_id,
     name="Test field",
+    geom_id=field_geom_id,
+    date_start=datetime(2020, 1, 1),
+    # date_end=datetime(2021, 1, 1),  # Can't set to `None`. Have to either set it or exclude entirely.
     field_group_id=field_group_id,
-    details={"external_id": 10736},
+    details={"external_id": 10736},  # Also can't be `None`
 )
+# print(field)
+
 field_id = insertOrGetField(cursor, field)
 
-assert field == getField(cursor, field_id), "Error in Field insert"
+assert field == getField(cursor, field_id), (
+    "Error in the Field insert. Did you pass `None` to any of these Field attributes: [`date_end`, `details`, "
+    "`created`, `last_updated`]?"
+)
+
+print(
+    f"Field name: {field.name}\n",
+    f"field_id: {field_id}\n",
+    f"  date_start: {field.date_start}\n",
+    f"  date_end: {getField(cursor, field_id).date_end}",
+)
 
 # %% add crop season information
 

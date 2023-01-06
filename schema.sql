@@ -87,14 +87,14 @@ create table field_group (
 
   created  timestamp without time zone
               not null
-              default now(),
+              default (now() at time zone 'utc'),
 
   details jsonb
           not null
           default '{}'::jsonb,
   last_updated  timestamp without time zone
                 not null
-                default now()
+                default (now() at time zone 'utc')
 );
 
 CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;
@@ -105,25 +105,33 @@ create table field (
   field_id bigserial
            primary key,
 
+  name text,
+
   geom_id   bigint
             not null
             references geom(geom_id),
 
-  name text,
+  date_start      timestamp without time zone
+                  not null,
+
+  date_end        timestamp without time zone
+                  not null
+                  default ('infinity'::timestamp at time zone 'utc'),
 
   field_group_id bigint
                   references field_group(field_group_id),
 
   created  timestamp without time zone
               not null
-              default now(),
+              default (now() at time zone 'utc'),
 
   details jsonb
           not null
           default '{}'::jsonb,
+
   last_updated  timestamp without time zone
                 not null
-                default now()
+                default (now() at time zone 'utc')
 );
 
 -- CROP TYPE
@@ -141,7 +149,7 @@ create table crop_type (
 
   created  timestamp without time zone
               not null
-              default now(),
+              default (now() at time zone 'utc'),
 
   details     jsonb
               not null
@@ -149,7 +157,7 @@ create table crop_type (
 
   last_updated  timestamp without time zone
                 not null
-                default now()
+                default (now() at time zone 'utc')
 );
 
 -- Is this really necessary given line 140?
@@ -283,11 +291,11 @@ create table function (
 
   created          timestamp without time zone
                    not null
-                   default now(),
+                   default (now() at time zone 'utc'),
 
   last_updated     timestamp without time zone
                    not null
-                   default now(),
+                   default (now() at time zone 'utc'),
 
   details          jsonb
                    not null
@@ -316,18 +324,21 @@ create table geospatial_key (
 create table temporal_key (
   temporal_key_id bigserial
                   primary key,
-  start_date      date
+  date_start      timestamp without time zone
                   not null,
-  end_date        date
+  date_end        timestamp without time zone
                   not null
+                  -- default ('infinity'::timestamp at time zone 'utc')
 );
 
 -- ACT
 
+CREATE TYPE act_type AS ENUM ('fertilize', 'harvest', 'irrigate', 'plant');
+
 create table act (
   act_id         bigserial primary key,
 
-  act_type           text not null,
+  act_type       text not null,
 
   field_id       bigint
                   not null
@@ -344,11 +355,11 @@ create table act (
 
   created       timestamp without time zone
                   not null
-                  default now(),
+                  default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
-                not null
-                default now(),
+                  not null
+                  default (now() at time zone 'utc'),
 
   details        jsonb
                   not null
@@ -378,10 +389,10 @@ create table observation (
 
   value_observed float
                  not null,
-  
+
   created        timestamp without time zone
                   not null
-                  default now(),
+                  default (now() at time zone 'utc'),
 
   geom_id        bigint
                  references geom(geom_id),
@@ -391,7 +402,7 @@ create table observation (
 
   last_updated   timestamp without time zone
                  not null
-                 default now(),
+                 default (now() at time zone 'utc'),
 
   details        jsonb
                  not null
@@ -453,7 +464,7 @@ create table http_parameter (
   primary key(function_id, http_type_id),
   last_updated  timestamp without time zone
                 not null
-                default now(),
+                default (now() at time zone 'utc'),
   details      jsonb
                not null
                default '{}'::jsonb
@@ -467,7 +478,7 @@ create table s3_input_parameter (
 
   last_updated  timestamp without time zone
                 not null
-                default now(),
+                default (now() at time zone 'utc'),
   details       jsonb
                 not null
                 default '{}'::jsonb
@@ -485,7 +496,7 @@ create table s3_output_parameter (
 
   last_updated  timestamp without time zone
                 not null
-                default now(),
+                default (now() at time zone 'utc'),
   details        jsonb
                  not null
                  default '{}'::jsonb
@@ -652,7 +663,7 @@ create table published_workflow (
   unique (workflow_name, major, minor),
   last_updated  timestamp without time zone
                 not null
-                default now(),
+                default (now() at time zone 'utc'),
   details     jsonb
               not null
               default '{}'::jsonb
@@ -705,7 +716,7 @@ create table root (
 
   last_updated  timestamp without time zone
                 not null
-                default now(),
+                default (now() at time zone 'utc'),
   details       jsonb
                 not null
                 default '{}'::jsonb

@@ -16,7 +16,9 @@ class Field(Detailed):
     name: str
     geom_id: TableId
     date_start: datetime
-    date_end: Optional[datetime] = field(default=datetime.max, hash=False, kw_only=True)
+    date_end: Optional[datetime] = field(
+        default_factory=datetime.max, hash=False, kw_only=True
+    )
     field_group_id: Optional[TableId] = None
 
 

@@ -135,7 +135,6 @@ crop_type_id = insertOrGetCropType(cursor, crop_type)
 
 assert crop_type == getCropType(cursor, crop_type_id), "Error in CropType insert"
 
-
 field_planting = Act(
     act_type="plant",
     field_id=field_id,
@@ -228,6 +227,13 @@ field_irrigate = Act(
     date_performed=datetime(2022, 6, 1),
 )
 irrigate_id = insertOrGetAct(cursor, field_irrigate)
+
+# %% Testing some constraints
+
+# check crop type unique constraint
+barley = CropType(crop="barley")
+try_id = insertOrGetCropType(cursor, barley)
+assert try_id != crop_type_id, "Error in unique constraint for CropType"
 
 
 # %%

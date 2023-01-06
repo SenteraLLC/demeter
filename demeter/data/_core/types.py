@@ -18,9 +18,6 @@ class Field(Detailed):
     date_start: datetime
     date_end: Optional[datetime] = field(default=datetime.max, hash=False, kw_only=True)
     field_group_id: Optional[TableId] = None
-    created: Optional[datetime] = field(
-        default=datetime.now(), hash=False, kw_only=True
-    )
 
 
 @dataclass(frozen=True)
@@ -29,7 +26,7 @@ class CropType(TypeTable, Detailed):
 
     crop: str
     product_name: Optional[str] = None
-    created: Optional[datetime] = datetime.now()
+    # created: Optional[datetime] = datetime.now()
 
 
 list_act_types = ("plant", "harvest", "fertilize", "irrigate")
@@ -45,7 +42,7 @@ class Act(Detailed):
     date_performed: datetime
     crop_type_id: Optional[TableId] = None
     geom_id: Optional[TableId] = None
-    created: Optional[datetime] = datetime.now()
+    # created: Optional[datetime] = datetime.now()
 
     def __post_init__(self):
         """Be sure that:
@@ -81,7 +78,6 @@ class Act(Detailed):
 #     act_id: db.TableId
 #     date_performed: datetime
 #     geom_id: Optional[db.TableId] = None
-#     created: Optional[datetime] = None
 
 
 # @dataclass(frozen=True)
@@ -91,7 +87,6 @@ class Act(Detailed):
 #     act_id: db.TableId
 #     date_performed: datetime
 #     geom_id: Optional[db.TableId] = None
-#     created: Optional[datetime] = None
 
 
 # @dataclass(frozen=True)

@@ -333,12 +333,12 @@ create table temporal_key (
 
 -- ACT
 
-CREATE TYPE act_type AS ENUM ('fertilize', 'harvest', 'irrigate', 'plant');
+CREATE TYPE act_type_enum AS ENUM ('fertilize', 'harvest', 'irrigate', 'plant');
 
 create table act (
   act_id         bigserial primary key,
 
-  act_type       text not null,
+  act_type       act_type_enum not null,
 
   field_id       bigint
                   not null

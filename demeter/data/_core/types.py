@@ -13,12 +13,10 @@ class Field(Detailed):
     area that is generally, but not always, managed as a single unit within
     the defined spatial and temporal constraints."""
 
-    name: str
     geom_id: TableId
     date_start: datetime
-    date_end: Optional[datetime] = field(
-        default_factory=lambda: datetime.max, hash=False, kw_only=True
-    )
+    date_end: datetime = field(default_factory=lambda: datetime.max)
+    name: str = None
     field_group_id: Optional[TableId] = None
 
 
@@ -27,7 +25,7 @@ class CropType(TypeTable, Detailed):
     """Information related to the plant cultivated through a Planting activity."""
 
     crop: str
-    product_name: Optional[str] = None
+    product_name: str = None
 
 
 list_act_types = ("plant", "harvest", "fertilize", "irrigate")
@@ -41,8 +39,8 @@ class Act(Detailed):
     act_type: str
     field_id: TableId
     date_performed: datetime
-    crop_type_id: Optional[TableId] = None
-    geom_id: Optional[TableId] = None
+    crop_type_id: TableId = None
+    geom_id: TableId = None
 
     def __post_init__(self):
         """Be sure that:

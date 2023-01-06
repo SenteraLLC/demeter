@@ -324,9 +324,9 @@ create table geospatial_key (
 create table temporal_key (
   temporal_key_id bigserial
                   primary key,
-  date_start      timestamp without time zone
+  date_start      date
                   not null,
-  date_end        timestamp without time zone
+  date_end        date
                   not null
                   -- default ('infinity'::timestamp at time zone 'utc')
 );

@@ -3,7 +3,6 @@ from typing import Any, Optional, Sequence, Dict, Set, Tuple
 from ... import db
 
 from collections import OrderedDict
-from datetime import datetime
 
 from dataclasses import dataclass
 
@@ -16,7 +15,6 @@ class FieldGroup(db.Detailed):
 
     name: str
     parent_field_group_id: Optional[db.TableId] = None
-    created: Optional[datetime] = datetime.now()
 
 
 FieldGroupAncestors = Sequence[Tuple[db.TableId, FieldGroup]]
@@ -107,7 +105,6 @@ class FieldSummary(db.Detailed):
     geom_id: db.TableId
     name: str
     field_group_id: Optional[db.TableId]
-    created: Optional[datetime] = None
 
 
 @dataclass(frozen=True)

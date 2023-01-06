@@ -114,6 +114,8 @@ field = Field(
 
 field_id = insertOrGetField(cursor, field)
 
+# print(getField(cursor, field_id))
+
 assert field == getField(cursor, field_id), (
     "Error in the Field insert. Did you pass `None` to any of these Field attributes: [`date_end`, `details`, "
     "`created`, `last_updated`]?"

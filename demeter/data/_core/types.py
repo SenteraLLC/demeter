@@ -6,6 +6,14 @@ from typing import Optional
 
 from ...db import TableId, Detailed, TypeTable
 
+"""Future behavior of finding duplicate fields in Demeter (1/9/2023):
+1. Query the field table for a field_id that spatially intersects a spatiotemporal unit of interest. This requires that we have both a geometry, and a range of dates (remember, date_end defaults to infinity).
+2. If no spatiotemporal intersection: Add in the new field, setting geom_id, date_start, and date_end (same as was performed on the query above.
+3. If there is a spatial intersection, but not a temporal intersection: Still not a problem, we just would add the field using the attributes used for the query.
+Note that if we tend to use infinity as date_end, this is probably a pretty rare scenario. It would mean that either the existing field that this intersects with or the potential field to add has a non-infinity value for date_end, which would have been explicitly set. There will probably be some logic here, that may be rather complicated. However, I think the level of complexity will probably be related to the level of complexity we decide to impose via setting date_start and date_end based on other data, like Acts.
+4. If there is a spatial AND a temporal intersection: This is a problem that has to be fixed (as long as we assume two boundaries cannot CROSS, which I suggest we are strict about). First thing would be to inventory all the field_ids that this intersects with. Short term, I think we just employ the fix manually. Longer term, I'm hopeful that we can come up with a creative solution (and also hope it doesn't take too much effort) to automatically generate a new field(s) to cover the spatiotemporal extent of the intended upsert without intersecting any of the existing field_ids.
+"""
+
 
 @dataclass(frozen=True)
 class Field(Detailed):

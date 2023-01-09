@@ -16,6 +16,9 @@ from demeter.data import (
     getCropType,
     getField,
     getFieldGroup,
+    getFieldGroupAncestors,
+    getFieldGroupDescendants,
+    getFieldGroupFields,
     getGeom,
     getObservation,
     getObservationType,
@@ -79,6 +82,9 @@ print(
     f"Org name: {argentina_group.name}\n  field_group_id: {argentina_group}\n  parent_field_group_id: {argentina_group.parent_field_group_id}"
 )
 
+getFieldGroupAncestors(cursor, field_group_id)
+getFieldGroupDescendants(cursor, argentina_group_id)
+
 # %% add field data with geometry
 
 # NOTE: Be sure to use WGS-84 CRS (EPSG:4326) - `demeter` assumes geoms get entered in that format
@@ -129,6 +135,8 @@ print(
     f"  date_start: {field.date_start}\n",
     f"  date_end: {getField(cursor, field_id).date_end}",
 )
+
+getFieldGroupFields(cursor, sa_group_id)
 
 # %% add crop season information
 
@@ -241,6 +249,7 @@ assert try_id != crop_type_id, "Error in unique constraint for CropType"
 # %%
 # NOTE SQL transaction intentionally left uncommitted
 trans.commit()
+trans.close()
 # c.close()
 # If you uncomment this, the script is no longer idempotent.
 #  That is, any function 'insertFoo' will throw integrity errors when run a second time.

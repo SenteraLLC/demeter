@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import (
+from typing import (  # Set,
     Any,
     Dict,
     Optional,
-    Set,
     Tuple,
 )
 
@@ -183,103 +182,56 @@ def getFieldGroupFields(
     return fields
 
 
-# TODO: Deprecated by 'getFieldGroupFields'
-def getOrgFields(
-    cursor: Any,
-    field_group_id: db.TableId,
-) -> Dict[db.TableId, Set[db.TableId]]:
-    stmt = """
-    with recursive ancestry as (
-      select parent_field_group_id,
-             field_group_id,
-             0 as depth
-      from field_group
-      where field_group_id = %(field_group_id)s
-      UNION ALL
-      select F.parent_field_group_id,
-             F.field_group_id,
-             A.depth + 1
-      from ancestry A
-      join field_group F on F.parent_field_group_id = A.field_group_id
+# def searchFieldGroup(
+#     cursor: Any,
+#     field_group_name: str,
+#     parent_field_group_id: Optional[db.TableId] = None,
+#     ancestor_field_group_id: Optional[db.TableId] = None,
+#     do_fuzzy_search: bool = False,
+# ) -> Optional[Tuple[db.TableId, FieldGroup]]:
+#     search_part = "where name = %(name)s"
+#     if do_fuzzy_search:
+#         search_part = "where name like concat('%', %(name)s, '%')"
 
-   ), leaf as (
-     select A1.*
-     from ancestry A1
-     where not exists (select * from ancestry A2 where A2.parent_field_group_id = A1.field_group_id)
+#     stmt = f"""
+#     with candidate as (
+#       select *
+#       from field_group
+#       {search_part}
 
-   ) select L.field_group_id as leaf_field_group_id,
-            L.depth,
-            coalesce(jsonb_agg(F.field_id) filter (where F.field_id is not null), '[]'::jsonb) as field_ids
-     from leaf L
-     left join field F on F.field_group_id = L.field_group_id
-     group by L.parent_field_group_id, L.field_group_id;
-  """
-    cursor.execute(stmt, {"field_group_id": field_group_id})
-    results = cursor.fetchall()
-    return {r.leaf_field_group_id: r.field_ids for r in results}
+#     ) select * from candidate;
+#     """
+#     args: Dict[str, Any] = {"name": field_group_name}
+#     cursor.execute(stmt, args)
+#     results = cursor.fetchall()
 
+#     maybe_result: Optional[Tuple[db.TableId, FieldGroup]] = None
+#     for r in results:
+#         _id = r["field_group_id"]
+#         f = FieldGroup(
+#             field_group_id=r["field_group_id"],
+#             parent_field_group_id=r["parent_field_group_id"],
+#             name=r["name"],
+#             details=r["details"],
+#             last_updated=r["last_updated"],
+#         )
 
-# TODO: How to deal with Demeter table classes vs Demeter table result classes? (IE w/ and w/o TableId)
+#         if (p_id := parent_field_group_id) or (a_id := ancestor_field_group_id):
+#             ancestors = getFieldGroupAncestors(cursor, _id)
+#             ancestor_ids = [a[0] for a in ancestors]
+#             if p_id is not None:
+#                 if p_id != ancestor_ids[0]:
+#                     continue
+#             if a_id is not None:
+#                 if a_id not in ancestor_ids:
+#                     continue
 
+#         if maybe_result is not None:
+#             raise Exception(
+#                 f"Ambiguous field group search: {field_group_name},{p_id},{a_id}"
+#             )
 
-@dataclass(frozen=True)
-class FieldSummary(db.Detailed):
-    field_id: db.TableId
-    geom_id: db.TableId
-    name: str
-    field_group_id: Optional[db.TableId]
+#         _id = r["field_group_id"]
+#         maybe_result = (_id, f)
 
-
-def searchFieldGroup(
-    cursor: Any,
-    field_group_name: str,
-    parent_field_group_id: Optional[db.TableId] = None,
-    ancestor_field_group_id: Optional[db.TableId] = None,
-    do_fuzzy_search: bool = False,
-) -> Optional[Tuple[db.TableId, FieldGroup]]:
-    search_part = "where name = %(name)s"
-    if do_fuzzy_search:
-        search_part = "where name like concat('%', %(name)s, '%')"
-
-    stmt = f"""
-    with candidate as (
-      select *
-      from field_group
-      {search_part}
-
-    ) select * from candidate;
-    """
-    args: Dict[str, Any] = {"name": field_group_name}
-    cursor.execute(stmt, args)
-    results = cursor.fetchall()
-
-    maybe_result: Optional[Tuple[db.TableId, FieldGroup]] = None
-    for r in results:
-        _id = r["field_group_id"]
-        f = FieldGroup(
-            field_group_id=r["field_group_id"],
-            parent_field_group_id=r["parent_field_group_id"],
-            name=r["name"],
-            details=r["details"],
-            last_updated=r["last_updated"],
-        )
-
-        if (p_id := parent_field_group_id) or (a_id := ancestor_field_group_id):
-            ancestors = getFieldGroupAncestors(cursor, _id)
-            ancestor_ids = [a[0] for a in ancestors]
-            if p_id is not None:
-                if p_id != ancestor_ids[0]:
-                    continue
-            if a_id is not None:
-                if a_id not in ancestor_ids:
-                    continue
-
-        if maybe_result is not None:
-            raise Exception(
-                f"Ambiguous field group search: {field_group_name},{p_id},{a_id}"
-            )
-
-        _id = r["field_group_id"]
-        maybe_result = (_id, f)
-
-    return maybe_result
+#     return maybe_result

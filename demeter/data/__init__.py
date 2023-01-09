@@ -1,10 +1,8 @@
-from ._core.field_group import (
+from ._core.field_group import (  # searchFieldGroup,
     FieldGroup,
     getFieldGroupAncestors,
     getFieldGroupDescendants,
     getFieldGroupFields,
-    getOrgFields,
-    searchFieldGroup,
 )
 from ._core.generated import (
     getAct,
@@ -63,8 +61,8 @@ __all__ = (
     "insertOrGetFieldGroup",
     "getFieldGroupAncestors",
     "getFieldGroupDescendants",
-    "getOrgFields",
-    "searchFieldGroup",
+    # "getOrgFields",
+    # "searchFieldGroup",
     "getFieldGroupFields",
     # Field
     "Field",

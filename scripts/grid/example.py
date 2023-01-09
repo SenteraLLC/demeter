@@ -1,20 +1,28 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, cast
-
-from shapely.geometry import Point  # type: ignore
-from shapely.geometry import Polygon as Poly
-
-from . import StopState
-from .spatial_utils import getNodeKey
-from .valuer import Value, Valuer
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    cast,
+)
 
 from shapely import wkb  # type: ignore
+from shapely.geometry import Point  # type: ignore
+from shapely.geometry import (
+    CAP_STYLE,
+    JOIN_STYLE,
+    MultiPoint,
+)
+from shapely.geometry import Polygon as Poly
 
-from demeter.data import Geom
-
-from shapely.geometry import MultiPoint
-
-from demeter.data import ObservationType, insertOrGetGeom, insertOrGetObservationType
+from demeter.data import (
+    Geom,
+    ObservationType,
+    insertOrGetGeom,
+    insertOrGetObservationType,
+)
 from demeter.db import TableId
 from demeter.grid import (
     Ancestry,
@@ -25,7 +33,9 @@ from demeter.grid import (
     insertOrGetRoot,
 )
 
-from shapely.geometry import CAP_STYLE, JOIN_STYLE
+from . import StopState
+from .spatial_utils import getNodeKey
+from .valuer import Value, Valuer
 
 
 def do_stop(
@@ -158,7 +168,7 @@ def getStartingGeoms(
         type="Polygon",
         coordinates=(polygon_bounds,),
     )
-    bound_geom_id = insertOrGetGeom(cursor, geom)
+    _ = insertOrGetGeom(cursor, geom)
     observation_type_id = getObservationType(cursor, stat)
     r = Root(
         observation_type_id=observation_type_id,

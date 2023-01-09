@@ -1,24 +1,22 @@
-from typing import Iterator
-
 import argparse
 import asyncio
 import json
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
+from typing import Iterator
 
+from dotenv import load_dotenv
 from shapely.geometry import Point  # type: ignore
 from shapely.geometry import Polygon as Poly
 
-
 from demeter.db import getConnection
 
-from .example import (
-    getPoints,
-    pointsToBound,
-)
-
+from .example import getPoints, pointsToBound
 from .main import main
-
 
 DATE = "%Y-%m-%d"
 SHORT = DATE + "Z"
@@ -33,7 +31,9 @@ def parseTime(s: str) -> datetime:
             return datetime.strptime(s, f)
         except ValueError:
             pass
-    raise ValueError(f"Invalid date string '{s}' does not match format: {DATE_FORMATS_STR}")
+    raise ValueError(
+        f"Invalid date string '{s}' does not match format: {DATE_FORMATS_STR}"
+    )
 
 
 def parsePoly(s: str) -> Poly:
@@ -51,11 +51,6 @@ def yieldTimeRange(
         yield x
         x += delta
 
-
-from typing import List
-
-
-from dotenv import load_dotenv
 
 if __name__ == "__main__":
     load_dotenv()
@@ -86,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--step_delta",
         type=json.loads,
-        help=f"Python datetime.timedelta on which to step",
+        help="Python datetime.timedelta on which to step",
         default=timedelta(days=1),
     )
 

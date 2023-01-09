@@ -1,6 +1,5 @@
 exclude: >
   (?x)^(
-      scripts/grid/|
       scripts/to_graphviz.py
   )
 repos:

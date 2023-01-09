@@ -1,15 +1,26 @@
 import curses
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Optional, Sequence, Set, Tuple
+from typing import (
+    Dict,
+    Generic,
+    List,
+    Sequence,
+    Set,
+    Tuple,
+)
 
 from demeter.db import TableId
 
-from ..formatting import ColumnFormat, Margins, inferColumnFormat
+from ..formatting import (
+    ColumnFormat,
+    Margins,
+    inferColumnFormat,
+)
 from ..log import getLogger
 from ..summary import RawRowType
 from ..theme import ColorScheme
-from .picker import Command, Picker, to_ascii
+from .picker import Command, Picker
 from .table import Table
 
 logger = getLogger()
@@ -101,7 +112,7 @@ class PickerTree(Generic[RawRowType]):
 
     def _back(self) -> bool:
         table_id = self.stack.pop()
-        c = cached = self.id_to_cached[table_id]
+        c = self.id_to_cached[table_id]
         self._swap_table(c.table, c.selected)
         self.current_id = table_id
         return True
@@ -110,7 +121,6 @@ class PickerTree(Generic[RawRowType]):
         cmd = self.picker.get_command()
         keep_going = self.picker.step(cmd)
 
-        maybe_new_table: Optional[Table[RawRowType]] = None
         p = self.picker
 
         if cmd == Command.ENTER:
@@ -147,7 +157,7 @@ class PickerTree(Generic[RawRowType]):
         selected_ids = {r.field_group_id for r in selected_rows}  # type: ignore
         child_ids = {r.field_group_id for r in table.raw_rows}  # type: ignore
         for _id in child_ids:
-            r = self.id_to_row[_id]
+            _ = self.id_to_row[_id]
 
             if _id not in selected_ids:
                 try:

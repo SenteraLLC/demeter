@@ -1,8 +1,11 @@
+from collections import OrderedDict
 from typing import Any
 
-from collections import OrderedDict
-
-from ..curses import FilterBy, SelectedResult, setup_curses
+from ..curses import (
+    FilterBy,
+    SelectedResult,
+    setup_curses,
+)
 from ..formatting import Margins
 from ..log import getLogger
 from ..picker.tree import PickerTree

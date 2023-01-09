@@ -1,5 +1,9 @@
 from dataclasses import dataclass
-from typing import Any, Sequence, Set
+from typing import (
+    Any,
+    Sequence,
+    Set,
+)
 
 from ..log import getLogger
 from .options import FormatOptions
@@ -31,7 +35,7 @@ class ColumnFormat:
 
     def shouldSkip(self, existing_titles: Set[str]) -> bool:
         is_excluded = self.options.xor_title in existing_titles
-        logger.warn(
+        logger.warning(
             "Should skip? %s %s %s",
             self.options.xor_title,
             existing_titles,
@@ -42,14 +46,14 @@ class ColumnFormat:
         return self.options.do_skip
 
 
+# MK: I tried to fix these two functions 1/9/2023 which were left broken.
 def _calculateFixedWidth(
-    column_format: ColumnFormat,
-    title_width: int,
+    column_format: ColumnFormat, title_width: int, rows: Sequence[Any]
 ) -> int:
     cf = column_format
     l = cf.options.min_columns
     h = cf.options.max_columns
-    greatest_value_width = max(len(str(r[self.key] or "")) for r in rows)  # type: ignore
+    greatest_value_width = max(len(str(r[column_format.key] or "")) for r in rows)  # type: ignore
     return max(title_width, min(h, max(greatest_value_width, l)))
 
 
@@ -66,11 +70,11 @@ def inferColumnFormat(
         not_null_fraction = 1 - (null_count / n)
         if not_null_fraction < cf.minimum_fraction:
             cf.options.do_skip = True
-            logger.warning(f"Fraction too low ({not_null_fraction}) for {title}")
+            logger.warning("Fraction too low (%s) for %s", not_null_fraction, title)
             return True
 
         title_width = len(title)
-        cf.options.fixed_width = _calculateFixedWidth(cf, title_width)
+        cf.options.fixed_width = _calculateFixedWidth(cf, title_width, rows)
 
         return True
 

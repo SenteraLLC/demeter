@@ -1,7 +1,13 @@
 import curses
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, NewType, Sequence, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Sequence,
+    TypeVar,
+)
 
 from demeter.db import TableId
 

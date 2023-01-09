@@ -1,5 +1,5 @@
-from .main import main as getValues
+from .main import main as get_values
 
 __all__ = [
-    "getValues",
+    "get_values",
 ]

@@ -1,17 +1,5 @@
 import argparse
 import os
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    Literal,
-    Sequence,
-    Set,
-    Tuple,
-    TypeVar,
-    cast,
-)
 
 from dotenv import load_dotenv
 
@@ -45,7 +33,9 @@ def check_dir(d: str) -> str:
 if __name__ == "__main__":
     load_dotenv()
 
-    parser = argparse.ArgumentParser(description="Use interactive menus to get Demeter data")
+    parser = argparse.ArgumentParser(
+        description="Use interactive menus to get Demeter data"
+    )
 
     parser.add_argument(
         "--output_directory",

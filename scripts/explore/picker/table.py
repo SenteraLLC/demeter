@@ -1,6 +1,5 @@
 import curses
 import math
-from collections import OrderedDict
 from dataclasses import asdict, dataclass
 from typing import (
     Any,
@@ -11,14 +10,11 @@ from typing import (
     Optional,
     Sequence,
     Set,
-    Type,
-    TypeVar,
-    cast,
 )
 
-from ..formatting import ColumnFormat, Margins, Specifiers
+from ..formatting import Margins, Specifiers
 from ..log import getLogger
-from ..summary import RawRowType, Summary
+from ..summary import RawRowType
 from ..theme import ColorScheme
 
 logger = getLogger()
@@ -76,7 +72,7 @@ class Table(Generic[RawRowType]):
 
         rows: List[Row[RawRowType]] = []
         for i, r in enumerate(self.raw_rows):
-            f = formatted_row = self.format_row(asdict(r), self.width)
+            f = self.format_row(asdict(r), self.width)
             rows.append(Row(r, f))
 
         self.rows: Sequence[Row[RawRowType]] = rows
@@ -159,17 +155,16 @@ class Table(Generic[RawRowType]):
             maybe_cursor_offset >= 0
         ):
             if self.max_page_offset > 0:
-                dfs = distance_from_start = co - po
-                dfe = distance_from_end = self.height - dfs
+                dfs = co - po
+                dfe = self.height - dfs
 
                 cb = self.cursor_buffer
                 is_in_cursor_buffer = (dfs < cb) if dy < 0 else (dfe < cb)
                 if is_in_cursor_buffer:
-                    mpo = maybe_page_offset = po + dy
+                    mpo = po + dy
                     if mpo >= 0 and mpo <= self.max_page_offset:
                         self.page_offset = mpo
 
-            former_cursor_offset = co
             self.refresh_row(co, selected_rows)
 
             co = self.cursor_offset = maybe_cursor_offset

@@ -1,8 +1,7 @@
-from typing import Set, NamedTuple
 from collections import OrderedDict
+from typing import NamedTuple, Set
 
 from .column import ColumnFormat
-
 
 ColumnTitleToFormat = OrderedDict[str, ColumnFormat]
 
@@ -16,10 +15,10 @@ Specifiers = OrderedDict[str, KeyAndSpecifier]
 
 
 def get_candidate_titles(
-        selected_titles: Set[str],
-        title_to_format: ColumnTitleToFormat,
-        is_first_pass: bool,
-    ) -> Set[str]:
+    selected_titles: Set[str],
+    title_to_format: ColumnTitleToFormat,
+    is_first_pass: bool,
+) -> Set[str]:
     candidate_titles: Set[str] = set()
     for t, f in title_to_format.items():
         is_not_selected = t not in selected_titles
@@ -67,10 +66,18 @@ def getSpecifiers(
     while (remaining_width > quit_threshold) and (starting_width > remaining_width):
         starting_width = remaining_width
 
-        candidate_titles = get_candidate_titles(selected_titles, title_to_format, is_first_pass)
+        candidate_titles = get_candidate_titles(
+            selected_titles, title_to_format, is_first_pass
+        )
         is_first_pass = False
 
-        maybe_select_title(candidate_titles, selected_titles, title_to_format, remaining_width, separation_width)
+        maybe_select_title(
+            candidate_titles,
+            selected_titles,
+            title_to_format,
+            remaining_width,
+            separation_width,
+        )
 
     def title_key_fn(s: str) -> int:
         return list(title_to_format.keys()).index(s)

@@ -1,6 +1,5 @@
 exclude: >
   (?x)^(
-      scripts/explore/|
       scripts/grid/|
       scripts/to_graphviz.py
   )

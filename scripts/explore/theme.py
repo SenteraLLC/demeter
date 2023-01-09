@@ -39,40 +39,39 @@ def _init(color_id: int, r: int, g: int, b: int) -> None:
 
 
 def setup_theme() -> None:
-    DG = COLOR_DARK_GRAY
-    LG = COLOR_LIGHT_GRAY
-    _init(DG, 40, 40, 40)
-    _init(LG, 70, 70, 70)
+    dg = COLOR_DARK_GRAY
+    lg = COLOR_LIGHT_GRAY
+    _init(dg, 40, 40, 40)
+    _init(lg, 70, 70, 70)
 
-    R = curses.COLOR_RED
-    Y = curses.COLOR_YELLOW
-    B = curses.COLOR_BLUE
-    _init(R, 255, 111, 111)
-    _init(Y, 255, 247, 111)
-    _init(B, 141, 193, 247)
+    r = curses.COLOR_RED
+    y = curses.COLOR_YELLOW
+    b = curses.COLOR_BLUE
+    _init(r, 255, 111, 111)
+    _init(y, 255, 247, 111)
+    _init(b, 141, 193, 247)
 
-    O = COLOR_ORANGE
-    QQQ = COLOR_ORANGE
-    M = curses.COLOR_MAGENTA
-    _init(M, 187, 87, 197)
-    _init(O, 255, 199, 111)
+    o = COLOR_ORANGE
+    m = curses.COLOR_MAGENTA
+    _init(m, 187, 87, 197)
+    _init(o, 255, 199, 111)
     # _init(O, 255, 0, 0)
     # Skip green hue for accessibility
 
-    K = curses.COLOR_BLACK
-    W = curses.COLOR_WHITE
-    XW = COLOR_BRIGHT_WHITE
-    _init(K, 1, 1, 1)
-    _init(W, 240, 240, 240)
-    _init(XW, 255, 255, 255)
+    k = curses.COLOR_BLACK
+    w = curses.COLOR_WHITE
+    xw = COLOR_BRIGHT_WHITE
+    _init(k, 1, 1, 1)
+    _init(w, 240, 240, 240)
+    _init(xw, 255, 255, 255)
 
-    curses.init_pair(ColorScheme.DEFAULT, XW, BG)
-    curses.init_pair(ColorScheme.SELECTED, R, BG)
-    curses.init_pair(ColorScheme.CURSOR, Y, MENU_SECONDARY)
-    curses.init_pair(ColorScheme.SELECTED_CURSOR, O, MENU_SECONDARY)
-    curses.init_pair(ColorScheme.VALUE, B, BG)
+    curses.init_pair(ColorScheme.DEFAULT, xw, BG)
+    curses.init_pair(ColorScheme.SELECTED, r, BG)
+    curses.init_pair(ColorScheme.CURSOR, y, MENU_SECONDARY)
+    curses.init_pair(ColorScheme.SELECTED_CURSOR, o, MENU_SECONDARY)
+    curses.init_pair(ColorScheme.VALUE, b, BG)
 
-    curses.init_pair(ColorScheme.MENU_TEXT, B, MENU_PRIMARY)
+    curses.init_pair(ColorScheme.MENU_TEXT, b, MENU_PRIMARY)
     # curses.init_pair(ColorScheme.MENU_VALUE, W, MENU_SECONDARY)
     # curses.init_pair(ColorScheme.MENU_ALERT, R, MENU_SECONDARY)
     # curses.init_pair(ColorScheme.MENU_OTHER, W, MENU_SECONDARY)

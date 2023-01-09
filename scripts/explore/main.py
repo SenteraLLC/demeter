@@ -1,5 +1,9 @@
 from collections import OrderedDict
-from typing import Any, Dict, Sequence, Set
+from typing import (
+    Any,
+    Sequence,
+    Set,
+)
 
 from demeter.db import TableId
 
@@ -8,8 +12,7 @@ from .curses import SelectedResult
 from .data_option import DataOption
 from .fields import getFieldIds
 from .log import getLogger
-from .summary import Summary
-from .values import getValues
+from .values import get_values
 
 logger = getLogger()
 
@@ -22,10 +25,10 @@ def main(
     results: OrderedDict[DataOption, SelectedResult[Any]] = OrderedDict()
 
     for t in targets:
-        logger.warn("TARGET: %s", t)
+        logger.warning("TARGET: %s", t)
         if t == DataOption.OBSERVATION_TYPE:
             maybe_types = types.interactive_select(cursor, results)
-            logger.warn("TYPES: %s", maybe_types)
+            logger.warning("TYPES: %s", maybe_types)
             if ts := maybe_types:
                 results[t] = ts
         elif t == DataOption.FIELD_GROUP:
@@ -48,4 +51,6 @@ def main(
     # field_group_ids : Set[TableId] = set(results.get(DataOption.FIELD_GROUP, []))
     field_ids = getFieldIds(results)
 
-    getValues(cursor, field_ids, observation_type_ids)
+    _ = output_directory
+
+    get_values(cursor, field_ids, observation_type_ids)

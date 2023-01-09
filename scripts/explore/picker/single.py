@@ -1,8 +1,5 @@
-from typing import Generic
-
 from ..summary import RawRowType
 from .picker import Picker
-from .table import Table
 
 
 class SinglePicker(Picker[RawRowType]):

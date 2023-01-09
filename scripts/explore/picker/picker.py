@@ -1,33 +1,32 @@
 import curses
 import curses.ascii
-import math
 from collections import OrderedDict
+from enum import IntEnum
 from typing import (
-    Any,
-    Callable,
-    Dict,
     Generic,
-    List,
     Optional,
     Sequence,
     Set,
-    TypeVar,
-    cast,
 )
 
-from ..formatting import ColumnFormat, Margins, getSpecifiers, inferColumnFormat
+from ..formatting import (
+    ColumnFormat,
+    Margins,
+    getSpecifiers,
+    inferColumnFormat,
+)
 from ..log import getLogger
 from ..summary import RawRowType
 from ..theme import ColorScheme, setup_theme
+from .footer import Footer
+from .header import Header
+from .table import Table
 
 logger = getLogger()
 
 
 def to_ascii(s: str) -> int:
     return ord(curses.ascii.ascii(s))
-
-
-from enum import IntEnum
 
 
 class Command(IntEnum):
@@ -37,11 +36,6 @@ class Command(IntEnum):
     ENTER = to_ascii("\n")
     BACK = to_ascii("q")
     QUIT = 27
-
-
-from .footer import Footer
-from .header import Header
-from .table import Table
 
 
 class Picker(Generic[RawRowType]):
@@ -87,7 +81,7 @@ class Picker(Generic[RawRowType]):
         # h = self.table.format_header()
         self.header = Header(title, h, w, m)
 
-        rows = self.table.get_rows()
+        _ = self.table.get_rows()
         coords = self.table.get_coords()
         self.footer = Footer(w, m, coords.bottom)
 
@@ -100,7 +94,7 @@ class Picker(Generic[RawRowType]):
         v = self.table.get_number_of_visible_rows()
         self.header.refresh(po, n, v)
 
-        co = self.table.get_cursor_offset()
+        _ = self.table.get_cursor_offset()
         row = self.get_cursor_row()
         self.footer.refresh(row)
 
@@ -139,7 +133,7 @@ class Picker(Generic[RawRowType]):
 
     def _do_select(self) -> bool:
         co = self.table.get_cursor_offset()
-        color_scheme = ColorScheme.DEFAULT
+        _ = ColorScheme.DEFAULT
         try:
             self.selected_rows.remove(co)
             self.table.refresh_row(co, self.selected_rows, ColorScheme.CURSOR)

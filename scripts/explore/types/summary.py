@@ -1,6 +1,12 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+)
 
 from demeter.db import TableId
 
@@ -41,7 +47,9 @@ class TypeSummary(Summary):
 
 
 # TODO: Filter on fields
-def getTypeSummaries(cursor: Any, field_ids: List[TableId] = []) -> Sequence[TypeSummary]:
+def getTypeSummaries(
+    cursor: Any, field_ids: List[TableId] = []
+) -> Sequence[TypeSummary]:
     search_part = ""
     args: Dict[str, List[TableId]] = {}
     if len(field_ids) > 0:

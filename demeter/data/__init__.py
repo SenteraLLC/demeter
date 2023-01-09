@@ -1,7 +1,7 @@
 from ._core.field_group import (
     FieldGroup,
-    FieldGroupFields,
     getFieldGroupAncestors,
+    getFieldGroupDescendants,
     getFieldGroupFields,
     getOrgFields,
     searchFieldGroup,
@@ -62,8 +62,8 @@ __all__ = (
     "getMaybeFieldGroupId",
     "insertOrGetFieldGroup",
     "getFieldGroupAncestors",
+    "getFieldGroupDescendants",
     "getOrgFields",
-    "FieldGroupFields",
     "searchFieldGroup",
     "getFieldGroupFields",
     # Field

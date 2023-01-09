@@ -1,10 +1,8 @@
-from collections import OrderedDict
 from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
     Optional,
-    Sequence,
     Set,
     Tuple,
 )
@@ -13,6 +11,7 @@ from pandas import DataFrame
 from pandas import concat as pd_concat
 
 from ... import db
+from .types import Field
 
 
 @dataclass(frozen=True)
@@ -81,6 +80,109 @@ def getFieldGroupAncestors(
     return ancestors
 
 
+def getFieldGroupDescendants(
+    cursor: Any,
+    field_group_id: db.TableId,
+) -> DataFrame:
+    """Takes a `field_group_id` value and returns a dataframe of that FieldGroup's descendants
+    sorted by their distance from the given parent."""
+    stmt = """
+    with recursive descendants as (
+      select root.*,
+             0 as distance
+      from field_group root
+      where root.field_group_id = %(field_group_id)s
+      UNION ALL
+      select descendant.*,
+             distance + 1
+      from descendants ancestor, field_group descendant
+      where ancestor.field_group_id = descendant.parent_field_group_id
+    )
+    select * from descendants
+    """
+    cursor.execute(stmt, {"field_group_id": field_group_id})
+    results = cursor.fetchall()
+
+    if len(results) < 1:
+        raise Exception(f"Failed to get field group descendants for: {field_group_id}")
+
+    df_results = DataFrame(results).sort_values(by="distance")
+    descendants = DataFrame(columns=["distance", "field_group_id", "field_group"])
+    for _, row in df_results.iterrows():
+        dist = row["distance"]
+        fg_id, fg = _row_to_field_group(row.to_dict())
+
+        this_data = {"distance": [dist], "field_group_id": [fg_id], "field_group": [fg]}
+        descendants = pd_concat(
+            [descendants, DataFrame(this_data)], ignore_index=True, axis=0
+        )
+
+    return descendants
+
+
+def _row_to_field(
+    row: Dict[str, Any],
+) -> Tuple[db.TableId, FieldGroup]:
+    r = row
+    fld = Field(
+        name=r["name"],
+        geom_id=r["geom_id"],
+        date_start=r["date_start"],
+        date_end=r["date_end"],
+        field_group_id=r["field_group_id"],
+        details=r["details"],
+        last_updated=r["last_updated"],
+    )
+    return fld
+
+
+def getFieldGroupFields(
+    cursor: Any,
+    field_group_id: db.TableId,
+    include_descendants: bool = True,
+) -> DataFrame:
+    """Takes a `field_group_id` value and returns a dataframe of all of the fields which
+    directly belong to that FieldGroup if `include_descendants` = False or belong to the FieldGroup or
+    one of its child organizations if `include_descendants` = True (default behavior)."""
+    stmt_descendants_true = """
+    with recursive descendants as (
+      select root.*
+      from field_group root
+      where root.field_group_id = %(field_group_id)s
+      UNION ALL
+      select descendant.*
+      from descendants ancestor, field_group descendant
+      where ancestor.field_group_id = descendant.parent_field_group_id
+    )
+    select * from field
+    where field_group_id in (select field_group_id from descendants)
+    """
+
+    stmt_descendants_false = """
+    select * from field
+    where field_group_id = %(field_group_id)s
+    """
+
+    if include_descendants:
+        cursor.execute(stmt_descendants_true, {"field_group_id": field_group_id})
+    else:
+        cursor.execute(stmt_descendants_false, {"field_group_id": field_group_id})
+    results = cursor.fetchall()
+
+    if len(results) < 1:
+        raise Exception(f"Failed to get fields for FieldGroup: {field_group_id}")
+
+    df_results = DataFrame(results)
+    fields = DataFrame(columns=["field_id", "field"])
+    for _, row in df_results.iterrows():
+        fld = _row_to_field(row.to_dict())
+
+        this_data = {"field_id": [row["field_id"]], "field": [fld]}
+        fields = pd_concat([fields, DataFrame(this_data)], ignore_index=True, axis=0)
+
+    return fields
+
+
 # TODO: Deprecated by 'getFieldGroupFields'
 def getOrgFields(
     cursor: Any,
@@ -126,81 +228,6 @@ class FieldSummary(db.Detailed):
     geom_id: db.TableId
     name: str
     field_group_id: Optional[db.TableId]
-
-
-@dataclass(frozen=True)
-class FieldGroupFields:
-    fields_by_depth: Dict[int, Sequence[FieldSummary]]
-    ancestors: Sequence[FieldGroup]
-
-
-def getFieldGroupFields(
-    cursor: Any,
-    field_group_ids: Sequence[db.TableId],
-) -> OrderedDict[db.TableId, FieldGroupFields]:
-    """Get the descendants of the provided field groups.
-    Rename to 'get_descendant_fields' or 'get_descendants'?
-    """
-    stmt = """
-  with recursive ancestor as (
-     select *,
-            0 as distance
-     from field_group
-     where field_group_id = any(%(field_group_ids)s::bigint[])
-     UNION ALL
-     select G.*,
-            distance + 1
-     from ancestor A
-     join field_group G on A.parent_field_group_id = G.field_group_id
-
-  ), descendant as (
-    select field_group_id as root_field_group_id,
-           *,
-           (select max(distance) from ancestor) as depth
-    from ancestor
-    where distance = 0
-    UNION ALL
-    select G.field_group_id as root_field_group_id,
-           G.*,
-           D.distance,
-           depth + 1
-    from descendant D
-    join field_group G on D.field_group_id = G.parent_field_group_id
-
-  ), field_group_fields as (
-    select D.root_field_group_id,
-           D.depth,
-           coalesce(
-             jsonb_agg(
-               to_jsonb(F) order by F.last_updated desc
-             ) filter(where F is not null),
-             '[]'::jsonb
-           ) as fields
-    from descendant D
-    left join field F on D.field_group_id = F.field_group_id
-    group by D.root_field_group_id, D.depth
-
-  ) select F.root_field_group_id as field_group_id,
-           jsonb_object_agg(
-             F.depth,
-             F.fields
-           ) as fields_by_depth,
-           jsonb_agg(to_jsonb(A) order by A.field_group_id asc) as ancestors
-           from field_group_fields F
-           join ancestor A on A.field_group_id = F.root_field_group_id
-           group by F.root_field_group_id
-  """
-
-    cursor.execute(stmt, {"field_group_ids": field_group_ids})
-    results = cursor.fetchall()
-
-    return OrderedDict(
-        (
-            db.TableId(r.field_group_id),
-            FieldGroupFields(fields_by_depth=r.fields_by_depth, ancestors=r.ancestors),
-        )
-        for r in results
-    )
 
 
 def searchFieldGroup(

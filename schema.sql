@@ -275,17 +275,20 @@ update_last_updated_column();
 create function field_geom_covers_act_geom() RETURNS trigger
   LANGUAGE plpgsql as
 $$BEGIN
-  IF (
-    SELECT not exists(
-      SELECT Q1.geom, Q2.geom
-      FROM (SELECT * FROM field F INNER JOIN geom GEO on F.geom_id = GEO.geom_id WHERE F.field_id = NEW.field_id) Q1
-      CROSS JOIN geom Q2
-      WHERE Q2.geom_id = NEW.geom_id AND ST_COVERS(Q1.geom, Q2.geom)
+  IF (NEW.geom_id IS NOT NULL)
+  THEN 
+    IF (
+      SELECT not exists(
+        SELECT Q1.geom, Q2.geom
+        FROM (SELECT * FROM field F INNER JOIN geom GEO on F.geom_id = GEO.geom_id WHERE F.field_id = NEW.field_id) Q1
+        CROSS JOIN geom Q2
+        WHERE Q2.geom_id = NEW.geom_id AND ST_COVERS(Q1.geom, Q2.geom)
+      )
     )
-  )
-  THEN
-    RAISE EXCEPTION 'Field geometry must cover act geometry.'; 
-  END IF; 
+    THEN
+      RAISE EXCEPTION 'Field geometry must cover act geometry.'; 
+    END IF; 
+  END IF;
 
   RETURN NEW;
 END;$$;

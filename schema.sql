@@ -333,8 +333,7 @@ CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
 ON observation FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
-<<<<<<< HEAD
-=======
+
 create function observation_types_match() RETURNS trigger
   LANGUAGE plpgsql as
 $$BEGIN

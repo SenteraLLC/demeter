@@ -333,3 +333,24 @@ CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
 ON observation FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
+<<<<<<< HEAD
+=======
+create function observation_types_match() RETURNS trigger
+  LANGUAGE plpgsql as
+$$BEGIN
+  IF (
+    SELECT not exists(
+      SELECT U.observation_type_id FROM unit_type U 
+      WHERE U.unit_type_id = NEW.unit_type_id and U.observation_type_id = NEW.observation_type_id
+    )
+  )
+  THEN
+    RAISE EXCEPTION 'Unit type observation type does not match given observation type.'; 
+  END IF; 
+
+  RETURN NEW;
+END;$$;
+  
+create constraint trigger observation_types_match
+  after insert or update on observation
+  for each row execute procedure observation_types_match();

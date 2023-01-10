@@ -185,11 +185,7 @@ ALTER TABLE observation_type
   CHECK (type_name = lower(type_name));
 
 
------------------
--- Type Tables --
------------------
-
--- Raw Input Types
+-- UNIT TYPE
 
 create table unit_type (
   unit_type_id   bigserial
@@ -209,29 +205,28 @@ ALTER TABLE unit_type
 -- Value Tables --
 ---------------------
 
+-- -- I'm not sure we need these?
+-- create table geospatial_key (
+--   geospatial_key_id bigserial
+--                     primary key,
+--   geom_id    bigint
+--              not null
+--              references geom(geom_id),
+--   field_id   bigint
+--              references field(field_id)
+-- );
 
--- I'm not sure we need these?
-create table geospatial_key (
-  geospatial_key_id bigserial
-                    primary key,
-  geom_id    bigint
-             not null
-             references geom(geom_id),
-  field_id   bigint
-             references field(field_id)
-);
 
-
--- I'm not sure we need these?
-create table temporal_key (
-  temporal_key_id bigserial
-                  primary key,
-  date_start      date
-                  not null,
-  date_end        date
-                  not null
-                  -- default ('infinity'::timestamp at time zone 'utc')
-);
+-- -- I'm not sure we need these?
+-- create table temporal_key (
+--   temporal_key_id bigserial
+--                   primary key,
+--   date_start      date
+--                   not null,
+--   date_end        date
+--                   not null
+--                   -- default ('infinity'::timestamp at time zone 'utc')
+-- );
 
 -- ACT
 

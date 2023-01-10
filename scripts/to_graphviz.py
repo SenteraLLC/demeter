@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 # type: ignore
 
 # Source: https://github.com/rm-hull/sql_graphviz
@@ -28,7 +28,7 @@ def field_act(s, loc, tok):
     row = """<tr>
                <td bgcolor="grey96" align="left" port="{0}">
                  <font face="Times-bold"> {0} </font>
-                /td>
+                </td>
                 <td align="left" port="{0}_right">
                   <font color="#535353"> {1} </font>
                 </td>

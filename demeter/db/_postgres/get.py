@@ -12,7 +12,7 @@ from psycopg2.sql import Identifier, Placeholder
 from .. import TableId
 from .._generic_types import SK, S
 from .._union_types import AnyIdTable
-from .helpers import is_optional
+from .helpers import is_none, is_optional
 from .tools import doPgFormat, doPgJoin
 
 
@@ -24,11 +24,17 @@ def getMaybeId(
     field_names = table.names()
     names_to_fields = OrderedDict({name: Identifier(name) for name in field_names})
 
-    conditions = [
-        doPgJoin(" = ", [Identifier(n), Placeholder(n)])
-        for n in names_to_fields
-        if not is_optional(table, n)
-    ]
+    conditions = []
+    for n in names_to_fields:
+        if is_optional(table, n):
+            continue
+
+        if is_none(table, n):
+            conditions = conditions + [
+                doPgJoin(" IS ", [Identifier(n), Placeholder(n)])
+            ]
+        else:
+            conditions = conditions + [doPgJoin(" = ", [Identifier(n), Placeholder(n)])]
 
     table_id = "_".join([table_name, "id"])
     stmt = doPgFormat(
@@ -37,6 +43,7 @@ def getMaybeId(
         Identifier(table_name),
         doPgJoin(" and ", conditions),
     )
+
     args = table()
     cursor.execute(stmt, args)
     result = cursor.fetchone()

@@ -177,9 +177,15 @@ ALTER TABLE crop_type
 
 create table observation_type (
   observation_type_id bigserial primary key,
-  type_name     text unique not null,
-  type_category text
+  type_name     text not null,
+  type_category text,
+  unique (type_name, type_category)
 );
+
+CREATE UNIQUE INDEX observation_type_category_null_unique_idx
+  ON observation_type(type_name)
+  WHERE (type_category is NULL);
+
 ALTER TABLE observation_type
   ADD CONSTRAINT observation_type_lowercase_ck
   CHECK (type_name = lower(type_name));

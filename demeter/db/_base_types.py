@@ -14,6 +14,8 @@ from typing import (
     cast,
 )
 
+import pytz
+
 from . import _json_type as json_type
 
 D = TypeVar("D")
@@ -44,14 +46,21 @@ class Table:
 #       For now, we have to copy-paste these decorators
 
 
+def _datetime_now_utc():
+    tz_utc = pytz.utc
+    return datetime.now(tz=tz_utc)
+
+
 @dataclass(frozen=True)
 class Detailed(Table):
     details: json_type.JSON = field(
         default_factory=lambda: json_type.EMPTY_JSON, hash=False, kw_only=True
     )
-    created: datetime = field(default_factory=datetime.now, hash=False, kw_only=True)
+    created: datetime = field(
+        default_factory=_datetime_now_utc, hash=False, kw_only=True
+    )
     last_updated: datetime = field(
-        default_factory=datetime.now, hash=False, kw_only=True
+        default_factory=_datetime_now_utc, hash=False, kw_only=True
     )
 
 

@@ -48,7 +48,7 @@ class Table:
 
 def _datetime_now_utc():
     tz_utc = pytz.utc
-    return datetime.now(tz=tz_utc)
+    return datetime.now(tz=tz_utc).replace(tzinfo=None)
 
 
 @dataclass(frozen=True)

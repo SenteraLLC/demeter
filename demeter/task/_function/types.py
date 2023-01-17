@@ -1,10 +1,17 @@
 from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum
-from typing import Optional, Sequence, Tuple, Union
+from typing import (
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 from ... import data, db
-from .._inputs import HTTPType, S3Type, S3TypeDataFrame
+from .._inputs import (
+    HTTPType,
+    S3Type,
+    S3TypeDataFrame,
+)
+from .._inputs.types import Keyword as Keyword
 
 
 @dataclass(frozen=True)
@@ -49,9 +56,6 @@ class S3InputParameter(Parameter, db.SelfKey, db.Detailed):
 class S3OutputParameter(Parameter, db.SelfKey, db.Detailed):
     s3_output_parameter_name: str
     s3_type_id: db.TableId
-
-
-from .._inputs.types import Keyword as Keyword
 
 
 @dataclass(frozen=True)

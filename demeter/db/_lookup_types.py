@@ -1,4 +1,8 @@
-from typing import Dict, Mapping, Type
+from typing import (
+    Dict,
+    Mapping,
+    Type,
+)
 
 from . import Table
 

@@ -1,11 +1,21 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+)
 
 import geopandas as gpd  # type: ignore
 import pandas as pd
 
 from ... import data, db
 from ._base import DataSourceBase
-from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
+from ._response import (
+    KeyToArgsFunction,
+    OneToOneResponseFunction,
+    ResponseFunction,
+)
 from ._s3_file import SupportedS3DataType
 
 

@@ -1,5 +1,10 @@
 import argparse
-from typing import Any, Dict, Tuple, Type
+from typing import (
+    Any,
+    Dict,
+    Tuple,
+    Type,
+)
 
 from . import keys
 

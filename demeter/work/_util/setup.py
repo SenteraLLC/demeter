@@ -1,5 +1,11 @@
 import inspect
-from typing import Any, Dict, Mapping, Tuple, Type
+from typing import (
+    Any,
+    Dict,
+    Mapping,
+    Tuple,
+    Type,
+)
 
 from ... import db, task
 from . import wrapper_types

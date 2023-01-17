@@ -1,10 +1,9 @@
 import pytest
-from sure import expect
-
 from geopandas import GeoDataFrame
 from pandas import read_sql_query
 from shapely.geometry import Point, Polygon
 from sqlalchemy.sql import text
+from sure import expect
 
 from demeter.data import insertOrGetGeom
 from demeter.tests.conftest import SCHEMA_NAME

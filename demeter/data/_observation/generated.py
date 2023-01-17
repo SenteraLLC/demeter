@@ -1,8 +1,15 @@
-from .._observation.types import ObservationType, Observation, UnitType
-from . import lookups as _lookups
-
-from ...db._generic_types import GetId, GetTable, ReturnId
 from ...db import SQLGenerator
+from ...db._generic_types import (
+    GetId,
+    GetTable,
+    ReturnId,
+)
+from .._observation.types import (
+    Observation,
+    ObservationType,
+    UnitType,
+)
+from . import lookups as _lookups
 
 g = SQLGenerator(
     "demeter.data",

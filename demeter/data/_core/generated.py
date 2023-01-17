@@ -1,22 +1,23 @@
 """Constructs insert functions for core types using `SQLGenerator`"""
-from .._core import lookups as _lookups
 
-from ...db._generic_types import GetId, GetTable, ReturnId
 from ...db import SQLGenerator
-
+from ...db._generic_types import (
+    GetId,
+    GetTable,
+    ReturnId,
+)
+from .._core import lookups as _lookups
 from .._core.types import (
+    Act,
     CropType,
     Field,
-    Act,
 )
-
+from .field_group import FieldGroup
 from .st_types import (
+    Geom,
     GeoSpatialKey,
     TemporalKey,
-    Geom,
 )
-
-from .field_group import FieldGroup
 
 g = SQLGenerator(
     "demeter.data",

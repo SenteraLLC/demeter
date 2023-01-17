@@ -1,5 +1,4 @@
-import os
-from typing import Any, Callable, Tuple
+from typing import Any, Tuple
 
 import boto3
 

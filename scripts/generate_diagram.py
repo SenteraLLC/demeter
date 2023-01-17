@@ -1,14 +1,14 @@
 """Automatic database diagram generation."""
 import argparse
-from dotenv import load_dotenv
 
-# Required import for sqlalchemy to use Geometry types
+from dotenv import load_dotenv
 from geoalchemy2 import Geometry  # noqa: F401
 from sqlalchemy import MetaData
 from sqlalchemy_schemadisplay import create_schema_graph
 
 from demeter.db import getConnection
 
+# Required geoalchemy2.Geometry import for sqlalchemy to use Geometry types
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate schema diagram.")

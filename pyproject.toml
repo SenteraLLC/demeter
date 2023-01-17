@@ -77,3 +77,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 example = "demeter.scripts.example:main"
 
+[tool.isort]
+line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+known_third_party = ["click"]
+force_grid_wrap = 3

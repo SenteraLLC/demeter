@@ -1,11 +1,17 @@
+from dataclasses import dataclass
 from datetime import date
 from typing import Optional, Union
 
-from shapely.geometry import LineString, Point, Polygon
-from shapely.geometry import MultiLineString, MultiPoint, MultiPolygon
-from shapely.geometry import GeometryCollection
+from shapely.geometry import (
+    GeometryCollection,
+    LineString,
+    MultiLineString,
+    MultiPoint,
+    MultiPolygon,
+    Point,
+    Polygon,
+)
 
-from dataclasses import dataclass
 from ... import db
 
 

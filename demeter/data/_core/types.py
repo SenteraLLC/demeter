@@ -4,7 +4,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
-from ...db import TableId, Detailed, TypeTable
+from ...db import (
+    Detailed,
+    TableId,
+    TypeTable,
+)
 
 """Future behavior of finding duplicate fields in Demeter (1/9/2023):
 1. Query the field table for a field_id that spatially intersects a spatiotemporal unit of interest. This requires that we have both a geometry, and a range of dates (remember, date_end defaults to infinity).

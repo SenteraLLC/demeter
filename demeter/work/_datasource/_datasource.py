@@ -1,18 +1,38 @@
 import uuid
 from collections import OrderedDict
 from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+)
 
 import geopandas as gpd  # type: ignore
 import pandas as pd
 
-from ... import data, db, task
+from ... import (
+    data,
+    db,
+    task,
+)
 from ._base import DataSourceBase
 from ._http import getHTTPRows
 from ._observation import getObservationRows
-from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
+from ._response import (
+    KeyToArgsFunction,
+    OneToOneResponseFunction,
+    ResponseFunction,
+)
 from ._s3 import getRawS3, rawToDataFrame
-from ._s3_file import AnyDataFrame, S3FileMeta, SupportedS3DataType
+from ._s3_file import (
+    AnyDataFrame,
+    S3FileMeta,
+    SupportedS3DataType,
+)
 from ._util import createKeywordArguments
 
 JoinResults = Dict[frozenset[str], AnyDataFrame]

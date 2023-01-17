@@ -1,6 +1,10 @@
 from typing import Union
 
-from .._observation.types import Observation, ObservationType, UnitType
+from .._observation.types import (
+    Observation,
+    ObservationType,
+    UnitType,
+)
 
 AnyDataTable = Observation
 

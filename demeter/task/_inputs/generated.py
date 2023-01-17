@@ -1,4 +1,17 @@
 from ...db import SQLGenerator as Generator
+from ...db._generic_types import (
+    GetId,
+    GetTable,
+    ReturnId,
+    ReturnSameKey,
+)
+from .._inputs.types import (
+    HTTPType,
+    S3Object,
+    S3ObjectKey,
+    S3Type,
+    S3TypeDataFrame,
+)
 from . import lookups as _lookups
 
 g = Generator(
@@ -9,9 +22,6 @@ g = Generator(
     key_table_lookup=_lookups.key_table_lookup,
 )
 
-
-from ...db._generic_types import GetId, GetTable, ReturnId, ReturnSameKey
-from .types import *
 
 getMaybeHTTPTypeId: GetId[HTTPType] = g.getMaybeIdFunction(HTTPType)
 getMaybeS3TypeId: GetId[S3Type] = g.getMaybeIdFunction(S3Type)

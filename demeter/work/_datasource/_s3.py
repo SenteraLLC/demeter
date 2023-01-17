@@ -1,5 +1,10 @@
 from io import BytesIO
-from typing import Any, List, Optional, Tuple
+from typing import (
+    Any,
+    List,
+    Optional,
+    Tuple,
+)
 
 import botocore.exceptions
 import geopandas as gpd  # type: ignore

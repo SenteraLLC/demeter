@@ -1,7 +1,9 @@
 # %%
 from datetime import datetime
+
 from dotenv import load_dotenv
 from shapely.geometry import Point, Polygon
+
 from demeter.data import (
     Act,
     CropType,
@@ -10,14 +12,6 @@ from demeter.data import (
     Observation,
     ObservationType,
     UnitType,
-    insertOrGetAct,
-    insertOrGetCropType,
-    insertOrGetField,
-    insertOrGetFieldGroup,
-    insertOrGetGeom,
-    insertOrGetObservation,
-    insertOrGetObservationType,
-    insertOrGetUnitType,
     getAct,
     getCropType,
     getField,
@@ -26,6 +20,14 @@ from demeter.data import (
     getObservation,
     getObservationType,
     getUnitType,
+    insertOrGetAct,
+    insertOrGetCropType,
+    insertOrGetField,
+    insertOrGetFieldGroup,
+    insertOrGetGeom,
+    insertOrGetObservation,
+    insertOrGetObservationType,
+    insertOrGetUnitType,
 )
 from demeter.db import getConnection
 

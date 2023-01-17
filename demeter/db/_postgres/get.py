@@ -1,5 +1,11 @@
 from collections import OrderedDict
-from typing import Any, NamedTuple, Optional, Tuple, cast
+from typing import (
+    Any,
+    NamedTuple,
+    Optional,
+    Tuple,
+    cast,
+)
 
 from psycopg2.sql import Identifier, Placeholder
 

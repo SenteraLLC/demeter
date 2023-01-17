@@ -1,8 +1,17 @@
-from typing import Any, List, Mapping, Optional
+from typing import (
+    Any,
+    List,
+    Mapping,
+    Optional,
+)
 
 from geopandas import GeoDataFrame
 
-from ... import data, db, task
+from ... import (
+    data,
+    db,
+    task,
+)
 from .. import (
     insertExecutionKey,
     insertHTTPArgument,
@@ -12,7 +21,11 @@ from .. import (
     insertS3OutputArgument,
 )
 from .._datasource import DataSource, S3File
-from .._types import ExecutionKey, ExecutionSummary, S3OutputArgument
+from .._types import (
+    ExecutionKey,
+    ExecutionSummary,
+    S3OutputArgument,
+)
 from .wrapper_types import RawFunctionOutputs
 
 

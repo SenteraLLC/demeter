@@ -1,10 +1,15 @@
-from typing import Any, Optional, Sequence, Dict, Set, Tuple
+from collections import OrderedDict
+from dataclasses import dataclass
+from typing import (
+    Any,
+    Dict,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
 
 from ... import db
-
-from collections import OrderedDict
-
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)

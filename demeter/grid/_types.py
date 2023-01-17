@@ -1,20 +1,29 @@
-from dataclasses import InitVar, dataclass, field
+from dataclasses import (
+    InitVar,
+    dataclass,
+    field,
+)
 from datetime import datetime
-from typing import List, Optional, Tuple
 
-from shapely.geometry import Polygon as Poly  # type: ignore
+from shapely.geometry import Polygon  # type: ignore
 
-from demeter.data import Geom, Polygon
-from demeter.db import Detailed, SelfKey, Table, TableId
+from demeter.data import Geom
+from demeter.db import (
+    Detailed,
+    SelfKey,
+    Table,
+    TableId,
+)
+from demeter.db._lookup_types import TableLookup
 
 
 @dataclass(frozen=True)
 class Node(Table):
-    polygon: InitVar[Poly]
+    polygon: InitVar[Polygon]
     value: float
     geom: str = field(init=False)
 
-    def __post_init__(self, polygon: Poly) -> None:
+    def __post_init__(self, polygon: Polygon) -> None:
         coords: Polygon = tuple(polygon.exterior.coords)
         # TODO: Too hacky? Maybe composition is better
         g = Geom(
@@ -51,8 +60,6 @@ class Ancestry(SelfKey):
     parent_node_id: TableId
     node_id: TableId
 
-
-from demeter.db._lookup_types import TableLookup
 
 id_table_lookup: TableLookup = {
     Root: "root",

@@ -1,10 +1,16 @@
-from typing import Any, Callable, Mapping, Optional, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Mapping,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from . import _base_types as base_types
 from . import _union_types as union_types
-
-from typing import Generic
-
 
 T = TypeVar("T", bound=base_types.Table)
 

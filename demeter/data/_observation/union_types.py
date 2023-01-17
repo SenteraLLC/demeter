@@ -1,8 +1,12 @@
 from typing import Union
 
-from .types import Observation, ObservationType, UnitType, Act
+from .._observation.types import (
+    Observation,
+    ObservationType,
+    UnitType,
+)
 
-AnyDataTable = Union[Observation, Act]
+AnyDataTable = Observation
 
 AnyTypeTable = Union[ObservationType, UnitType]
 

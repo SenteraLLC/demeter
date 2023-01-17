@@ -1,4 +1,14 @@
 from ...db import SQLGenerator as Generator
+from ...db._generic_types import GetId, ReturnId
+from .._function.types import (
+    Function,
+    FunctionType,
+    HTTPParameter,
+    KeywordParameter,
+    ObservationParameter,
+    S3InputParameter,
+    S3OutputParameter,
+)
 from . import lookups as _lookups
 
 g = Generator(
@@ -7,19 +17,6 @@ g = Generator(
     data_table_lookup=_lookups.data_table_lookup,
     id_table_lookup=_lookups.id_table_lookup,
     key_table_lookup=_lookups.key_table_lookup,
-)
-
-
-from ...db._generic_types import GetId, ReturnId
-from .types import (
-    Function,
-    FunctionSignature,
-    FunctionType,
-    HTTPParameter,
-    KeywordParameter,
-    ObservationParameter,
-    S3InputParameter,
-    S3OutputParameter,
 )
 
 getMaybeFunctionTypeId: GetId[FunctionType] = g.getMaybeIdFunction(FunctionType)

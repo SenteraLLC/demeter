@@ -72,23 +72,27 @@ create constraint trigger geom_must_be_unique
 create table field_group (
   field_group_id bigserial primary key,
   -- TODO: Add cycle detection constraint
+
+  name text
+        not null,
+  
   parent_field_group_id bigint
                         references field_group(field_group_id),
+                        
   unique (field_group_id, parent_field_group_id),
-
-  name text,
-
-  constraint roots_must_be_named check (
-    not (parent_field_group_id is null and name is null)
-  ),
-  unique(parent_field_group_id, name),
+  unique (parent_field_group_id, name),
 
   details jsonb
           not null
           default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default now()
+                default (now() at time zone 'utc')
 );
 
 CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;
@@ -99,26 +103,33 @@ create table field (
   field_id bigserial
            primary key,
 
+  name text,
+
   geom_id   bigint
             not null
             references geom(geom_id),
 
-  name text,
-  external_id text,
+  date_start      timestamp without time zone
+                  not null,
+
+  date_end        timestamp without time zone
+                  not null
+                  default ('infinity'::timestamp at time zone 'utc'),
 
   field_group_id bigint
                   references field_group(field_group_id),
 
-  created  timestamp without time zone
-              not null
-              default now(),
-
   details jsonb
           not null
           default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default now()
+                default (now() at time zone 'utc')
 );
 
 -- CROP TYPE
@@ -127,49 +138,40 @@ create table crop_type (
   crop_type_id bigserial
                primary key,
 
-  species      text
+  crop        text
                not null,
 
-  cultivar     text,
+  product_name text,
 
-  unique (species, cultivar),
+  unique (crop, product_name),
 
-  parent_id_1  bigint,
-  parent_id_2  bigint,
-  unique (parent_id_1, parent_id_2),
-  check (parent_id_1 > parent_id_2),
+  details jsonb
+          not null
+          default '{}'::jsonb,
 
-  details     jsonb
+  created  timestamp without time zone
               not null
-              default '{}'::jsonb,
+              default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
                 not null
-                default now()
+                default (now() at time zone 'utc')
 );
 
-CREATE UNIQUE INDEX unique_species_cultivar_null_idx on crop_type (species, cultivar) where cultivar is null;
-
-CREATE UNIQUE INDEX crop_type_parent_idx ON crop_type (
-  LEAST(parent_id_1, parent_id_2)
-, GREATEST(parent_id_1, parent_id_2)
-);
+CREATE UNIQUE INDEX crop_product_name_null_unique_idx
+  ON crop_type(crop)
+  WHERE (product_name is NULL);
 
 CREATE TRIGGER update_crop_type_last_updated BEFORE UPDATE
 ON crop_type FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 ALTER TABLE crop_type
-  ADD CONSTRAINT crop_type_species_lowercase_ck
-  CHECK (species = lower(species));
+  ADD CONSTRAINT crop_type_crop_lowercase_ck
+  CHECK (crop = lower(crop));
 ALTER TABLE crop_type
-  ADD CONSTRAINT crop_type_cultivar_lowercase_ck
-  CHECK (cultivar = lower(cultivar));
-CREATE UNIQUE INDEX crop_variety_null_unique_idx
-  ON crop_type(species)
-  WHERE (cultivar is NULL);
-alter table crop_type add constraint fk_parent1_crop_type foreign key (parent_id_1) references crop_type(crop_type_id);
-alter table crop_type add constraint fk_parent2_crop_type foreign key (parent_id_2) references crop_type(crop_type_id);
+  ADD CONSTRAINT crop_type_product_name_lowercase_ck
+  CHECK (product_name = lower(product_name));
 
 -- OBSERVATION TYPE
 
@@ -182,83 +184,6 @@ ALTER TABLE observation_type
   ADD CONSTRAINT observation_type_lowercase_ck
   CHECK (type_name = lower(type_name));
 
-
--- PLANTING
-
-create table planting (
-  crop_type_id  bigint
-                not null
-                references crop_type(crop_type_id),
-  field_id      bigint references field(field_id) not null,
-  planted       timestamp without time zone not null,
-  primary key(crop_type_id, field_id, planted),
-
-  observation_type_id bigint
-                references observation_type(observation_type_id),
-
-  last_updated  timestamp without time zone
-                not null
-                default now(),
-  details       jsonb
-                not null
-                default '{}'::jsonb
-);
-
-CREATE TRIGGER update_planting_last_updated BEFORE UPDATE
-ON planting FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
-
--- HARVEST
-
-create table harvest (
-  crop_type_id  bigint
-                not null
-                references crop_type(crop_type_id),
-  field_id      bigint references field(field_id) not null,
-  planted timestamp without time zone not null,
-
-  foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
-
-  observation_type_id bigint
-                references observation_type(observation_type_id),
-
-  primary key (crop_type_id, field_id, planted),
-
-  last_updated  timestamp without time zone
-                not null
-                default now(),
-  details       jsonb
-                not null
-                default '{}'::jsonb
-);
-
-CREATE TRIGGER update_harvest_last_updated BEFORE UPDATE
-ON planting FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
-
--- CROP STAGE
-
-create table crop_stage (
-  crop_stage_id bigserial primary key,
-  crop_stage text unique
-);
-
-create table crop_progress (
-  crop_type_id  bigint
-                not null
-                references crop_type(crop_type_id),
-  field_id      bigint references field(field_id) not null,
-  planted timestamp without time zone not null,
-
-  observation_type_id bigint
-                      references observation_type(observation_type_id),
-
-  foreign key (crop_type_id, field_id, planted) references planting(crop_type_id, field_id, planted),
-
-  crop_stage_id bigint references crop_stage(crop_stage_id) not null,
-
-  primary key (crop_type_id, field_id, planted, crop_stage_id)
-);
 
 -----------------
 -- Type Tables --
@@ -358,17 +283,18 @@ create table function (
                    references function_type(function_type_id)
                    not null,
 
-  created          timestamp without time zone
-                   not null
-                   default now(),
+  details jsonb
+          not null
+          default '{}'::jsonb,
 
-  last_updated     timestamp without time zone
-                   not null
-                   default now(),
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
 
-  details          jsonb
-                   not null
-                   default '{}'::jsonb
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
 );
 ALTER TABLE function
   ADD CONSTRAINT function_name_lowercase_ck
@@ -393,37 +319,76 @@ create table geospatial_key (
 create table temporal_key (
   temporal_key_id bigserial
                   primary key,
-  start_date      date
+  date_start      date
                   not null,
-  end_date        date
+  date_end        date
                   not null
+                  -- default ('infinity'::timestamp at time zone 'utc')
 );
 
 -- ACT
 
+CREATE TYPE act_type_enum AS ENUM ('fertilize', 'harvest', 'irrigate', 'plant');
+
 create table act (
   act_id         bigserial primary key,
+
+  act_type       act_type_enum not null,
+
   field_id       bigint
                   not null
                   references field(field_id),
 
-  name           text not null,
+  date_performed timestamp without time zone
+                  not null,
 
   crop_type_id   bigint
                   references crop_type(crop_type_id),
 
-  performed      timestamp without time zone
-                  not null
-                  default now(),
+  geom_id       bigint
+                  references geom(geom_id),
 
-  details        jsonb
-                  not null
-                  default '{}'::jsonb
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
 );
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
+
+create function field_geom_covers_act_geom() RETURNS trigger
+  LANGUAGE plpgsql as
+$$BEGIN
+  IF (NEW.geom_id IS NOT NULL)
+  THEN 
+    IF (
+      SELECT not exists(
+        SELECT Q1.geom, Q2.geom
+        FROM (SELECT * FROM field F INNER JOIN geom GEO on F.geom_id = GEO.geom_id WHERE F.field_id = NEW.field_id) Q1
+        CROSS JOIN geom Q2
+        WHERE Q2.geom_id = NEW.geom_id AND ST_COVERS(Q1.geom, Q2.geom)
+      )
+    )
+    THEN
+      RAISE EXCEPTION 'Field geometry must cover act geometry.'; 
+    END IF; 
+  END IF;
+
+  RETURN NEW;
+END;$$;
+  
+create constraint trigger field_geom_covers_act_geom
+  after insert or update on act
+  for each row execute procedure field_geom_covers_act_geom();
 
 -- OBSERVATION
 
@@ -440,34 +405,51 @@ create table observation (
   observation_type_id bigint
                 not null
                 references observation_type(observation_type_id),
-  date_observed timestamp without time zone
-                 not null,
-
   value_observed float
                  not null,
-  
-  created        timestamp without time zone
-                  not null,
-
+  date_observed timestamp without time zone,
   geom_id        bigint
                  references geom(geom_id),
 
   act_id         bigint
                   references act(act_id),
+  details jsonb
+          not null
+          default '{}'::jsonb,
 
-  last_updated   timestamp without time zone
-                 not null
-                 default now(),
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
 
-  details        jsonb
-                 not null
-                 default '{}'::jsonb
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
 );
 
 
-CREATE TRIGGER update_observation_last_updated BEFORE INSERT or UPDATE
+CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
 ON observation FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
+
+create function observation_types_match() RETURNS trigger
+  LANGUAGE plpgsql as
+$$BEGIN
+  IF (
+    SELECT not exists(
+      SELECT U.observation_type_id FROM unit_type U 
+      WHERE U.unit_type_id = NEW.unit_type_id and U.observation_type_id = NEW.observation_type_id
+    )
+  )
+  THEN
+    RAISE EXCEPTION 'Unit type observation type does not match given observation type.'; 
+  END IF; 
+
+  RETURN NEW;
+END;$$;
+  
+create constraint trigger observation_types_match
+  after insert or update on observation
+  for each row execute procedure observation_types_match();
 
 -- S3 OBJECT
 
@@ -517,12 +499,18 @@ create table http_parameter (
   http_type_id bigint
                references http_type(http_type_id),
   primary key(function_id, http_type_id),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default now(),
-  details      jsonb
-               not null
-               default '{}'::jsonb
+                default (now() at time zone 'utc')
 );
 
 create table s3_input_parameter (
@@ -531,12 +519,17 @@ create table s3_input_parameter (
   s3_type_id    bigint references s3_type(s3_type_id),
   primary key   (function_id, s3_type_id),
 
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default now(),
-  details       jsonb
-                not null
-                default '{}'::jsonb
+                default (now() at time zone 'utc')
 );
 
 create table s3_output_parameter (
@@ -549,12 +542,17 @@ create table s3_output_parameter (
   s3_type_id     bigint references s3_type(s3_type_id),
   primary key    (s3_output_parameter_name, s3_type_id, function_id),
 
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default now(),
-  details        jsonb
-                 not null
-                 default '{}'::jsonb
+                default (now() at time zone 'utc')
 );
 
 create type keyword_type as ENUM('STRING', 'INTEGER', 'FLOAT', 'JSON');
@@ -716,12 +714,18 @@ create table published_workflow (
   major       int    not null,
   minor       serial not null,
   unique (workflow_name, major, minor),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default now(),
-  details     jsonb
-              not null
-              default '{}'::jsonb
+                default (now() at time zone 'utc')
 
 );
 
@@ -769,12 +773,17 @@ create table root (
   time          timestamp without time zone
                 not null,
 
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
   last_updated  timestamp without time zone
                 not null
-                default now(),
-  details       jsonb
-                not null
-                default '{}'::jsonb
+                default (now() at time zone 'utc')
 );
 
 create table node_ancestry (

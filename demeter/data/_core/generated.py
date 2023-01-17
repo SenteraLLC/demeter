@@ -1,73 +1,60 @@
-from .._core import lookups as _lookups
+"""Constructs insert functions for core types using `SQLGenerator`"""
 
-from ...db._generic_types import GetId, GetTable, GetTableByKey, ReturnId
 from ...db import SQLGenerator
-
-from .types import (
-    CropProgress,
-    CropProgressKey,
-    CropStage,
+from ...db._generic_types import (
+    GetId,
+    GetTable,
+    ReturnId,
+)
+from .._core import lookups as _lookups
+from .._core.types import (
+    Act,
     CropType,
     Field,
-    Planting,
-    PlantingKey,
-    Harvest,
-    ReportType,
 )
-
+from .field_group import FieldGroup
 from .st_types import (
+    Geom,
     GeoSpatialKey,
     TemporalKey,
-    Geom,
 )
-
-from .field_group import FieldGroup
 
 g = SQLGenerator(
     "demeter.data",
     type_table_lookup=_lookups.type_table_lookup,
     data_table_lookup=_lookups.data_table_lookup,
     id_table_lookup=_lookups.id_table_lookup,
-    key_table_lookup=_lookups.key_table_lookup,
+    # key_table_lookup=_lookups.key_table_lookup,
 )
 
-getMaybeFieldGroupId = g.getMaybeIdFunction(FieldGroup)
-getMaybeFieldId = g.getMaybeIdFunction(Field)
+# core types
+getMaybeFieldGroupId: GetId[FieldGroup] = g.getMaybeIdFunction(FieldGroup)
+getMaybeFieldId: GetId[Field] = g.getMaybeIdFunction(Field)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
-getMaybeCropStageId: GetId[CropStage] = g.getMaybeIdFunction(CropStage)
-getMaybeReportTypeId: GetId[ReportType] = g.getMaybeIdFunction(ReportType)
+getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
 
 getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
 getField: GetTable[Field] = g.getTableFunction(Field)
+getCropType: GetTable[CropType] = g.getTableFunction(CropType)
+getAct: GetTable[Act] = g.getTableFunction(Act)
 
 insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
-insertCropStage = g.getInsertReturnIdFunction(CropStage)
-insertReportType: ReturnId[ReportType] = g.getInsertReturnIdFunction(ReportType)
+insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
 
-insertPlanting = g.getInsertReturnKeyFunction(Planting, PlantingKey)
-insertHarvest = g.getInsertReturnKeyFunction(Harvest, PlantingKey)
-insertCropProgress = g.getInsertReturnKeyFunction(CropProgress, CropProgressKey)
 
-insertOrGetFieldGroup = g.partialInsertOrGetId(getMaybeFieldGroupId, insertFieldGroup)
-insertOrGetField = g.partialInsertOrGetId(getMaybeFieldId, insertField)
-insertOrGetCropType = g.partialInsertOrGetId(getMaybeCropTypeId, insertCropType)
-insertOrGetCropStage = g.partialInsertOrGetId(getMaybeCropStageId, insertCropStage)
-
-getPlanting = g.getTableByKeyFunction(Planting, PlantingKey)
-getHarvest = g.getTableByKeyFunction(Harvest, PlantingKey)
-getCropProgress: GetTableByKey[CropProgressKey, CropProgress] = g.getTableByKeyFunction(
-    CropProgress, CropProgressKey
+insertOrGetFieldGroup: ReturnId[FieldGroup] = g.partialInsertOrGetId(
+    getMaybeFieldGroupId, insertFieldGroup
 )
-
-insertOrGetPlanting = g.partialInsertOrGetKey(PlantingKey, getPlanting, insertPlanting)
-insertOrGetHarvest = g.partialInsertOrGetKey(PlantingKey, getHarvest, insertHarvest)
-insertOrGetCropProgress = g.partialInsertOrGetKey(
-    CropProgressKey, getCropProgress, insertCropProgress
+insertOrGetField: ReturnId[Field] = g.partialInsertOrGetId(getMaybeFieldId, insertField)
+insertOrGetCropType: ReturnId[CropType] = g.partialInsertOrGetId(
+    getMaybeCropTypeId, insertCropType
 )
+insertOrGetAct: ReturnId[Act] = g.partialInsertOrGetId(getMaybeActId, insertAct)
 
-# spatiotemporal
+
+# spatiotemporal types
 getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)
 getMaybeTemporalKeyId: GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey)
 

@@ -1,7 +1,18 @@
 from collections import OrderedDict
-from dataclasses import dataclass, field, fields
+from dataclasses import (
+    dataclass,
+    field,
+    fields,
+)
 from datetime import datetime
-from typing import Any, NewType, Sequence, TypeVar, Union, cast
+from typing import (
+    Any,
+    NewType,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from . import _json_type as json_type
 
@@ -35,11 +46,12 @@ class Table:
 
 @dataclass(frozen=True)
 class Detailed(Table):
-    last_updated: datetime = field(
-        default_factory=datetime.now, hash=False, kw_only=True
-    )
     details: json_type.JSON = field(
         default_factory=lambda: json_type.EMPTY_JSON, hash=False, kw_only=True
+    )
+    created: datetime = field(default_factory=datetime.now, hash=False, kw_only=True)
+    last_updated: datetime = field(
+        default_factory=datetime.now, hash=False, kw_only=True
     )
 
 

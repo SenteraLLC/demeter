@@ -1,18 +1,25 @@
-from typing import Any, Optional, Sequence, Dict, Set, Tuple
+from collections import OrderedDict
+from dataclasses import dataclass
+from typing import (
+    Any,
+    Dict,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
 
 from ... import db
-
-from collections import OrderedDict
-from datetime import datetime
-
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class FieldGroup(db.Detailed):
+    """Arbitrary collection of Field objects or other FieldGroup
+    objects which allows demeter to represent field organization
+    schemes for any customer."""
+
     name: str
     parent_field_group_id: Optional[db.TableId] = None
-    created: Optional[datetime] = None
 
 
 FieldGroupAncestors = Sequence[Tuple[db.TableId, FieldGroup]]
@@ -102,9 +109,7 @@ class FieldSummary(db.Detailed):
     field_id: db.TableId
     geom_id: db.TableId
     name: str
-    external_id: Optional[str]
     field_group_id: Optional[db.TableId]
-    created: Optional[datetime] = None
 
 
 @dataclass(frozen=True)
@@ -115,7 +120,6 @@ class FieldGroupFields:
 
 def _row_to_field_group(
     row: Dict[str, Any],
-    name: Optional[str] = None,
     id_name: str = "field_group_id",
 ) -> Tuple[db.TableId, FieldGroup]:
     r = row

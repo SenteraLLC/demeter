@@ -1,7 +1,11 @@
-from typing import List, Sequence, TypedDict
+from dataclasses import dataclass
+from typing import (
+    List,
+    Sequence,
+    TypedDict,
+)
 
-from ... import data
-from ... import db
+from ... import data, db
 from .arguments import (
     HTTPArgument,
     KeywordArgument,
@@ -9,7 +13,6 @@ from .arguments import (
     S3InputArgument,
     S3OutputArgument,
 )
-from dataclasses import dataclass
 
 
 class ExecutionOutputs(TypedDict):

@@ -1,15 +1,29 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    TypedDict,
+)
 
 import pandas as pd
 
-from ... import data, db, task
+from ... import (
+    data,
+    db,
+    task,
+)
 from .._types import (
     ExecutionArguments,
     ExecutionOutputs,
     ExecutionSummary,
 )
-from ._response import KeyToArgsFunction, OneToOneResponseFunction, ResponseFunction
+from ._response import (
+    KeyToArgsFunction,
+    OneToOneResponseFunction,
+    ResponseFunction,
+)
 from ._s3_file import SupportedS3DataType
 
 

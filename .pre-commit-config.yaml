@@ -1,18 +1,21 @@
 exclude: >
   (?x)^(
-      demeter/task/|
-      demeter/grid/|
       scripts/explore/|
       scripts/grid/|
       scripts/to_graphviz.py
   )
 repos:
+- repo: https://github.com/pycqa/isort
+  rev: 5.11.4
+  hooks:
+    - id: isort
+      name: isort (python)
 - repo: https://github.com/ambv/black
-  rev: '22.10.0'
+  rev: '22.12.0'
   hooks:
     - id: black
 - repo: https://github.com/pycqa/flake8
-  rev: '5.0.4'
+  rev: '6.0.0'
   hooks:
     - id: flake8
       exclude: (tests|doc)
@@ -24,7 +27,7 @@ repos:
           'pep8-naming'
       ]
 - repo: https://github.com/python-poetry/poetry
-  rev: '1.2.2'
+  rev: '1.3.0'
   hooks:
     - id: poetry-check
 default_language_version:

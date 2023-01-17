@@ -1,27 +1,26 @@
 from typing import Union
 
-from .types import (
+from .._core.types import (  # ReportType,
+    Act,
     CropType,
-    CropStage,
-    ReportType,
-    Geom,
     Field,
+)
+from .field_group import FieldGroup
+from .st_types import (
+    Geom,
     GeoSpatialKey,
-    TemporalKey,
-    Planting,
-    Harvest,
-    CropProgress,
     Key,
+    TemporalKey,
 )
 
-from .field_group import (
-    FieldGroup,
-)
+AnyDataTable = Union[Geom, Field, FieldGroup, GeoSpatialKey, TemporalKey, Key, Act]
 
-AnyDataTable = Union[Geom, Field, FieldGroup, GeoSpatialKey, TemporalKey, Key]
+AnyTypeTable = CropType
 
-AnyTypeTable = Union[CropType, CropStage, ReportType]
+# AnyKeyTable = Union[Planting, Harvest]
 
-AnyKeyTable = Union[Planting, Harvest, CropProgress]
-
-AnyTable = Union[AnyDataTable, AnyTypeTable, AnyKeyTable]
+AnyTable = Union[
+    AnyDataTable,
+    AnyTypeTable,
+    # AnyKeyTable,
+]

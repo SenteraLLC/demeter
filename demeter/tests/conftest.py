@@ -1,7 +1,11 @@
-from os.path import dirname, join, realpath
-import pytest
-
 from contextlib import contextmanager
+from os.path import (
+    dirname,
+    join,
+    realpath,
+)
+
+import pytest
 from dotenv import load_dotenv
 from geoalchemy2 import Geometry  # Required import for sqlalchemy to use Geometry types
 from sqlalchemy import MetaData

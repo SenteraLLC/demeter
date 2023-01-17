@@ -1,7 +1,6 @@
-from typing import Optional
-
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
 
 from ... import db
 
@@ -15,11 +14,21 @@ class Observation(db.Detailed):
     field_id: db.TableId
     unit_type_id: db.TableId
     observation_type_id: db.TableId
-    date_observed: datetime
     value_observed: float
-    created: datetime
-    geom_id: Optional[db.TableId] = None
-    act_id: Optional[db.TableId] = None
+    date_observed: datetime = None
+    geom_id: db.TableId = None
+    act_id: db.TableId = None
+
+    def __post_init__(self):
+
+        this_act_id = object.__getattribute__(self, "act_id")
+
+        # Ensure that at least one of `act_id` and `date_observed` is populated.
+        if (
+            this_act_id is None
+            and object.__getattribute__(self, "date_observed") is None
+        ):
+            raise AttributeError("Must pass one of `act_id` or `date_observed`.")
 
 
 # TODO: We need to impose constraints on which values can be passed to `type_name` to ensure that we aren't
@@ -39,10 +48,3 @@ class UnitType(db.TypeTable):
     unit_name: str
     # aliases: list[str]
     observation_type_id: db.TableId
-
-
-@dataclass(frozen=True)
-class Act(db.Detailed):
-    field_id: db.TableId
-    observation_type_id: db.TableId
-    performed: datetime

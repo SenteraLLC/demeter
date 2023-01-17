@@ -1,4 +1,13 @@
-from typing import Any, Callable, Dict, List, Mapping, Optional, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Type,
+    Union,
+)
 
 from ... import db
 from .._types import KeywordArgument

@@ -2,8 +2,20 @@ import os.path
 import tarfile
 import uuid
 from enum import Enum
-from io import BufferedIOBase, BytesIO, IOBase
-from typing import Any, Callable, Dict, Optional, TypedDict, Union, cast
+from io import (
+    BufferedIOBase,
+    BytesIO,
+    IOBase,
+)
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    TypedDict,
+    Union,
+    cast,
+)
 
 import geopandas as gpd  # type: ignore
 import pandas as pd

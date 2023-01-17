@@ -1,14 +1,13 @@
-from ..db._lookup_types import sumMappings, TableLookup
+from ..db._lookup_types import TableLookup, sumMappings
 from ._types import (
     Execution,
     ExecutionKey,
-    ObservationArgument,
     HTTPArgument,
     KeywordArgument,
+    ObservationArgument,
     S3InputArgument,
     S3OutputArgument,
 )
-
 
 type_table_lookup: TableLookup = {}
 data_table_lookup: TableLookup = {

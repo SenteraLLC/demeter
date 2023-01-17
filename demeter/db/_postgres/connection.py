@@ -1,13 +1,23 @@
 import os
 from ast import literal_eval
-from typing import Any, Optional, Type
+from typing import (
+    Any,
+    Optional,
+    Type,
+)
 
 import psycopg2
 import psycopg2.extras
-from psycopg2.extensions import adapt
-from psycopg2.extensions import connection
-from psycopg2.extensions import register_adapter
-from sqlalchemy.engine import Connection, create_engine, URL
+from psycopg2.extensions import (
+    adapt,
+    connection,
+    register_adapter,
+)
+from sqlalchemy.engine import (
+    URL,
+    Connection,
+    create_engine,
+)
 from sqlalchemy.orm import sessionmaker
 
 

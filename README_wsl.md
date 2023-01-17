@@ -17,7 +17,7 @@ sudo service postgresql start
 ```
 
 ### Step 2: Edit Postgres Config Files (in WSL)
-Each of these changes ensures that the Postgres installation on WSL2 is accessibel to Windows.
+Each of these changes ensures that the Postgres installation on WSL2 is accessible to Windows.
 
 **postgresql.conf**
 

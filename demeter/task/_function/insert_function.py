@@ -1,8 +1,16 @@
-from typing import Any, Optional, Tuple
+from typing import (
+    Any,
+    Optional,
+    Tuple,
+)
 
 from ... import db
 from .._inputs import KeywordType
-from .types import Function, FunctionSignature, Keyword
+from .types import (
+    Function,
+    FunctionSignature,
+    Keyword,
+)
 
 
 def insertFunction(

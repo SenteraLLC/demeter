@@ -1,15 +1,29 @@
-from typing import Type, cast
+from typing import Any
+
+from shapely import wkb  # type: ignore
+from shapely.geometry import Polygon as Poly  # type: ignore
+
+from demeter.db import TableId
+from demeter.db._generic_types import (
+    GetTable,
+    ReturnId,
+    ReturnSameKey,
+)
 
 from ..db import SQLGenerator
-from ._types import Ancestry, Node, Root, id_table_lookup, key_table_lookup
+from ._types import (
+    Ancestry,
+    Node,
+    Root,
+    id_table_lookup,
+    key_table_lookup,
+)
 
 g = SQLGenerator(
     "demeter.data",
     id_table_lookup=id_table_lookup,
     key_table_lookup=key_table_lookup,
 )
-
-from demeter.db._generic_types import GetId, GetTable, ReturnId, ReturnSameKey
 
 getMaybeRootId = g.getMaybeIdFunction(Root)
 getMaybeNodeId = g.getMaybeIdFunction(Node)
@@ -19,13 +33,6 @@ getMaybeAncestry = g.getTableByKeyFunction(Ancestry, Ancestry)
 getRoot: GetTable[Root] = g.getTableFunction(Root)
 # TODO: getGeom needs to be fixed similarly
 getAncestry = g.getTableByKeyFunction(Ancestry, Ancestry)
-
-from typing import Any
-
-from shapely import wkb  # type: ignore
-from shapely.geometry import Polygon as Poly  # type: ignore
-
-from demeter.db import TableId
 
 
 def getNodePolygon(cursor: Any, node_id: TableId) -> Poly:
@@ -39,8 +46,6 @@ def getNodePolygon(cursor: Any, node_id: TableId) -> Poly:
 insertRoot: ReturnId[Root] = g.getInsertReturnIdFunction(Root)
 # insertNode : ReturnId[Node] = g.getInsertReturnIdFunction(Node)
 insertAncestry: ReturnSameKey[Ancestry] = g.getInsertReturnSameKeyFunction(Ancestry)
-
-from typing import Any
 
 
 # TODO: Warn the user when the geometry is modified by ST_MakeValid

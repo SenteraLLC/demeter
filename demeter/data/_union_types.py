@@ -10,9 +10,9 @@ AnyDataTable = Union[
     core.AnyDataTable,
 ]
 
-AnyKeyTable = Union[
-    core.AnyKeyTable,
-]
+# AnyKeyTable = Union[
+#     core.AnyKeyTable,
+# ]
 
 AnyIdTable = Union[
     AnyTypeTable,
@@ -22,6 +22,6 @@ AnyIdTable = Union[
 AnyTable = Union[
     AnyTypeTable,
     AnyDataTable,
-    AnyKeyTable,
+    # AnyKeyTable,
     AnyIdTable,
 ]

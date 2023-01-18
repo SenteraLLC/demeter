@@ -52,6 +52,7 @@ class TestUpsertFieldGroup:
                 root_fg_id = insertOrGetFieldGroup(
                     conn.connection.cursor(), root_field_group
                 )
+                root_fg_id.should.be.equal(1)
 
                 child_field_group = FieldGroup(
                     name="Child Field Group", parent_field_group_id=root_fg_id

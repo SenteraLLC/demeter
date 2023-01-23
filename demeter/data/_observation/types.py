@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 from ... import db
 
@@ -38,7 +37,7 @@ class ObservationType(db.TypeTable):
     """Measurement type as it relates to collection methodology and/or agronomic interpretation."""
 
     type_name: str
-    type_category: Optional[str] = None
+    type_category: str = None
 
 
 @dataclass(frozen=True)

@@ -72,6 +72,7 @@ def getFieldGroupAncestors(
       where descendant.parent_field_group_id = ancestor.field_group_id
     )
     select * from ancestry
+    order by ancestry.distance
     """
     cursor.execute(stmt, {"field_group_id": field_group_id})
     results = cursor.fetchall()
@@ -79,7 +80,7 @@ def getFieldGroupAncestors(
     if len(results) < 1:
         raise Exception(f"Failed to get field group ancestors for: {field_group_id}")
 
-    df_results = DataFrame(results).sort_values(by="distance")
+    df_results = DataFrame(results)
     ancestors = DataFrame(columns=["distance", "field_group_id", "field_group"])
     for _, row in df_results.iterrows():
         dist = row["distance"]
@@ -112,6 +113,7 @@ def getFieldGroupDescendants(
       where ancestor.field_group_id = descendant.parent_field_group_id
     )
     select * from descendants
+    order by ancestry.distance
     """
     cursor.execute(stmt, {"field_group_id": field_group_id})
     results = cursor.fetchall()
@@ -119,7 +121,7 @@ def getFieldGroupDescendants(
     if len(results) < 1:
         raise Exception(f"Failed to get field group descendants for: {field_group_id}")
 
-    df_results = DataFrame(results).sort_values(by="distance")
+    df_results = DataFrame(results)
     descendants = DataFrame(columns=["distance", "field_group_id", "field_group"])
     for _, row in df_results.iterrows():
         dist = row["distance"]

@@ -9,8 +9,8 @@ from typing import (  # Set,
 from pandas import DataFrame
 from pandas import concat as pd_concat
 
-from ... import db
-from .types import Field
+from demeter import db
+from demeter.data._core.types import Field
 
 
 @dataclass(frozen=True)

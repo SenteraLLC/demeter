@@ -9,8 +9,8 @@ from typing import (  # Set,
 from pandas import DataFrame
 from pandas import concat as pd_concat
 
-from ... import db
-from .types import Field
+from demeter import db
+from demeter.data._core.types import Field
 
 
 @dataclass(frozen=True)
@@ -27,9 +27,23 @@ def _row_to_field_group(
     row: Dict[str, Any],
     id_name: str = "field_group_id",
 ) -> Tuple[db.TableId, FieldGroup]:
+    """Takes a row of "field_group" table and returns field group ID and FieldGroup object.
+
+    Row of table is given as a dictionary, which must contain the following keys:
+    `id_name`, "parent_+`id_name`", "last_updated", and "details". Since this function
+    is typically applied to rows from the Demeter table, these values are typically
+    always available, so are NULL if no value exists."""
+
+    msg1 = f"'{id_name}' is not a key within `row`"
+    assert id_name in row.keys(), msg1
+
     r = row
     _id = r[id_name]
     parent_id_name = "_".join(["parent", id_name])
+
+    msg2 = f"'{parent_id_name}' is not a key within `row`"
+    assert parent_id_name in row.keys(), msg2
+
     f = FieldGroup(
         name=r["name"],
         parent_field_group_id=r[parent_id_name],
@@ -58,6 +72,7 @@ def getFieldGroupAncestors(
       where descendant.parent_field_group_id = ancestor.field_group_id
     )
     select * from ancestry
+    order by distance
     """
     cursor.execute(stmt, {"field_group_id": field_group_id})
     results = cursor.fetchall()
@@ -65,7 +80,7 @@ def getFieldGroupAncestors(
     if len(results) < 1:
         raise Exception(f"Failed to get field group ancestors for: {field_group_id}")
 
-    df_results = DataFrame(results).sort_values(by="distance")
+    df_results = DataFrame(results)
     ancestors = DataFrame(columns=["distance", "field_group_id", "field_group"])
     for _, row in df_results.iterrows():
         dist = row["distance"]
@@ -98,6 +113,7 @@ def getFieldGroupDescendants(
       where ancestor.field_group_id = descendant.parent_field_group_id
     )
     select * from descendants
+    order by distance
     """
     cursor.execute(stmt, {"field_group_id": field_group_id})
     results = cursor.fetchall()
@@ -105,7 +121,7 @@ def getFieldGroupDescendants(
     if len(results) < 1:
         raise Exception(f"Failed to get field group descendants for: {field_group_id}")
 
-    df_results = DataFrame(results).sort_values(by="distance")
+    df_results = DataFrame(results)
     descendants = DataFrame(columns=["distance", "field_group_id", "field_group"])
     for _, row in df_results.iterrows():
         dist = row["distance"]

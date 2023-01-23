@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytest
 from pandas import read_sql_query
+from pandas.testing import assert_frame_equal
 from psycopg2.errors import ForeignKeyViolation
 from shapely.geometry import Point
 from sqlalchemy.sql import text
@@ -52,6 +53,7 @@ class TestUpsertFieldGroup:
                 root_fg_id = insertOrGetFieldGroup(
                     conn.connection.cursor(), root_field_group
                 )
+                root_fg_id.should.be.equal(1)
 
                 child_field_group = FieldGroup(
                     name="Child Field Group", parent_field_group_id=root_fg_id
@@ -86,6 +88,17 @@ class TestUpsertFieldGroup:
                 with pytest.raises(Exception):
                     _ = getFieldGroupAncestors(conn.connection.cursor(), 3)
 
+                cols = ["distance", "field_group_id"]
+                assert_frame_equal(
+                    left=getFieldGroupAncestors(conn.connection.cursor(), 2)[
+                        cols
+                    ],  # SQL should have sorted by distance already
+                    right=getFieldGroupAncestors(conn.connection.cursor(), 2)[
+                        cols
+                    ].sort_values(by="distance"),
+                    check_dtype=False,
+                )
+
     def test_get_field_group_descendants(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
@@ -98,6 +111,15 @@ class TestUpsertFieldGroup:
 
                 with pytest.raises(Exception):
                     _ = getFieldGroupDescendants(conn.connection.cursor(), 3)
+
+                cols = ["distance", "field_group_id"]
+                assert_frame_equal(
+                    left=getFieldGroupDescendants(conn.connection.cursor(), 2)[cols],
+                    right=getFieldGroupDescendants(conn.connection.cursor(), 2)[
+                        cols
+                    ].sort_values(by="distance"),
+                    check_dtype=False,
+                )
 
     def test_get_field_group_field_in_child(self, test_db_class):
         with test_db_class.connect() as conn:

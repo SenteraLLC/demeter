@@ -72,7 +72,7 @@ def getFieldGroupAncestors(
       where descendant.parent_field_group_id = ancestor.field_group_id
     )
     select * from ancestry
-    order by ancestry.distance
+    order by distance
     """
     cursor.execute(stmt, {"field_group_id": field_group_id})
     results = cursor.fetchall()
@@ -113,7 +113,7 @@ def getFieldGroupDescendants(
       where ancestor.field_group_id = descendant.parent_field_group_id
     )
     select * from descendants
-    order by ancestry.distance
+    order by distance
     """
     cursor.execute(stmt, {"field_group_id": field_group_id})
     results = cursor.fetchall()

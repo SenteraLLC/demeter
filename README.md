@@ -91,4 +91,4 @@ pg_dump --schema-only --schema test_demeter -h localhost -U postgres -d postgres
 - Grant `read_and_write` to `<user>`
 
 #### Example Schema
-![Example Schema](./schema.png)
+![Example Schema](./schema-test_demeter.png)

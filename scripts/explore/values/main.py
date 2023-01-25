@@ -3,7 +3,13 @@ import json
 import os
 from collections import OrderedDict
 from io import TextIOWrapper
-from typing import Any, Callable, Dict, List, Set
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Set,
+)
 
 import psycopg2.extras
 from dotenv import load_dotenv
@@ -12,7 +18,9 @@ import demeter.db
 from demeter.db import TableId
 
 this_dir = os.path.dirname(__file__)
-open_sql: Callable[[str], TextIOWrapper] = lambda filename: open(os.path.join(this_dir, filename))
+open_sql: Callable[[str], TextIOWrapper] = lambda filename: open(
+    os.path.join(this_dir, filename)
+)
 
 get_features_stmt = open_sql("get_features.sql").read()
 get_action_planting_stmt = open_sql("get_action_planting.sql").read()
@@ -97,7 +105,9 @@ def main(
 if __name__ == "__main__":
     load_dotenv()
 
-    parser = argparse.ArgumentParser(description="Load a field and all of its input data as JSON")
+    parser = argparse.ArgumentParser(
+        description="Load a field and all of its input data as JSON"
+    )
 
     parser.add_argument("--field_ids", type=int, nargs="+", help="list of field ids")
     parser.add_argument(

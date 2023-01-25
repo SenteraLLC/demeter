@@ -1,5 +1,11 @@
 from collections import OrderedDict
-from typing import Dict, List, Sequence, Set, cast
+from typing import (
+    Dict,
+    List,
+    Sequence,
+    Set,
+    cast,
+)
 
 from demeter.db import TableId
 
@@ -15,13 +21,13 @@ def getFieldGroups(
     target: FieldGroupSummary,
     field_group_summaries: Dict[TableId, FieldGroupSummary],
 ) -> Sequence[TableId]:
-    logger.warn("TARGET: %s", target)
+    logger.warning("TARGET: %s", target)
     out: List[TableId] = []
     out.extend([f.parcel_id for f in target.fields])
     for i in target.field_group_ids:
         g = field_group_summaries[i]
         out.extend(getFieldGroups(g, field_group_summaries))
-    logger.warn("LEN: %s", len(out))
+    logger.warning("LEN: %s", len(out))
     return out
 
 

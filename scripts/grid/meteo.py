@@ -1,5 +1,14 @@
+import json
 import os
-from typing import cast
+from datetime import datetime
+from typing import (
+    Any,
+    Dict,
+    Sequence,
+    Set,
+    Tuple,
+    cast,
+)
 
 import requests
 
@@ -14,10 +23,6 @@ url_template = "https://api.meteomatics.com/{dates}/{stats}/{coords}/{typ}"
 
 # Go to fifth decimal with lat long
 #  https://gis.stackexchange.com/questions/8650/measuring-accuracy-of-latitude-and-longitude/8674#8674
-
-import json
-from datetime import datetime
-from typing import Any, Dict, Sequence, Set, Tuple
 
 
 def req(

@@ -1,5 +1,10 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Sequence
+from typing import (
+    Any,
+    Dict,
+    Optional,
+    Sequence,
+)
 
 from joblib import Memory  # type: ignore
 

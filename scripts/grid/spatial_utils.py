@@ -1,4 +1,8 @@
-from typing import Iterator, List, Tuple
+from typing import (
+    Iterator,
+    List,
+    Tuple,
+)
 
 from shapely.geometry import Point  # type: ignore
 from shapely.geometry import Polygon as Poly

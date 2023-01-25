@@ -1,9 +1,3 @@
-exclude: >
-  (?x)^(
-      scripts/explore/|
-      scripts/grid/|
-      scripts/to_graphviz.py
-  )
 repos:
 - repo: https://github.com/pycqa/isort
   rev: 5.11.4

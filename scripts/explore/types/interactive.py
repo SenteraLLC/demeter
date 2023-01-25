@@ -1,14 +1,14 @@
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
-from demeter.data import ObservationType, ObservationValue
-from demeter.db import Table, TableId, getConnection
-
-from ..curses import FilterBy, SelectedResult, setup_curses
-from ..data_option import DataOption
-from ..field_groups import FieldGroupSummary
+from ..curses import (
+    FilterBy,
+    SelectedResult,
+    setup_curses,
+)
 from ..fields import getFieldIds
 from ..formatting import Margins
+from ..log import getLogger
 from ..picker import Picker
 from . import TypeSummary, getTypeSummaries
 from .layout import LAYOUT
@@ -20,7 +20,6 @@ HEADER_ROW_COUNT = 5
 FOOTER_ROW_COUNT = 4
 FRAME_ROW_COUNT = HEADER_ROW_COUNT + FOOTER_ROW_COUNT
 
-from ..log import getLogger
 
 logger = getLogger()
 
@@ -29,7 +28,7 @@ logger = getLogger()
 def select(
     cursor: Any, filter_by: FilterBy = OrderedDict()
 ) -> SelectedResult[TypeSummary]:
-    logger.warn("START SELECT.")
+    logger.warning("START SELECT.")
 
     margins = Margins(
         top=HEADER_ROW_COUNT,
@@ -38,10 +37,10 @@ def select(
         bottom=FOOTER_ROW_COUNT,
     )
 
-    logger.warn("START SELECT.")
+    logger.warning("START SELECT.")
 
     field_ids = getFieldIds(filter_by)
-    logger.warn("Field IDs are: %s\n", field_ids)
+    logger.warning("Field IDs are: %s\n", field_ids)
 
     observation_type_summaries = getTypeSummaries(cursor, list(field_ids))
 
@@ -49,15 +48,15 @@ def select(
         (t.observation_type_id, t) for t in observation_type_summaries
     )
 
-    separation_width = 3
-    separator = " " * separation_width
+    # separation_width = 3
+    # separator = " " * separation_width
 
     picker = Picker(
         "Observation Type Summary", observation_type_summaries, margins, LAYOUT
     )
 
     while picker.step():
-        logger.warn("Type picker step.")
+        logger.warning("Type picker step.")
         pass
 
     selected_rows = picker.get_selected_rows()

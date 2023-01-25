@@ -3,7 +3,14 @@ from asyncio import Queue
 from collections import OrderedDict
 from datetime import datetime
 from time import time
-from typing import Dict, Iterator, List, NewType, Set, Tuple
+from typing import (
+    Dict,
+    Iterator,
+    List,
+    NewType,
+    Set,
+    Tuple,
+)
 
 from shapely import wkb  # type: ignore
 from shapely.geometry import Point  # type: ignore
@@ -99,7 +106,7 @@ class Valuer:
 
             # TODO: Copy by item, not entire array
             for k, o in out.copy().items():
-                child_level = level + 1
+                _ = level + 1
                 remaining_slots = MAX_LOCATIONS - len(out)
                 if remaining_slots <= 0:
                     break
@@ -108,7 +115,7 @@ class Valuer:
                 if len(buffer):
                     out.update((getKey(p), p) for p in buffer)
             if len(out):
-                times = [self.time]
+                _ = [self.time]
                 points = [getCentroid(x) for x in out.values()]
                 r = req([self.time], {self.stat}, points)
 

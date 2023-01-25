@@ -1,7 +1,16 @@
-from typing import TypedDict
-
+from collections import ChainMap
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypedDict,
+)
 
 from shapely import wkb  # type: ignore
 from shapely.geometry import Point  # type: ignore
@@ -100,12 +109,6 @@ class NodeMeta(TypedDict):
     is_bud: bool
 
 
-from collections import ChainMap
-from collections.abc import ItemsView
-from dataclasses import dataclass
-from typing import Iterator
-
-
 @dataclass
 class Tree:
     leaves: Dict[TableId, NodeMeta]
@@ -196,7 +199,7 @@ def getTree(
 
 
 def debug() -> None:
-    stmt = """
+    _ = """
   select A.geom::Polygon,
                    B.geom::Polygon,
                    ST_Contains(A.geom, B.geom),

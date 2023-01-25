@@ -1,14 +1,15 @@
-from typing import Any, List, Dict, Tuple
-
 import asyncio
-
 from datetime import datetime, timedelta
-
-from shapely.geometry import Point  # type: ignore
-from shapely.geometry import Polygon as Poly
-
+from typing import (
+    Any,
+    Dict,
+    List,
+    Tuple,
+)
 
 from shapely import wkb  # type: ignore
+from shapely.geometry import Point  # type: ignore
+from shapely.geometry import Polygon as Poly
 
 from demeter.db import TableId
 from demeter.grid import getNodePolygon, getRoot

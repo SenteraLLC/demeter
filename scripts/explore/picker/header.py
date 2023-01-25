@@ -1,5 +1,4 @@
 import curses
-from typing import Generic, List, cast
 
 from ..formatting import Margins
 from ..theme import ColorScheme

@@ -5,8 +5,7 @@
 -- TODO: Identity columns instead of serials
 
 -- Database Setup
-
-drop schema if exists test_demeter cascade;
+-- drop schema if exists demeter cascade;
 create schema test_demeter;
 set schema 'test_demeter';
 

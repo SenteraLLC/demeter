@@ -72,9 +72,9 @@ initdb -D /usr/local/pgsql/data
 postgres -D /usr/local/pgsql/data
 ```
 
-### Step 5: Initialize the database schema
+### Step 5: Initialize the database schema with a given name (see `initialize.demeter.py` for more information)
 ``` bash
-psql --host localhost --user postgres -f schema.sql postgres
+python3 -m scripts.initialize_demeter --schema_name='SCHEMA_NAME' --database_host='LOCAL'
 ```
 
 ### Step 6: Connect to the database

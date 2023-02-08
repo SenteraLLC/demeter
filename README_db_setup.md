@@ -12,7 +12,7 @@ The `.env` file holds the credentials necessary to connect to the desired Postgr
 DEMETER_TEST = "{'host':'localhost', 'port':'5433', 'username':'postgres', 'password':'abc123', 'database':'postgres', 'schema_name':'test_demeter'}"
 ```
 
-## Method 1: Connect to an existing database (via an SSH tunnel)
+## Method 1: Connect to the AWS RDS `demeter_database` instance (via an SSH tunnel)
 
 To proceed with this method, you must obtain SSH access from Elliot or Sam ([see py-analytics-db repo](https://github.com/SenteraLLC/py-analytics-db#credentials)).
 
@@ -20,12 +20,12 @@ To proceed with this method, you must obtain SSH access from Elliot or Sam ([see
 
 ### Step 1: Connect to the SSH Tunnel
 ``` bash
-ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:<DEMETER_PG_PORT>:<DATABASE_NAME>:<SSH_PORT><AWS_ANALYTICS_BASTION_USERNAME>@<SSH_HOST>
+ssh -o ServerAliveInterval=36000 -i <FILE LOCATION OF IDENTITY FILE> -NL 127.0.0.1:<DEMETER_PG_PORT>:<DATABASE_NAME>:<SSH_PORT><AWS_ANALYTICS_BASTION_USERNAME>@<SSH_HOST>
 ```
 
 **Example**
 ``` bash
-ssh -o ServerAliveInterval=36000 -vvv -L 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 myname@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com
+ssh -o ServerAliveInterval=36000 -i "identity_key.pem" -NL 127.0.0.1:5433:demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com:5432 my_bastion_user@bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com -v
 ```
 
 ### Step 2: Test your database connection

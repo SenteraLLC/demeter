@@ -1,21 +1,18 @@
-import subprocess
 from contextlib import contextmanager
 from os.path import (
     dirname,
     join,
     realpath,
 )
-from tempfile import NamedTemporaryFile
 
 import pytest
 from dotenv import load_dotenv
 from geoalchemy2 import Geometry  # Required import for sqlalchemy to use Geometry types
 from psycopg2.extensions import AsIs
 from sqlalchemy import MetaData
-from sqlalchemy.engine import Connection
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
-from demeter.db import getConnection
+from demeter.db import getConnection, initializeDemeterInstance
 
 load_dotenv()
 
@@ -28,37 +25,14 @@ TEST_DIR = realpath(dirname(__file__))
 
 c = getConnection(env_name=ENV_NAME)
 engine = c.engine
-# Base = declarative_base()
 
 # check to make sure a test demeter instance doesn't already exist; if so, we need to manually drop that schema
-stmt = """
-    select * from information_schema.schemata 
-    where schema_name = %(schema_name)s
-"""
-connection = c.connection.cursor()
-connection.execute(stmt, {"schema_name": SCHEMA_NAME})
-results = connection.fetchall()
+# else create instance for running tests
+created_test_demeter_instance = initializeDemeterInstance(
+    conn=c, schema_name=SCHEMA_NAME, drop_existing=False
+)
 msg = "Test schema already exists. Did you create a test schema for dev work? Please check and manually drop it."
-assert len(results) == 0, msg
-connection.close()
-
-# create test database schema before tests begin
-with NamedTemporaryFile() as tmp:
-    with open(join(ROOT_DIR, "schema.sql"), "r") as schema_f:
-        schema_sql = schema_f.read()
-        # Change schema name in SQL script if needed.
-        if SCHEMA_NAME != "test_demeter":
-            schema_sql = schema_sql.replace("test_demeter", SCHEMA_NAME)
-    tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
-
-    host = engine.url.host
-    username = engine.url.username
-    password = engine.url.password
-    database = engine.url.database
-    psql = (
-        f'PGPASSWORD={password} psql -h {host} -U {username} -f "{tmp.name}" {database}'
-    )
-    subprocess.call(psql, shell=True)
+assert created_test_demeter_instance, msg
 
 metadata_obj = MetaData(schema=SCHEMA_NAME)
 metadata_obj.reflect(c.engine)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demeter"
-version = "1.1.35"
+version = "1.2.0"
 description = "The database schema and API that supports agronomic modeling and data science activities."
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [

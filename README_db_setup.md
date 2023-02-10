@@ -13,6 +13,11 @@ Let's walk through how to connect to accomplish both of these tasks.
 
 The `.env` file holds the credentials necessary to connect to the desired Postgres server (see [python-dotenv](https://github.com/theskumar/python-dotenv) for more information). It should never be committed to Github (i.e., should be part of the `.gitignore`). See [`.env.template`](https://github.com/SenteraLLC/demeter/blob/main/.env.template) for an example, and ask @tnigon or @marissakivi if you have questions about credentials or set-up.
 
+You will need the following environments set up to complete these tasks: 
+- DEMETER-DEV_AWS
+- DEMETER_DEV_LOCAL
+- DEMETER_DEV_LOCAL_SUPER (this is the postgres user that you set up for your database)
+
 **.env.template**
 ```bash
 DEMETER_TEST = "{'host':'localhost', 'port':'5433', 'username':'demeter_user', 'password':'abc123', 'database':'demeter-dev', 'schema_name':'test_demeter'}"
@@ -40,6 +45,16 @@ ssh -o ServerAliveInterval=36000 -i "identity_key.pem" -NL 127.0.0.1:5433:demete
 In a separate terminal window (running on your local machine), run the following line. It should prompt you for the `demeter_user` password, which you can get from Tyler or Marissa.
 ``` bash
 psql --host localhost --port 5433 --user demeter_user demeter-dev
+```
+
+### Step 3: Connect to the database 
+You can do this in one of the following ways:
+1. PGAdmin (see ["Step 5" of README_wsl.md](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md#step-5-connect-to-wsls-postgres)) (do not need to do SSH tunneling from command line)
+2. Python/Jupyter notebook (via `demeter`):
+
+```python
+from demeter.db import getConnection
+conn = getConnection(env_name="DEMETER-DEV_AWS")
 ```
 
 ## Method 2: Create your own database locally (Mac)

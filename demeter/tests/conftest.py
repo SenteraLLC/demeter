@@ -18,12 +18,18 @@ load_dotenv()
 
 # prepare database working environment
 SCHEMA_NAME = "test_demeter"
-ENV_NAME = "TEST_DEMETER"
+
+
+@pytest.fixture(scope="function")
+def schema_name():
+    yield SCHEMA_NAME
+
+
 ROOT_DIR = realpath(join(dirname(__file__), "..", ".."))
 DEMETER_DIR = realpath(join(dirname(__file__), ".."))
 TEST_DIR = realpath(dirname(__file__))
 
-c = getConnection(env_name=ENV_NAME)
+c = getConnection(env_name="TEST_DEMETER_SETUP")
 engine = c.engine
 
 # check to make sure a test demeter instance doesn't already exist; if so, we need to manually drop that schema
@@ -36,6 +42,9 @@ assert created_test_demeter_instance, msg
 
 metadata_obj = MetaData(schema=SCHEMA_NAME)
 metadata_obj.reflect(c.engine)
+
+c_read_write = getConnection(env_name="TEST_DEMETER_RW")
+engine_read_write = c_read_write.engine
 
 
 @contextmanager
@@ -71,9 +80,18 @@ def clear_tables():
 def test_db_class():
     """Class scope - do not use this after `test_db_session` has been used."""
     clear_tables()  # Ensure tables are empty before beginning the tests
-    yield engine
-    engine.dispose()
+    yield engine_read_write
+    engine_read_write.dispose()
     clear_tables()
+
+
+@pytest.fixture(scope="function")
+def test_read_only_access():
+    """Function scope - create connection for read only user testing."""
+    c_read_only = getConnection(env_name="TEST_DEMETER_RO")
+    engine_read_only = c_read_only.engine
+    yield engine_read_only
+    c_read_only.close()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -85,6 +103,8 @@ def test_db_session_teardown():
             stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
             params = AsIs(SCHEMA_NAME)
             conn.execute(stmt, params)
+    c_read_write.close()
+    c.close()
 
 
 # @pytest.fixture(autouse=True, scope="session")

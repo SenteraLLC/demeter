@@ -1,4 +1,5 @@
 import subprocess
+from os import getenv
 from os.path import (
     dirname,
     join,
@@ -54,6 +55,15 @@ def initializeDemeterInstance(
             # Change schema name in SQL script if needed.
             if schema_name != "test_demeter":
                 schema_sql = schema_sql.replace("test_demeter", schema_name)
+
+            # Add user passwords
+            schema_sql = schema_sql.replace(
+                "demeter_user_password", getenv("demeter_user_password")
+            )
+            schema_sql = schema_sql.replace(
+                "demeter_ro_user_password", getenv("demeter_ro_user_password")
+            )
+
         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
         host = conn.engine.url.host
         username = conn.engine.url.username

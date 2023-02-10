@@ -15,9 +15,6 @@ create extension if not exists postgis_raster with schema public;
 -- create extension "postgres-json-schema" with schema public;
 
 set search_path = test_demeter, public;
-create role read_and_write;
-grant select, insert on all tables in schema test_demeter to read_and_write;
-grant usage on schema test_demeter to read_and_write;
 
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$
@@ -358,3 +355,18 @@ END;$$;
 create constraint trigger observation_types_match
   after insert or update on observation
   for each row execute procedure observation_types_match();
+
+-- MUST GRANT USERS ACCESS ONCE THE TABLES ARE ALREADY CREATED
+
+-- create read and write user access
+create user demeter_user with password 'demeter_user_password';
+grant select, insert on all tables in schema test_demeter to demeter_user;
+grant usage, select on all sequences in schema test_demeter to demeter_user;
+alter default privileges in schema test_demeter grant usage on sequences to demeter_user;
+grant usage on schema test_demeter to demeter_user;
+
+-- create read only access user
+create user demeter_ro_user with password 'demeter_ro_user_password';
+grant select on all tables in schema test_demeter to demeter_ro_user;
+grant select on all sequences in schema test_demeter to demeter_ro_user;
+grant usage on schema test_demeter to demeter_ro_user;

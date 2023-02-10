@@ -18,6 +18,11 @@ You will need the following environments set up to complete these tasks:
 - DEMETER_DEV_LOCAL
 - DEMETER_DEV_LOCAL_SUPER (this is the postgres user that you set up for your database)
 
+For testing, you will also need these environments:
+- TEST_DEMETER_SETUP
+- TEST_DEMETER_RW
+- TEST_DEMETER_RO
+
 **.env.template**
 ```bash
 DEMETER_TEST = "{'host':'localhost', 'port':'5433', 'username':'demeter_user', 'password':'abc123', 'database':'demeter-dev', 'schema_name':'test_demeter'}"

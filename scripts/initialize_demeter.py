@@ -1,6 +1,7 @@
 # %%
 import argparse
 
+import click
 from dotenv import load_dotenv  # type: ignore
 
 from demeter.db import getConnection, initializeDemeterInstance
@@ -37,11 +38,20 @@ if __name__ == "__main__":
     database_host = args.database_host
     drop_existing = args.drop_existing
 
-    assert database_host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
-
     if database_host == "AWS":
         conn = getConnection(env_name="DEMETER_AWS")
     else:
         conn = getConnection(env_name="DEMETER")
+
+    assert database_host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
+
+    if drop_existing:
+        if click.confirm(
+            "Are you sure you want to drop existing schema?", default=False
+        ):
+            pass
+        else:
+            print("Continuing command with `drop_existing` set to False.")
+            drop_existing = False
 
     _ = initializeDemeterInstance(conn, schema_name, drop_existing)

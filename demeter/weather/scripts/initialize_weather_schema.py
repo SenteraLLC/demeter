@@ -1,27 +1,25 @@
 """Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
 
-This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as the necessary passwords for the
-`demeter_user` and `demeter_ro_user`.
+This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that the demeter users are
+already set up on your database using `scripts.initialize_demeter`.
+
+It can be run from the command line as: python3 -m demeter.weather.scripts.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
+
 """
 import argparse
 
 import click
 from dotenv import load_dotenv  # type: ignore
 
-from demeter.db import getConnection, initializeDemeterInstance
+from demeter.db import getConnection
+
+from .._initialize import initialize_weather_schema
 
 if __name__ == "__main__":
 
     c = load_dotenv()
 
-    parser = argparse.ArgumentParser(description="Initialize Demeter instance.")
-
-    parser.add_argument(
-        "--schema_name",
-        type=str,
-        help="Schema name to use for new Demeter instance.",
-        required=True,
-    )
+    parser = argparse.ArgumentParser(description="Initialize weather schema instance.")
 
     parser.add_argument(
         "--database_host",
@@ -39,13 +37,12 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--drop_existing",
+        action="store_true",
         help="Should the schema be re-created if it exists?",
         default=False,
-        action="store_true",
     )
 
     args = parser.parse_args()
-    schema_name = args.schema_name
     database_host = args.database_host
     database_env = args.database_env
 
@@ -63,7 +60,7 @@ if __name__ == "__main__":
 
     conn = getConnection(env_name=database_env_name)
 
-    if drop_existing:
+    if drop_existing is True:
         if click.confirm(
             "Are you sure you want to drop existing schema?", default=False
         ):
@@ -72,4 +69,4 @@ if __name__ == "__main__":
             print("Continuing command with `drop_existing` set to False.")
             drop_existing = False
 
-    _ = initializeDemeterInstance(conn, schema_name, drop_existing)
+    _ = initialize_weather_schema(conn, drop_existing)

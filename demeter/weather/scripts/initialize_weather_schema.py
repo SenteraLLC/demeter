@@ -1,9 +1,9 @@
 """Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
 
-This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that the demeter users are
-already set up on your database using `scripts.initialize_demeter`.
+This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that you have passwords
+for the two weather schema users--weather_user and weather_ro_user-- in your .env file.
 
-It can be run from the command line as: python3 -m demeter.weather.scripts.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
+Once you have those things ready to go, set up the schema by running: python3 -m demeter.weather.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
 
 """
 import argparse

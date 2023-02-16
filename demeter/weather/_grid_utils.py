@@ -17,11 +17,13 @@ from numpy import (
     uint64,
 )
 from numpy.typing import ArrayLike, DTypeLike
+from pandas import DataFrame
 from rasterio import MemoryFile
 from rasterio import open as rio_open
 from rasterio.mask import mask as rio_mask
 from rasterio.profiles import DefaultGTiffProfile
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
+from shapely.wkb import loads as wkb_loads
 from sqlalchemy.engine import Connection
 
 
@@ -336,38 +338,44 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
     cursor.execute(stmt, args)
 
 
-# def get_cell_id(
-#     base_dir_wx_grid: str,
-#     utm_row: str,
-#     utm_zone: int,
-#     geometry: Union[MultiPolygon, Point, Polygon],
-#     geometry_epsg: int = 4326,
-# ) -> int:
-#     """Load appropriate raster based on zone and row."""
-#     geometry = (
-#         geometry.centroid if isinstance(geometry, (Polygon, MultiPolygon)) else geometry
-#     )
-#     with rio_open(
-#         join(
-#             base_dir_wx_grid,
-#             "5km_weather_grid",
-#             f"row-{utm_row}_zone-{int(utm_zone)}_5km.tif",
-#         ),
-#         "r",
-#     ) as ds:
-#         geom_pt = (
-#             GeoDataFrame(crs=geometry_epsg, geometry=[geometry])
-#             .to_crs(ds.crs.to_epsg())
-#             .iloc[0]["geometry"]
-#         )
-#         # geom_pt = gdf_pt.iloc[0]["geometry"]
-#         return [x[0] for x in ds.sample([[geom_pt.x, geom_pt.y]])][0]
-# %%
-# -- select * from weather.world_utm where ST_intersects(ST_Point( -93.090, 44.954, 4326), weather.world_utm.geom);
-# -- world_utm_id = 917
-# -- raster_epsg = 32615
-# select ST_Value(
-# 	rast_cell_id,
-# 	ST_Transform(ST_Point( -93.090, 44.954, 4326), 32615)
-# )
-# from weather.raster_5km where world_utm_id = 917
+def get_cell_id(cursor: Any, lat: float, long: float) -> int:
+    """For a given set of lat/long coordinates, determine cell ID and cell centroid.
+
+    Args:
+        cursor (Any): Connection to Demeter weather database
+        lat (float): Latitude (decimal degrees) of point
+        long (float): Longitude (decimal degress) of point
+
+    Returns:
+        cell ID (int) of weather grid pixel the point falls within
+        centroid (shapely.Point) of pixel with lat/long values rounded to 5 decimal places
+    """
+
+    stmt = """
+    select q2.cell_id, ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326) as centroid
+    from (
+        select q.cell_id as cell_id, q.rast, (ST_PixelOfValue(q.rast, 1, q.cell_id)).*
+        from (
+            select raster_5km.rast_cell_id as rast,
+                ST_Value(
+                weather.raster_5km.rast_cell_id,
+                ST_Transform(ST_Point( %(long)s, %(lat)s, 4326), weather.world_utm.raster_epsg)
+                ) as cell_id
+            from world_utm,raster_5km
+            where ST_intersects(ST_Point(%(long)s, %(lat)s, 4326), world_utm.geom)
+            and world_utm.world_utm_id=raster_5km.world_utm_id
+        ) as q
+    ) as q2;
+    """
+    args = {"long": long, "lat": lat}
+
+    cursor.execute(stmt, args)
+    res = DataFrame(cursor.fetchall())
+
+    assert len(res) < 2, "More than one cell ID returned."
+    assert len(res) == 1, "No cell ID was returned for this set of coordinates."
+
+    full_pt = wkb_loads(res.at[0, "centroid"], hex=True)
+    centroid = Point(round(full_pt.x, 5), round(full_pt.y, 5))
+
+    return int(res.at[0, "cell_id"]), centroid

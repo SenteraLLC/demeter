@@ -19,7 +19,6 @@ class Observation(db.Detailed):
     act_id: db.TableId = None
 
     def __post_init__(self):
-
         this_act_id = object.__getattribute__(self, "act_id")
 
         # Ensure that at least one of `act_id` and `date_observed` is populated.

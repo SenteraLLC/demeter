@@ -27,7 +27,6 @@ class TestUserPrivileges:
     def test_demeter_user_can_insert(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 test_field_group = FieldGroup(
                     name="Field Group", parent_field_group_id=None
                 )
@@ -39,7 +38,6 @@ class TestUserPrivileges:
     def test_demeter_user_can_read(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 test_field_group = FieldGroup(
                     name="Field Group", parent_field_group_id=None
                 )
@@ -51,7 +49,6 @@ class TestUserPrivileges:
     def test_demeter_user_cannot_update(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 stmt = """update field_group
                 set name = 'name change'
                 where field_group_id = 1"""
@@ -59,22 +56,36 @@ class TestUserPrivileges:
                 with pytest.raises(ProgrammingError):
                     conn.execute(stmt)
 
-    def test_demeter_user_cannot_drop(self, test_db_class, schema_name):
+    def test_demeter_user_cannot_delete(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
+                stmt = """update from field_group
+                where field_group_id = 1"""
 
+                with pytest.raises(ProgrammingError):
+                    conn.execute(stmt)
+
+    def test_demeter_user_cannot_drop_schema(self, test_db_class, schema_name):
+        with test_db_class.connect() as conn:
+            with conn.begin():
                 stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
                 params = AsIs(schema_name)
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(stmt, params)
 
+    def test_demeter_user_cannot_drop_table(self, test_db_class):
+        with test_db_class.connect() as conn:
+            with conn.begin():
+                stmt = """DROP TABLE IF EXISTS field CASCADE;"""
+                with pytest.raises(ProgrammingError):
+                    conn.execute(stmt)
+
     ## TEST FOR DEMETER_RO_USER
 
     def test_demeter_ro_user_can_read(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-
                 test_field_group = FieldGroup(
                     name="Field Group", parent_field_group_id=None
                 )
@@ -86,7 +97,6 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_insert(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-
                 test_field_group_2 = FieldGroup(
                     name="New field Group", parent_field_group_id=None
                 )
@@ -98,7 +108,6 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_update(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-
                 stmt = """update field_group
                 set name = 'name change'
                 where field_group_id = 1"""
@@ -106,12 +115,29 @@ class TestUserPrivileges:
                 with pytest.raises(ProgrammingError):
                     conn.execute(stmt)
 
-    def test_demeter_ro_user_cannot_drop(self, test_read_only_access, schema_name):
+    def test_demeter_ro_user_cannot_delete(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
+                stmt = """update from field_group
+                where field_group_id = 1"""
 
+                with pytest.raises(ProgrammingError):
+                    conn.execute(stmt)
+
+    def test_demeter_ro_user_cannot_drop_schema(
+        self, test_read_only_access, schema_name
+    ):
+        with test_read_only_access.connect() as conn:
+            with conn.begin():
                 stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
                 params = AsIs(schema_name)
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(stmt, params)
+
+    def test_demeter_ro_user_cannot_drop_table(self, test_read_only_access):
+        with test_read_only_access.connect() as conn:
+            with conn.begin():
+                stmt = """DROP TABLE IF EXISTS field CASCADE;"""
+                with pytest.raises(ProgrammingError):
+                    conn.execute(stmt)

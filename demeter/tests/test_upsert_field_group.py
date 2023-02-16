@@ -29,7 +29,6 @@ class TestUpsertFieldGroup:
     def test_insert_get_field_group(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 root_field_group = FieldGroup(
                     name="Root Field Group", parent_field_group_id=None
                 )
@@ -46,7 +45,6 @@ class TestUpsertFieldGroup:
     def test_insert_child_field_group(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 root_field_group = FieldGroup(
                     name="Root Field Group", parent_field_group_id=None
                 )
@@ -66,7 +64,6 @@ class TestUpsertFieldGroup:
     def test_insert_orphan_field_group(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 child_field_group = FieldGroup(
                     name="Child Field Group 2", parent_field_group_id=10
                 )
@@ -78,7 +75,6 @@ class TestUpsertFieldGroup:
     def test_get_field_group_ancestors(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 list_length_1 = getFieldGroupAncestors(conn.connection.cursor(), 1)
                 len(list_length_1).should.be.equal_to(1)
 
@@ -102,7 +98,6 @@ class TestUpsertFieldGroup:
     def test_get_field_group_descendants(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 list_length_1 = getFieldGroupDescendants(conn.connection.cursor(), 2)
                 len(list_length_1).should.be.equal_to(1)
 
@@ -124,7 +119,6 @@ class TestUpsertFieldGroup:
     def test_get_field_group_field_in_child(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 # add field to child
                 field_geom = Point(0, 0)
                 field_geom_id = insertOrGetGeom(conn.connection.cursor(), field_geom)
@@ -177,7 +171,6 @@ class TestUpsertFieldGroup:
     def test_read_field_group_table(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 sql = text(
                     """
                     select * from field_group
@@ -193,7 +186,6 @@ class TestClearGeomData:
     def test_read_field_group_table_nodata(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 sql = text(
                     """
                     select * from geom

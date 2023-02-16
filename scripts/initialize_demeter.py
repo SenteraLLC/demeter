@@ -86,4 +86,6 @@ if __name__ == "__main__":
     logging.info("Connecting to database: %s", database_env_name)
     conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
 
+    logging.info("Initializing demeter schema instance with name: %s", schema_name)
     _ = initializeDemeterInstance(conn, schema_name, drop_existing)
+    conn.close()

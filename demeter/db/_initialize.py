@@ -39,7 +39,7 @@ def initializeDemeterInstance(
         logging.info(
             "A schema of name %s already exists in this database.", schema_name
         )
-        if not drop_existing:
+        if drop_existing is False:
             logging.info("Change `drop_existing` to True if you'd like to drop it.")
             return False
         else:

@@ -8,16 +8,17 @@ set schema 'weather';
 set search_path = weather, public;
 
 -- TABLE: 'world_utm'
-CREATE TYPE utm_row AS ENUM ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z');
+-- utm_row doesn't include "I" or "O" rows
+CREATE TYPE utm_row AS ENUM ('A','B','C','D','E','F','G','H','J','K','L','M','N','P','Q','R','S','T','U','V','W','X','Y','Z');
 
 create table world_utm (
     world_utm_id smallserial primary key,
-    zone smallint not null, 
+    zone smallint not null,
     row utm_row not null,
     unique (zone, row),
     geom geometry(Geometry, 4326) not null,
     check (ST_IsValid(geom)),
-    utc_offset time with time zone not null, 
+    utc_offset time with time zone not null,
     raster_epsg smallint not null
 );
 
@@ -29,7 +30,7 @@ create table raster_5km (
     world_utm_id smallint
                  references world_utm(world_utm_id),
     unique(world_utm_id),
-    rast_cell_id raster, 
+    rast_cell_id raster,
     rast_metadata jsonb
                   default '{}'::jsonb
 );
@@ -38,7 +39,7 @@ create table raster_5km (
 create table weather_type (
     weather_type_id serial primary key,
     weather_type text not null,
-    temporal_extent interval not null, 
+    temporal_extent interval not null,
     units text,
     description text not null
 );

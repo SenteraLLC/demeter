@@ -151,3 +151,10 @@ conn = getConnection(env_name="DEMETER-DEV_LOCAL")
 ```
 
 Be sure you've added a `.env` file with appropriate credentials ([see .env.template example above](https://github.com/SenteraLLC/demeter/blob/main/README_db_setup.md#before-you-begin)).
+
+## User and Read-Only User Passwords
+To enable initialization of the schema, the following environment variables must be set:
+`demeter_user_password`
+`demeter_ro_user_password`
+
+You can set the passwords to whatever you wish, but remember the `initializeDemeterInstance()` function will set the user passwords based on what you set.

@@ -7,16 +7,21 @@ Once you have those things ready to go, set up the schema by running: python3 -m
 
 """
 import argparse
+import logging
 import subprocess
+import sys
+from os import getenv
 from os.path import (
     dirname,
     join,
     realpath,
 )
+from tempfile import NamedTemporaryFile
 
 import click
 from dotenv import load_dotenv  # type: ignore
 from sqlalchemy.engine import Connection
+from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection
 
@@ -42,12 +47,12 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
 
     # if the schema exists already, drop existing if `drop_existing` is True, else do nothing
     if len(results) > 0:
-        print("A schema of name 'weather' already exists in this database.")
+        logging.info("A schema of name 'weather' already exists in this database.")
         if not drop_existing:
-            print("Change `drop_existing` to True if you'd like to drop it.")
+            logging.info("Change `drop_existing` to True if you'd like to drop it.")
             return False
         else:
-            print(
+            logging.info(
                 "`drop_existing` is True. The existing schema will be dropped and overwritten."
             )
             stmt = """DROP SCHEMA IF EXISTS weather CASCADE;"""
@@ -55,24 +60,36 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
 
     # make temporary SQL file and overwrite schema name lines
     file_dir = realpath(join(dirname(__file__)))
-    schema_file = join(file_dir, "schema_weather.sql")
 
-    # collect credentials
-    host = conn.engine.url.host
-    username = conn.engine.url.username
-    password = conn.engine.url.password
-    database = conn.engine.url.database
-    port = conn.engine.url.port
-    psql = f'PGPASSWORD={password} psql -h {host} -p {port} -U {username} -f "{schema_file}" {database}'
-    print(schema_file)
-    subprocess.call(psql, shell=True)
+    with NamedTemporaryFile() as tmp:
+        with open(join(file_dir, "schema_weather.sql"), "r") as schema_f:
+            schema_sql = schema_f.read()
+
+            # Add user passwords
+            schema_sql = schema_sql.replace(
+                "weather_user_password", getenv("weather_user_password")
+            )
+            schema_sql = schema_sql.replace(
+                "weather_ro_user_password", getenv("weather_ro_user_password")
+            )
+
+        tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
+        tmp.flush()
+        host = conn.engine.url.host
+        username = conn.engine.url.username
+        password = conn.engine.url.password
+        database = conn.engine.url.database
+        port = conn.engine.url.port
+        psql = f'PGPASSWORD={password} psql -h {host} -p {port} -U {username} -f "{tmp.name}" {database}'
+
+        subprocess.call(psql, shell=True)
 
     return True
 
 
 if __name__ == "__main__":
-
     c = load_dotenv()
+    logging_init()
 
     parser = argparse.ArgumentParser(description="Initialize weather schema instance.")
 
@@ -92,24 +109,32 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--drop_existing",
-        type=bool,
+        action="store_true",
         help="Should the schema be re-created if it exists?",
         default=False,
     )
 
+    # set up args
     args = parser.parse_args()
     database_host = args.database_host
     database_env = args.database_env
-    drop_existing = args.drop_existing
 
+    if args.drop_existing:
+        drop_existing = True
+    else:
+        drop_existing = False
+
+    # ensure appropriate set-up
     assert database_host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
     assert database_env in ["DEV", "PROD"], "`database_env` can be 'DEV' or 'PROD'"
 
-    database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
-
-    print(f"Connecting to database: {database_env_name}")
-
-    conn = getConnection(env_name=database_env_name)
+    if database_host == "AWS":
+        if click.confirm(
+            "Are you sure you want to tunnel to AWS database?", default=False
+        ):
+            logging.info("Connecting to AWS database instance.")
+        else:
+            sys.exit()
 
     if drop_existing:
         if click.confirm(
@@ -117,7 +142,16 @@ if __name__ == "__main__":
         ):
             pass
         else:
-            print("Continuing command with `drop_existing` set to False.")
+            logging.info("Continuing command with `drop_existing` set to False.")
             drop_existing = False
 
+    ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
+    database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
+
+    # set up database connection
+    logging.info("Connecting to database: %s", database_env_name)
+    conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
+
+    logging.info("Initializing weather schema instance")
     _ = initialize_weather_schema(conn, drop_existing)
+    conn.close()

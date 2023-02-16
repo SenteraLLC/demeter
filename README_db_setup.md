@@ -1,8 +1,8 @@
 # Demeter Database Setup
 A guide for configuring your project to connect to a `demeter` database.
 
-There are two main ways in which our team interacts with `demeter`. 
-(1) We read and write data to the `demeter` database instances on AWS: `demeter-dev` and `demeter-prod`. 
+There are two main ways in which our team interacts with `demeter`.
+(1) We read and write data to the `demeter` database instances on AWS: `demeter-dev` and `demeter-prod`.
 (2) We spin up local `demeter-dev` database instances on our local machine for local development, fulfillment, and testing.
 
 Let's walk through how to connect to accomplish both of these tasks.
@@ -13,7 +13,7 @@ Let's walk through how to connect to accomplish both of these tasks.
 
 The `.env` file holds the credentials necessary to connect to the desired Postgres server (see [python-dotenv](https://github.com/theskumar/python-dotenv) for more information). It should never be committed to Github (i.e., should be part of the `.gitignore`). See [`.env.template`](https://github.com/SenteraLLC/demeter/blob/main/.env.template) for an example, and ask @tnigon or @marissakivi if you have questions about credentials or set-up.
 
-You will need the following environments set up to complete these tasks: 
+You will need the following environments set up to complete these tasks:
 - DEMETER-DEV_AWS
 - DEMETER_DEV_LOCAL
 - DEMETER_DEV_LOCAL_SUPER (this is the postgres user that you set up for your database)
@@ -31,10 +31,13 @@ DEMETER_TEST = "{'host':'localhost', 'port':'5433', 'username':'demeter_user', '
 ## Method 1: Connect to the AWS RDS `demeter_database` via an SSH tunnel.
 
 To proceed with this method, you must obtain SSH access to the bastion server from Elliot or Sam ([see py-analytics-db repo](https://github.com/SenteraLLC/py-analytics-db#credentials)).
-They will provide you with your bastion username. You will not be able to SSH into the bastion server but only tunnel through it. 
+They will provide you with your bastion username. You will not be able to SSH into the bastion server but only tunnel through it.
 
 ### Step 1: Connect to database through an SSH Tunnel
 See [Connecting to a Database (safely)](https://sentera.atlassian.net/wiki/spaces/GML/pages/3173416965/Connecting+to+a+Database+safely#The-General-Problem) for more information.
+
+Create an SSH tunnel via bash (note that SSH tunneling can also be done within Python by setting the `SSH_DEMETER_AWS` environment variable).
+
 ``` bash
 ssh -o ServerAliveInterval=36000 -i <FILE LOCATION OF IDENTITY FILE> -NL 127.0.0.1:<DEMETER_PG_PORT>:<DATABASE_LOCATION>:<SSH_PORT> <AWS_ANALYTICS_BASTION_USERNAME>@<SSH_HOST> -v
 ```
@@ -52,14 +55,29 @@ In a separate terminal window (running on your local machine), run the following
 psql --host localhost --port 5433 --user demeter_user demeter-dev
 ```
 
-### Step 3: Connect to the database 
+### Step 3: Connect to the database
 You can do this in one of the following ways:
 1. PGAdmin (see ["Step 5" of README_wsl.md](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md#step-5-connect-to-wsls-postgres)) (do not need to do SSH tunneling from command line)
 2. Python/Jupyter notebook (via `demeter`):
 
+
+#### Option A: If SSH tunneling via bash
 ```python
 from demeter.db import getConnection
 conn = getConnection(env_name="DEMETER-DEV_AWS")
+```
+
+#### Option B: If SSH tunneling via Python
+Add SSH credentials to `SSH_DEMETER_AWS` environment variable.
+
+``` bash
+SSH_DEMETER_AWS = "{'ssh_address_or_host':'bastion-lt-lb-369902c3f6e57f00.elb.us-east-1.amazonaws.com', 'ssh_username':'my_bastion_user', 'ssh_pkey': '/path/to/my/ssh/identity/key', 'remote_bind_address': 'demeter-database.cbqzrf0bsec9.us-east-1.rds.amazonaws.com'}"
+```
+
+Then when making the connection, pass `ssh_env_name` to `getConnection()` function:
+```python
+from demeter.db import getConnection
+conn = getConnection(env_name="DEMETER-DEV_AWS", ssh_env_name="SSH_DEMETER_AWS")
 ```
 
 ## Method 2: Create your own database locally (Mac)

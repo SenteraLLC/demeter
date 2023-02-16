@@ -1,7 +1,7 @@
 """Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
 
-This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as the necessary passwords for the
-`demeter_user` and `demeter_ro_user`.
+This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as
+the necessary passwords for the `demeter_user` and `demeter_ro_user`.
 """
 import argparse
 
@@ -53,11 +53,12 @@ if __name__ == "__main__":
     assert database_host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
     assert database_env in ["DEV", "PROD"], "`database_env` can be 'DEV' or 'PROD'"
 
+    ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
     database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
 
     print(f"Connecting to database: {database_env_name}")
 
-    conn = getConnection(env_name=database_env_name)
+    conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
 
     if drop_existing:
         if click.confirm(

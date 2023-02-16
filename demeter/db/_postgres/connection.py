@@ -19,6 +19,7 @@ from sqlalchemy.engine import (
     create_engine,
 )
 from sqlalchemy.orm import sessionmaker
+from sshtunnel import SSHTunnelForwarder
 
 
 def getEnv(
@@ -38,9 +39,13 @@ def getConnection(
     env_name: str = "TEST",
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
     dialect: str = "postgresql+psycopg2",
+    ssh_env_name: str = None,
 ) -> Connection:
     return getEngine(
-        env_name=env_name, cursor_type=cursor_type, dialect=dialect
+        env_name=env_name,
+        cursor_type=cursor_type,
+        dialect=dialect,
+        ssh_env_name=ssh_env_name,
     ).connect()
 
 
@@ -48,8 +53,18 @@ def getEngine(
     env_name: str = "TEST",
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
     dialect: str = "postgresql+psycopg2",
+    ssh_env_name: str = None,
 ) -> Connection:
     db_meta = literal_eval(getEnv(env_name))  # make into dictionary
+    if ssh_env_name:
+        ssh_meta = literal_eval(getEnv(ssh_env_name))
+        ssh_address_or_host = ssh_meta["ssh_address_or_host"]
+        ssh_username = ssh_meta["ssh_username"]
+        ssh_private_key = ssh_meta["ssh_pkey"]
+        remote_bind_address = ssh_meta["remote_bind_address"]
+        db_meta["port"] = ssh_bind_port(
+            ssh_address_or_host, ssh_username, ssh_private_key, remote_bind_address
+        )
     schema_name = (
         db_meta["schema_name"] + "," if "schema_name" in db_meta.keys() else ""
     )
@@ -67,6 +82,23 @@ def getEngine(
         database=db_meta["database"],
     )
     return create_engine(url_object, connect_args=connect_args)
+
+
+def ssh_bind_port(
+    ssh_address_or_host, ssh_username, ssh_private_key, remote_bind_address
+):
+    """Use SSHTunnelForwarder to bind host to a local port."""
+    server = SSHTunnelForwarder(
+        ssh_address_or_host=(ssh_address_or_host, 22),
+        ssh_username=ssh_username,
+        ssh_private_key=ssh_private_key,
+        remote_bind_address=(remote_bind_address, 5432),
+        set_keepalive=15,
+    )
+    server.daemon_forward_servers = True
+    server.start()
+    local_port = str(server.local_bind_port)
+    return local_port
 
 
 def getSession(

@@ -27,7 +27,6 @@ class TestUserPrivileges:
     def test_demeter_user_can_insert(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 test_field_group = FieldGroup(
                     name="Field Group", parent_field_group_id=None
                 )
@@ -39,7 +38,6 @@ class TestUserPrivileges:
     def test_demeter_user_can_read(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 test_field_group = FieldGroup(
                     name="Field Group", parent_field_group_id=None
                 )
@@ -51,7 +49,6 @@ class TestUserPrivileges:
     def test_demeter_user_cannot_update(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 stmt = """update field_group
                 set name = 'name change'
                 where field_group_id = 1"""
@@ -62,7 +59,6 @@ class TestUserPrivileges:
     def test_demeter_user_cannot_drop(self, test_db_class, schema_name):
         with test_db_class.connect() as conn:
             with conn.begin():
-
                 stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
                 params = AsIs(schema_name)
 
@@ -74,7 +70,6 @@ class TestUserPrivileges:
     def test_demeter_ro_user_can_read(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-
                 test_field_group = FieldGroup(
                     name="Field Group", parent_field_group_id=None
                 )
@@ -86,7 +81,6 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_insert(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-
                 test_field_group_2 = FieldGroup(
                     name="New field Group", parent_field_group_id=None
                 )
@@ -98,7 +92,6 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_update(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-
                 stmt = """update field_group
                 set name = 'name change'
                 where field_group_id = 1"""
@@ -109,7 +102,6 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_drop(self, test_read_only_access, schema_name):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-
                 stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
                 params = AsIs(schema_name)
 

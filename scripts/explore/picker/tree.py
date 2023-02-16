@@ -44,7 +44,6 @@ class PickerTree(Generic[RawRowType]):
         id_to_row: Dict[TableId, RawRowType],
         separator: str = "   ",
     ) -> None:
-
         self.layout = layout
 
         self.id_to_row = id_to_row
@@ -128,7 +127,6 @@ class PickerTree(Generic[RawRowType]):
                 r = p.get_cursor_row()
                 child_ids = r.field_group_ids  # type: ignore
                 if child_ids:
-
                     _id = r.field_group_id  # type: ignore
 
                     child_table, child_selected = self._get_table_and_selected(

@@ -61,7 +61,7 @@ class TestUserPrivileges:
     def test_demeter_user_cannot_delete(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                stmt = """update from field_group
+                stmt = """delete from field_group
                 where field_group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
@@ -120,7 +120,7 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_delete(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-                stmt = """update from field_group
+                stmt = """delete from field_group
                 where field_group_id = 1"""
 
                 with pytest.raises(ProgrammingError):

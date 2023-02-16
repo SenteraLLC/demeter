@@ -9,9 +9,6 @@ from demeter.data import insertOrGetGeom
 from demeter.tests.conftest import SCHEMA_NAME
 from demeter.tests.constants import TABLES_LIST
 
-# from demeter.db import getConnection
-# conn = getConnection(env_name="TEST_DEMETER")
-
 
 class TestUpsertGeom:
     """

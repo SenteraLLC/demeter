@@ -27,19 +27,21 @@ class TestUserPrivileges:
     def test_demeter_user_can_insert(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                test_field_group = FieldGroup(
-                    name="Field Group", parent_field_group_id=None
-                )
-                test_fg_id = insertOrGetFieldGroup(
-                    conn.connection.cursor(), test_field_group
-                )
-                test_fg_id.should.be.equal(1)
+                cursor = conn.connection.cursor()
+                stmt = """insert into field_group (name)
+                values ('Testing User Privileges');
+                """
+                cursor.execute(stmt)
+
+                stmt = """select name from field_group where name = 'Testing User Privileges'"""
+                cursor.execute(stmt)
+                len(cursor.fetchall()).should.be.equal(1)
 
     def test_demeter_user_can_read(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
                 test_field_group = FieldGroup(
-                    name="Field Group", parent_field_group_id=None
+                    name="Testing User Privileges", parent_field_group_id=None
                 )
                 test_fg_id = getMaybeFieldGroupId(
                     conn.connection.cursor(), test_field_group
@@ -87,7 +89,7 @@ class TestUserPrivileges:
         with test_read_only_access.connect() as conn:
             with conn.begin():
                 test_field_group = FieldGroup(
-                    name="Field Group", parent_field_group_id=None
+                    name="Testing User Privileges", parent_field_group_id=None
                 )
                 test_fg_id = getMaybeFieldGroupId(
                     conn.connection.cursor(), test_field_group
@@ -97,13 +99,13 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_insert(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-                test_field_group_2 = FieldGroup(
-                    name="New field Group", parent_field_group_id=None
-                )
+                cursor = conn.connection.cursor()
+                stmt = """insert into field_group (name)
+                values ('Testing User Privileges - 2');
+                """
+
                 with pytest.raises(InsufficientPrivilege):
-                    _ = insertOrGetFieldGroup(
-                        conn.connection.cursor(), test_field_group_2
-                    )
+                    cursor.execute(stmt)
 
     def test_demeter_ro_user_cannot_update(self, test_read_only_access):
         with test_read_only_access.connect() as conn:

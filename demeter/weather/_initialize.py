@@ -21,15 +21,16 @@ from demeter.weather._grid_utils import (
 )
 
 
-def populate_weather_grid(geojson_dir: str):
+def populate_weather_grid():
     """Populate the weather with 5km weather grid.
 
     See Confluence doc: https://sentera.atlassian.net/wiki/spaces/GML/pages/3260710936/Creating+the+5km+weather+grid
     """
+    file_dir = realpath(join(dirname(__file__)))
 
     # load grid
     gdf_utm = (
-        gpd_read_file(join(geojson_dir, "utm_grid.geojson"))
+        gpd_read_file(join(file_dir, "utm_grid.geojson"))
         .sort_values(["row", "zone"])
         .reset_index(drop=True)
     )

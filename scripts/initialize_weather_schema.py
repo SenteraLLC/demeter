@@ -3,8 +3,7 @@
 This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that you have passwords
 for the two weather schema users--weather_user and weather_ro_user-- in your .env file.
 
-Once you have those things ready to go, set up the schema by running: python3 -m demeter.weather.scripts.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
-
+Once you have those things ready to go, set up the schema by running: python3 -m scripts.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
 """
 import argparse
 
@@ -12,8 +11,7 @@ import click
 from dotenv import load_dotenv  # type: ignore
 
 from demeter.db import getConnection
-
-from .._initialize import initialize_weather_schema, populate_weather_grid
+from demeter.weather._initialize import initialize_weather_schema, populate_weather_grid
 
 if __name__ == "__main__":
 
@@ -72,5 +70,4 @@ if __name__ == "__main__":
     _ = initialize_weather_schema(conn, drop_existing)
     conn.close()
 
-    geojson_dir = "/Users/marissakivi/Local/demeter/demeter/weather"
-    populate_weather_grid(geojson_dir)
+    populate_weather_grid()

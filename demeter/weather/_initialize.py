@@ -8,7 +8,6 @@ from os.path import (
 )
 from tempfile import NamedTemporaryFile
 
-from dotenv import load_dotenv
 from geo_utils.general import get_utc_offset
 from geopandas import read_file as gpd_read_file
 from sqlalchemy.engine import Connection
@@ -21,16 +20,12 @@ from demeter.weather._grid_utils import (
     insert_utm_polygon,
 )
 
-geojson_dir = "/Users/marissakivi/Local/demeter/demeter/weather"
-
 
 def populate_weather_grid(geojson_dir: str):
     """Populate the weather with 5km weather grid.
 
     See Confluence doc: https://sentera.atlassian.net/wiki/spaces/GML/pages/3260710936/Creating+the+5km+weather+grid
     """
-
-    load_dotenv()
 
     # load grid
     gdf_utm = (

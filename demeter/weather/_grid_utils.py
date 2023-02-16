@@ -363,3 +363,11 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
 #         # geom_pt = gdf_pt.iloc[0]["geometry"]
 #         return [x[0] for x in ds.sample([[geom_pt.x, geom_pt.y]])][0]
 # %%
+# -- select * from weather.world_utm where ST_intersects(ST_Point( -93.090, 44.954, 4326), weather.world_utm.geom);
+# -- world_utm_id = 917
+# -- raster_epsg = 32615
+# select ST_Value(
+# 	rast_cell_id,
+# 	ST_Transform(ST_Point( -93.090, 44.954, 4326), 32615)
+# )
+# from weather.raster_5km where world_utm_id = 917

@@ -39,17 +39,23 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--drop_existing",
-        type=bool,
+        action="store_true",
         help="Should the schema be re-created if it exists?",
         default=False,
     )
 
+    # set up args
     args = parser.parse_args()
     schema_name = args.schema_name
     database_host = args.database_host
     database_env = args.database_env
-    drop_existing = args.drop_existing
 
+    if args.drop_existing:
+        drop_existing = True
+    else:
+        drop_existing = False
+
+    # ensure appropriate set-up
     assert database_host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
     assert database_env in ["DEV", "PROD"], "`database_env` can be 'DEV' or 'PROD'"
 
@@ -61,13 +67,6 @@ if __name__ == "__main__":
         else:
             sys.exit()
 
-    ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
-    database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
-
-    print(f"Connecting to database: {database_env_name}")
-
-    conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
-
     if drop_existing:
         if click.confirm(
             "Are you sure you want to drop existing schema?", default=False
@@ -76,5 +75,12 @@ if __name__ == "__main__":
         else:
             print("Continuing command with `drop_existing` set to False.")
             drop_existing = False
+
+    ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
+    database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
+
+    # set up database connection
+    print(f"Connecting to database: {database_env_name}")
+    conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
 
     _ = initializeDemeterInstance(conn, schema_name, drop_existing)

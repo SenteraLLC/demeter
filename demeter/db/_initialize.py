@@ -12,7 +12,7 @@ from psycopg2.extensions import AsIs
 from sqlalchemy.engine import Connection
 
 
-def initializeDemeterInstance(
+def initialize_demeter_instance(
     conn: Connection, schema_name: str, drop_existing: bool = False
 ) -> bool:
     """Initializes Demeter schema with given `schema_name` using database connection.

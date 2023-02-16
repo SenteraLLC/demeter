@@ -14,7 +14,6 @@ def parseCLIArguments(
     major: int,
     keyword_types: Dict[str, Type[Any]] = {},
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-
     default_cli_types: Dict[str, Any] = {
         "geospatial_key_file": keys.toGeoSpatialKeys,
         "temporal_key_file": keys.toTemporalKeys,

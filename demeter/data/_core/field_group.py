@@ -158,7 +158,8 @@ def getFieldGroupFields(
 ) -> DataFrame:
     """Takes a `field_group_id` value and returns a dataframe of all of the fields which
     directly belong to that FieldGroup if `include_descendants` = False or belong to the FieldGroup or
-    one of its child organizations if `include_descendants` = True (default behavior)."""
+    one of its child organizations if `include_descendants` = True (default behavior).
+    """
     stmt_descendants_true = """
     with recursive descendants as (
       select root.*

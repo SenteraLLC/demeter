@@ -8,27 +8,43 @@ from os.path import (
 import pytest
 from dotenv import load_dotenv
 from geoalchemy2 import Geometry  # Required import for sqlalchemy to use Geometry types
+from psycopg2.extensions import AsIs
 from sqlalchemy import MetaData
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
-from demeter.db import getConnection
+from demeter.db import getConnection, initializeDemeterInstance
 
 load_dotenv()
 
+# prepare database working environment
 SCHEMA_NAME = "test_demeter"
+
+
+@pytest.fixture(scope="function")
+def schema_name():
+    yield SCHEMA_NAME
+
+
 ROOT_DIR = realpath(join(dirname(__file__), "..", ".."))
 DEMETER_DIR = realpath(join(dirname(__file__), ".."))
 TEST_DIR = realpath(dirname(__file__))
 
-# engine = create_engine('postgresql://...')
-conn = getConnection(env_name="TEST_DEMETER")
-engine = conn.engine
-Base = declarative_base()
+c = getConnection(env_name="TEST_DEMETER_SETUP")
+engine = c.engine
 
+# check to make sure a test demeter instance doesn't already exist; if so, we need to manually drop that schema
+# else create instance for running tests
+created_test_demeter_instance = initializeDemeterInstance(
+    conn=c, schema_name=SCHEMA_NAME, drop_existing=False
+)
+msg = "Test schema already exists. Did you create a test schema for dev work? Please check and manually drop it."
+assert created_test_demeter_instance, msg
 
-metadata_obj = MetaData(schema="test_demeter")
-metadata_obj.reflect(conn.engine)
-# metadata_obj.tables["test_demeter.geom"]
+metadata_obj = MetaData(schema=SCHEMA_NAME)
+metadata_obj.reflect(c.engine)
+
+c_read_write = getConnection(env_name="TEST_DEMETER_RW")
+engine_read_write = c_read_write.engine
 
 
 @contextmanager
@@ -64,9 +80,38 @@ def clear_tables():
 def test_db_class():
     """Class scope - do not use this after `test_db_session` has been used."""
     clear_tables()  # Ensure tables are empty before beginning the tests
-    yield engine
-    engine.dispose()
+    yield engine_read_write
+    engine_read_write.dispose()
     clear_tables()
+
+
+@pytest.fixture(scope="function")
+def test_read_only_access():
+    """Function scope - create connection for read only user testing."""
+    c_read_only = getConnection(env_name="TEST_DEMETER_RO")
+    engine_read_only = c_read_only.engine
+    yield engine_read_only
+    c_read_only.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def test_db_session_teardown():
+    """Session scope - DB schema drop occurs after all tests in the session have been completed."""
+    yield None
+    with engine.connect() as conn:
+        with conn.begin():
+            stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
+            params = AsIs(SCHEMA_NAME)
+            conn.execute(stmt, params)
+    c_read_write.close()
+    c.close()
+
+
+# @pytest.fixture(autouse=True, scope="session")
+# def SETUP_DB_FIXTURE():
+#     setup_db(conn)
+#     yield None
+#     teardown_db(conn)
 
 
 # @pytest.fixture(scope="session")
@@ -80,57 +125,9 @@ def test_db_class():
 
 # @pytest.fixture(autouse=True, scope="session")
 # def CONNECTION_FIXTURE():
-#     yield getConnection(env_name="TEST_DEMETER")
+#     yield getConnection(env_name=ENV_NAME)
 
 
 # @pytest.fixture(autouse=True, scope="session")
 # def CURSOR_FIXTURE(CONNECTION_FIXTURE):
 #     yield CONNECTION_FIXTURE.connection.cursor()
-
-
-# def setup_db(conn: Connection, schema):
-#     """Loads and runs schema.sql from repo's root directory, setting schema based on user argument.
-#
-#        Note: This function does 4 things:
-#            1. Loads schema.sql
-#            2. Replaces all instances of "test_demeter" with `schema`
-#            3. Saves to a temporary file (deleted as soon as function finishes).
-#            4. Executes the temporary file, creating the new schema and all tables defined in schema.sql.
-#     """
-#     import subprocess
-#     from tempfile import NamedTemporaryFile
-
-#     with NamedTemporaryFile() as tmp:
-#         with open(join(ROOT_DIR, "schema.sql"), "r") as schema_f:
-#             schema_sql = schema_f.read()
-#             # Change schema name in SQL script if needed.
-#             if schema != "test_demeter":
-#                 schema_sql = schema_sql.replace("test_demeter", schema)
-#         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
-#         host = conn.engine.url.host
-#         username = conn.engine.url.username
-#         password = conn.engine.url.password
-#         database = conn.engine.url.database
-#         psql = f'PGPASSWORD={password} psql -h {host} -U {username} -f "{tmp.name}" {database}'
-#         subprocess.call(psql, shell=True)
-
-
-# def teardown_db(conn: Connection):
-#     stmt = "DROP SCHEMA IF EXISTS test_demeter CASCADE;"  # Don't know why I can't pass schema as a var?
-#     conn.execute(stmt)  # Delete test schema
-#     # host = conn.engine.url.host
-#     # username = conn.engine.url.username
-#     # password = conn.engine.url.password
-#     # database = conn.engine.url.database
-#     # stmt = text("DROP SCHEMA IF EXISTS test_demeter CASCADE;")
-#     # psql = f'PGPASSWORD={password} psql -h {host} -U {username} {database} '{}'
-#     # subprocess.call(psql, shell=True)
-#     # stmt = text("DROP SCHEMA IF EXISTS :schema_name CASCADE;")
-#     # conn_public.engine.execute(stmt, {"schema_name": SCHEMA_NAME})  # Delete test schema
-
-
-# @pytest.fixture(autouse=True, scope="session")
-# def SETUP_DB_FIXTURE(CONNECTION_FIXTURE, CONNECTION_FIXTURE_PUBLIC):
-#     setup_db(CONNECTION_FIXTURE)
-#     yield None
-#     teardown_db(CONNECTION_FIXTURE_PUBLIC)

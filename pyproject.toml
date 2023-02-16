@@ -32,6 +32,7 @@ types-urllib3 = "^1.26.9"
 sqlalchemy_schemadisplay = {git = "https://github.com/fschulze/sqlalchemy_schemadisplay.git", branch = "master"}
 SQLAlchemy = "^1.4.45"
 GeoAlchemy2 = "^0.12.5"
+sshtunnel = "^0.4.0"
 
 [tool.poetry.group.docs]
 optional = true

@@ -4,6 +4,7 @@ This script requires that you have the appropriate superuser credentials for the
 the necessary passwords for the `demeter_user` and `demeter_ro_user`.
 """
 import argparse
+import sys
 
 import click
 from dotenv import load_dotenv  # type: ignore
@@ -11,7 +12,6 @@ from dotenv import load_dotenv  # type: ignore
 from demeter.db import getConnection, initializeDemeterInstance
 
 if __name__ == "__main__":
-
     c = load_dotenv()
 
     parser = argparse.ArgumentParser(description="Initialize Demeter instance.")
@@ -52,6 +52,14 @@ if __name__ == "__main__":
 
     assert database_host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
     assert database_env in ["DEV", "PROD"], "`database_env` can be 'DEV' or 'PROD'"
+
+    if database_host == "AWS":
+        if click.confirm(
+            "Are you sure you want to tunnel to AWS database?", default=False
+        ):
+            print("Connecting to AWS database instance.")
+        else:
+            sys.exit()
 
     ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
     database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"

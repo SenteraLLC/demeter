@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from datetime import time
 from os import getenv
@@ -44,7 +45,6 @@ def populate_weather_grid():
     cell_id_min, cell_id_max = 0, 0
     raster_5km_id = 1
     for _, utm_poly in gdf_utm.iterrows():
-
         row, zone = utm_poly.row, int(utm_poly.zone)
 
         (
@@ -99,12 +99,17 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
 
     # if the schema exists already, drop existing if `drop_existing` is True, else do nothing
     if len(results) > 0:
-        print("A schema of name 'weather' already exists in this database.")
+        logging.info("A schema of name 'weather' already exists in this database.")
         if not drop_existing:
-            print("Change `drop_existing` to True if you'd like to drop it.")
+            logging.info(
+                "No further action will be taken as no `--drop_existing` flag was passed."
+            )
+            logging.info(
+                "Add `--drop_existing` flag to command call if you would like to re-initialize the schema."
+            )
             return False
         else:
-            print(
+            logging.info(
                 "`drop_existing` is True. The existing schema will be dropped and overwritten."
             )
             stmt = """DROP SCHEMA IF EXISTS weather CASCADE;"""
@@ -124,7 +129,6 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
             schema_sql = schema_sql.replace(
                 "weather_ro_user_password", getenv("weather_ro_user_password")
             )
-
         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
         tmp.flush()
         host = conn.engine.url.host

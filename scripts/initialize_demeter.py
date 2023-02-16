@@ -1,18 +1,23 @@
 """Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
 
-This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as the necessary passwords for the
-`demeter_user` and `demeter_ro_user`.
+For help: python3 -m scripts.initialize_demeter --help
+
+This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as
+the necessary passwords for the `demeter_user` and `demeter_ro_user`.
 """
 import argparse
+import logging
+import sys
 
 import click
 from dotenv import load_dotenv  # type: ignore
+from utils.logging.tqdm import logging_init
 
-from demeter.db import getConnection, initializeDemeterInstance
+from demeter.db import getConnection, initialize_demeter_instance
 
 if __name__ == "__main__":
-
     c = load_dotenv()
+    logging_init()  # enables tqdm progress bar to work with logging
 
     parser = argparse.ArgumentParser(description="Initialize Demeter instance.")
 
@@ -39,11 +44,12 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--drop_existing",
+        action="store_true",
         help="Should the schema be re-created if it exists?",
         default=False,
-        action="store_true",
     )
 
+    # set up args
     args = parser.parse_args()
     schema_name = args.schema_name
     database_host = args.database_host
@@ -54,14 +60,17 @@ if __name__ == "__main__":
     else:
         drop_existing = False
 
+    # ensure appropriate set-up
     assert database_host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
     assert database_env in ["DEV", "PROD"], "`database_env` can be 'DEV' or 'PROD'"
 
-    database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
-
-    print(f"Connecting to database: {database_env_name}")
-
-    conn = getConnection(env_name=database_env_name)
+    if database_host == "AWS":
+        if click.confirm(
+            "Are you sure you want to tunnel to AWS database?", default=False
+        ):
+            logging.info("Connecting to AWS database instance.")
+        else:
+            sys.exit()
 
     if drop_existing:
         if click.confirm(
@@ -69,7 +78,16 @@ if __name__ == "__main__":
         ):
             pass
         else:
-            print("Continuing command with `drop_existing` set to False.")
+            logging.info("Continuing command with `drop_existing` set to False.")
             drop_existing = False
 
-    _ = initializeDemeterInstance(conn, schema_name, drop_existing)
+    ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
+    database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
+
+    # set up database connection
+    logging.info("Connecting to database: %s", database_env_name)
+    conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
+
+    logging.info("Initializing demeter schema instance with name: %s", schema_name)
+    _ = initialize_demeter_instance(conn, schema_name, drop_existing)
+    conn.close()

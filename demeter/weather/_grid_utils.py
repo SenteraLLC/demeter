@@ -174,7 +174,19 @@ def assign_cell_ids(
 def create_raster_for_utm_polygon(
     utm_poly: GeoSeries, cell_id_min: int, cell_id_max: int
 ):
-    """Creates weather grid raster for passed `utm_poly`."""
+    """Main function to create a weather grid raster for passed `utm_poly`.
+
+    Args:
+        utm_poly (GeoSeries): Row from GeoDataFrame loaded from `utm_grid.geojson`
+        cell_id_min (int): First cell ID from previous polygon
+        cell_id_max (int): Last cell ID from previous polygon
+
+    Returns:
+        array_cell_id (array): Array of cell IDs to map to raster
+        profile (DefaultGTiffProfile): Metadata for raster
+        cell_id_min (int); First cell ID for this polygon
+        cell_id_max (int): Last cell ID for this polygon
+    """
     epsg_wgs = 4326
     pix_size_m = 5000
     dtype_template, dtype_out = uint64, uint32
@@ -278,7 +290,7 @@ def insert_utm_polygon(
 
 
 def add_raster(conn: Connection, array_cell_id: ArrayLike, profile: dict) -> None:
-    """DOCSTRING"""
+    """Insert weather grid raster into weather.raster_5km to start a new row."""
 
     host = conn.engine.url.host
     username = conn.engine.url.username
@@ -316,6 +328,7 @@ def add_raster(conn: Connection, array_cell_id: ArrayLike, profile: dict) -> Non
 
 
 def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
+    """Add raster metadata to complete database entry in weather.raster_5km for `raster_5km_id`."""
 
     profile_dict = {
         k.replace(" ", "_") if " " in k else k: v for k, v in profile.items()

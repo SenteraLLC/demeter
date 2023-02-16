@@ -4,15 +4,18 @@ This script requires that you have the appropriate superuser credentials for the
 `demeter_user` and `demeter_ro_user`.
 """
 import argparse
+import logging
 
 import click
 from dotenv import load_dotenv  # type: ignore
+from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection, initializeDemeterInstance
 
 if __name__ == "__main__":
 
     c = load_dotenv()
+    logging_init()  # enables tqdm progress bar to work with logging
 
     parser = argparse.ArgumentParser(description="Initialize Demeter instance.")
 
@@ -55,7 +58,7 @@ if __name__ == "__main__":
 
     database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
 
-    print(f"Connecting to database: {database_env_name}")
+    logging.info("Connecting to database: %s", database_env_name)
 
     conn = getConnection(env_name=database_env_name)
 
@@ -65,7 +68,7 @@ if __name__ == "__main__":
         ):
             pass
         else:
-            print("Continuing command with `drop_existing` set to False.")
+            logging.info("Continuing command with `drop_existing` set to False.")
             drop_existing = False
 
     _ = initializeDemeterInstance(conn, schema_name, drop_existing)

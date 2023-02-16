@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from os import getenv
 from os.path import (
@@ -35,12 +36,14 @@ def initializeDemeterInstance(
 
     # if the schema exists already, drop existing if `drop_existing` is True, else do nothing
     if len(results) > 0:
-        print(f"A schema of name {schema_name} already exists in this database.")
+        logging.info(
+            "A schema of name %s already exists in this database.", schema_name
+        )
         if not drop_existing:
-            print("Change `drop_existing` to True if you'd like to drop it.")
+            logging.info("Change `drop_existing` to True if you'd like to drop it.")
             return False
         else:
-            print(
+            logging.info(
                 "`drop_existing` is True. The existing schema will be dropped and overwritten."
             )
             stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
@@ -71,7 +74,7 @@ def initializeDemeterInstance(
         database = conn.engine.url.database
         port = conn.engine.url.port
         psql = f'PGPASSWORD={password} psql -h {host} -p {port} -U {username} -f "{tmp.name}" {database}'
-        print(psql)
+        logging.info("%s", psql)
         subprocess.call(psql, shell=True)
 
     return True

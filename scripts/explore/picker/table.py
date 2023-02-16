@@ -96,7 +96,7 @@ class Table(Generic[RawRowType]):
     ) -> str:
         # parts : List[str] = ["  "]
         parts: List[str] = []
-        for (key, specifier) in self.specifiers.values():
+        for key, specifier in self.specifiers.values():
             # f = self.layout[t]
             v = row[key]
             contents = str(v) if v is not None else ""

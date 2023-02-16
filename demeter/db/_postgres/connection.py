@@ -27,7 +27,6 @@ def getEnv(
     default: Optional[Any] = None,
     is_required: bool = False,
 ) -> Optional[str]:
-
     v = os.environ.get(name, default)
 
     if is_required and v is None:

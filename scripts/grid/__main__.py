@@ -125,7 +125,6 @@ if __name__ == "__main__":
     start_polygon = args.bounds or pointsToBound(points)
 
     for d in yieldTimeRange(start, end, delta):
-
         for s in args.stats:
             asyncio.run(main(cursor, s, d, points, start_polygon, args.keep_unused))
 

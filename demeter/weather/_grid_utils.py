@@ -354,6 +354,10 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
 def get_cell_id(cursor: Any, lat: float, long: float) -> int:
     """For a given set of lat/long coordinates, determine cell ID and cell centroid.
 
+    If the lat/long coordinate somehow falls on a polygon boundary, which results in 2 cell IDs
+    being returned, the smaller cell ID will always be returned for consistency.
+
+
     Args:
         cursor (Any): Connection to Demeter weather database
         lat (float): Latitude (decimal degrees) of point
@@ -383,11 +387,9 @@ def get_cell_id(cursor: Any, lat: float, long: float) -> int:
     args = {"long": long, "lat": lat}
 
     cursor.execute(stmt, args)
-    res = DataFrame(cursor.fetchall())
+    res = DataFrame(cursor.fetchall()).sort_values(by=["cell_id"])
 
-    assert len(res) < 2, "More than one cell ID returned."
-    assert len(res) == 1, "No cell ID was returned for this set of coordinates."
-
+    # if more than one cell ID returned (i.e., on polygon edge), take the smaller cell ID arbitrarily
     full_pt = wkb_loads(res.at[0, "centroid"], hex=True)
     centroid = Point(round(full_pt.x, 5), round(full_pt.y, 5))
 

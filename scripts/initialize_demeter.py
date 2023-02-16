@@ -4,11 +4,11 @@ This script requires that you have the appropriate superuser credentials for the
 the necessary passwords for the `demeter_user` and `demeter_ro_user`.
 """
 import argparse
-
 import logging
+import sys
+
 import click
 from dotenv import load_dotenv  # type: ignore
-import sys
 from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection, initializeDemeterInstance
@@ -63,13 +63,17 @@ if __name__ == "__main__":
     assert database_env in ["DEV", "PROD"], "`database_env` can be 'DEV' or 'PROD'"
 
     if database_host == "AWS":
-        if click.confirm("Are you sure you want to tunnel to AWS database?", default=False):
+        if click.confirm(
+            "Are you sure you want to tunnel to AWS database?", default=False
+        ):
             logging.info("Connecting to AWS database instance.")
         else:
             sys.exit()
 
     if drop_existing:
-        if click.confirm("Are you sure you want to drop existing schema?", default=False):
+        if click.confirm(
+            "Are you sure you want to drop existing schema?", default=False
+        ):
             pass
         else:
             logging.info("Continuing command with `drop_existing` set to False.")

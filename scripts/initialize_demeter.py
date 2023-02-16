@@ -1,5 +1,7 @@
 """Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
 
+For help: python3 -m scripts.initialize_demeter --help
+
 This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as
 the necessary passwords for the `demeter_user` and `demeter_ro_user`.
 """
@@ -11,7 +13,7 @@ import click
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from demeter.db import getConnection, initializeDemeterInstance
+from demeter.db import getConnection, initialize_demeter_instance
 
 if __name__ == "__main__":
     c = load_dotenv()
@@ -87,5 +89,5 @@ if __name__ == "__main__":
     conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
 
     logging.info("Initializing demeter schema instance with name: %s", schema_name)
-    _ = initializeDemeterInstance(conn, schema_name, drop_existing)
+    _ = initialize_demeter_instance(conn, schema_name, drop_existing)
     conn.close()

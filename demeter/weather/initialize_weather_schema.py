@@ -1,10 +1,11 @@
-"""Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
+"""Initializes (or re-initializes) a Demeter weather schema instance for a given host and database environment.
+
+For help: python3 -m scripts.weather.initialize_weather_schema --help
 
 This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that you have passwords
 for the two weather schema users--weather_user and weather_ro_user-- in your .env file.
 
 Once you have those things ready to go, set up the schema by running: python3 -m demeter.weather.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
-
 """
 import argparse
 import logging
@@ -49,7 +50,12 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
     if len(results) > 0:
         logging.info("A schema of name 'weather' already exists in this database.")
         if not drop_existing:
-            logging.info("Change `drop_existing` to True if you'd like to drop it.")
+            logging.info(
+                "No further action will be taken as no `--drop_existing` flag was passed."
+            )
+            logging.info(
+                "Add `--drop_existing` flag to command call if you would like to re-initialize the schema."
+            )
             return False
         else:
             logging.info(
@@ -72,7 +78,7 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
             schema_sql = schema_sql.replace(
                 "weather_ro_user_password", getenv("weather_ro_user_password")
             )
-
+        print(schema_sql)
         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
         tmp.flush()
         host = conn.engine.url.host

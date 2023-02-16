@@ -2,8 +2,8 @@
 A guide for configuring your project to connect to a `demeter` database.
 
 There are two main ways in which our team interacts with `demeter`.
-(1) We read and write data to the `demeter` database instances on AWS: `demeter-dev` and `demeter-prod`.
-(2) We spin up local `demeter-dev` database instances on our local machine for local development, fulfillment, and testing.
+1. We read and write data to the `demeter` database instances on AWS: `demeter-dev` and `demeter-prod`.
+2. We spin up local `demeter-dev` database instances on our local machine for local development, fulfillment, and testing.
 
 Let's walk through how to connect to accomplish both of these tasks.
 

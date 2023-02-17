@@ -8,7 +8,6 @@ from typing import Any, Tuple
 from geo_utils.general import estimate_utm_crs, hemisphere_from_centroid
 from geo_utils.raster import build_transform_utm, create_array_skeleton
 from geo_utils.vector import reproject_shapely
-from geopandas import GeoSeries
 from numpy import (
     arange,
     count_nonzero,
@@ -17,7 +16,7 @@ from numpy import (
     uint64,
 )
 from numpy.typing import ArrayLike, DTypeLike
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from rasterio import MemoryFile
 from rasterio import open as rio_open
 from rasterio.mask import mask as rio_mask
@@ -34,7 +33,6 @@ def determine_raster_origin(
     hemisphere_ns: str,
     pole: bool,
 ) -> Tuple[Tuple[float], Tuple[float]]:
-
     """Determines raster origin for WGS- and UTM-projected UTM polygons.
 
     Raster origin should be on the latitudinal axis nearest the equator.
@@ -171,9 +169,7 @@ def assign_cell_ids(
     return array_cell_id.astype(dtype_out)
 
 
-def create_raster_for_utm_polygon(
-    utm_poly: GeoSeries, cell_id_min: int, cell_id_max: int
-):
+def create_raster_for_utm_polygon(utm_poly: Series, cell_id_min: int, cell_id_max: int):
     """Main function to create a weather grid raster for passed `utm_poly`.
 
     Args:
@@ -300,7 +296,6 @@ def add_raster(conn: Connection, array_cell_id: ArrayLike, profile: dict) -> Non
 
     with NamedTemporaryFile(suffix=".tif") as tmpfile:
         with rio_open(tmpfile, "w", **profile) as rast_mem:
-
             rast_mem.write(array_cell_id)
             rast_mem.set_band_description(1, "cell_id")
             rast_mem.update_tags(**profile)
@@ -351,7 +346,7 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
     cursor.execute(stmt, args)
 
 
-def get_cell_id(cursor: Any, lat: float, long: float) -> int:
+def get_cell_id(cursor: Any, lat: float, long: float) -> Series:
     """For a given set of lat/long coordinates, determine cell ID and cell centroid.
 
     If the lat/long coordinate somehow falls on a polygon boundary, which results in 2 cell IDs
@@ -393,4 +388,4 @@ def get_cell_id(cursor: Any, lat: float, long: float) -> int:
     full_pt = wkb_loads(res.at[0, "centroid"], hex=True)
     centroid = Point(round(full_pt.x, 5), round(full_pt.y, 5))
 
-    return int(res.at[0, "cell_id"]), centroid
+    return Series(data={"cell_id": int(res.at[0, "cell_id"]), "centroid": centroid})

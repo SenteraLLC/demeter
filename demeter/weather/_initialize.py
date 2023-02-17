@@ -85,7 +85,8 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
 
     Args:
         conn (sqlalchemy.engine.Connection): Connection to demeter database where schema should be created.
-        drop_existing (bool): Indicates whether or not an existing schema called `schema_name` should be dropped if exists.
+        drop_existing (bool): Indicates whether or not an existing schema called `schema_name` should be dropped if
+        exists.
     """
 
     # check if the given schema name already exists

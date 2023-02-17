@@ -422,14 +422,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.26.72"
-description = "Type annotations for boto3 1.26.72 generated with mypy-boto3-builder 7.12.3"
+version = "1.26.73"
+description = "Type annotations for boto3 1.26.73 generated with mypy-boto3-builder 7.12.3"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "boto3-stubs-1.26.72.tar.gz", hash = "sha256:e71b971e9502372f2077223a5be538530041f2c74a69e5b481fa5e7894080cfa"},
-    {file = "boto3_stubs-1.26.72-py3-none-any.whl", hash = "sha256:b9a208dad994c049807032c82015632f0424fa3393ebbf5ee87a6f9740b05b41"},
+    {file = "boto3-stubs-1.26.73.tar.gz", hash = "sha256:4fa86d7c0e326f00d7514fd56192db9dd2236017c45c96be4993b0d59f33e104"},
+    {file = "boto3_stubs-1.26.73-py3-none-any.whl", hash = "sha256:7ce59560315190d72119c14020aa2f56200745d92f0b125caa9ceea5878f262e"},
 ]
 
 [package.dependencies]
@@ -472,7 +472,7 @@ backup-gateway = ["mypy-boto3-backup-gateway (>=1.26.0,<1.27.0)"]
 backupstorage = ["mypy-boto3-backupstorage (>=1.26.0,<1.27.0)"]
 batch = ["mypy-boto3-batch (>=1.26.0,<1.27.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.26.0,<1.27.0)"]
-boto3 = ["boto3 (==1.26.72)", "botocore (==1.29.72)"]
+boto3 = ["boto3 (==1.26.73)", "botocore (==1.29.73)"]
 braket = ["mypy-boto3-braket (>=1.26.0,<1.27.0)"]
 budgets = ["mypy-boto3-budgets (>=1.26.0,<1.27.0)"]
 ce = ["mypy-boto3-ce (>=1.26.0,<1.27.0)"]
@@ -803,14 +803,14 @@ crt = ["awscrt (==0.16.9)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.29.72"
+version = "1.29.73"
 description = "Type annotations and code completion for botocore"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "botocore_stubs-1.29.72-py3-none-any.whl", hash = "sha256:b004950fa26a60791e82352d02da4e649202df3b5513842a454e8a26619084e9"},
-    {file = "botocore_stubs-1.29.72.tar.gz", hash = "sha256:84b9f309be92fb2a029b63886bc1f348013b8345eb4ad83a52980f0680c9e920"},
+    {file = "botocore_stubs-1.29.73-py3-none-any.whl", hash = "sha256:7579ce60994635f8866e43650907fbf5a65554730101b8fc7bc3acf7eef499e5"},
+    {file = "botocore_stubs-1.29.73.tar.gz", hash = "sha256:5ebbe1962ebc55631b6748807c01ef0c35af6b31dc800b1bdc083175c0e37e3f"},
 ]
 
 [package.dependencies]

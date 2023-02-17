@@ -12,7 +12,7 @@ from psycopg2.extensions import AsIs
 from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker
 
-from demeter.db import getConnection, initializeDemeterInstance
+from demeter.db import getConnection, initialize_demeter_instance
 
 load_dotenv()
 
@@ -34,7 +34,7 @@ engine = c.engine
 
 # check to make sure a test demeter instance doesn't already exist; if so, we need to manually drop that schema
 # else create instance for running tests
-created_test_demeter_instance = initializeDemeterInstance(
+created_test_demeter_instance = initialize_demeter_instance(
     conn=c, schema_name=SCHEMA_NAME, drop_existing=False
 )
 msg = "Test schema already exists. Did you create a test schema for dev work? Please check and manually drop it."

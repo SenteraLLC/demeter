@@ -1,9 +1,11 @@
-"""Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
+"""Initializes (or re-initializes) a Demeter weather schema instance for a given host and database environment.
 
-For help: python3 -m scripts.initialize_demeter --help
+For help: python3 -m scripts.initialize_weather_schema --help
 
-This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as
-the necessary passwords for the `demeter_user` and `demeter_ro_user`.
+This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that you have passwords
+for the two weather schema users--weather_user and weather_ro_user-- in your .env file.
+
+Once you have those things ready to go, set up the schema by running: python3 -m scripts.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
 """
 import argparse
 import logging
@@ -13,20 +15,14 @@ import click
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from demeter.db import getConnection, initialize_demeter_instance
+from demeter.db import getConnection
+from demeter.weather._initialize import initialize_weather_schema
 
 if __name__ == "__main__":
     c = load_dotenv()
-    logging_init()  # enables tqdm progress bar to work with logging
+    logging_init()
 
-    parser = argparse.ArgumentParser(description="Initialize Demeter instance.")
-
-    parser.add_argument(
-        "--schema_name",
-        type=str,
-        help="Schema name to use for new Demeter instance.",
-        required=True,
-    )
+    parser = argparse.ArgumentParser(description="Initialize weather schema instance.")
 
     parser.add_argument(
         "--database_host",
@@ -51,7 +47,6 @@ if __name__ == "__main__":
 
     # set up args
     args = parser.parse_args()
-    schema_name = args.schema_name
     database_host = args.database_host
     database_env = args.database_env
 
@@ -88,6 +83,6 @@ if __name__ == "__main__":
     logging.info("Connecting to database: %s", database_env_name)
     conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
 
-    logging.info("Initializing demeter schema instance with name: %s", schema_name)
-    _ = initialize_demeter_instance(conn, schema_name, drop_existing)
+    logging.info("Initializing weather schema instance")
+    _ = initialize_weather_schema(conn, drop_existing)
     conn.close()

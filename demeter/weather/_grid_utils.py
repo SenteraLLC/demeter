@@ -8,6 +8,7 @@ from typing import Any, Tuple
 from geo_utils.general import estimate_utm_crs, hemisphere_from_centroid
 from geo_utils.raster import build_transform_utm, create_array_skeleton
 from geo_utils.vector import reproject_shapely
+from geo_utils.world import round_coordinate
 from numpy import (
     arange,
     count_nonzero,
@@ -364,7 +365,7 @@ def get_cell_id(cursor: Any, lat: float, long: float) -> Series:
     """
 
     stmt = """
-    select q2.cell_id, ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326) as centroid
+    select q2.cell_id, ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326), 0.00001) as centroid
     from (
         select q.cell_id as cell_id, q.rast, (ST_PixelOfValue(q.rast, 1, q.cell_id)).*
         from (
@@ -373,7 +374,7 @@ def get_cell_id(cursor: Any, lat: float, long: float) -> Series:
                 weather.raster_5km.rast_cell_id,
                 ST_Transform(ST_Point( %(long)s, %(lat)s, 4326), weather.world_utm.raster_epsg)
                 ) as cell_id
-            from world_utm,raster_5km
+            from weather.world_utm, weather.raster_5km
             where ST_intersects(ST_Point(%(long)s, %(lat)s, 4326), world_utm.geom)
             and world_utm.world_utm_id=raster_5km.world_utm_id
         ) as q
@@ -386,6 +387,7 @@ def get_cell_id(cursor: Any, lat: float, long: float) -> Series:
 
     # if more than one cell ID returned (i.e., on polygon edge), take the smaller cell ID arbitrarily
     full_pt = wkb_loads(res.at[0, "centroid"], hex=True)
-    centroid = Point(round(full_pt.x, 5), round(full_pt.y, 5))
+    # centroid = Point(round(full_pt.x, 5), round(full_pt.y, 5))
+    centroid = Point(round_coordinate([full_pt.x, full_pt.y], 5))
 
     return Series(data={"cell_id": int(res.at[0, "cell_id"]), "centroid": centroid})

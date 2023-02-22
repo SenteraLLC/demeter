@@ -64,6 +64,12 @@ grant usage, select on all sequences in schema weather to weather_user;
 alter default privileges in schema weather grant usage on sequences to weather_user;
 grant usage on schema weather to weather_user;
 
+-- give `demeter_user` read and write access to `weather`
+grant select, insert on all tables in schema weather to demeter_user;
+grant usage, select on all sequences in schema weather to demeter_user;
+alter default privileges in schema weather grant usage on sequences to demeter_user;
+grant usage on schema weather to demeter_user;
+
 -- create read only access user
 create user weather_ro_user with password 'weather_ro_user_password';
 grant select on all tables in schema weather to weather_ro_user;

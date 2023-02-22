@@ -18,6 +18,7 @@ from numpy import (
 )
 from numpy.typing import ArrayLike, DTypeLike
 from pandas import DataFrame, Series
+from pyproj import CRS
 from rasterio import MemoryFile
 from rasterio import open as rio_open
 from rasterio.mask import mask as rio_mask
@@ -348,22 +349,35 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
     cursor.execute(stmt, args)
 
 
-def get_cell_id(cursor: Any, lat: float, lng: float) -> Series:
-    """For a given set of lat/lng coordinates, determine cell ID and cell centroid.
+def get_cell_id(
+    cursor: Any, geometry: Point, geometry_crs: CRS = CRS.from_epsg(4326)
+) -> Series:
+    """For a given Point geometry, determine cell ID and cell centroid.
 
-    If the lat/lng coordinate somehow falls on a polygon boundary, which results in 2 cell IDs
+    If the point geometry somehow falls on a polygon boundary, which results in 2 cell IDs
     being returned, the smaller cell ID will always be returned for consistency.
 
 
     Args:
         cursor (Any): Connection to Demeter weather database
-        lat (float): Latitude (decimal degrees) of point
-        lng (float): Longitude (decimal degress) of point
+        geometry (shapely.geometry.Point): Point geometry for which to extract cell ID
+
+        geometry_crs (pyproj.CRS): Coordinate reference system for `geometry`. Defaults to
+            WGS 84 (EPSG=4326).
 
     Returns:
         cell ID (int) of weather grid pixel the point falls within
         centroid (shapely.Point) of pixel with lat/lng values rounded to 5 decimal places
     """
+
+    assert isinstance(geometry, Point), "`geometry` must be passed as a `Point`"
+
+    epsg_src = geometry_crs.to_epsg()
+    if epsg_src != 4326:
+        epsg_dst = 4326
+        geometry = reproject_shapely(
+            epsg_src=epsg_src, epsg_dst=epsg_dst, geometry=geometry
+        )
 
     stmt = """
     select q2.cell_id, ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326), 0.00001) as centroid
@@ -373,22 +387,21 @@ def get_cell_id(cursor: Any, lat: float, lng: float) -> Series:
             select raster_5km.rast_cell_id as rast,
                 ST_Value(
                 raster_5km.rast_cell_id,
-                ST_Transform(ST_Point( %(lng)s, %(lat)s, 4326), world_utm.raster_epsg)
+                ST_Transform(ST_Point( %(x)s, %(y)s, 4326), world_utm.raster_epsg)
                 ) as cell_id
             from world_utm, raster_5km
-            where ST_intersects(ST_Point(%(lng)s, %(lat)s, 4326), world_utm.geom)
+            where ST_intersects(ST_Point(%(x)s, %(y)s, 4326), world_utm.geom)
             and world_utm.world_utm_id=raster_5km.world_utm_id
         ) as q
     ) as q2;
     """
-    args = {"lng": lng, "lat": lat}
+    args = {"x": geometry.x, "y": geometry.y}
 
     cursor.execute(stmt, args)
     res = DataFrame(cursor.fetchall()).sort_values(by=["cell_id"])
 
     # if more than one cell ID returned (i.e., on polygon edge), take the smaller cell ID arbitrarily
     full_pt = wkb_loads(res.at[0, "centroid"], hex=True)
-    # centroid = Point(round(full_pt.x, 5), round(full_pt.y, 5))
     centroid = Point(round_coordinate([full_pt.x, full_pt.y], 5))
 
     return Series(data={"cell_id": int(res.at[0, "cell_id"]), "centroid": centroid})

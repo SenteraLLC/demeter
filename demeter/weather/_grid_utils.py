@@ -372,10 +372,10 @@ def get_cell_id(cursor: Any, lat: float, lng: float) -> Series:
         from (
             select raster_5km.rast_cell_id as rast,
                 ST_Value(
-                weather.raster_5km.rast_cell_id,
-                ST_Transform(ST_Point( %(lng)s, %(lat)s, 4326), weather.world_utm.raster_epsg)
+                raster_5km.rast_cell_id,
+                ST_Transform(ST_Point( %(lng)s, %(lat)s, 4326), world_utm.raster_epsg)
                 ) as cell_id
-            from weather.world_utm, weather.raster_5km
+            from world_utm, raster_5km
             where ST_intersects(ST_Point(%(lng)s, %(lat)s, 4326), world_utm.geom)
             and world_utm.world_utm_id=raster_5km.world_utm_id
         ) as q

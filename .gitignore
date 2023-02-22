@@ -8,3 +8,4 @@ dist/
 .env
 key/
 **/.DS_Store
+.venv/

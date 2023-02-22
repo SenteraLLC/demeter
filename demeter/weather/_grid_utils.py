@@ -286,6 +286,7 @@ def insert_utm_polygon(
     cursor.execute(stmt, args)
 
 
+# TODO: Move to either geo_utils or `demeter_utils` to be used more broadly (?)
 def add_raster(conn: Connection, array_cell_id: ArrayLike, profile: dict) -> None:
     """Insert weather grid raster into weather.raster_5km to start a new row."""
 

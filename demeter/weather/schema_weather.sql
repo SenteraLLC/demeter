@@ -1,6 +1,7 @@
 create schema weather;
 set schema 'weather';
 
+-- TODO: Move user creation to a different SQL file 
 -- create extension if not exists postgis with schema public;
 -- create extension if not exists postgis_raster with schema public;
 

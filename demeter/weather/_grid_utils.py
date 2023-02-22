@@ -348,21 +348,21 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
     cursor.execute(stmt, args)
 
 
-def get_cell_id(cursor: Any, lat: float, long: float) -> Series:
-    """For a given set of lat/long coordinates, determine cell ID and cell centroid.
+def get_cell_id(cursor: Any, lat: float, lng: float) -> Series:
+    """For a given set of lat/lng coordinates, determine cell ID and cell centroid.
 
-    If the lat/long coordinate somehow falls on a polygon boundary, which results in 2 cell IDs
+    If the lat/lng coordinate somehow falls on a polygon boundary, which results in 2 cell IDs
     being returned, the smaller cell ID will always be returned for consistency.
 
 
     Args:
         cursor (Any): Connection to Demeter weather database
         lat (float): Latitude (decimal degrees) of point
-        long (float): Longitude (decimal degress) of point
+        lng (float): Longitude (decimal degress) of point
 
     Returns:
         cell ID (int) of weather grid pixel the point falls within
-        centroid (shapely.Point) of pixel with lat/long values rounded to 5 decimal places
+        centroid (shapely.Point) of pixel with lat/lng values rounded to 5 decimal places
     """
 
     stmt = """
@@ -373,15 +373,15 @@ def get_cell_id(cursor: Any, lat: float, long: float) -> Series:
             select raster_5km.rast_cell_id as rast,
                 ST_Value(
                 weather.raster_5km.rast_cell_id,
-                ST_Transform(ST_Point( %(long)s, %(lat)s, 4326), weather.world_utm.raster_epsg)
+                ST_Transform(ST_Point( %(lng)s, %(lat)s, 4326), weather.world_utm.raster_epsg)
                 ) as cell_id
             from weather.world_utm, weather.raster_5km
-            where ST_intersects(ST_Point(%(long)s, %(lat)s, 4326), world_utm.geom)
+            where ST_intersects(ST_Point(%(lng)s, %(lat)s, 4326), world_utm.geom)
             and world_utm.world_utm_id=raster_5km.world_utm_id
         ) as q
     ) as q2;
     """
-    args = {"long": long, "lat": lat}
+    args = {"lng": lng, "lat": lat}
 
     cursor.execute(stmt, args)
     res = DataFrame(cursor.fetchall()).sort_values(by=["cell_id"])

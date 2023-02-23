@@ -1,6 +1,12 @@
 create schema weather;
 set schema 'weather';
 
+-- TODO: Move user creation to a different SQL file 
+-- Once we have knowledge of all of the schemas that are going to go into the demeter database and the users we will need to create, then we...
+-- (1) Create all of the users with passwords
+-- (2) Initialize each individual schema and, in the same SQL file, grant access to the appropriate users.
+-- Essentially, this separates out the CREATE USER statements from the CREATE SCHEMA statements. 
+
 -- create extension if not exists postgis with schema public;
 -- create extension if not exists postgis_raster with schema public;
 
@@ -63,6 +69,12 @@ grant select, insert on all tables in schema weather to weather_user;
 grant usage, select on all sequences in schema weather to weather_user;
 alter default privileges in schema weather grant usage on sequences to weather_user;
 grant usage on schema weather to weather_user;
+
+-- give `demeter_user` read and write access to `weather`
+grant select, insert on all tables in schema weather to demeter_user;
+grant usage, select on all sequences in schema weather to demeter_user;
+alter default privileges in schema weather grant usage on sequences to demeter_user;
+grant usage on schema weather to demeter_user;
 
 -- create read only access user
 create user weather_ro_user with password 'weather_ro_user_password';

@@ -73,6 +73,7 @@ def initialize_demeter_instance(
             )
 
         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
+        tmp.flush()  # Push file contents so they are accessible
         host = conn.engine.url.host
         username = conn.engine.url.username
         password = conn.engine.url.password

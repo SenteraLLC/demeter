@@ -1,5 +1,10 @@
 import logging
 import subprocess
+from datetime import (
+    time,
+    timedelta,
+    timezone,
+)
 from os import getenv
 from os.path import (
     dirname,
@@ -8,7 +13,79 @@ from os.path import (
 )
 from tempfile import NamedTemporaryFile
 
+from geo_utils.general import get_utc_offset
+from geopandas import read_file as gpd_read_file
 from sqlalchemy.engine import Connection
+
+from demeter.db import getConnection
+from demeter.weather._grid_utils import (
+    add_rast_metadata,
+    add_raster,
+    create_raster_for_utm_polygon,
+    insert_utm_polygon,
+)
+
+
+def populate_weather_grid():
+    """Populate the weather with 5km weather grid.
+
+    See Confluence doc: https://sentera.atlassian.net/wiki/spaces/GML/pages/3260710936/Creating+the+5km+weather+grid
+    """
+    file_dir = realpath(join(dirname(__file__)))
+
+    # load grid
+    gdf_utm = (
+        gpd_read_file(join(file_dir, "utm_grid.geojson"))
+        .sort_values(["row", "zone"])
+        .reset_index(drop=True)
+    )
+
+    # connect to database
+    conn = getConnection(env_name="DEMETER-DEV_LOCAL_WEATHER_SUPER")
+    cursor = conn.connection.cursor()
+    trans = conn.begin()
+
+    # loop through polygons, create rasters, and insert
+    cell_id_min, cell_id_max = 0, 0
+    raster_5km_id = 1
+    for _, utm_poly in gdf_utm.iterrows():
+        row, zone = utm_poly.row, int(utm_poly.zone)
+
+        (
+            array_cell_id,
+            profile,
+            cell_id_min,
+            cell_id_max,
+        ) = create_raster_for_utm_polygon(utm_poly, cell_id_min, cell_id_max)
+
+        # get utc offset (with handling poles)
+        if zone == 0:
+            if row in ["A", "Y"]:
+                utc_offset_tz = timezone(timedelta(hours=-6))
+            else:
+                utc_offset_tz = timezone(timedelta(hours=6))
+        else:
+            utc_offset_tz, _ = get_utc_offset(zone)
+        utc_offset = time(0, 0, tzinfo=utc_offset_tz)
+
+        raster_epsg = profile["crs"].to_epsg()
+
+        # add UTM polygon to `world_utm` table
+        insert_utm_polygon(
+            cursor, zone, row, utm_poly.geometry, utc_offset, raster_epsg
+        )
+
+        # add raster
+        add_raster(conn, array_cell_id, profile)
+
+        # add raster metadata
+        add_rast_metadata(cursor, raster_5km_id, profile)
+
+        raster_5km_id += 1
+
+    trans.commit()
+    trans.close()
+    conn.close()
 
 
 def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> bool:
@@ -63,7 +140,6 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
             schema_sql = schema_sql.replace(
                 "weather_ro_user_password", getenv("weather_ro_user_password")
             )
-        print(schema_sql)
         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
         tmp.flush()
         host = conn.engine.url.host

@@ -16,7 +16,7 @@ from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection
-from demeter.weather._initialize import initialize_weather_schema
+from demeter.weather._initialize import initialize_weather_schema, populate_weather_grid
 
 if __name__ == "__main__":
     c = load_dotenv()
@@ -86,3 +86,5 @@ if __name__ == "__main__":
     logging.info("Initializing weather schema instance")
     _ = initialize_weather_schema(conn, drop_existing)
     conn.close()
+
+    populate_weather_grid()

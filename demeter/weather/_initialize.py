@@ -1,6 +1,10 @@
 import logging
 import subprocess
-from datetime import time
+from datetime import (
+    time,
+    timedelta,
+    timezone,
+)
 from os import getenv
 from os.path import (
     dirname,
@@ -54,8 +58,14 @@ def populate_weather_grid():
             cell_id_max,
         ) = create_raster_for_utm_polygon(utm_poly, cell_id_min, cell_id_max)
 
-        # get utc offset
-        utc_offset_tz, _ = get_utc_offset(zone)
+        # get utc offset (with handling poles)
+        if zone == 0:
+            if row in ["A", "Y"]:
+                utc_offset_tz = timezone(timedelta(hours=-6))
+            else:
+                utc_offset_tz = timezone(timedelta(hours=6))
+        else:
+            utc_offset_tz, _ = get_utc_offset(zone)
         utc_offset = time(0, 0, tzinfo=utc_offset_tz)
 
         raster_epsg = profile["crs"].to_epsg()

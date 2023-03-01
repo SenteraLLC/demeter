@@ -41,10 +41,16 @@ create table raster_5km (
                   default '{}'::jsonb
 );
 
+-- create ENUM for Meteomatics parameter
+CREATE TYPE weather_parameter AS ENUM (
+    PARAMETER_LIST
+);
+
 -- TABLE: 'weather_type'
 create table weather_type (
     weather_type_id serial primary key,
-    weather_type text not null,
+    weather_type weather_parameter not null,
+    unique (weather_type),
     temporal_extent interval not null,
     units text,
     description text not null
@@ -59,9 +65,31 @@ create table daily (
     date date not null,
     weather_type_id bigint not null references weather_type(weather_type_id),
     value float not null,
-    date_extracted timestamp without time zone
+    date_requested timestamp without time zone
                 not null
 );
+
+-- TABLE: 'request_log'
+CREATE TYPE request_status AS ENUM (
+    'SUCCESS', 'FAIL'
+);
+create table request_log (
+    request_id bigserial
+                 not null,
+    zone smallint not null,
+    utm_request_id smallint not null,
+    n_pts_requested int not null, 
+    startdate timestamp without time zone
+                not null,
+    enddate timestamp without time zone
+                not null,
+    parameters text,
+    date_requested timestamp without time zone
+                not null,
+    status request_status not null,
+    request_seconds float not null
+);
+
 
 -- create read and write user access
 create user weather_user with password 'weather_user_password';

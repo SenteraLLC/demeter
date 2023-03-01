@@ -9,6 +9,7 @@ from geo_utils.general import estimate_utm_crs, hemisphere_from_centroid
 from geo_utils.raster import build_transform_utm, create_array_skeleton
 from geo_utils.vector import reproject_shapely
 from geo_utils.world import round_coordinate
+from global_land_mask.globe import is_land
 from numpy import (
     arange,
     count_nonzero,
@@ -405,3 +406,54 @@ def get_cell_id(
     centroid = Point(round_coordinate([full_pt.x, full_pt.y], 5))
 
     return Series(data={"cell_id": int(res.at[0, "cell_id"]), "centroid": centroid})
+
+
+## MAYBE SOME EXTRA FUNCTIONS?
+
+
+def get_centroid(cursor: Any, zone: int, row: str, cell_id: int):
+    """DOCSTRING."""
+    stmt = """
+    select ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326), 0.00001) as centroid
+    from (
+        select q.rast, (ST_PixelOfValue(q.rast, 1, %(cell_id)s)).*
+        from (
+            select raster_5km.rast_cell_id as rast
+            from world_utm, raster_5km
+            where world_utm.zone = %(zone)s and row = %(row)s
+            and world_utm.world_utm_id=raster_5km.world_utm_id
+        ) as q
+    ) as q2;
+    """
+    args = {"zone": int(zone), "row": row, "cell_id": int(cell_id)}
+    cursor.execute(stmt, args)
+    res = DataFrame(cursor.fetchall())["centroid"].item()
+    centroid = wkb_loads(res, hex=True)
+    return centroid
+
+
+def get_world_utm_info_for_cell_id(cursor: Any, cell_id: int):
+    """DOCSTRING."""
+    stmt = """
+    select q.world_utm_id, (ST_PixelOfValue(q.rast, 1, %(cell_id)s)).*, w.row, w.zone, w.utc_offset
+    from (
+        select world_utm_id, rast_cell_id as rast
+        from raster_5km
+    ) as q
+    cross join world_utm as w
+    where w.world_utm_id = q.world_utm_id;
+    """
+
+    args = {"cell_id": int(cell_id)}
+    cursor.execute(stmt, args)
+    df_result = DataFrame(cursor.fetchall())[
+        ["world_utm_id", "zone", "row", "utc_offset"]
+    ]
+
+    assert len(df_result) == 1, "Error: More than one raster contains this cell ID."
+
+    return df_result
+
+
+def pt_is_on_land(point: Point) -> bool:
+    return is_land(lat=point.y, lon=point.x)

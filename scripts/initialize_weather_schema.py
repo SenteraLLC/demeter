@@ -16,13 +16,19 @@ from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection
-from demeter.weather._initialize import initialize_weather_schema, populate_weather_grid
+from demeter.weather._initialize import (
+    initialize_weather_schema,
+    populate_weather_grid,
+    populate_weather_types,
+)
 
 if __name__ == "__main__":
     c = load_dotenv()
     logging_init()
 
-    parser = argparse.ArgumentParser(description="Initialize weather schema instance.")
+    parser = argparse.ArgumentParser(
+        description="Initialize weather schema instance and populate with weather grid and weather types."
+    )
 
     parser.add_argument(
         "--database_host",
@@ -88,3 +94,4 @@ if __name__ == "__main__":
     conn.close()
 
     populate_weather_grid()
+    populate_weather_types()

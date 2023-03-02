@@ -64,13 +64,16 @@ create table daily (
     cell_id integer not null,
     date date not null,
     weather_type_id bigint not null references weather_type(weather_type_id),
-    value float not null,
+    value float,
     date_requested timestamp without time zone
                 not null
 );
 
 -- TABLE: 'request_log'
 CREATE TYPE request_status AS ENUM (
+    'SUCCESS', 'FAIL'
+);
+CREATE TYPE fulfilled_status AS ENUM (
     'SUCCESS', 'FAIL'
 );
 create table request_log (
@@ -87,7 +90,7 @@ create table request_log (
     date_requested timestamp without time zone
                 not null,
     status request_status not null,
-    request_seconds float not null
+    request_seconds float not null,
 );
 
 

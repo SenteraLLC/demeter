@@ -1,3 +1,4 @@
+"""Helper functions for creating and using the weather grid network."""
 import json
 import subprocess
 from datetime import timezone
@@ -412,7 +413,7 @@ def get_cell_id(
 
 
 def get_centroid(cursor: Any, zone: int, row: str, cell_id: int):
-    """DOCSTRING."""
+    """For a given cell ID, UTM zone, and UTM row, get its centroid from the database."""
     stmt = """
     select ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326), 0.00001) as centroid
     from (
@@ -433,7 +434,7 @@ def get_centroid(cursor: Any, zone: int, row: str, cell_id: int):
 
 
 def get_world_utm_info_for_cell_id(cursor: Any, cell_id: int):
-    """DOCSTRING."""
+    """For a given cell ID, get its `world_utm_id`, `zone`, `row`, and `utc_offset` from the database."""
     stmt = """
     select q.world_utm_id, (ST_PixelOfValue(q.rast, 1, %(cell_id)s)).*, w.row, w.zone, w.utc_offset
     from (
@@ -456,4 +457,5 @@ def get_world_utm_info_for_cell_id(cursor: Any, cell_id: int):
 
 
 def pt_is_on_land(point: Point) -> bool:
+    """Indicates whether the passed Point geometry is on land or not."""
     return is_land(lat=point.y, lon=point.x)

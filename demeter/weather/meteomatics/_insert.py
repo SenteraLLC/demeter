@@ -1,3 +1,5 @@
+"""Helper functions for organizing and inserting data into the demeter weather schema."""
+
 from datetime import timedelta, timezone
 from typing import (
     Any,
@@ -156,7 +158,7 @@ def insert_daily_weather(conn: Connection, df_clean: DataFrame):
     ]
     assert set(rq_cols).issubset(
         df_clean.columns
-    ), f"The followig columns must be in `df_clean`: {rq_cols}"
+    ), f"The following columns must be in `df_clean`: {rq_cols}"
 
     engine = conn.engine
     df_insert = df_clean[rq_cols]

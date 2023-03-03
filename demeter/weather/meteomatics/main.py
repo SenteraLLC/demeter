@@ -1,6 +1,11 @@
+"""Higher-level functions to help organize, submit, and store Meteomatics requests and any extracted data."""
+
+from datetime import datetime, timedelta
 from typing import List
 
 from geopandas import GeoDataFrame
+from numpy import array_split, ceil
+from pytz import UTC
 from sqlalchemy.engine import Connection
 
 from demeter.weather.meteomatics._insert import (
@@ -10,7 +15,7 @@ from demeter.weather.meteomatics._insert import (
     log_meteomatics_request,
 )
 from demeter.weather.meteomatics._requests import (
-    split_gdf_for_new_cell_ids,
+    get_request_list_from_gdfs_list,
     submit_single_meteomatics_request,
 )
 
@@ -47,6 +52,97 @@ def attempt_and_maybe_insert_meteomatics_request(
         insert_daily_weather(conn, df_clean)
 
     return request
+
+
+def split_gdf_for_new_cell_ids(
+    gdf: GeoDataFrame,
+    parameter_sets: List[List[str]],
+    n_spatial_pts_per_set: List[int],
+    n_forecast_days: int = 7,
+):
+    """Creates `request_list` that will fully populate Demeter with weather for new cell IDS specified in `gdf`.
+
+    This splitting strategy should be used only to extract weather for new cell IDs since such requests are often
+    have a much higher number of time points (i.e., ~11 years of data per cell ID).
+
+    The strategy functions as follows:
+    1. Split by parameter sets as specified in `parameter_sets`. This is required because MM only allows one
+    to request 10 parameters at a time. This also allows us to more easily customize how big requests get depending on
+    the parameter, which is important because request time depends on parameter.
+
+    2. Split by UTM zone since we cannot differentiate start and end dates within one request and each zone has a different
+    offset for end of day.
+
+    3. Split by year. This approach was decided to help make the request process simpler in the absence of sufficient data
+    for understanding how request time changes across parameter x time x space.
+
+    4. Split by number of cell IDS. Using previous data for yearly extractions for each parameter set, we can gain a better
+    understanding of how many cell IDs can be included in each request with a lower risk of time out. Depending on the number
+    of cell IDs, this is not always necessary.
+
+    Args:
+        gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests.
+        parameter_sets (list of str): List of sets of parameters to be extracted for each cell ID x date combination.
+
+        n_spatial_pts_per_set (list of int): Maximum number of cell IDs to include in a request when requesting a
+            certain parameter set (corresponds to order of `parameter_sets`).
+
+        n_forecast_days (int): Number of days of forecast weather to collect for each cell ID
+
+    Returns:
+        request_list (list of dict): List containing a dictionary for each request required to get data for `gdf`
+        under the specified split protocol.
+    """
+    rq_cols = ["utm_zone", "utc_offset", "cell_id", "date_first", "date_last"]
+    assert set(rq_cols).issubset(
+        gdf.columns
+    ), f"The following columns must be in `gdf`: {rq_cols}"
+
+    request_list = []
+
+    df_zones = gdf[["utm_zone", "utc_offset"]].drop_duplicates()
+
+    # SPLIT #1: parameters due to MM request limiting to 10 parameters
+    for i in range(len(parameter_sets)):
+        # SPLIT #2: UTM zone due to `utc_offset` problem
+        for _, row in df_zones.iterrows():
+            gdf_zone_subset = gdf.loc[gdf["utm_zone"] == row["utm_zone"]]
+            gdf_zone_subset["year_first"] = gdf_zone_subset["date_first"].dt.year
+            utc_offset = row["utc_offset"].tzinfo
+
+            first_year = gdf_zone_subset["year_first"].min()
+            last_year = gdf_zone_subset["date_last"].max().year
+            years = range(first_year, last_year + 1)
+
+            this_parameter_set = parameter_sets[i]
+            this_n_spatial_pts_max = n_spatial_pts_per_set[i]
+
+            # SPLIT #3: split by year
+            for year in years:
+                gdf_zone_year_subset = gdf_zone_subset.loc[
+                    gdf_zone_subset["year_first"] <= year
+                ]
+                gdf_zone_year_subset["date_first"] = datetime(year, 1, 1)
+
+                if year == datetime.now().year:
+                    gdf_zone_year_subset["date_last"] = datetime.now(tz=UTC).replace(
+                        hour=0, minute=0, seconds=0
+                    ) + timedelta(days=n_forecast_days)
+                else:
+                    gdf_zone_year_subset["date_last"] = datetime(year, 12, 31)
+
+                # SPLIT #4: split by max spatial points (if needed)
+                n_splits = int(ceil(len(gdf_zone_year_subset) / this_n_spatial_pts_max))
+                list_gdfs = array_split(gdf_zone_year_subset, n_splits)
+
+                request_list += get_request_list_from_gdfs_list(
+                    list_gdfs=list_gdfs,
+                    utm_zone=row["utm_zone"],
+                    utc_offset=utc_offset,
+                    parameters=this_parameter_set,
+                )
+
+    return request_list
 
 
 def organize_and_process_meteomatics_requests(

@@ -25,11 +25,11 @@ DAILY_WEATHER_TYPES = [
         "meters per second",
         "Mean daily wind speed at two meters above ground",
     ],
-    [
-        "wind_gusts_2m_24h:ms",
-        "meters per second",
-        "Wind gusts at two meters above ground",
-    ],
+    # [
+    #     "wind_gusts_2m_24h:ms",
+    #     "meters per second",
+    #     "Wind gusts at two meters above ground",
+    # ],
     [
         "relative_humidity_mean_2m_24h:p",
         "percent",

@@ -10,8 +10,7 @@ from demeter.weather.meteomatics._insert import (
     log_meteomatics_request,
 )
 from demeter.weather.meteomatics._requests import (
-    get_meteomatics_request_list,
-    split_gdf_for_meteomatics_request_list,
+    split_gdf_for_new_cell_ids,
     submit_single_meteomatics_request,
 )
 
@@ -21,7 +20,7 @@ def attempt_and_maybe_insert_meteomatics_request(
     request: dict,
     gdf_cell_id: GeoDataFrame,
     params_to_weather_types: dict,
-):
+) -> dict:
     """Submits MM request based on `request`, logs metadata to db, and, if successful, inserts data to db.
 
     Args:
@@ -45,23 +44,31 @@ def attempt_and_maybe_insert_meteomatics_request(
             utc_offset=utc_offset,
         )
         df_clean["weather_type_id"] = df_clean["variable"].map(params_to_weather_types)
-        df_clean["date_requested"] = request["date_requested"]
         insert_daily_weather(conn, df_clean)
 
+    return request
 
-# TODO: This should return failed requests?
-# TODO: How should we handle duplicate data? Due to errors in making `gdf` or due to structure of the optimized request?
+
 def organize_and_process_meteomatics_requests(
     conn: Connection,
     gdf: GeoDataFrame,
+    step: str,
     parameters: List[str] = None,
     parameter_sets: List[List[str]] = None,
-    n_pts_max: int = None,
-    n_pts_max_set: List[int] = None,
-    default_n_pts_max: int = 50000,
+    n_cells_max: int = None,
+    n_cells_max_set: List[int] = None,
     parallel: bool = False,
-):
-    """Takes `gdf` and information on desired parameters and organizes and processes MM requests to extract data.
+) -> List[dict]:
+    """Takes `gdf` and information on desired parameters and organizes and processes MM requests to extract data based on the `step`.
+
+    `step` affects which splitting function is used to create `request_list` and, thus, controls how the function organizes
+    and optimizes data needs. These steps include:
+    1. "add": Initializes a cell ID in the database; often has the largest number of data pts and creates the chunkiest requests.
+
+    **NOT IMPLEMENTED YET**
+    2. "update": Update all existing cell IDs in the database with most up-to-date recent historical (past 2 days) and forecast
+    data.
+    3. "fill": Fill in gaps in the weather data following a full inventory.
 
     Args:
         conn (Connection): Connection to demeter weather database
@@ -70,13 +77,16 @@ def organize_and_process_meteomatics_requests(
             data needed; must contain the following columns: "utm_zone", "utc_offset", "world_utm_id", "cell_id",
             "centroid","date_first","date_last".
 
+        step (int): Indicates which step in the weather data extraction process is being completed; can be: "add",
+            "update", or "fill".
+
         parameter_sets (list of list of str): List of parameter sets to extract.
 
-        n_pts_max_set (list of int): Corresponding with the order of `parameter_sets`, maximum number of
-            points to be extracted for any given request with a given parameter set. This is necessary because
+        n_cells_max_set (list of int): Corresponding with the order of `parameter_sets`, maximum number of
+            cell IDs that shoudl be extracted for a given request with a given parameter set. This is necessary because
             different parameters can have different request times.
 
-        n_pts_max (int): Maximum number of points to be extracted for any given request; this value is not used
+        n_cells_max (int): Maximum number of cell IDs to be extracted for any given request; this value is not used
             if `n_pts_max_set` is set.
 
         parameters (list of str): Full list of parameter names to extract with length <= 10; this parameter
@@ -97,13 +107,14 @@ def organize_and_process_meteomatics_requests(
         assert len(parameters) <= 10, msg
         parameter_sets = [parameters]
 
-    if n_pts_max is not None:
-        n_pts_max_set = [n_pts_max] * len(parameter_sets)
-    elif n_pts_max_set is None:
-        n_pts_max_set = [default_n_pts_max] * len(parameter_sets)
+    if n_cells_max is not None:
+        n_cells_max_set = [n_cells_max] * len(parameter_sets)
     else:
+        assert (
+            n_cells_max_set is not None
+        ), "Must set `n_cells_max` or `n_cells_max_set`"
         msg = "`n_pts_max_set` and `parameter_set` must be the same length"
-        assert len(n_pts_max_set) == len(parameter_sets), msg
+        assert len(n_cells_max_set) == len(parameter_sets), msg
 
     # make sure all of the columns are present
     rq_cols = [
@@ -119,6 +130,8 @@ def organize_and_process_meteomatics_requests(
         gdf.columns
     ), f"The following columns must be in `gdf`: {rq_cols}"
 
+    assert step in ["add", "update", "fill"], "Step must be 'add','update',or 'fill"
+
     # TODO: Make into argument and implement `pool` function
     parallel = False
 
@@ -126,31 +139,11 @@ def organize_and_process_meteomatics_requests(
     cursor = conn.connection.cursor()
     params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
 
-    # SPLIT #1: UTM zone due to `utc_offset` problem
-    df_zones = gdf[["utm_zone", "utc_offset"]].drop_duplicates()
-    request_list = []
-    for _, row in df_zones.iterrows():
-        gdf_zone_subset = gdf.loc[gdf["utm_zone"] == row["utm_zone"]]
-        utc_offset = row["utc_offset"].tzinfo
-
-        # SPLIT #2: parameters due to MM request limiting to 10 parameters
-        for i in range(len(parameter_sets)):
-            this_parameter_set = parameter_sets[i]
-            this_n_pts_max = n_pts_max_set[0]
-
-            # SPLIT #3: split along time to maximize spatial dimension
-            list_gdfs = split_gdf_for_meteomatics_request_list(
-                gdf=gdf_zone_subset,
-                data_pts_threshold=this_n_pts_max,
-                parameters=this_parameter_set,
-            )
-
-            request_list += get_meteomatics_request_list(
-                list_gdfs=list_gdfs,
-                utm_zone=row["utm_zone"],
-                utc_offset=utc_offset,
-                parameters=this_parameter_set,
-            )
+    # Split requests based on step
+    if step == "add":
+        request_list = split_gdf_for_new_cell_ids(gdf, parameter_sets, n_cells_max_set)
+    else:
+        pass
 
     # organize cell ID information with lat and lon to connect MM info to weather network
     gdf_cell_id = gdf[["world_utm_id", "cell_id", "centroid"]]
@@ -163,9 +156,12 @@ def organize_and_process_meteomatics_requests(
     else:
         for ind in range(len(request_list)):
             request = request_list[ind]
-            attempt_and_maybe_insert_meteomatics_request(
+            request = attempt_and_maybe_insert_meteomatics_request(
                 conn=conn,
                 request=request,
                 gdf_cell_id=gdf_cell_id,
                 params_to_weather_types=params_to_weather_types,
             )
+            request_list[ind] = request
+
+    return request_list

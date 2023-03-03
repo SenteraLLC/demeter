@@ -38,25 +38,6 @@ def maybe_insert_weather_type_to_db(
         cursor.execute(stmt, args)
 
 
-def maybe_add_enum_value_to_weather_parameter_type(
-    conn: Connection, new_value: str
-) -> None:
-    """If not already listed as ENUM value, update database to recognize `new_value` as valid `weather_parameter` type."""
-    stmt = (
-        """SELECT unnest(enum_range(NULL::weather.weather_parameter))::text AS values"""
-    )
-    conn.execute(stmt)
-    df_values = DataFrame(conn.fetchall())
-
-    if new_value in df_values["values"].to_list():
-        print("ENUM value already included.")
-    else:
-        stmt = """ALTER TYPE weather_parameter ADD VALUE %(value)s"""
-        args = {"value": new_value}
-        conn.execute(stmt, args)
-        print("New ENUM value added.")
-
-
 def get_weather_type_id_from_db(cursor: Any, parameters: Union[str, List[str]]) -> dict:
     """
     Creates dictionary mapping desired parameters to Demeter weather type IDs.
@@ -150,7 +131,9 @@ def clean_meteomatics_data(
     df_wx_clean = df_wx_full.drop(columns=["lat", "lon", "validdate", "centroid"])
 
     # melt wide dataframe to long format
-    df_melt_clean = pd_melt(df_wx_clean, id_vars=["world_utm_id", "cell_id", "date"])
+    df_melt_clean = pd_melt(
+        df_wx_clean, id_vars=["world_utm_id", "cell_id", "date", "date_requested"]
+    )
 
     return df_melt_clean
 
@@ -179,3 +162,22 @@ def insert_daily_weather(conn: Connection, df_clean: DataFrame):
     df_insert = df_clean[rq_cols]
 
     df_insert.to_sql("daily", con=engine, if_exists="append", index=False)
+
+
+# def maybe_add_enum_value_to_weather_parameter_type(
+#     conn: Connection, new_value: str
+# ) -> None:
+#     """If not already listed as ENUM value, update database to recognize `new_value` as valid `weather_parameter` type."""
+#     stmt = (
+#         """SELECT unnest(enum_range(NULL::weather.weather_parameter))::text AS values"""
+#     )
+#     conn.execute(stmt)
+#     df_values = DataFrame(conn.fetchall())
+
+#     if new_value in df_values["values"].to_list():
+#         print("ENUM value already included.")
+#     else:
+#         stmt = """ALTER TYPE weather_parameter ADD VALUE %(value)s"""
+#         args = {"value": new_value}
+#         conn.execute(stmt, args)
+#         print("New ENUM value added.")

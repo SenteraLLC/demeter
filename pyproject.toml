@@ -83,7 +83,7 @@ build-backend = "poetry.core.masonry.api"
 example = "demeter.scripts.example:main"
 
 [tool.isort]
-line_length = 120
+line_length = 88
 multi_line_output = 3
 include_trailing_comma = true
 known_third_party = ["click"]

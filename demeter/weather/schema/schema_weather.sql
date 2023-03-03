@@ -73,9 +73,7 @@ create table daily (
 CREATE TYPE request_status AS ENUM (
     'SUCCESS', 'FAIL'
 );
-CREATE TYPE fulfilled_status AS ENUM (
-    'SUCCESS', 'FAIL'
-);
+
 create table request_log (
     request_id bigserial
                  not null,
@@ -90,7 +88,7 @@ create table request_log (
     date_requested timestamp without time zone
                 not null,
     status request_status not null,
-    request_seconds float not null,
+    request_seconds float not null
 );
 
 

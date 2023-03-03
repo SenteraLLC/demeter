@@ -1,6 +1,5 @@
 """Concerning MM requests"""
 
-
 from datetime import (
     datetime,
     timedelta,
@@ -17,7 +16,7 @@ from typing import (
 from geopandas import GeoDataFrame
 from meteomatics.api import query_time_series
 from meteomatics.exceptions import NotFound
-from numpy import ceil, floor
+from numpy import array_split, ceil
 from pandas import DataFrame
 from pytz import UTC
 from requests import ReadTimeout
@@ -87,115 +86,95 @@ def get_n_pts_requested(gdf_request: GeoDataFrame, n_params: int):
     return n_params * max_n_dates * len(gdf_request)
 
 
-def split_request_algorithm(
-    gdf: GeoDataFrame, data_pts_threshold: int, n_params: int
-) -> Tuple[int, int, List[GeoDataFrame]]:
-    """
-    Splits up cell ID x date requests into requests of, at most, `data_pts_threshold` points.
+def split_gdf_for_new_cell_ids(
+    gdf: GeoDataFrame,
+    parameter_sets: List[List[str]],
+    n_spatial_pts_per_set: List[int],
+    n_forecast_days: int = 7,
+):
+    """Creates `request_list` that will fully populate Demeter with weather for new cell IDS specified in `gdf`.
 
-    This algorithm orders `gdf` by "date_first" so that the rows are listed from most to least days needed.
-    Then, the algorithm determines the number of rows (i.e., cell IDs) to include in each request group
-    given that all requests must have less than `data_pts_threshold` points and all included cell IDs will
-    have data extracted for the same days as that needed by the first row in the group. The algorithm continues
-    to "slice" `gdf` until all of the rows are in a request group.
+    This splitting strategy should be used only to extract weather for new cell IDs since such requests are often
+    have a much higher number of time points (i.e., ~11 years of data per cell ID).
 
-    NOTE: This approach requires that all rows have the same "date_last". Other approaches might be better
-    suited for optimizing request number when "date_last" can vary.
+    The strategy functions as follows:
+    1. Split by parameter sets as specified in `parameter_sets`. This is required because MM only allows one
+    to request 10 parameters at a time. This also allows us to more easily customize how big requests get depending on
+    the parameter, which is important because request time depends on parameter.
+
+    2. Split by UTM zone since we cannot differentiate start and end dates within one request and each zone has a different
+    offset for end of day.
+
+    3. Split by year. This approach was decided to help make the request process simpler in the absence of sufficient data
+    for understanding how request time changes across parameter x time x space.
+
+    4. Split by number of cell IDS. Using previous data for yearly extractions for each parameter set, we can gain a better
+    understanding of how many cell IDs can be included in each request with a lower risk of time out. Depending on the number
+    of cell IDs, this is not always necessary.
 
     Args:
         gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests.
-        data_pts_threshold (int): Maximum number of pts to be included in a given request
-        n_params (int): Number of parameters to be extracted for each cell ID x date combination.
+        parameter_sets (list of str): List of sets of parameters to be extracted for each cell ID x date combination.
+
+        n_spatial_pts_per_set (list of int): Maximum number of cell IDs to include in a request when requesting a
+            certain parameter set (corresponds to order of `parameter_sets`).
+
+        n_forecast_days (int): Number of days of forecast weather to collect for each cell ID
 
     Returns:
-        n_pts_requested (int): Total number of points requested across all requests
-        n_splits (int): Number of splits needed.
-        list_gdf_splits (list of GeoDataFrame): List containing each of the GeoDataFrame slices
+        request_list (list of dict): List containing a dictionary for each request required to get data for `gdf`
+        under the specified split protocol.
     """
-
-    rq_cols = ["cell_id", "date_first", "date_last"]
+    rq_cols = ["utm_zone", "utc_offset", "cell_id", "date_first", "date_last"]
     assert set(rq_cols).issubset(
         gdf.columns
-    ), "Columns 'cell_id', 'date_first', and 'date_last' must be in `gdf`"
+    ), f"The following columns must be in `gdf`: {rq_cols}"
 
-    assert (
-        len(gdf["date_last"].unique()) == 1
-    ), "'date_last' must be consistent across all rows"
+    request_list = []
 
-    n_pts_requested = 0
-    n_pts_wasted = 0
-    n_splits = 0
+    df_zones = gdf[["utm_zone", "utc_offset"]].drop_duplicates()
 
-    list_gdf_splits = []
-    gdf_remaining = gdf.copy().sort_values("date_first").reset_index(drop=True)
-    gdf_remaining["n_dates"] = gdf_remaining.apply(
-        lambda row: (row["date_last"] - row["date_first"]).days + 1, axis=1
-    )
+    # SPLIT #1: parameters due to MM request limiting to 10 parameters
+    for i in range(len(parameter_sets)):
+        # SPLIT #2: UTM zone due to `utc_offset` problem
+        for _, row in df_zones.iterrows():
+            gdf_zone_subset = gdf.loc[gdf["utm_zone"] == row["utm_zone"]]
+            gdf_zone_subset["year_first"] = gdf_zone_subset["date_first"].dt.year
+            utc_offset = row["utc_offset"].tzinfo
 
-    while len(gdf_remaining) > 0:
-        max_n_dates = gdf_remaining["n_dates"].max()
-        n_pts_per_cell_id = max_n_dates * n_params
-        n_rows = int(floor(data_pts_threshold / n_pts_per_cell_id))
+            first_year = gdf_zone_subset["year_first"].min()
+            last_year = gdf_zone_subset["date_last"].max().year
+            years = range(first_year, last_year + 1)
 
-        n_pts_requested += n_pts_per_cell_id * n_rows
-        n_pts_wasted += sum(max_n_dates - gdf_remaining.iloc[:n_rows]["n_dates"])
-        n_splits += 1
+            this_parameter_set = parameter_sets[i]
+            this_n_spatial_pts_max = n_spatial_pts_per_set[i]
 
-        list_gdf_splits += [gdf_remaining.iloc[:n_rows]]
+            # SPLIT #3: split by year
+            for year in years:
+                gdf_zone_year_subset = gdf_zone_subset.loc[
+                    gdf_zone_subset["year_first"] <= year
+                ]
+                gdf_zone_year_subset["date_first"] = datetime(year, 1, 1)
 
-        gdf_remaining = gdf_remaining.iloc[n_rows:]
+                if year == datetime.now().year:
+                    gdf_zone_year_subset["date_last"] = datetime.now(tz=UTC).replace(
+                        hour=0, minute=0, seconds=0
+                    ) + timedelta(days=n_forecast_days)
+                else:
+                    gdf_zone_year_subset["date_last"] = datetime(year, 12, 31)
 
-    return n_pts_requested, n_splits, list_gdf_splits
+                # SPLIT #4: split by max spatial points (if needed)
+                n_splits = int(ceil(len(gdf_zone_year_subset) / this_n_spatial_pts_max))
+                list_gdfs = array_split(gdf_zone_year_subset, n_splits)
 
+                request_list += get_meteomatics_request_list(
+                    list_gdfs=list_gdfs,
+                    utm_zone=row["utm_zone"],
+                    utc_offset=utc_offset,
+                    parameters=this_parameter_set,
+                )
 
-def split_gdf_for_meteomatics_request_list(
-    gdf: GeoDataFrame, data_pts_threshold: int, parameters: List[str]
-) -> List[GeoDataFrame]:
-    """
-    Splits up `gdf` using `split_requests_algorithm()` in two ways and chooses optimal split to reduce request waste.
-
-    A two-step approach is used here to ensure that we are minimizing the average number of points requested
-    across all requests organized in this function. In the case that the last split has very few data points
-    after the first split, the second split attempts to better split up the data to reduce the chance of request
-    time out.
-
-    NOTE: Currently, this function is really only useful when "date_last" is consistent across all spatial coordinates,
-    which is the case when first populating the database for a cell ID or when performing daily updates. A different
-    approach for optimizing MM requests should be used when filling weather gaps. This could be specified with an
-    argument like `optimization_fx` or maybe just a completely different function?
-
-    Args:
-        gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests.
-        data_pts_threshold (int): Maximum number of pts to be included in a given request
-        parameters (list of str): List of parameter names to be extracted for each cell ID x date combination.
-
-    Returns:
-        list_gdf_splits (list of GeoDataFrame): List containing each of the GeoDataFrame slices that will be
-        individually requested based on chosen optimization algorithm
-    """
-
-    # Accumulate cell ID rows until user-passed pt threshold is met for each split
-    n_pts_requested, n_splits, list_gdfs_1 = split_request_algorithm(
-        gdf, data_pts_threshold, len(parameters)
-    )
-
-    # Determine average number of pts requested per split
-    reduced_data_pts_threshold = int(ceil(n_pts_requested / n_splits))
-
-    # Then, re-complete optimization with smaller number of pts to see if overall request size can be reduced.
-    _, n_splits_2, list_gdfs_2 = split_request_algorithm(
-        gdf, reduced_data_pts_threshold, len(parameters)
-    )
-
-    # Determine the better split based on request number
-    if n_splits < n_splits_2:
-        print("Using the first split.")
-        list_gdfs = list_gdfs_1
-    else:
-        print("Using the second split.")
-        list_gdfs = list_gdfs_2
-
-    return list_gdfs
+    return request_list
 
 
 def get_request_for_single_gdf(
@@ -320,9 +299,8 @@ def submit_single_meteomatics_request(
         [(key in request.keys()) for key in rq_keys]
     ), f"`request` must contain the following keys: {rq_keys}"
 
-    request["date_requested"] = (
-        datetime.now().astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S%z")
-    )
+    date_requested = datetime.now().astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S%z")
+    request["date_requested"] = date_requested
     time_0 = time()
 
     try:
@@ -337,6 +315,7 @@ def submit_single_meteomatics_request(
             request_type="GET",
             on_invalid="fill_with_invalid",
         )
+        df_wx.insert(df_wx.shape[1], "date_requested", date_requested)
 
         time_1 = time()
         request["status"] = "SUCCESS"
@@ -355,3 +334,98 @@ def submit_single_meteomatics_request(
         df_wx = None
 
     return df_wx, request
+
+
+# def split_request_algorithm(
+#     gdf: GeoDataFrame, data_pts_threshold: int, n_params: int
+# ) -> Tuple[int, int, List[GeoDataFrame]]:
+#     """
+#     Splits up `gdf` into blocks of, at most, `max_n_spatial_pts`.
+
+#     This algorithm orders `gdf` by "date_first" so that the rows are listed from most to least days needed.
+#     Then, the algorithm determines the number of rows (i.e., cell IDs) to include in each request group
+#     given that all requests must have less than `data_pts_threshold` points and all included cell IDs will
+#     have data extracted for the same days as that needed by the first row in the group. The algorithm continues
+#     to "slice" `gdf` until all of the rows are in a request group.
+
+#     NOTE: This approach requires that all rows have the same "date_last". Other approaches might be better
+#     suited for optimizing request number when "date_last" can vary.
+
+#     Args:
+#         gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests.
+#         data_pts_threshold (int): Maximum number of pts to be included in a given request
+#         n_params (int): Number of parameters to be extracted for each cell ID x date combination.
+
+#     Returns:
+#         n_pts_requested (int): Total number of points requested across all requests
+#         n_splits (int): Number of splits needed.
+#         list_gdf_splits (list of GeoDataFrame): List containing each of the GeoDataFrame slices
+#     """
+
+#     n_pts_requested = 0
+#     n_pts_wasted = 0
+#     n_splits = 0
+
+#     list_gdf_splits = []
+#     gdf_remaining = gdf.copy().sort_values("date_first").reset_index(drop=True)
+#     gdf_remaining["n_dates"] = gdf_remaining.apply(
+#         lambda row: (row["date_last"] - row["date_first"]).days + 1, axis=1
+#     )
+
+#     while len(gdf_remaining) > 0:
+#         max_n_dates = gdf_remaining["n_dates"].max()
+#         n_pts_per_cell_id = max_n_dates * n_params
+#         n_rows = int(floor(data_pts_threshold / n_pts_per_cell_id))
+
+#         n_pts_requested += n_pts_per_cell_id * n_rows
+#         n_pts_wasted += sum(max_n_dates - gdf_remaining.iloc[:n_rows]["n_dates"])
+#         n_splits += 1
+
+#         list_gdf_splits += [gdf_remaining.iloc[:n_rows]]
+
+#         gdf_remaining = gdf_remaining.iloc[n_rows:]
+
+#     return n_pts_requested, n_splits, list_gdf_splits
+
+
+# def split_gdf_for_meteomatics_request_list(
+#     gdf: GeoDataFrame, data_pts_threshold: int, parameters: List[str]
+# ) -> List[GeoDataFrame]:
+#     """
+#     Splits up `gdf` using `split_requests_algorithm()` in two ways and chooses optimal split to reduce request waste.
+
+#     A two-step approach is used here to ensure that we are minimizing the average number of points requested
+#     across all requests organized in this function. In the case that the last split has very few data points
+#     after the first split, the second split attempts to better split up the data to reduce the chance of request
+#     time out.
+
+#     NOTE: Currently, this function is really only useful when "date_last" is consistent across all spatial coordinates,
+#     which is the case when first populating the database for a cell ID or when performing daily updates. A different
+#     approach for optimizing MM requests should be used when filling weather gaps. This could be specified with an
+#     argument like `optimization_fx` or maybe just a completely different function?
+
+
+#     """
+
+#     # Accumulate cell ID rows until user-passed pt threshold is met for each split
+#     n_pts_requested, n_splits, list_gdfs_1 = split_request_algorithm(
+#         gdf, data_pts_threshold, len(parameters)
+#     )
+
+#     # Determine average number of pts requested per split
+#     reduced_data_pts_threshold = int(ceil(n_pts_requested / n_splits))
+
+#     # Then, re-complete optimization with smaller number of pts to see if overall request size can be reduced.
+#     _, n_splits_2, list_gdfs_2 = split_request_algorithm(
+#         gdf, reduced_data_pts_threshold, len(parameters)
+#     )
+
+#     # Determine the better split based on request number
+#     if n_splits < n_splits_2:
+#         print("Using the first split.")
+#         list_gdfs = list_gdfs_1
+#     else:
+#         print("Using the second split.")
+#         list_gdfs = list_gdfs_2
+
+#     return list_gdfs

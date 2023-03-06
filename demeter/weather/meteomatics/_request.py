@@ -124,7 +124,7 @@ def get_request_for_single_gdf(
     # Get space
     coordinate_list = []
     for _, row in gdf_request.iterrows():
-        coordinate_list += [(round(row["centroid"].y, 5), round(row["centroid"].x, 5))]
+        coordinate_list += [(row["centroid"].y, row["centroid"].x)]
 
     # Get time
     startdate, enddate = get_utc_date_range_with_offset(
@@ -157,18 +157,13 @@ def get_request_list_from_gdfs_list(
 
     Args:
         list_gdfs (list of GeoDataFrame): List containing each of the GeoDataFrame slices to be individually requested.
-        utm_zone (int): UTM zone in which included cell IDs are located.
-        utc_offset (datetime.timezone): UTC offset for given UTM zone.
         parameters (list of str): List of parameters to be extracted within this request list.
 
     Returns:
         request_list (list of dict): List of dictionaries containing metadata to inform MM requests for
         each item in `list_gdfs`
     """
-    msg = (
-        "Error: More than one `utc_offset` given in `gdf`. Should only be passing one."
-    )
-
+    msg = "Error: More than one `utc_offset` given in `gdf`. Should only be passing one per request."
     request_list = []
 
     for n in range(len(list_gdfs)):
@@ -180,11 +175,26 @@ def get_request_list_from_gdfs_list(
         assert len(utc_offset) == 1, msg
 
         rq = get_request_for_single_gdf(
-            gdf_request, utc_offset[0], utm_zone[0], parameters, utm_request_id=n
+            gdf_request, utc_offset[0].tzinfo, utm_zone[0], parameters, utm_request_id=n
         )
         request_list += [rq]
 
     return request_list
+
+
+def check_coordinate_rounding(coord: Tuple[float, float], n: int = 5) -> bool:
+    """Helper function for checking coordinate rounding for cell ID centroids.
+
+    Since Python is not maintaining significant digits here, we can only ensure that
+    there are not MORE than `n` decimal places.
+    """
+    first = str(coord[0])[::-1].find(".") <= n
+    second = str(coord[1])[::-1].find(".") <= n
+
+    if first and second:
+        return True
+    else:
+        return False
 
 
 def submit_single_meteomatics_request(
@@ -198,6 +208,12 @@ def submit_single_meteomatics_request(
 
     See https://www.meteomatics.com/en/api/request/optional-parameters/ for information on other parameters
     and defaults.
+
+    Handles:
+        `ReadTimeOut`: occurs when the request takes too long (> 300 seconds)
+
+        `NotFound`: occurs when a parameter is not available for the requested
+            time frame x point combination
 
     Args:
         request (dict): Dictionary containing metadata necessary to create a needed Meteomatics request.
@@ -213,6 +229,11 @@ def submit_single_meteomatics_request(
     assert all(
         [(key in request.keys()) for key in rq_keys]
     ), f"`request` must contain the following keys: {rq_keys}"
+
+    msg = "Passed coordinate pair has not been rounded to 5th decimal place. Please re-evaluate requested points."
+    assert all(
+        [check_coordinate_rounding(tup) for tup in request["coordinate_list"]]
+    ), msg
 
     date_requested = datetime.now().astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S%z")
     request["date_requested"] = date_requested

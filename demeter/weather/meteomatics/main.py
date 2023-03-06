@@ -1,20 +1,16 @@
 """Higher-level functions to help organize, submit, and store Meteomatics requests and any extracted data."""
 
-from datetime import datetime, timedelta
 from typing import List
 
 from geopandas import GeoDataFrame
-from numpy import array_split, ceil
-from pytz import UTC
 from sqlalchemy.engine import Connection
 
 from demeter.weather.meteomatics._insert import (
     clean_meteomatics_data,
-    get_weather_type_id_from_db,
     insert_daily_weather,
     log_meteomatics_request,
 )
-from demeter.weather.meteomatics._requests import (
+from demeter.weather.meteomatics._request import (
     get_request_list_from_gdfs_list,
     submit_single_meteomatics_request,
 )
@@ -59,7 +55,7 @@ def attempt_and_maybe_insert_meteomatics_request(
     return request
 
 
-def split_gdf_for_new_cell_ids(
+def split_gdf_for_add_step(
     gdf: GeoDataFrame,
     parameter_sets: List[List[str]],
     n_cells_per_set: List[int],
@@ -103,13 +99,17 @@ def split_gdf_for_new_cell_ids(
         gdf.columns
     ), f"The following columns must be in `gdf`: {rq_cols}"
 
+    # split by UTM zone
     gdf_split_utm = split_by_utm_zone(gdf)
 
-    gdf_split_year = [split_by_year(this_gdf) for this_gdf in gdf_split_utm]
+    # split by year and flatten
+    gdf_split_year = [
+        split_by_year(this_gdf, n_forecast_days) for this_gdf in gdf_split_utm
+    ]
     gdf_split_year = [item for sublist in gdf_split_year for item in sublist]
 
+    # iterate over parameter sets
     request_list = []
-
     for i in range(len(parameter_sets)):
         this_parameter_set = parameter_sets[i]
         this_n_cells_max = n_cells_per_set[i]
@@ -124,164 +124,122 @@ def split_gdf_for_new_cell_ids(
             parameters=this_parameter_set,
         )
 
-        df_zones = None
-        # SPLIT #1: parameters due to MM request limiting to 10 parameters
-
-        # SPLIT #2: UTM zone due to `utc_offset` problem
-        for _, row in df_zones.iterrows():
-            gdf_zone_subset = gdf.loc[gdf["utm_zone"] == row["utm_zone"]]
-            gdf_zone_subset["year_first"] = gdf_zone_subset["date_first"].dt.year
-            utc_offset = row["utc_offset"].tzinfo
-
-            first_year = gdf_zone_subset["year_first"].min()
-            last_year = gdf_zone_subset["date_last"].max().year
-            years = range(first_year, last_year + 1)
-
-            # SPLIT #3: split by year
-            for year in years:
-                gdf_zone_year_subset = gdf_zone_subset.loc[
-                    gdf_zone_subset["year_first"] <= year
-                ]
-                gdf_zone_year_subset["date_first"] = datetime(year, 1, 1)
-
-                if year == datetime.now().year:
-                    gdf_zone_year_subset["date_last"] = datetime.now(tz=UTC).replace(
-                        hour=0, minute=0, second=0
-                    ) + timedelta(days=n_forecast_days)
-                else:
-                    gdf_zone_year_subset["date_last"] = datetime(year, 12, 31)
-
-                # SPLIT #4: split by max spatial points (if needed)
-                n_splits = int(ceil(len(gdf_zone_year_subset) / this_n_cells_max))
-                list_gdfs = array_split(gdf_zone_year_subset, n_splits)
-
-                request_list += get_request_list_from_gdfs_list(
-                    list_gdfs=list_gdfs,
-                    utm_zone=row["utm_zone"],
-                    utc_offset=utc_offset,
-                    parameters=this_parameter_set,
-                )
-
     return request_list
 
 
-def split_gdf_for_update():
-    pass
+# def organize_and_process_meteomatics_requests(
+#     conn: Connection,
+#     gdf: GeoDataFrame,
+#     step: str,
+#     parameters: List[str] = None,
+#     parameter_sets: List[List[str]] = None,
+#     n_cells_max: int = None,
+#     n_cells_max_set: List[int] = None,
+#     parallel: bool = False,
+# ) -> List[dict]:
+#     """Takes `gdf` and information on desired parameters and organizes and processes MM requests to extract data based on the `step`.
 
+#     `step` affects which splitting function is used to create `request_list` and, thus, controls how the function organizes
+#     and optimizes data needs. These steps include:
+#     1. "add": Initializes a cell ID in the database; often has the largest number of data pts and creates the chunkiest requests.
 
-def organize_and_process_meteomatics_requests(
-    conn: Connection,
-    gdf: GeoDataFrame,
-    step: str,
-    parameters: List[str] = None,
-    parameter_sets: List[List[str]] = None,
-    n_cells_max: int = None,
-    n_cells_max_set: List[int] = None,
-    parallel: bool = False,
-) -> List[dict]:
-    """Takes `gdf` and information on desired parameters and organizes and processes MM requests to extract data based on the `step`.
+#     **NOT IMPLEMENTED YET**
+#     2. "update": Update all existing cell IDs in the database with most up-to-date recent historical (past 2 days) and forecast
+#     data.
+#     3. "fill": Fill in gaps in the weather data following a full inventory.
 
-    `step` affects which splitting function is used to create `request_list` and, thus, controls how the function organizes
-    and optimizes data needs. These steps include:
-    1. "add": Initializes a cell ID in the database; often has the largest number of data pts and creates the chunkiest requests.
+#     Args:
+#         conn (Connection): Connection to demeter weather database
 
-    **NOT IMPLEMENTED YET**
-    2. "update": Update all existing cell IDs in the database with most up-to-date recent historical (past 2 days) and forecast
-    data.
-    3. "fill": Fill in gaps in the weather data following a full inventory.
+#         gdf (GeoDataFrame): GeoDataframe containing information on the spatiotemporal dimensions of the MM
+#             data needed; must contain the following columns: "utm_zone", "utc_offset", "world_utm_id", "cell_id",
+#             "centroid","date_first","date_last".
 
-    Args:
-        conn (Connection): Connection to demeter weather database
+#         step (int): Indicates which step in the weather data extraction process is being completed; can be: "add",
+#             "update", or "fill".
 
-        gdf (GeoDataFrame): GeoDataframe containing information on the spatiotemporal dimensions of the MM
-            data needed; must contain the following columns: "utm_zone", "utc_offset", "world_utm_id", "cell_id",
-            "centroid","date_first","date_last".
+#         parameter_sets (list of list of str): List of parameter sets to extract.
 
-        step (int): Indicates which step in the weather data extraction process is being completed; can be: "add",
-            "update", or "fill".
+#         n_cells_max_set (list of int): Corresponding with the order of `parameter_sets`, maximum number of
+#             cell IDs that shoudl be extracted for a given request with a given parameter set. This is necessary because
+#             different parameters can have different request times.
 
-        parameter_sets (list of list of str): List of parameter sets to extract.
+#         n_cells_max (int): Maximum number of cell IDs to be extracted for any given request; this value is not used
+#             if `n_pts_max_set` is set.
 
-        n_cells_max_set (list of int): Corresponding with the order of `parameter_sets`, maximum number of
-            cell IDs that shoudl be extracted for a given request with a given parameter set. This is necessary because
-            different parameters can have different request times.
+#         parameters (list of str): Full list of parameter names to extract with length <= 10; this parameter
+#             is not used if `parameter_sets` is set.
 
-        n_cells_max (int): Maximum number of cell IDs to be extracted for any given request; this value is not used
-            if `n_pts_max_set` is set.
+#         default_n_pts_max (int): If `n_pts_max` and `n_pts_max_set` are not set, this value will be used
+#             as the maximum value of points requested for all parameter sets. Defaults to 50000.
+#     """
 
-        parameters (list of str): Full list of parameter names to extract with length <= 10; this parameter
-            is not used if `parameter_sets` is set.
+#     # check some assumptions
+#     if parameter_sets is not None:
+#         msg = "All sublists in `parameter_sets` must have length <= 10."
+#         assert any([len(sublist) <= 10] for sublist in parameter_sets), msg
+#         parameters = [elem for sublist in parameter_sets for elem in sublist]
+#     else:
+#         assert parameters is not None, "Must set `parameters` or `parameter_sets`"
+#         msg = "Cannot have more than 10 parameters in a request. Use `parameter_sets` argument to specify breaks in list."
+#         assert len(parameters) <= 10, msg
+#         parameter_sets = [parameters]
 
-        default_n_pts_max (int): If `n_pts_max` and `n_pts_max_set` are not set, this value will be used
-            as the maximum value of points requested for all parameter sets. Defaults to 50000.
-    """
+#     if n_cells_max is not None:
+#         n_cells_max_set = [n_cells_max] * len(parameter_sets)
+#     else:
+#         assert (
+#             n_cells_max_set is not None
+#         ), "Must set `n_cells_max` or `n_cells_max_set`"
+#         msg = "`n_pts_max_set` and `parameter_set` must be the same length"
+#         assert len(n_cells_max_set) == len(parameter_sets), msg
 
-    # check some assumptions
-    if parameter_sets is not None:
-        msg = "All sublists in `parameter_sets` must have length <= 10."
-        assert any([len(sublist) <= 10] for sublist in parameter_sets), msg
-        parameters = [elem for sublist in parameter_sets for elem in sublist]
-    else:
-        assert parameters is not None, "Must set `parameters` or `parameter_sets`"
-        msg = "Cannot have more than 10 parameters in a request. Use `parameter_sets` argument to specify breaks in list."
-        assert len(parameters) <= 10, msg
-        parameter_sets = [parameters]
+#     # make sure all of the columns are present
+#     rq_cols = [
+#         "utm_zone",
+#         "utc_offset",
+#         "world_utm_id",
+#         "cell_id",
+#         "centroid",
+#         "date_first",
+#         "date_last",
+#     ]
+#     assert set(rq_cols).issubset(
+#         gdf.columns
+#     ), f"The following columns must be in `gdf`: {rq_cols}"
 
-    if n_cells_max is not None:
-        n_cells_max_set = [n_cells_max] * len(parameter_sets)
-    else:
-        assert (
-            n_cells_max_set is not None
-        ), "Must set `n_cells_max` or `n_cells_max_set`"
-        msg = "`n_pts_max_set` and `parameter_set` must be the same length"
-        assert len(n_cells_max_set) == len(parameter_sets), msg
+#     assert step in ["add", "update", "fill"], "Step must be 'add','update',or 'fill"
 
-    # make sure all of the columns are present
-    rq_cols = [
-        "utm_zone",
-        "utc_offset",
-        "world_utm_id",
-        "cell_id",
-        "centroid",
-        "date_first",
-        "date_last",
-    ]
-    assert set(rq_cols).issubset(
-        gdf.columns
-    ), f"The following columns must be in `gdf`: {rq_cols}"
+#     # TODO: Make into argument and implement `pool` function
+#     parallel = False
 
-    assert step in ["add", "update", "fill"], "Step must be 'add','update',or 'fill"
+#     # Get information on parameters from DB and checks that they exist there
+#     cursor = conn.connection.cursor()
+#     params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
 
-    # TODO: Make into argument and implement `pool` function
-    parallel = False
+#     # Split requests based on step
+#     if step == "add":
+#         request_list = split_gdf_for_add_step(gdf, parameter_sets, n_cells_max_set)
+#     else:
+#         pass
 
-    # Get information on parameters from DB and checks that they exist there
-    cursor = conn.connection.cursor()
-    params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
+#     # organize cell ID information with lat and lon to connect MM info to weather network
+#     gdf_cell_id = gdf[["world_utm_id", "cell_id", "centroid"]]
+#     gdf_cell_id.insert(0, "lon", gdf_cell_id.geometry.x)
+#     gdf_cell_id.insert(0, "lat", gdf_cell_id.geometry.y)
 
-    # Split requests based on step
-    if step == "add":
-        request_list = split_gdf_for_new_cell_ids(gdf, parameter_sets, n_cells_max_set)
-    else:
-        pass
+#     # perform requests
+#     if parallel:
+#         pass
+#     else:
+#         for ind in range(len(request_list)):
+#             request = request_list[ind]
+#             request = attempt_and_maybe_insert_meteomatics_request(
+#                 conn=conn,
+#                 request=request,
+#                 gdf_cell_id=gdf_cell_id,
+#                 params_to_weather_types=params_to_weather_types,
+#             )
+#             request_list[ind] = request
 
-    # organize cell ID information with lat and lon to connect MM info to weather network
-    gdf_cell_id = gdf[["world_utm_id", "cell_id", "centroid"]]
-    gdf_cell_id.insert(0, "lon", round(gdf_cell_id.geometry.x, 5))
-    gdf_cell_id.insert(0, "lat", round(gdf_cell_id.geometry.y, 5))
-
-    # perform requests
-    if parallel:
-        pass
-    else:
-        for ind in range(len(request_list)):
-            request = request_list[ind]
-            request = attempt_and_maybe_insert_meteomatics_request(
-                conn=conn,
-                request=request,
-                gdf_cell_id=gdf_cell_id,
-                params_to_weather_types=params_to_weather_types,
-            )
-            request_list[ind] = request
-
-    return request_list
+#     return request_list

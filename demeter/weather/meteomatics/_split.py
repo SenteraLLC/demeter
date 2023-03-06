@@ -19,7 +19,7 @@ GDF_COLS = [
 
 
 def split_by_utm_zone(gdf: GeoDataFrame) -> List[GeoDataFrame]:
-    """DOCSTRING"""
+    """Split `gdf` into separate requests for each UTM zone appearing within the dataframe.."""
     list_gdf = []
     df_zones = gdf[["utm_zone"]].drop_duplicates()
     for _, row in df_zones.iterrows():
@@ -29,40 +29,27 @@ def split_by_utm_zone(gdf: GeoDataFrame) -> List[GeoDataFrame]:
 
 
 def split_by_n_cells(gdf: GeoDataFrame, max_n_cells: int) -> List[GeoDataFrame]:
-    """DOCSTRING"""
+    """Split `gdf` evenly into N requests such that no request has more than `max_n_cells`."""
     list_gdf = []
     n_splits = int(ceil(len(gdf) / max_n_cells))
     list_gdf = array_split(gdf, n_splits)
     return list_gdf
 
 
-def split_by_year(
-    gdf: GeoDataFrame, date_bound_method: str = "all_possible", n_forecast_days: int = 7
-) -> List[GeoDataFrame]:
-    """Split `gdf` into one request for each year as needed for temporal bounds.
+def split_by_year(gdf: GeoDataFrame, n_forecast_days: int = 7) -> List[GeoDataFrame]:
+    """Split `gdf` into one request per year for all years that fall within at least one cell IDs
+    temporal bounds.
 
-    Two methods for splitting:
-    1. "all_possible" assumes that we want all dates for a given year if the year is within the
-    temporal bounds of `gdf`. This means Jan 1 to Dec 31 (or until `n_forecast_days` after today's date
-    for current year).
-    2. "all_needed" determines temporal bounds based on what is explicitly requested in `gdf`.
-
-    DOCSTRING
+    This function assumes that all dates are required for all years that a cell ID needs. For the current
+    year, this means up until today UTC + `n_forecast_days` days.
 
     Args:
-        gdf (GeoDataFrame):
-        date_bound_m
+        gdf (GeoDataFrame): GeoDataFrame to split
+        n_forecast_days (int): Number of days to forecast from today (UTC)
     """
-
-    assert date_bound_method in [
-        "all_possible",
-        "all_needed",
-    ], '`date_last_method` must be "all_possible" or "all_needed"'
-
     list_gdf = []
 
     gdf["year_first"] = gdf["date_first"].dt.year
-
     gdf["year_last"] = to_datetime(gdf["date_last"]).dt.year
 
     first_year = gdf["year_first"].min()
@@ -73,30 +60,20 @@ def split_by_year(
         gdf_year_subset = gdf.loc[gdf["year_first"] <= year]
         gdf_year_subset = gdf_year_subset.loc[gdf["year_last"] >= year]
 
-        if date_bound_method == "all_possible":
-            gdf_year_subset["date_first"] = datetime(year, 1, 1)
+        gdf_year_subset["date_first"] = datetime(year, 1, 1)
 
-            if year == datetime.now().year:
-                gdf_year_subset["date_last"] = datetime.now(tz=UTC).replace(
-                    hour=0, minute=0, second=0
-                ) + timedelta(days=n_forecast_days)
-            else:
-                gdf_year_subset["date_last"] = datetime(year, 12, 31)
-
+        if year == datetime.now().year:
+            last_date_current_year = datetime.now(tz=UTC) + timedelta(
+                days=n_forecast_days
+            )
+            gdf_year_subset["date_last"] = datetime(
+                last_date_current_year.year,
+                last_date_current_year.month,
+                last_date_current_year.day,
+            )
         else:
-            date_first_subset = gdf_year_subset["date_first"].min()
-            gdf_year_subset["date_first"] = max(
-                [date_first_subset, datetime(year, 1, 1)]
-            )
-
-            date_last_subset = gdf_year_subset["date_last"].max()
-            gdf_year_subset["date_last"] = min(
-                [date_last_subset, datetime(year, 12, 31)]
-            )
+            gdf_year_subset["date_last"] = datetime(year, 12, 31)
 
         list_gdf += [gdf_year_subset[GDF_COLS]]
 
     return list_gdf
-
-
-# def

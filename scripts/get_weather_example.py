@@ -1,5 +1,5 @@
 """
-Sample Python script to utilize some of the weather data helper functions to extract weather data for new cell IDS.
+Sample Python script that exemplifies a modular workflow for extracting weather data for new cell IDS.
 """
 
 # %% imports
@@ -18,7 +18,7 @@ from demeter.weather._grid_utils import get_centroid, get_world_utm_info_for_cel
 from demeter.weather.meteomatics._insert import get_weather_type_id_from_db
 from demeter.weather.meteomatics.main import (
     attempt_and_maybe_insert_meteomatics_request,
-    split_gdf_for_new_cell_ids,
+    split_gdf_for_add_step,
 )
 from demeter.weather.schema.weather_types import DAILY_WEATHER_TYPES
 
@@ -26,7 +26,10 @@ c = load_dotenv()
 conn = getConnection(env_name="DEMETER-DEV_LOCAL_WEATHER")
 cursor = conn.connection.cursor()
 
-# %% generate test data (n = n_cells) from row T and zones 11-15 (world utm ID 913-917)
+# %% STEP 1: Gather information on cell ID, date_first, date_last
+
+# In this case, we create sample data.
+# Generate test data (n = n_cells) from row T and zones 11-15 (world utm ID 913-917)
 random.seed(999999)
 n_cells = 100
 cell_ids = sample(range(17132197, 17218911), n_cells)
@@ -67,50 +70,33 @@ df.reset_index(drop=True, inplace=True)
 gdf = GeoDataFrame(df, geometry="centroid")
 
 
-# %%
-# # wind gusts has been removed for now to avoid problems
+# %% STEP 2: Organize parameter sets
+
+# wind gusts has been removed for now to avoid problems
+# we use `n_cells_max_set` to control for parameter variability in request time
 full_parameters = [weather_type[0] for weather_type in DAILY_WEATHER_TYPES]
 parameter_sets = [full_parameters[:6], full_parameters[6:]]
 n_cells_max_set = [100, 100]
 
-if parameter_sets is not None:
-    msg = "All sublists in `parameter_sets` must have length <= 10."
-    assert any([len(sublist) <= 10] for sublist in parameter_sets), msg
-    parameters = [elem for sublist in parameter_sets for elem in sublist]
+parameters = [elem for sublist in parameter_sets for elem in sublist]
 
 # TODO: Make into argument and implement `pool` function
 parallel = False
 
-# Get information on parameters from DB and checks that they exist there
+# get information on parameters from DB and checks that they exist there
 params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
-request_list = split_gdf_for_new_cell_ids(gdf, parameter_sets, n_cells_max_set)
 
-# %%
-# request_split_utm = split_by_utm_zone(gdf)
+# %% STEP 3: Split up the requests using some sort of logic
+# This step will be specific to the different weather extraction steps
+request_list = split_gdf_for_add_step(gdf, parameter_sets, n_cells_max_set)
 
-# request_split_year = [split_by_year(this_gdf) for this_gdf in request_split_utm]
-# request_split_year = [item for sublist in request_split_year for item in sublist]
-
-# request_split_cells = [
-#     split_by_n_cells(this_gdf, 100) for this_gdf in request_split_year
-# ]
-# request_split_cells = [item for sublist in request_split_cells for item in sublist]
-
-# request_list += get_request_list_from_gdfs_list(
-#     list_gdfs=list_gdfs,
-#     utm_zone=row["utm_zone"],
-#     utc_offset=utc_offset,
-#     parameters=this_parameter_set,
-# )
-
-
-# %%
+# %% STEP 4: Perform requests
 # organize cell ID information with lat and lon to connect MM info to weather network
 gdf_cell_id = gdf[["world_utm_id", "cell_id", "centroid"]]
-gdf_cell_id.insert(0, "lon", round(gdf_cell_id.geometry.x, 5))
-gdf_cell_id.insert(0, "lat", round(gdf_cell_id.geometry.y, 5))
+gdf_cell_id.insert(0, "lon", gdf_cell_id.geometry.x)
+gdf_cell_id.insert(0, "lat", gdf_cell_id.geometry.y)
 
-# perform requests
+
 if parallel:
     pass
 else:

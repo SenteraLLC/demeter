@@ -7,20 +7,18 @@ STEPS:
 4. Run "add" on those cell ID x year combinations which are new
 """
 # TODO: Make `demeter_user` able to search `weather` schema.
-
+# %% imports
 from dotenv import load_dotenv
 
-# %% imports
 from demeter.db import getConnection
-from demeter.weather.inventory._demeter_inventory import (
-    get_spatiotemporal_weather_database_needs,
+from demeter.weather.inventory.main import get_gdf_for_add, get_gdf_for_update
+from demeter.weather.meteomatics._insert import get_weather_type_id_from_db
+from demeter.weather.meteomatics.main import (
+    run_requests,
+    split_gdf_for_add,
+    split_gdf_for_update,
 )
-from demeter.weather.inventory._weather_inventory import (
-    get_cell_ids_in_weather_table,
-    get_first_data_year_for_cell_id,
-)
-from demeter.weather.inventory.main import update_weather
-from demeter.weather.meteomatics.main import organize_and_process_meteomatics_requests
+from demeter.weather.schema.weather_types import DAILY_WEATHER_TYPES
 
 # %% Create connections to databases
 c = load_dotenv()
@@ -30,30 +28,36 @@ cursor_weather = conn_weather.connection.cursor()
 conn_demeter = getConnection(env_name="DEMETER-DEV_LOCAL")
 cursor_demeter = conn_demeter.connection.cursor()
 
-# WITHIN EACH STEP:
-# - figure out cell ID, date_first, date_last
-# - add centroid
-# - split requests to be "optimal" for step
-# - run requests
+# %% Organize parameter sets
+
+# wind gusts has been removed for now to avoid problems
+# we use `n_cells_max_set` to control for parameter variability in request time
+full_parameters = [weather_type[0] for weather_type in DAILY_WEATHER_TYPES]
+parameter_sets = [full_parameters[:6], full_parameters[6:]]
+parameters = [elem for sublist in parameter_sets for elem in sublist]
+
+# TODO: Make into argument and implement `pool` function
+parallel = False
+
+# get information on parameters from DB and checks that they exist there
+params_to_weather_types = get_weather_type_id_from_db(cursor_weather, parameters)
 
 # %% 1. Run "update" on those cell IDs already in demeter
-gdf_update = update_weather(conn_weather)
-request_list = organize_and_process_meteomatics_requests(
-    conn_weather, gdf_update, step="update", parameter_sets=None, n_cells_max_set=None
-)
+n_cells_per_set = [1000, 1000]
+gdf_update = get_gdf_for_update(conn_weather)
+update_requests = split_gdf_for_update(gdf_update, parameter_sets, n_cells_per_set)
 
-# %%  2. Get all cell IDs and first planting dates from `demeter`
-gdf_need = get_spatiotemporal_weather_database_needs(cursor_demeter, cursor_weather)
+gdf_cell_id = gdf_update[["world_utm_id", "cell_id", "centroid"]]
+gdf_cell_id.insert(0, "lon", gdf_cell_id.geometry.x)
+gdf_cell_id.insert(0, "lat", gdf_cell_id.geometry.y)
+run_requests(conn_weather, request_list=update_requests, gdf_cell_id=gdf_cell_id)
 
-# %% 3. Determine all cell IDs and the first year of data available for each in `weather`
+# %%  2. Run "add" on all new cell ID x year combinations
+n_cells_per_set = [100, 100]
+gdf_add = get_gdf_for_add(conn_demeter, conn_weather)
+add_requests = split_gdf_for_add(gdf_add, parameter_sets, n_cells_per_set)
 
-# get_new_cell_id_by_year_combinations
-
-# Find cell IDs which are not in the database or need more historical years of data.
-cell_id = get_cell_ids_in_weather_table(cursor_weather, table="daily")
-gdf_available = get_first_data_year_for_cell_id(
-    cursor_weather, gdf_need["cell_id"].to_list()
-)
-
-# %% 4. Run "add" on those cell ID x year combinations which are new
-gdf_new = gdf_need.loc[~gdf_need["cell_id"].isin(cell_id)]
+gdf_cell_id = gdf_add[["world_utm_id", "cell_id", "centroid"]]
+gdf_cell_id.insert(0, "lon", gdf_cell_id.geometry.x)
+gdf_cell_id.insert(0, "lat", gdf_cell_id.geometry.y)
+run_requests(conn_weather, request_list=add_requests, gdf_cell_id=gdf_cell_id)

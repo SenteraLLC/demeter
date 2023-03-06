@@ -1,16 +1,21 @@
 from datetime import datetime, timedelta
 
 from geopandas import GeoDataFrame
+from pandas import concat as pd_concat
 from pandas import merge as pd_merge
-from pytz import UTC
 from sqlalchemy.engine import Connection
 
-from demeter.weather._grid_utils import get_centroid
+from demeter.weather._grid_utils import get_centroid, get_info_for_world_utm
+from demeter.weather.inventory._demeter_inventory import (
+    get_spatiotemporal_weather_database_needs,
+)
 from demeter.weather.inventory._utils import localize_utc_datetime_with_utc_offset
 from demeter.weather.inventory._weather_inventory import (
+    get_cell_ids_in_weather_table,
     get_date_last_requested_for_cell_id,
+    get_first_data_year_for_cell_id,
     get_first_unstable_date,
-    get_info_for_world_utm,
+    get_min_current_date_for_world_utm,
 )
 
 GDF_COLS = [
@@ -24,7 +29,7 @@ GDF_COLS = [
 ]
 
 
-def update_weather(conn_weather: Connection) -> GeoDataFrame:
+def get_gdf_for_update(conn_weather: Connection) -> GeoDataFrame:
     """DOCSTRING."""
 
     cursor_weather = conn_weather.connection.cursor()
@@ -53,15 +58,13 @@ def update_weather(conn_weather: Connection) -> GeoDataFrame:
         lambda d: get_first_unstable_date(d)
     )
 
-    # last day is 7 days from today UTC
-    utc_today = datetime.now(tz=UTC).date()
-    df_full["date_last"] = utc_today + timedelta(days=7)
+    # last day is 7 days from the last full day across all UTM zones
+    today = get_min_current_date_for_world_utm()
+    df_full["date_last"] = today + timedelta(days=7)
 
     # get centroid for each cell ID
     df_full["centroid"] = df_full.apply(
-        lambda row: get_centroid(
-            cursor_weather, row["utm_zone"], row["utm_row"], row["cell_id"]
-        ),
+        lambda row: get_centroid(cursor_weather, row["world_utm_id"], row["cell_id"]),
         axis=1,
     )
 
@@ -70,8 +73,37 @@ def update_weather(conn_weather: Connection) -> GeoDataFrame:
     return gdf_full
 
 
-def add_weather():
-    pass
+def get_gdf_for_add(conn_demeter: Connection, conn_weather: Connection):
+    """DOCSTRING"""
+
+    cursor_demeter = conn_demeter.connection.cursor()
+    cursor_weather = conn_weather.connection.cursor()
+
+    gdf_need = get_spatiotemporal_weather_database_needs(cursor_demeter, cursor_weather)
+
+    # find cell IDs which need more historical years of data
+    cell_id = get_cell_ids_in_weather_table(cursor_weather, table="daily")
+    gdf_available = get_first_data_year_for_cell_id(
+        cursor_weather, gdf_need["cell_id"].to_list()
+    )
+
+    gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
+    keep = gdf_new_years.apply(
+        lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1
+    )
+    gdf_new_years = gdf_new_years.loc[keep]
+    gdf_new_years["date_last"] = gdf_new_years["first_year"].map(
+        lambda yr: datetime(yr - 1, 12, 31)
+    )
+
+    # find cell IDs which are not in the database at all
+    gdf_new_cells = gdf_need.loc[~gdf_need["cell_id"].isin(cell_id)]
+
+    gdf_add = pd_concat(
+        [gdf_new_years[gdf_new_cells.columns.values], gdf_new_cells], axis=0
+    )
+
+    return gdf_add
 
 
 def fill_weather():

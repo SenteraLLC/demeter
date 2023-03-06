@@ -13,12 +13,14 @@ from typing import (
 
 from geopandas import GeoDataFrame
 from pandas import DataFrame
+from pandas import concat as pd_concat
 from pandas import merge as pd_merge
 from pytz import UTC
 from shapely.errors import ShapelyDeprecationWarning
 from shapely.wkb import loads as wkb_loads
 
 from demeter.weather import get_cell_id
+from demeter.weather._grid_utils import get_centroid, get_world_utm_info_for_cell_id
 
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
@@ -148,10 +150,11 @@ def get_spatiotemporal_weather_database_needs(
     assert len(field_id) > 0, "There are no fields in `demeter`."
 
     gdf_field_space = get_centroid_for_field_id(cursor_demeter, field_id)
-    gdf_field_space[["cell_id", "centroid"]] = gdf_field_space.apply(
+    gdf_field_space["cell_id"] = gdf_field_space.apply(
         lambda row: get_cell_id(cursor_weather, row["field_centroid"]), axis=1
     )
 
+    # based on planting date and `n_hist_years`
     df_field_time = get_temporal_bounds_for_field_id(cursor_demeter, field_id)
 
     gdf_full = pd_merge(gdf_field_space, df_field_time, on="field_id")
@@ -160,8 +163,34 @@ def get_spatiotemporal_weather_database_needs(
         ["cell_id"], keep="first"
     )  # only need to worry about `date_first`
 
+    # add world utm ID
+    df_world_utm = gdf_unique.apply(
+        lambda row: get_world_utm_info_for_cell_id(cursor_weather, row["cell_id"]).iloc[
+            0
+        ],
+        axis=1,
+    )
+
+    gdf_world_utm = pd_concat([gdf_unique, df_world_utm], axis=1).rename(
+        columns={"zone": "utm_zone"}
+    )
+
+    gdf_world_utm["centroid"] = gdf_world_utm.apply(
+        lambda row: get_centroid(cursor_weather, row["world_utm_id"], row["cell_id"]),
+        axis=1,
+    )
+
+    cols = [
+        "utm_zone",
+        "utc_offset",
+        "world_utm_id",
+        "cell_id",
+        "centroid",
+        "date_first",
+        "date_last",
+    ]
     gdf_clean = GeoDataFrame(
-        gdf_unique[["cell_id", "date_first", "date_last", "centroid"]],
+        gdf_world_utm[cols],
         geometry="centroid",
     )
 

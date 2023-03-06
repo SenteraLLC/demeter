@@ -1,9 +1,5 @@
 import warnings
-from datetime import (
-    date,
-    datetime,
-    timedelta,
-)
+from datetime import datetime, timedelta
 from typing import (
     Any,
     List,
@@ -12,6 +8,7 @@ from typing import (
 
 from pandas import DataFrame, to_datetime
 from psycopg2.sql import Identifier
+from pytz import UTC
 from shapely.errors import ShapelyDeprecationWarning
 
 from demeter.db._postgres.tools import doPgFormat
@@ -19,9 +16,28 @@ from demeter.db._postgres.tools import doPgFormat
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 
-def get_first_unstable_date(local_date_last_requested: datetime) -> date:
+def get_min_current_date_for_world_utm() -> datetime:
+    """Get the earliest date (according to the UTM offset approach) that at least one
+    UTM zone is currently in."""
+    now = datetime.now(tz=UTC)
+    yesterday_eod = datetime(now.year, now.month, now.day, tzinfo=UTC) + timedelta(
+        hours=12
+    )
+
+    # we have passed the EOD for yesterday across all UTM zones, then return today
+    if now > yesterday_eod:
+        return datetime(now.year, now.month, now.day)
+    else:
+        return datetime(now.year, now.month, now.day) - timedelta(days=1)
+
+
+def get_first_unstable_date(local_date_last_requested: datetime) -> datetime:
     first_unstable_datetime = local_date_last_requested - timedelta(days=1)
-    return first_unstable_datetime.date()
+    return datetime(
+        first_unstable_datetime.year,
+        first_unstable_datetime.month,
+        first_unstable_datetime.day,
+    )
 
 
 def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily"):
@@ -117,30 +133,3 @@ def get_date_last_requested_for_cell_id(
         return None
     else:
         return df_result
-
-
-def get_info_for_world_utm(
-    cursor_weather: Any, world_utm_id: Union[int, List[int]]
-) -> DataFrame:
-    """Return 'utc_offset', 'utm_zone', 'utm_row' for list of `weather.world_utm` IDs.
-
-    Args:
-        cursor (Any): Connection to Demeter weather schema
-        world_utm_id (int or list of int): IDS from world_utm table to extract utc_offset for
-
-    Returns dataframe with two columns: "world_utm_id", "utc_offset", "utm_zone", "utm_row"
-    """
-    world_utm_id_tuple = tuple(world_utm_id)
-
-    stmt = """
-    select world_utm_id, utc_offset, zone, row
-    from world_utm
-    where world_utm_id in %(world_utm_id)s
-    """
-    args = {"world_utm_id": world_utm_id_tuple}
-    cursor_weather.execute(stmt, args)
-    df_result = DataFrame(cursor_weather.fetchall())
-
-    assert len(df_result) > 0, "This `world_utm_id` does not exist in the DB."
-
-    return df_result.rename(columns={"zone": "utm_zone", "row": "utm_row"})

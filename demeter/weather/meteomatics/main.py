@@ -18,6 +18,11 @@ from demeter.weather.meteomatics._requests import (
     get_request_list_from_gdfs_list,
     submit_single_meteomatics_request,
 )
+from demeter.weather.meteomatics._split import (
+    split_by_n_cells,
+    split_by_utm_zone,
+    split_by_year,
+)
 
 
 def attempt_and_maybe_insert_meteomatics_request(
@@ -57,7 +62,7 @@ def attempt_and_maybe_insert_meteomatics_request(
 def split_gdf_for_new_cell_ids(
     gdf: GeoDataFrame,
     parameter_sets: List[List[str]],
-    n_spatial_pts_per_set: List[int],
+    n_cells_per_set: List[int],
     n_forecast_days: int = 7,
 ):
     """Creates `request_list` that will fully populate Demeter with weather for new cell IDS specified in `gdf`.
@@ -84,7 +89,7 @@ def split_gdf_for_new_cell_ids(
         gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests.
         parameter_sets (list of str): List of sets of parameters to be extracted for each cell ID x date combination.
 
-        n_spatial_pts_per_set (list of int): Maximum number of cell IDs to include in a request when requesting a
+        n_cells_per_set (list of int): Maximum number of cell IDs to include in a request when requesting a
             certain parameter set (corresponds to order of `parameter_sets`).
 
         n_forecast_days (int): Number of days of forecast weather to collect for each cell ID
@@ -98,12 +103,30 @@ def split_gdf_for_new_cell_ids(
         gdf.columns
     ), f"The following columns must be in `gdf`: {rq_cols}"
 
+    gdf_split_utm = split_by_utm_zone(gdf)
+
+    gdf_split_year = [split_by_year(this_gdf) for this_gdf in gdf_split_utm]
+    gdf_split_year = [item for sublist in gdf_split_year for item in sublist]
+
     request_list = []
 
-    df_zones = gdf[["utm_zone", "utc_offset"]].drop_duplicates()
-
-    # SPLIT #1: parameters due to MM request limiting to 10 parameters
     for i in range(len(parameter_sets)):
+        this_parameter_set = parameter_sets[i]
+        this_n_cells_max = n_cells_per_set[i]
+
+        gdf_split_cells = [
+            split_by_n_cells(this_gdf, this_n_cells_max) for this_gdf in gdf_split_year
+        ]
+        gdf_split_cells = [item for sublist in gdf_split_cells for item in sublist]
+
+        request_list += get_request_list_from_gdfs_list(
+            list_gdfs=gdf_split_cells,
+            parameters=this_parameter_set,
+        )
+
+        df_zones = None
+        # SPLIT #1: parameters due to MM request limiting to 10 parameters
+
         # SPLIT #2: UTM zone due to `utc_offset` problem
         for _, row in df_zones.iterrows():
             gdf_zone_subset = gdf.loc[gdf["utm_zone"] == row["utm_zone"]]
@@ -114,9 +137,6 @@ def split_gdf_for_new_cell_ids(
             last_year = gdf_zone_subset["date_last"].max().year
             years = range(first_year, last_year + 1)
 
-            this_parameter_set = parameter_sets[i]
-            this_n_spatial_pts_max = n_spatial_pts_per_set[i]
-
             # SPLIT #3: split by year
             for year in years:
                 gdf_zone_year_subset = gdf_zone_subset.loc[
@@ -126,13 +146,13 @@ def split_gdf_for_new_cell_ids(
 
                 if year == datetime.now().year:
                     gdf_zone_year_subset["date_last"] = datetime.now(tz=UTC).replace(
-                        hour=0, minute=0, seconds=0
+                        hour=0, minute=0, second=0
                     ) + timedelta(days=n_forecast_days)
                 else:
                     gdf_zone_year_subset["date_last"] = datetime(year, 12, 31)
 
                 # SPLIT #4: split by max spatial points (if needed)
-                n_splits = int(ceil(len(gdf_zone_year_subset) / this_n_spatial_pts_max))
+                n_splits = int(ceil(len(gdf_zone_year_subset) / this_n_cells_max))
                 list_gdfs = array_split(gdf_zone_year_subset, n_splits)
 
                 request_list += get_request_list_from_gdfs_list(
@@ -143,6 +163,10 @@ def split_gdf_for_new_cell_ids(
                 )
 
     return request_list
+
+
+def split_gdf_for_update():
+    pass
 
 
 def organize_and_process_meteomatics_requests(

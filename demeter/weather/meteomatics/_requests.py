@@ -148,8 +148,6 @@ def get_request_for_single_gdf(
 
 def get_request_list_from_gdfs_list(
     list_gdfs: List[GeoDataFrame],
-    utm_zone: int,
-    utc_offset: timezone,
     parameters: List[str],
 ) -> List[dict]:
     """
@@ -167,13 +165,22 @@ def get_request_list_from_gdfs_list(
         request_list (list of dict): List of dictionaries containing metadata to inform MM requests for
         each item in `list_gdfs`
     """
+    msg = (
+        "Error: More than one `utc_offset` given in `gdf`. Should only be passing one."
+    )
 
     request_list = []
 
     for n in range(len(list_gdfs)):
         gdf_request = list_gdfs[n]
+
+        utc_offset = list(gdf_request["utc_offset"].unique())
+        utm_zone = list(gdf_request["utm_zone"].unique())
+
+        assert len(utc_offset) == 1, msg
+
         rq = get_request_for_single_gdf(
-            gdf_request, utc_offset, utm_zone, parameters, utm_request_id=n
+            gdf_request, utc_offset[0], utm_zone[0], parameters, utm_request_id=n
         )
         request_list += [rq]
 

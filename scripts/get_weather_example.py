@@ -2,9 +2,6 @@
 Sample Python script to utilize some of the weather data helper functions to extract weather data for new cell IDS.
 """
 
-# QUESTIONS:
-# TODO: `ST_reduceprecision` doesn't always round things well ?? search "round" here
-
 # %% imports
 
 import random
@@ -19,9 +16,9 @@ from pandas import concat as pd_concat
 from demeter.db import getConnection
 from demeter.weather._grid_utils import get_centroid, get_world_utm_info_for_cell_id
 from demeter.weather.meteomatics._insert import get_weather_type_id_from_db
-from demeter.weather.meteomatics._requests import split_gdf_for_new_cell_ids
 from demeter.weather.meteomatics.main import (
     attempt_and_maybe_insert_meteomatics_request,
+    split_gdf_for_new_cell_ids,
 )
 from demeter.weather.schema.weather_types import DAILY_WEATHER_TYPES
 
@@ -50,9 +47,7 @@ for id_ind in range(n_cells):
 
     df_world_utm = get_world_utm_info_for_cell_id(cursor, cell_id)
 
-    centroid = get_centroid(
-        cursor, df_world_utm["zone"].item(), df_world_utm["row"].item(), cell_id
-    )
+    centroid = get_centroid(cursor, df_world_utm["world_utm_id"].item(), cell_id)
 
     year = sample(range(2015, 2024), 1)[0]
     date_first = datetime(year, 1, 1)
@@ -78,7 +73,6 @@ full_parameters = [weather_type[0] for weather_type in DAILY_WEATHER_TYPES]
 parameter_sets = [full_parameters[:6], full_parameters[6:]]
 n_cells_max_set = [100, 100]
 
-
 if parameter_sets is not None:
     msg = "All sublists in `parameter_sets` must have length <= 10."
     assert any([len(sublist) <= 10] for sublist in parameter_sets), msg
@@ -90,6 +84,25 @@ parallel = False
 # Get information on parameters from DB and checks that they exist there
 params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
 request_list = split_gdf_for_new_cell_ids(gdf, parameter_sets, n_cells_max_set)
+
+# %%
+# request_split_utm = split_by_utm_zone(gdf)
+
+# request_split_year = [split_by_year(this_gdf) for this_gdf in request_split_utm]
+# request_split_year = [item for sublist in request_split_year for item in sublist]
+
+# request_split_cells = [
+#     split_by_n_cells(this_gdf, 100) for this_gdf in request_split_year
+# ]
+# request_split_cells = [item for sublist in request_split_cells for item in sublist]
+
+# request_list += get_request_list_from_gdfs_list(
+#     list_gdfs=list_gdfs,
+#     utm_zone=row["utm_zone"],
+#     utc_offset=utc_offset,
+#     parameters=this_parameter_set,
+# )
+
 
 # %%
 # organize cell ID information with lat and lon to connect MM info to weather network

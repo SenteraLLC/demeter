@@ -1,4 +1,5 @@
 """Helper functions for creating and using the weather grid network."""
+
 import json
 import subprocess
 from datetime import timezone
@@ -9,7 +10,6 @@ from typing import Any, Tuple
 from geo_utils.general import estimate_utm_crs, hemisphere_from_centroid
 from geo_utils.raster import build_transform_utm, create_array_skeleton
 from geo_utils.vector import reproject_shapely
-from geo_utils.world import round_coordinate
 from global_land_mask.globe import is_land
 from numpy import (
     arange,
@@ -353,8 +353,8 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
 
 def get_cell_id(
     cursor: Any, geometry: Point, geometry_crs: CRS = CRS.from_epsg(4326)
-) -> Series:
-    """For a given Point geometry, determine cell ID and cell centroid.
+) -> int:
+    """For a given Point geometry, determine cell ID.
 
     If the point geometry somehow falls on a polygon boundary, which results in 2 cell IDs
     being returned, the smaller cell ID will always be returned for consistency.
@@ -369,7 +369,6 @@ def get_cell_id(
 
     Returns:
         cell ID (int) of weather grid pixel the point falls within
-        centroid (shapely.Point) of pixel with lat/lng values rounded to 5 decimal places
     """
 
     assert isinstance(geometry, Point), "`geometry` must be passed as a `Point`"
@@ -382,54 +381,48 @@ def get_cell_id(
         )
 
     stmt = """
-    select q2.cell_id, ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326), 0.00001) as centroid
+    select q.cell_id as cell_id
     from (
-        select q.cell_id as cell_id, q.rast, (ST_PixelOfValue(q.rast, 1, q.cell_id)).*
-        from (
-            select raster_5km.rast_cell_id as rast,
-                ST_Value(
-                raster_5km.rast_cell_id,
-                ST_Transform(ST_Point( %(x)s, %(y)s, 4326), world_utm.raster_epsg)
-                ) as cell_id
-            from world_utm, raster_5km
-            where ST_intersects(ST_Point(%(x)s, %(y)s, 4326), world_utm.geom)
-            and world_utm.world_utm_id=raster_5km.world_utm_id
-        ) as q
-    ) as q2;
+        select raster_5km.rast_cell_id as rast,
+            ST_Value(
+            raster_5km.rast_cell_id,
+            ST_Transform(ST_Point( %(x)s, %(y)s, 4326), world_utm.raster_epsg)
+            ) as cell_id
+        from world_utm, raster_5km
+        where ST_intersects(ST_Point(%(x)s, %(y)s, 4326), world_utm.geom)
+        and world_utm.world_utm_id=raster_5km.world_utm_id
+    ) as q;
     """
     args = {"x": geometry.x, "y": geometry.y}
 
     cursor.execute(stmt, args)
     res = DataFrame(cursor.fetchall()).sort_values(by=["cell_id"])
 
-    # if more than one cell ID returned (i.e., on polygon edge), take the smaller cell ID arbitrarily
-    full_pt = wkb_loads(res.at[0, "centroid"], hex=True)
-    centroid = Point(round_coordinate([full_pt.x, full_pt.y], 5))
-
-    return Series(data={"cell_id": int(res.at[0, "cell_id"]), "centroid": centroid})
+    return int(res.at[0, "cell_id"])
 
 
-## MAYBE SOME EXTRA FUNCTIONS?
-
-
-def get_centroid(cursor: Any, zone: int, row: str, cell_id: int):
-    """For a given cell ID, UTM zone, and UTM row, get its centroid from the database."""
+def get_centroid(cursor: Any, world_utm_id: int, cell_id: int):
+    """For a given cell ID and world UTM ID, get its centroid from the database."""
     stmt = """
-    select ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326), 0.00001) as centroid
+    select ST_Point(ROUND(ST_X(q3.point)::numeric,5), ROUND(ST_Y(q3.point)::numeric,5)) as centroid
     from (
-        select q.rast, (ST_PixelOfValue(q.rast, 1, %(cell_id)s)).*
+        select ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326), 0.00001) as point
         from (
-            select raster_5km.rast_cell_id as rast
-            from world_utm, raster_5km
-            where world_utm.zone = %(zone)s and row = %(row)s
-            and world_utm.world_utm_id=raster_5km.world_utm_id
-        ) as q
-    ) as q2;
+            select q.rast, (ST_PixelOfValue(q.rast, 1, %(cell_id)s)).*
+            from (
+                select raster_5km.rast_cell_id as rast
+                from world_utm, raster_5km
+                where world_utm.world_utm_id= %(world_utm_id)s
+                and world_utm.world_utm_id=raster_5km.world_utm_id
+            ) as q
+        ) as q2
+    ) as q3;
     """
-    args = {"zone": int(zone), "row": row, "cell_id": int(cell_id)}
+    args = {"world_utm_id": world_utm_id, "cell_id": int(cell_id)}
     cursor.execute(stmt, args)
     res = DataFrame(cursor.fetchall())["centroid"].item()
     centroid = wkb_loads(res, hex=True)
+
     return centroid
 
 

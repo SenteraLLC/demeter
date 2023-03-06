@@ -124,7 +124,7 @@ def get_request_for_single_gdf(
     # Get space
     coordinate_list = []
     for _, row in gdf_request.iterrows():
-        coordinate_list += [(round(row["centroid"].y, 5), round(row["centroid"].x, 5))]
+        coordinate_list += [(row["centroid"].y, row["centroid"].x)]
 
     # Get time
     startdate, enddate = get_utc_date_range_with_offset(

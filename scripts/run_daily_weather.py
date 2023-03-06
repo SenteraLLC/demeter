@@ -5,7 +5,6 @@ STEPS:
 2. Determine all cell IDs and the first year of data available for each in `weather`
 3. Get all cell IDs and first planting dates from `demeter` (** This step is not currently fully using Demeter's creation timestamps.)
 4. Run "add" on those cell ID x year combinations which are new
-
 """
 # TODO: Make `demeter_user` able to search `weather` schema.
 

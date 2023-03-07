@@ -55,13 +55,21 @@ add_requests = split_gdf_for_add(gdf_add, parameter_sets, n_cells_per_set)
 # %% 3. Actually complete the requests: start with "add" and then do "update"
 
 # run ADD requests
-gdf_cell_id = gdf_add[["world_utm_id", "cell_id", "centroid"]]
-gdf_cell_id.insert(0, "lon", gdf_cell_id.geometry.x)
-gdf_cell_id.insert(0, "lat", gdf_cell_id.geometry.y)
-run_requests(conn_weather, request_list=add_requests, gdf_cell_id=gdf_cell_id)
+if len(add_requests) > 0:
+    run_requests(
+        conn_weather,
+        request_list=add_requests,
+        gdf_request=gdf_add,
+        params_to_weather_types=params_to_weather_types,
+    )
 
 # run UPDATE requests
-gdf_cell_id = gdf_update[["world_utm_id", "cell_id", "centroid"]]
-gdf_cell_id.insert(0, "lon", gdf_cell_id.geometry.x)
-gdf_cell_id.insert(0, "lat", gdf_cell_id.geometry.y)
-run_requests(conn_weather, request_list=update_requests, gdf_cell_id=gdf_cell_id)
+if len(update_requests) > 0:
+    run_requests(
+        conn_weather,
+        request_list=update_requests,
+        gdf_request=gdf_update,
+        params_to_weather_types=params_to_weather_types,
+    )
+
+# %%

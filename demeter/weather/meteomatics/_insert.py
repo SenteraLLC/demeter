@@ -130,7 +130,18 @@ def clean_meteomatics_data(
     df_wx_full["date"] = df_wx_full["validdate"].dt.tz_convert(utc_offset).dt.date
 
     # finalize columns
-    df_wx_clean = df_wx_full.drop(columns=["lat", "lon", "validdate", "centroid"])
+    df_wx_clean = df_wx_full.drop(
+        columns=[
+            "lat",
+            "lon",
+            "validdate",
+            "centroid",
+            "utm_zone",
+            "utc_offset",
+            "date_first",
+            "date_last",
+        ]
+    )
 
     # melt wide dataframe to long format
     df_melt_clean = pd_melt(

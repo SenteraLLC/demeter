@@ -7,6 +7,7 @@ from sqlalchemy.engine import Connection
 
 from demeter.weather.meteomatics._insert import (
     clean_meteomatics_data,
+    filter_dates_by_gdf_bounds,
     insert_daily_weather,
     log_meteomatics_request,
 )
@@ -149,7 +150,7 @@ def split_gdf_for_add(
 def attempt_and_maybe_insert_meteomatics_request(
     conn: Connection,
     request: dict,
-    gdf_cell_id: GeoDataFrame,
+    gdf_request: GeoDataFrame,
     params_to_weather_types: dict,
 ) -> dict:
     """Submits MM request based on `request`, logs metadata to db, and, if request is successful, inserts data to db.
@@ -157,11 +158,19 @@ def attempt_and_maybe_insert_meteomatics_request(
     Args:
         conn (Connection): Connection to demeter weather database
         request (dict): Information for outlining Meteomatics request
-        gdf_cell_id (GeoDataFrame): Dataframe matching lat/lon coordinates to cell IDs
+
+        gdf_request (GeoDataFrame): Dataframe matching lat/lon coordinates to cell IDs and containing
+            cell-level temporal bounds for weather data needed
+
         params_to_weather_types (dict): Dictionary mapping weather parameters to db weather types IDs
 
     Returns `request` with updated information on request metadata (i.e., "status", "request_seconds")
     """
+
+    rq_gdf_cols = ["world_utm_id", "cell_id", "date_first", "date_last", "lat", "lon"]
+    assert set(rq_gdf_cols).issubset(
+        gdf_request.columns
+    ), f"The following columns must be in `gdf_request`: {rq_gdf_cols}"
 
     df_wx, request = submit_single_meteomatics_request(request=request)
 
@@ -173,11 +182,18 @@ def attempt_and_maybe_insert_meteomatics_request(
         utc_offset = request["utc_offset"]
         df_clean = clean_meteomatics_data(
             df_wx=df_wx,
-            gdf_cell_id=gdf_cell_id,
+            gdf_request=gdf_request,
             utc_offset=utc_offset,
         )
-        df_clean["weather_type_id"] = df_clean["variable"].map(params_to_weather_types)
-        insert_daily_weather(conn, df_clean)
+
+        df_filter = filter_dates_by_gdf_bounds(
+            df_clean=df_clean, gdf_request=gdf_request
+        )
+
+        df_filter["weather_type_id"] = df_filter["variable"].map(
+            params_to_weather_types
+        )
+        insert_daily_weather(conn, df_filter)
 
     return request
 
@@ -185,7 +201,7 @@ def attempt_and_maybe_insert_meteomatics_request(
 def run_requests(
     conn: Connection,
     request_list: List[dict],
-    gdf_cell_id: GeoDataFrame,
+    gdf_request: GeoDataFrame,
     params_to_weather_types: dict,
     parallel: bool = False,
 ):
@@ -196,10 +212,23 @@ def run_requests(
     Args:
         conn: Connection to Demeter weather schema
         request_list (list of dict): List of `request` dictionaries, which each outline the spatiotemporal info for a MM request
-        gdf_cell_id (GeoDataFrame): Dataframe matching lat/lon coordinates to cell IDs across all cell IDS included in `request_list`
+
+        gdf_request (GeoDataFrame): Dataframe containing spatiotemporal information for the given weather
+            requests
+
         params_to_weather_types (dict): Dictionary mapping weather parameters to db weather types IDs
         parallel (bool): Indicates whether requests should be run in parallel (not currently implemented); defaults to False.
     """
+    rq_gdf_cols = ["world_utm_id", "cell_id", "date_first", "date_last", "centroid"]
+    assert set(rq_gdf_cols).issubset(
+        gdf_request.columns
+    ), f"The following columns must be in `gdf_request`: {rq_gdf_cols}"
+
+    # add lat/lon if not already added
+    if not set(["lon", "lat"]).issubset(gdf_request.columns):
+        gdf_request.insert(0, "lon", gdf_request.geometry.x)
+        gdf_request.insert(0, "lat", gdf_request.geometry.y)
+
     if parallel:
         pass
     else:
@@ -208,7 +237,7 @@ def run_requests(
             request = attempt_and_maybe_insert_meteomatics_request(
                 conn=conn,
                 request=request,
-                gdf_cell_id=gdf_cell_id,
+                gdf_request=gdf_request,
                 params_to_weather_types=params_to_weather_types,
             )
             request_list[ind] = request

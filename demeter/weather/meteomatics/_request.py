@@ -14,11 +14,22 @@ from typing import (
 )
 
 from geopandas import GeoDataFrame
-from meteomatics.api import query_time_series
+from meteomatics.api import query_time_series, query_user_limits
 from meteomatics.exceptions import NotFound
 from pandas import DataFrame
 from pytz import UTC
 from requests import ReadTimeout
+
+
+def get_n_requests_remaining() -> int:
+    """Determines how many requests are remaining on Sentera's Meteomatics license for today."""
+    res = query_user_limits(
+        "sentera",
+        getenv("METEOMATICS_KEY"),
+    )
+    used, total = res["requests since last UTC midnight"]
+
+    return total - used
 
 
 def get_utc_date_range_with_offset(
@@ -234,6 +245,9 @@ def submit_single_meteomatics_request(
     assert all(
         [check_coordinate_rounding(tup) for tup in request["coordinate_list"]]
     ), msg
+
+    n_requests_remaining = get_n_requests_remaining()
+    assert n_requests_remaining > 0, "Meteomatics request limit reached for today."
 
     date_requested = datetime.now().astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S%z")
     request["date_requested"] = date_requested

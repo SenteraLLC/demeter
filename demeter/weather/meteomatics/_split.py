@@ -1,4 +1,4 @@
-"""Methods for splitting up requests"""
+"""Methods for splitting up requests along one or more dimensions."""
 from datetime import datetime, timedelta
 from typing import List
 
@@ -29,7 +29,11 @@ def split_by_utm_zone(gdf: GeoDataFrame) -> List[GeoDataFrame]:
 
 
 def split_by_n_cells(gdf: GeoDataFrame, max_n_cells: int) -> List[GeoDataFrame]:
-    """Split `gdf` evenly into N requests such that no request has more than `max_n_cells`."""
+    """Split `gdf` evenly into N requests such that no request has more than `max_n_cells`.
+
+    Args:
+        gdf (GeoDataFrame): GeoDataFrame to split
+        max_n_cells (int): Maximum number of cell IDs to include in a split."""
     list_gdf = []
     n_splits = int(ceil(len(gdf) / max_n_cells))
     list_gdf = array_split(gdf, n_splits)

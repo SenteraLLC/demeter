@@ -7,14 +7,14 @@ from sqlalchemy.engine import Connection
 
 from demeter.weather._grid_utils import get_centroid, get_info_for_world_utm
 from demeter.weather.inventory._demeter_inventory import (
-    get_spatiotemporal_weather_database_needs,
+    determine_needed_weather_for_demeter,
 )
 from demeter.weather.inventory._utils import localize_utc_datetime_with_utc_offset
 from demeter.weather.inventory._weather_inventory import (
     get_cell_ids_in_weather_table,
     get_date_last_requested_for_cell_id,
-    get_first_data_year_for_cell_id,
-    get_first_unstable_date,
+    get_first_available_data_year_for_cell_id,
+    get_first_unstable_date_at_request_time,
     get_min_current_date_for_world_utm,
 )
 
@@ -55,7 +55,7 @@ def get_gdf_for_update(conn_weather: Connection) -> GeoDataFrame:
 
     # perform this action at the cell ID level
     df_full["date_first"] = df_full["local_date_last_requested"].map(
-        lambda d: get_first_unstable_date(d)
+        lambda d: get_first_unstable_date_at_request_time(d)
     )
 
     # last day is 7 days from the last full day across all UTM zones
@@ -79,11 +79,11 @@ def get_gdf_for_add(conn_demeter: Connection, conn_weather: Connection):
     cursor_demeter = conn_demeter.connection.cursor()
     cursor_weather = conn_weather.connection.cursor()
 
-    gdf_need = get_spatiotemporal_weather_database_needs(cursor_demeter, cursor_weather)
+    gdf_need = determine_needed_weather_for_demeter(cursor_demeter, cursor_weather)
 
     # find cell IDs which need more historical years of data
     cell_id = get_cell_ids_in_weather_table(cursor_weather, table="daily")
-    gdf_available = get_first_data_year_for_cell_id(
+    gdf_available = get_first_available_data_year_for_cell_id(
         cursor_weather, gdf_need["cell_id"].to_list()
     )
 
@@ -106,5 +106,5 @@ def get_gdf_for_add(conn_demeter: Connection, conn_weather: Connection):
     return gdf_add
 
 
-def fill_weather():
+def get_gdf_for_fill():
     pass

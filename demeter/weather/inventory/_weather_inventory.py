@@ -1,3 +1,9 @@
+"""Helper functions for running inventory on Demeter Weather in terms of what is available and what is needed.
+
+Helps with "update" and "add" step in weather extraction process.
+"""
+
+
 import warnings
 from datetime import datetime, timedelta
 from typing import (
@@ -17,8 +23,7 @@ warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
 
 def get_min_current_date_for_world_utm() -> datetime:
-    """Get the earliest date (according to the UTM offset approach) that at least one
-    UTM zone is currently in."""
+    """Get the earliest curent date (according to the UTM offset approach) across all zones."""
     now = datetime.now(tz=UTC)
     yesterday_eod = datetime(now.year, now.month, now.day, tzinfo=UTC) + timedelta(
         hours=12
@@ -31,7 +36,15 @@ def get_min_current_date_for_world_utm() -> datetime:
         return datetime(now.year, now.month, now.day) - timedelta(days=1)
 
 
-def get_first_unstable_date(local_date_last_requested: datetime) -> datetime:
+def get_first_unstable_date_at_request_time(
+    local_date_last_requested: datetime,
+) -> datetime:
+    """At a given localized request time, determine the first "unstable" date that would need to be re-extracted.
+
+    Following guidance from Meteomatics rep, the Meteomatics model predictions become "stable" after 24 hours.
+    Therefore, to ensure we have the stable version of each daily weather parameter, we must ensure that all values
+    are extracted at least 24 hours after the local end-of-day for the date.
+    """
     first_unstable_datetime = local_date_last_requested - timedelta(days=1)
     return datetime(
         first_unstable_datetime.year,
@@ -40,8 +53,15 @@ def get_first_unstable_date(local_date_last_requested: datetime) -> datetime:
     )
 
 
-def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily"):
-    """Get list of all cell IDs that have data in a given data in the weather schema."""
+def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily") -> List:
+    """Get list of all cell IDs that have data in a given data in the weather schema.
+
+    Args:
+        cursor: Connection to demeter weather schema
+
+        table (str): Name of weather table to consider; defaults to "daily" which is currently
+            the only weather data table in use.
+    """
 
     assert table in [
         "daily"
@@ -57,14 +77,19 @@ def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily"):
     return df_result["cell_id"].to_list()
 
 
-def get_first_data_year_for_cell_id(
+def get_first_available_data_year_for_cell_id(
     cursor_weather: Any,
     cell_id: Union[int, List[int]],
     table: str = "daily",
 ) -> Union[DataFrame, None]:
-    """Get first date of data available for `cell_id` in weather.`table`
+    """Gets the first year where data are available for `cell_id` in weather.`table`
 
     If no data is available, None is returned.
+
+    Due to the data-greedy approach that we use to extract weather data for a given cell ID,
+    we use this more coarse inventory function to determine the first year of available data.
+    Based on our approach, we can assume that, if data exists for at least one day of a year
+    for a cell ID, then that cell ID has data for the entire year.
 
     Args:
         cursor (Any): Connection to Demeter weather schema
@@ -107,11 +132,11 @@ def get_date_last_requested_for_cell_id(
 ) -> Union[DataFrame, None]:
     """Get last request datetime (in UTC) for all cell IDs in weather.`table`
 
-    If no data is available, None is returned.
+    If no data is available, None is returned. "world_utm_id" is included in this
+    query because it makes it easier to trace `cell_id` to a specific UTM polygon.
 
     Args:
         cursor (Any): Connection to Demeter weather schema
-
         table (str): Name of data table to search; defaults to "daily".
 
     Returns dataframe with three columns: "world_utm_id", "cell_id" and "date_last_requested"

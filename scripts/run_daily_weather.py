@@ -1,10 +1,10 @@
 """Daily add/update of Demeter weather database based on Demeter field data.
 
+This is the working draft of a script that would execute on daily weather extraction for `Demeter`.
+
 STEPS:
 1. Run "update" on those cell IDs which already exist in the database
-2. Determine all cell IDs and the first year of data available for each in `weather`
-3. Get all cell IDs and first planting dates from `demeter` (** This step is not currently fully using Demeter's creation timestamps.)
-4. Run "add" on those cell ID x year combinations which are new
+2. Run "add" on those cell ID x year combinations which are new
 """
 # TODO: Make `demeter_user` able to search `weather` schema.
 # %% imports

@@ -26,6 +26,34 @@ def split_gdf_for_update(
     parameter_sets: List[List[str]],
     n_cells_per_set: List[int],
 ):
+    """Creates `request_list` for extracting weather data needed to update the database with recent data as given in `gdf`.
+
+    This splitting strategy should be used only for "update" data requests, because it assumes each cell ID requires a short
+    time series (e.g. 1-3 weeks). As a consequence, no splitting is done along the temporal dimension.
+
+    The splitting strategy at this step is as follows:
+    1. Split by parameter sets as specified in `parameter_sets`. This is required because MM only allows one
+    to request 10 parameters at a time. This also allows us to more easily customize how big requests get depending on
+    the parameter, which is important because request time depends on parameter.
+
+    2. Split by UTM zone since we cannot differentiate start and end dates within one request and each zone has a different
+    offset for end of day.
+
+    3. Split by number of cell IDS. This is not always necessary since we can extract many more cell IDs per UTM request
+    with fewer time points per cell ID.
+
+    Args:
+        gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests.
+        parameter_sets (list of str): List of sets of parameters to be extracted for each cell ID x date combination.
+
+        n_cells_per_set (list of int): Maximum number of cell IDs to include in a request when requesting a
+            certain parameter set (corresponds to order of `parameter_sets`).
+
+    Returns:
+        request_list (list of dict): List containing a dictionary for each request required to get data for `gdf`
+        under the specified split protocol.
+    """
+
     gdf_split_utm = split_by_utm_zone(gdf)
 
     # iterate over parameter sets
@@ -52,12 +80,12 @@ def split_gdf_for_add(
     n_cells_per_set: List[int],
     n_forecast_days: int = 7,
 ):
-    """Creates `request_list` that will fully populate Demeter with weather for new cell IDS specified in `gdf`.
+    """Creates `request_list` that will fully populate Demeter with weather for new cell ID X year combinations specified in `gdf`.
 
     This splitting strategy should be used only to extract weather for new cell IDs since such requests are often
-    have a much higher number of time points (i.e., ~11 years of data per cell ID).
+    extracting entire years of data.
 
-    The strategy functions as follows:
+    The splitting strategy at this step is as follows:
     1. Split by parameter sets as specified in `parameter_sets`. This is required because MM only allows one
     to request 10 parameters at a time. This also allows us to more easily customize how big requests get depending on
     the parameter, which is important because request time depends on parameter.
@@ -69,8 +97,8 @@ def split_gdf_for_add(
     for understanding how request time changes across parameter x time x space.
 
     4. Split by number of cell IDS. Using previous data for yearly extractions for each parameter set, we can gain a better
-    understanding of how many cell IDs can be included in each request with a lower risk of time out. Depending on the number
-    of cell IDs, this is not always necessary.
+    understanding of how many cell IDs can be included in each UTM x year request with a lower risk of time out. Depending on
+    the number of cell IDs, this is not always necessary.
 
     Args:
         gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests.
@@ -79,7 +107,7 @@ def split_gdf_for_add(
         n_cells_per_set (list of int): Maximum number of cell IDs to include in a request when requesting a
             certain parameter set (corresponds to order of `parameter_sets`).
 
-        n_forecast_days (int): Number of days of forecast weather to collect for each cell ID
+        n_forecast_days (int): Number of days of forecast weather to collect for each cell ID; defaults to 7 days.
 
     Returns:
         request_list (list of dict): List containing a dictionary for each request required to get data for `gdf`
@@ -124,13 +152,15 @@ def attempt_and_maybe_insert_meteomatics_request(
     gdf_cell_id: GeoDataFrame,
     params_to_weather_types: dict,
 ) -> dict:
-    """Submits MM request based on `request`, logs metadata to db, and, if successful, inserts data to db.
+    """Submits MM request based on `request`, logs metadata to db, and, if request is successful, inserts data to db.
 
     Args:
         conn (Connection): Connection to demeter weather database
         request (dict): Information for outlining Meteomatics request
         gdf_cell_id (GeoDataFrame): Dataframe matching lat/lon coordinates to cell IDs
         params_to_weather_types (dict): Dictionary mapping weather parameters to db weather types IDs
+
+    Returns `request` with updated information on request metadata (i.e., "status", "request_seconds")
     """
 
     df_wx, request = submit_single_meteomatics_request(request=request)
@@ -159,6 +189,17 @@ def run_requests(
     params_to_weather_types: dict,
     parallel: bool = False,
 ):
+    """Loops through passed `request_list` and submits each request to Meteomatics and stores data to the database.
+
+    Parallelizable if desired, but this is not currently implemented. Default behavior is running requests consecutively.
+
+    Args:
+        conn: Connection to Demeter weather schema
+        request_list (list of dict): List of `request` dictionaries, which each outline the spatiotemporal info for a MM request
+        gdf_cell_id (GeoDataFrame): Dataframe matching lat/lon coordinates to cell IDs across all cell IDS included in `request_list`
+        params_to_weather_types (dict): Dictionary mapping weather parameters to db weather types IDs
+        parallel (bool): Indicates whether requests should be run in parallel (not currently implemented); defaults to False.
+    """
     if parallel:
         pass
     else:

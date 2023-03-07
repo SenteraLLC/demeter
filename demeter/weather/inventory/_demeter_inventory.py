@@ -1,4 +1,4 @@
-"""Helper function for broadly reconciling differences between Demeter and Demeter Weather in terms of spatiotemporal needs.
+"""Helper functions for running inventory on Demeter in terms of spatiotemporal needs for inserted fields.
 
 Focuses on "add" step in weather extraction process.
 """
@@ -98,7 +98,7 @@ def get_temporal_bounds_for_field_id(
     return df[["field_id", "date_first", "date_last"]]
 
 
-def get_centroid_for_field_id(
+def get_field_centroid_for_field_id(
     cursor: Any, field_id: Union[int, List[int]]
 ) -> GeoDataFrame:
     """Get centroid of field ID's geom and returns as GeoDataFrame.
@@ -133,7 +133,7 @@ def get_centroid_for_field_id(
     return gdf_result
 
 
-def get_spatiotemporal_weather_database_needs(
+def determine_needed_weather_for_demeter(
     cursor_demeter: Any,
     cursor_weather: Any,
 ) -> DataFrame:
@@ -149,7 +149,7 @@ def get_spatiotemporal_weather_database_needs(
 
     assert len(field_id) > 0, "There are no fields in `demeter`."
 
-    gdf_field_space = get_centroid_for_field_id(cursor_demeter, field_id)
+    gdf_field_space = get_field_centroid_for_field_id(cursor_demeter, field_id)
     gdf_field_space["cell_id"] = gdf_field_space.apply(
         lambda row: get_cell_id(cursor_weather, row["field_centroid"]), axis=1
     )

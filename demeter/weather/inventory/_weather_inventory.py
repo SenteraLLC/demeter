@@ -132,6 +132,10 @@ def get_date_last_requested_for_cell_id(
 ) -> Union[DataFrame, None]:
     """Get last request datetime (in UTC) for all cell IDs in weather.`table`
 
+    To ensure we are including all "unstable" data, we should determine the most
+    recent `date_requested` for all parameters and then take the minimum across all
+    parameters.
+
     If no data is available, None is returned. "world_utm_id" is included in this
     query because it makes it easier to trace `cell_id` to a specific UTM polygon.
 
@@ -146,10 +150,15 @@ def get_date_last_requested_for_cell_id(
     ], "Only the following table names are currently implemented: 'daily'"
 
     template = """
-    select world_utm_id, cell_id, MAX(date_requested) as date_last_requested
-    from {0}
-    group by world_utm_id, cell_id;
+    select q.world_utm_id, q.cell_id, MIN(q.date_last_requested) as date_last_requested
+    from (
+        select world_utm_id, cell_id, weather_type_id, MAX(date_requested) as date_last_requested
+        from {0}
+        group by world_utm_id, cell_id, weather_type_id
+    ) as q
+    group by q.world_utm_id, q.cell_id
     """
+
     stmt = doPgFormat(template, Identifier(table))
     cursor_weather.execute(stmt)
     df_result = DataFrame(cursor_weather.fetchall())

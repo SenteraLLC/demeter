@@ -8,7 +8,7 @@
 -- drop schema if exists demeter cascade;
 create schema test_demeter;
 set schema 'test_demeter';
-COMMENT ON SCHEMA weather IS 'Demeter Weather Schema v0.0.0';
+COMMENT ON SCHEMA demeter IS 'Demeter Schema v0.0.0';
 
 create extension if not exists postgis with schema public;
 create extension if not exists postgis_raster with schema public;

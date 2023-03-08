@@ -3,6 +3,7 @@
 from typing import List
 
 from geopandas import GeoDataFrame
+from pandas import DataFrame, Series
 from sqlalchemy.engine import Connection
 
 from demeter.weather.meteomatics._insert import (
@@ -144,6 +145,39 @@ def split_gdf_for_add(
         )
 
     return request_list
+
+
+def cut_request_list_along_utm_zone(
+    request_list: List[dict], n_requests: int
+) -> List[dict]:
+    """Cuts request list along UTM zone boundaries so we do not request partial data for a UTM zone in a given day.
+
+    By cutting request lists along UTM zone boundaries, we ensure that cell IDs are not half populated in
+    the "add" step. Any data which is "cut" from the `request_list` will still be picked up by the "add" step
+    tomorrow.
+
+    Args:
+        request_list (list of dict): List of `request` dictionaries for Meteomatics requests
+        n_requests (int): Maximum number of requests to return
+
+    Returns `cut_request_list` (list of dict) which contains a maximum of `n_requests` complete UTM-zone
+    requests from `request_list`.
+    """
+    df_zone = (
+        DataFrame(
+            data={"count": Series([rq["zone"] for rq in request_list]).value_counts()}
+        )
+        .reset_index(names="zone")
+        .sort_values(["count"])
+    )
+    df_zone["n_requests"] = df_zone["count"].cumsum()
+
+    df_cut = df_zone.loc[df_zone["n_requests"] < n_requests]
+    cut_request_list = [
+        rq for rq in request_list if rq["zone"] in df_cut["zone"].to_list()
+    ]
+
+    return cut_request_list
 
 
 def attempt_and_maybe_insert_meteomatics_request(

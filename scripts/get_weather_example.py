@@ -18,7 +18,7 @@ from demeter.weather._grid_utils import get_centroid, get_world_utm_info_for_cel
 from demeter.weather.meteomatics._insert import get_weather_type_id_from_db
 from demeter.weather.meteomatics.main import (
     attempt_and_maybe_insert_meteomatics_request,
-    split_gdf_for_add_step,
+    split_gdf_for_add,
 )
 from demeter.weather.schema.weather_types import DAILY_WEATHER_TYPES
 
@@ -88,7 +88,7 @@ params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
 
 # %% STEP 3: Split up the requests using some sort of logic
 # This step will be specific to the different weather extraction steps
-request_list = split_gdf_for_add_step(gdf, parameter_sets, n_cells_max_set)
+request_list = split_gdf_for_add(gdf, parameter_sets, n_cells_max_set)
 
 # %% STEP 4: Perform requests
 # organize cell ID information with lat and lon to connect MM info to weather network

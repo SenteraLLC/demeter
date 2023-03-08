@@ -11,10 +11,11 @@ STEPS:
 from dotenv import load_dotenv
 
 from demeter.db import getConnection
-from demeter.weather.inventory.main import get_gdf_for_add, get_gdf_for_update
-from demeter.weather.meteomatics._insert import get_weather_type_id_from_db
-from demeter.weather.meteomatics.main import (
+from demeter.weather.inventory import get_gdf_for_add, get_gdf_for_update
+from demeter.weather.meteomatics import (
     cut_request_list_along_utm_zone,
+    get_n_requests_remaining,
+    get_weather_type_id_from_db,
     run_requests,
     split_gdf_for_add,
     split_gdf_for_update,
@@ -52,17 +53,38 @@ n_cells_per_set = [100, 100]
 gdf_add = get_gdf_for_add(conn_demeter, conn_weather)
 add_requests = split_gdf_for_add(gdf_add, parameter_sets, n_cells_per_set)
 
-# %% 3. Actually complete the requests: start with "add" and then do "update"
+# %% 3. Actually complete the requests: start with "update" and then do "add"
 
-# If the number of requests for "update" is greater than our share, we want to prioritize
-# the "add" step first, given that "update" overwrites already existing data in the database.
-n_requests_demeter = 2500
-if len(add_requests) > n_requests_demeter:
-    add_requests = cut_request_list_along_utm_zone(add_requests, n_requests_demeter)
-n_requests_used = len(add_requests)
+n_requests_demeter = (
+    2500  # our team's self-imposed maximum daily usage of 5000 hard limit
+)
+n_requests_limit = get_n_requests_remaining()
+
+n_requests = min([n_requests_limit, n_requests_demeter])
+
+# run UPDATE requests
+if len(update_requests) > n_requests:
+    update_requests = cut_request_list_along_utm_zone(update_requests, n_requests)
+
+n_requests_used = len(update_requests)
+
+if len(update_requests) > 0:
+    update_requests = run_requests(
+        conn_weather,
+        request_list=update_requests,
+        gdf_request=gdf_update,
+        params_to_weather_types=params_to_weather_types,
+    )
+
+# TODO: Re-try failed requests if relevant; add to `n_requests_used`
 
 # run ADD requests
-if len(add_requests) > 0:
+n_requests_remaining = n_requests - n_requests_used
+if n_requests_remaining > 0 and len(add_requests) > 0:
+    add_requests = cut_request_list_along_utm_zone(add_requests, n_requests_remaining)
+
+    n_requests_used += len(add_requests)
+
     add_requests = run_requests(
         conn_weather,
         request_list=add_requests,
@@ -70,16 +92,4 @@ if len(add_requests) > 0:
         params_to_weather_types=params_to_weather_types,
     )
 
-# run UPDATE requests
-n_requests_remaining = n_requests_demeter - n_requests_used
-if n_requests_remaining > 0 and len(update_requests) > 0:
-    update_requests = update_requests[:n_requests_remaining]
-
-    n_requests_used += len(update_requests)
-
-    update_requests = run_requests(
-        conn_weather,
-        request_list=update_requests,
-        gdf_request=gdf_update,
-        params_to_weather_types=params_to_weather_types,
-    )
+    # TODO: Re-try failed requests if relevant; add to `n_requests_used`

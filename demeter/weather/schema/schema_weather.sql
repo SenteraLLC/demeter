@@ -1,11 +1,12 @@
 create schema weather;
 set schema 'weather';
+COMMENT ON SCHEMA weather IS 'Demeter Weather Schema v0.0.0';
 
--- TODO: Move user creation to a different SQL file 
+-- TODO: Move user creation to a different SQL file
 -- Once we have knowledge of all of the schemas that are going to go into the demeter database and the users we will need to create, then we...
 -- (1) Create all of the users with passwords
 -- (2) Initialize each individual schema and, in the same SQL file, grant access to the appropriate users.
--- Essentially, this separates out the CREATE USER statements from the CREATE SCHEMA statements. 
+-- Essentially, this separates out the CREATE USER statements from the CREATE SCHEMA statements.
 
 -- create extension if not exists postgis with schema public;
 -- create extension if not exists postgis_raster with schema public;
@@ -79,7 +80,7 @@ create table request_log (
                  not null,
     zone smallint not null,
     utm_request_id smallint not null,
-    n_pts_requested int not null, 
+    n_pts_requested int not null,
     startdate timestamp without time zone
                 not null,
     enddate timestamp without time zone

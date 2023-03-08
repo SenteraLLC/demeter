@@ -17,6 +17,7 @@ from geo_utils.general import get_utc_offset
 from geopandas import read_file as gpd_read_file
 from sqlalchemy.engine import Connection
 
+from demeter._version import __version__
 from demeter.db import getConnection
 from demeter.weather._grid_utils import (
     add_rast_metadata,
@@ -177,6 +178,7 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
             schema_sql = schema_sql.replace(
                 "weather_ro_user_password", getenv("weather_ro_user_password")
             )
+            schema_sql = schema_sql.replace("v0.0.0", "v" + __version__)
 
             # Add list of weather types
             schema_sql = schema_sql.replace("PARAMETER_LIST", weather_types)

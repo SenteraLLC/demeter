@@ -11,6 +11,8 @@ from tempfile import NamedTemporaryFile
 from psycopg2.extensions import AsIs
 from sqlalchemy.engine import Connection
 
+from demeter._version import __version__
+
 
 def initialize_demeter_instance(
     conn: Connection, schema_name: str, drop_existing: bool = False
@@ -71,6 +73,7 @@ def initialize_demeter_instance(
             schema_sql = schema_sql.replace(
                 "demeter_ro_user_password", getenv("demeter_ro_user_password")
             )
+            schema_sql = schema_sql.replace("v0.0.0", "v" + __version__)
 
         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
         tmp.flush()  # Push file contents so they are accessible

@@ -359,7 +359,7 @@ create constraint trigger observation_types_match
 
 -- MUST GRANT USERS ACCESS ONCE THE TABLES ARE ALREADY CREATED
 
-alter role postgres set search_path = demeter,weather,test_demeter,public;
+alter role postgres set search_path = demeter,weather,public;
 
 -- create read and write user access
 create user demeter_user with password 'demeter_user_password';

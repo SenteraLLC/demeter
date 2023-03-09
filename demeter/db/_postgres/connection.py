@@ -2,6 +2,7 @@ import os
 from ast import literal_eval
 from typing import (
     Any,
+    Dict,
     Optional,
     Type,
 )
@@ -62,16 +63,10 @@ def getConnection(
     ).connect()
 
 
-def getEngine(
-    env_name: str = "TEST",
-    cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
-    dialect: str = "postgresql+psycopg2",
+def check_ssh_env(
+    db_meta: Dict,
     ssh_env_name: str = None,
-) -> Connection:
-    cols_env = ["host", "port", "username", "password", "database", "schema_name"]
-    db_meta = literal_eval(
-        getEnv(env_name, is_required=True, required_keys=cols_env)
-    )  # make into dictionary
+) -> Dict:
     if ssh_env_name:
         cols_ssh = [
             "ssh_address_or_host",
@@ -89,11 +84,70 @@ def getEngine(
         db_meta["port"] = ssh_bind_port(
             ssh_address_or_host, ssh_username, ssh_private_key, remote_bind_address
         )
-    schema_name = (
-        db_meta["schema_name"] + "," if "schema_name" in db_meta.keys() else ""
-    )
+    return db_meta
+
+
+def getExistingSearchPath(
+    env_name: str = "TEST",
+    cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
+    dialect: str = "postgresql+psycopg2",
+    ssh_env_name: str = None,
+) -> str:
+    cols_env = ["host", "port", "username", "password", "database", "schema_name"]
+    db_meta = check_ssh_env(
+        literal_eval(getEnv(env_name, is_required=True, required_keys=cols_env)),
+        ssh_env_name,
+    )  # make into dictionary
     connect_args = {
-        "options": "-csearch_path={}public".format(schema_name),
+        "cursor_factory": cursor_type,
+    }
+    #  Can't use getEngine() because getEngine() needs getExistingSearchPath()
+    url_object = URL.create(
+        dialect,
+        host=db_meta["host"],
+        port=db_meta["port"],
+        username=db_meta["username"],
+        password=db_meta["password"],
+        database=db_meta["database"],
+    )
+    with create_engine(url_object, connect_args=connect_args).connect() as conn:
+        stmt = """
+        SELECT rs.setconfig
+        FROM pg_db_role_setting rs
+        LEFT JOIN pg_roles r ON r.oid = rs.setrole
+        WHERE r.rolname = 'postgres';
+        """
+        cursor = conn.connection.cursor()
+        cursor.execute(stmt)
+        results = cursor.fetchall()
+    search_path = results[0].setconfig[0].replace(" ", "")
+    return search_path
+
+
+def getEngine(
+    env_name: str = "TEST",
+    cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
+    dialect: str = "postgresql+psycopg2",
+    ssh_env_name: str = None,
+) -> Connection:
+    cols_env = ["host", "port", "username", "password", "database", "schema_name"]
+    db_meta = check_ssh_env(
+        literal_eval(getEnv(env_name, is_required=True, required_keys=cols_env)),
+        ssh_env_name,
+    )  # make into dictionary
+
+    # Get existing search_path and combine with whatever is in db_meta["schema_name"] (if anything)
+    search_path = getExistingSearchPath(env_name, cursor_type, dialect, ssh_env_name)
+    search_path_list = search_path.split("=")[-1].split(",")
+    if "schema_name" in db_meta.keys():
+        if db_meta["schema_name"] not in search_path_list:
+            # ensure "public" is in search path no matter the initial order; remove "public", then add it back
+            search_path_list.remove(
+                "public"
+            ) if "public" in search_path_list else search_path_list
+            search_path = f"search_path={','.join(search_path_list)},{db_meta['schema_name']},public"
+    connect_args = {
+        "options": f"-c {search_path}",  # overwrites search path, but gets according to getExistingSearchPath()
         "cursor_factory": cursor_type,
     }
 
@@ -132,9 +186,15 @@ def getSession(
     env_name: str = "TEST",
     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
     dialect: str = "postgresql+psycopg2",
+    ssh_env_name: str = None,
 ):
     return sessionmaker(
-        getEngine(env_name=env_name, cursor_type=cursor_type, dialect=dialect).connect()
+        getEngine(
+            env_name=env_name,
+            cursor_type=cursor_type,
+            dialect=dialect,
+            ssh_env_name=ssh_env_name,
+        ).connect()
     )
 
 

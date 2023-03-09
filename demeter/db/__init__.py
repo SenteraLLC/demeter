@@ -17,6 +17,7 @@ from ._postgres.connection import (  # unlikely that anything besides Postgres w
     getConnection,
     getEngine,
     getEnv,
+    getExistingSearchPath,
     getSession,
 )
 from ._postgres.generator import SQLGenerator
@@ -31,6 +32,7 @@ __all__ = [
     "initialize_demeter_instance",
     "getConnection",
     "getEngine",
+    "getExistingSearchPath",
     "getSession",
     "getEnv",
     "SQLGenerator",

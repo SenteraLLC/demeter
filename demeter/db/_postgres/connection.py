@@ -20,6 +20,7 @@ from sqlalchemy.engine import (
     create_engine,
 )
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import text
 from sshtunnel import SSHTunnelForwarder
 
 
@@ -111,12 +112,14 @@ def getExistingSearchPath(
         database=db_meta["database"],
     )
     with create_engine(url_object, connect_args=connect_args).connect() as conn:
-        stmt = """
-        SELECT rs.setconfig
-        FROM pg_db_role_setting rs
-        LEFT JOIN pg_roles r ON r.oid = rs.setrole
-        WHERE r.rolname = 'postgres';
-        """
+        stmt = text(
+            """
+            SELECT rs.setconfig
+            FROM pg_db_role_setting rs
+            LEFT JOIN pg_roles r ON r.oid = rs.setrole
+            WHERE r.rolname = 'postgres';
+            """
+        )
         cursor = conn.connection.cursor()
         cursor.execute(stmt)
         results = cursor.fetchall()

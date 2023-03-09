@@ -78,9 +78,9 @@ if __name__ == "__main__":
             "Are you sure you want to drop existing schema?", default=False
         ):
             pass
-        else:
-            logging.info("Continuing command with `drop_existing` set to False.")
-            drop_existing = False
+    else:
+        logging.info("Continuing command with `drop_existing` set to False.")
+        drop_existing = False
 
     ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
     database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"

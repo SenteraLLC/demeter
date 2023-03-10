@@ -10,6 +10,7 @@ from typing import Any, Tuple
 from geo_utils.general import estimate_utm_crs, hemisphere_from_centroid
 from geo_utils.raster import build_transform_utm, create_array_skeleton
 from geo_utils.vector import reproject_shapely
+from geopandas import read_postgis
 from global_land_mask.globe import is_land
 from numpy import (
     arange,
@@ -349,6 +350,69 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
         "profile": profile_json,
     }
     cursor.execute(stmt, args)
+
+
+def query_weather_grid(conn: Connection, point: Point, crs: CRS = CRS.from_epsg(4326)):
+    """
+    Queries all the relevant information of the demeter weather grid from a Point geometry.
+
+    Args:
+        conn (Connection): Active connection to the database to query.
+        point (Point): Point
+        crs (CRS, optional): CRS of `point`; projected to EPSG=4326 if not already in EPSG=4326. Defaults to
+        CRS.from_epsg(4326).
+
+    Returns:
+        GeoDataFrame: With columns ["world_utm_id", "rast_col", "rast_row", "cell_id", "lng", "lat", "pixel_centroid"].
+        `pixel_centroid` is the centroid of the 5km grid cell that intersects with `point`; `lng` and `lat` are the
+        latitude and longitude of `pixel_centroid`, rounded to five (5) decimal places.
+    """
+    assert isinstance(point, Point), "`point` must be passed as a `Point`"
+
+    epsg_src = crs.to_epsg()
+    if epsg_src != 4326:
+        epsg_dst = 4326
+        point = reproject_shapely(epsg_src=epsg_src, epsg_dst=epsg_dst, geometry=point)
+    precision = 5
+    prec_decimal = "0." + "0" * (precision - 1) + "1"
+    stmt = """
+    with q1 AS (
+        select raster_5km.rast_cell_id as rast,
+            ST_Value(
+            raster_5km.rast_cell_id,
+            ST_Transform(ST_Point(%(x)s, %(y)s, 4326), world_utm.raster_epsg)
+            ) as cell_id,
+            world_utm.world_utm_id as world_utm_id
+        from world_utm, raster_5km
+        where ST_intersects(ST_Point(%(x)s, %(y)s, 4326), world_utm.geom)
+        and world_utm.world_utm_id=raster_5km.world_utm_id
+    ), q2 AS (
+        select q1.*, ST_PixelOfValue(q1.rast, 1, q1.cell_id) as pixel
+        from q1
+    ), q3 AS (
+        select q2.world_utm_id, (q2.pixel).x as rast_col, (q2.pixel).y as rast_row, q2.cell_id,
+        ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, (q2.pixel).x, (q2.pixel).y), 4326), %(prec_decimal)s) as point
+        from q2
+    )
+    select q3.world_utm_id, q3.rast_col, q3.rast_row, q3.cell_id, ROUND(ST_X(q3.point)::numeric, %(precision)s) as lng, ROUND(ST_Y(q3.point)::numeric, %(precision)s) as lat, q3.point as pixel_centroid
+    from q3
+    """
+    args = {
+        "x": point.x,
+        "y": point.y,
+        "precision": precision,
+        "prec_decimal": prec_decimal,
+    }
+
+    # cursor.execute(stmt, args)
+    # res = DataFrame(cursor.fetchall(), geometry="geometry", crs=CRS.from_epsg(4326)).sort_values(by=["cell_id"])
+    return read_postgis(
+        sql=stmt,
+        con=conn,
+        params=args,
+        geom_col="pixel_centroid",
+        crs=CRS.from_epsg(4326),
+    )
 
 
 def get_cell_id(

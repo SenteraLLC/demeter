@@ -31,5 +31,3 @@ class TestUpsertGeom:
         gdf.cell_id[0].should.be.equal_to(17211907)
         gdf.lng[0].should.be.equal_to(-93.10847)
         gdf.lat[0].should.be.equal_to(44.66063)
-
-        # df = read_sql_query(sql, conn, params={"schema_name": SCHEMA_NAME})

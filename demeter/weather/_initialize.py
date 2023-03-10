@@ -38,7 +38,7 @@ def get_weather_types_as_string():
     return string_list_types
 
 
-def populate_weather_types():
+def populate_daily_weather_types():
     """Populate the weather types table with daily MM parameters listed and detailed in `weather_types.py`.
 
     NOTE: This function assumes that all parameters listed have a daily temporal extent.

@@ -18,8 +18,8 @@ from utils.logging.tqdm import logging_init
 from demeter.db import getConnection
 from demeter.weather._initialize import (
     initialize_weather_schema,
+    populate_daily_weather_types,
     populate_weather_grid,
-    populate_weather_types,
 )
 
 if __name__ == "__main__":
@@ -94,4 +94,4 @@ if __name__ == "__main__":
     conn.close()
 
     populate_weather_grid()
-    populate_weather_types()
+    populate_daily_weather_types()

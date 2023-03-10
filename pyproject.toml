@@ -37,6 +37,7 @@ geo_utils = { git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch =
 utils = { git = "ssh://git@github.com/SenteraLLC/py-utils.git", branch = "master"}
 meteomatics = "^2.9.0"
 global-land-mask = "^1.0.0"
+timezonefinder = "^6.1.9"
 
 [tool.poetry.group.docs]
 optional = true

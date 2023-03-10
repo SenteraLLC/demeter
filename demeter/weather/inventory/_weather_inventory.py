@@ -3,7 +3,6 @@
 Helps with "update" and "add" step in weather extraction process.
 """
 
-
 import warnings
 from datetime import datetime, timedelta
 from typing import (

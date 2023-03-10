@@ -20,8 +20,8 @@ class TestUpsertGeom:
                 "rast_col",
                 "rast_row",
                 "cell_id",
-                "lng",
-                "lat",
+                "lng_centroid",
+                "lat_centroid",
                 "pixel_centroid",
             ]
         )
@@ -29,5 +29,5 @@ class TestUpsertGeom:
         gdf.rast_col[0].should.be.equal_to(50)
         gdf.rast_row[0].should.be.equal_to(104)
         gdf.cell_id[0].should.be.equal_to(17211907)
-        gdf.lng[0].should.be.equal_to(-93.10847)
-        gdf.lat[0].should.be.equal_to(44.66063)
+        gdf.lng_centroid[0].should.be.equal_to(-93.10847)
+        gdf.lat_centroid[0].should.be.equal_to(44.66063)

@@ -364,8 +364,8 @@ def query_weather_grid(conn: Connection, point: Point, crs: CRS = CRS.from_epsg(
 
     Returns:
         GeoDataFrame: With columns ["world_utm_id", "rast_col", "rast_row", "cell_id", "lng", "lat", "pixel_centroid"].
-        `pixel_centroid` is the centroid of the 5km grid cell that intersects with `point`; `lng` and `lat` are the
-        latitude and longitude of `pixel_centroid`, rounded to five (5) decimal places.
+        `pixel_centroid` is the centroid of the 5km grid cell that intersects with `point`; `lng_centroid` and
+        `lat_centroid` are the latitude and longitude of `pixel_centroid`, rounded to five (5) decimal places.
     """
     assert isinstance(point, Point), "`point` must be passed as a `Point`"
 
@@ -394,7 +394,7 @@ def query_weather_grid(conn: Connection, point: Point, crs: CRS = CRS.from_epsg(
         ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, (q2.pixel).x, (q2.pixel).y), 4326), %(prec_decimal)s) as point
         from q2
     )
-    select q3.world_utm_id, q3.rast_col, q3.rast_row, q3.cell_id, ROUND(ST_X(q3.point)::numeric, %(precision)s) as lng, ROUND(ST_Y(q3.point)::numeric, %(precision)s) as lat, q3.point as pixel_centroid
+    select q3.world_utm_id, q3.rast_col, q3.rast_row, q3.cell_id, ROUND(ST_X(q3.point)::numeric, %(precision)s) as lng_centroid, ROUND(ST_Y(q3.point)::numeric, %(precision)s) as lat_centroid, q3.point as pixel_centroid
     from q3
     """
     args = {

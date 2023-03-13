@@ -57,7 +57,7 @@ DAILY_WEATHER_TYPES = [
     },
     {
         "weather_type": "leaf_wetness:idx",
-        "units": "binary (0/1)",
+        "units": "unitless",
         "description": "Amount of dew left on surfaces to be used for detection of fog and dew conditions; value of 1 indicates wetness",
     },
 ]

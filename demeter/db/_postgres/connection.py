@@ -33,19 +33,19 @@ def getEnv(
 
     if is_required and v is None:
         raise Exception(
-            f"Environment variable for <{name}> not set.\nDid your app include `load_dotenv()`?\n"
-            + f"Does the <{name}> environment variable exist?"
+            f"Environment variable for {name} not set.\nDid your app include `load_dotenv()`?\n"
+            + f"Does the {name} environment variable exist?"
         )
     if required_keys is not None:
         try:
             v_dict = literal_eval(v)
         except SyntaxError as e:
             raise SyntaxError(
-                f"\nCannot perform a literal_eval on <{name}> environment variable\n{e}"
+                f"\nCannot perform a literal_eval on {name} environment variable\n{e}"
             )
         assert set(required_keys).issubset(
             list(v_dict.keys())
-        ), f"These keys must be present in <{name}>: {required_keys}"
+        ), f"These keys must be present in {name}: {required_keys}"
     return v
 
 
@@ -115,12 +115,15 @@ def getExistingSearchPath(
         SELECT rs.setconfig
         FROM pg_db_role_setting rs
         LEFT JOIN pg_roles r ON r.oid = rs.setrole
-        WHERE r.rolname = 'postgres';
+        WHERE r.rolname = '%(username)s';
         """
         cursor = conn.connection.cursor()
-        cursor.execute(stmt)
+        args = {"username": db_meta["username"]}
+        cursor.execute(stmt, args)
         results = cursor.fetchall()
-    search_path = results[0].setconfig[0].replace(" ", "")
+    search_path = (
+        results[0].setconfig[0].replace(" ", "") if len(results) != 0 else None
+    )
     return search_path
 
 
@@ -138,7 +141,10 @@ def getEngine(
 
     # Get existing search_path and combine with whatever is in db_meta["schema_name"] (if anything)
     search_path = getExistingSearchPath(env_name, cursor_type, dialect, ssh_env_name)
-    search_path_list = search_path.split("=")[-1].split(",")
+    if search_path is None:
+        search_path_list = []
+    else:
+        search_path_list = search_path.split("=")[-1].split(",")
     if "schema_name" in db_meta.keys():
         if db_meta["schema_name"] not in search_path_list:
             # ensure "public" is in search path no matter the initial order; remove "public", then add it back
@@ -146,7 +152,10 @@ def getEngine(
                 "public"
             ) if "public" in search_path_list else search_path_list
             # prepend schema_name to search_path
-            search_path = f"search_path={db_meta['schema_name']},{','.join(search_path_list)},public"
+            if len(search_path_list) == 0:
+                search_path = f"search_path={db_meta['schema_name']},public"
+            else:
+                search_path = f"search_path={db_meta['schema_name']},{','.join(search_path_list)},public"
     connect_args = {
         "options": f"-c {search_path}",  # overwrites search path, but gets according to getExistingSearchPath()
         "cursor_factory": cursor_type,

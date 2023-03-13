@@ -8,6 +8,7 @@
 -- drop schema if exists demeter cascade;
 create schema test_demeter;
 set schema 'test_demeter';
+COMMENT ON SCHEMA demeter IS 'Demeter Schema v0.0.0';
 
 create extension if not exists postgis with schema public;
 create extension if not exists postgis_raster with schema public;
@@ -71,10 +72,10 @@ create table field_group (
 
   name text
         not null,
-  
+
   parent_field_group_id bigint
                         references field_group(field_group_id),
-                        
+
   unique (field_group_id, parent_field_group_id),
   unique (parent_field_group_id, name),
 
@@ -273,7 +274,7 @@ create function field_geom_covers_act_geom() RETURNS trigger
   LANGUAGE plpgsql as
 $$BEGIN
   IF (NEW.geom_id IS NOT NULL)
-  THEN 
+  THEN
     IF (
       SELECT not exists(
         SELECT Q1.geom, Q2.geom
@@ -283,13 +284,13 @@ $$BEGIN
       )
     )
     THEN
-      RAISE EXCEPTION 'Field geometry must cover act geometry.'; 
-    END IF; 
+      RAISE EXCEPTION 'Field geometry must cover act geometry.';
+    END IF;
   END IF;
 
   RETURN NEW;
 END;$$;
-  
+
 create constraint trigger field_geom_covers_act_geom
   after insert or update on act
   for each row execute procedure field_geom_covers_act_geom();
@@ -341,22 +342,24 @@ create function observation_types_match() RETURNS trigger
 $$BEGIN
   IF (
     SELECT not exists(
-      SELECT U.observation_type_id FROM unit_type U 
+      SELECT U.observation_type_id FROM unit_type U
       WHERE U.unit_type_id = NEW.unit_type_id and U.observation_type_id = NEW.observation_type_id
     )
   )
   THEN
-    RAISE EXCEPTION 'Unit type observation type does not match given observation type.'; 
-  END IF; 
+    RAISE EXCEPTION 'Unit type observation type does not match given observation type.';
+  END IF;
 
   RETURN NEW;
 END;$$;
-  
+
 create constraint trigger observation_types_match
   after insert or update on observation
   for each row execute procedure observation_types_match();
 
 -- MUST GRANT USERS ACCESS ONCE THE TABLES ARE ALREADY CREATED
+
+alter role postgres set search_path = demeter,weather,public;
 
 -- create read and write user access
 create user demeter_user with password 'demeter_user_password';
@@ -364,9 +367,11 @@ grant select, insert on all tables in schema test_demeter to demeter_user;
 grant usage, select on all sequences in schema test_demeter to demeter_user;
 alter default privileges in schema test_demeter grant usage on sequences to demeter_user;
 grant usage on schema test_demeter to demeter_user;
+alter role demeter_user set search_path = demeter,weather,public;
 
 -- create read only access user
 create user demeter_ro_user with password 'demeter_ro_user_password';
 grant select on all tables in schema test_demeter to demeter_ro_user;
 grant select on all sequences in schema test_demeter to demeter_ro_user;
 grant usage on schema test_demeter to demeter_ro_user;
+alter role demeter_user set search_path = demeter,weather,public;

@@ -1,0 +1,47 @@
+name: Create GitHub Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: TOML Reader
+        id: read_toml
+        uses: SebRollen/toml-action@2bd04b06a3ebc3e6a3eb6060de115710cad16cd6 #v1.0.2
+        with:
+          file: 'pyproject.toml'
+          field: 'tool.poetry.version'
+
+      - name: Define TAG
+        run: |
+          export VERSION="${{ steps.read_toml.outputs.value }}"
+          echo "TAG=v$VERSION" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          retries: 3
+          script: |
+            github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: process.env.TAG,
+              target_commitish: context.sha,
+              name: process.env.TAG,
+              generate_release_notes: true
+            })

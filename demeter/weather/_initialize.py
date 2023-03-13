@@ -17,6 +17,7 @@ from geo_utils.general import get_utc_offset
 from geopandas import read_file as gpd_read_file
 from sqlalchemy.engine import Connection
 
+from demeter._version import __version__
 from demeter.db import getConnection
 from demeter.weather._grid_utils import (
     add_rast_metadata,
@@ -32,12 +33,12 @@ DAILY_TEMPORAL_EXTENT = timedelta(days=1)
 
 def get_weather_types_as_string():
     """Extracts weather type names from `weather_types.py` and formats to be placed in schema creation SQL statement."""
-    list_types = [weather_type[0] for weather_type in DAILY_WEATHER_TYPES]
+    list_types = [weather_type["weather_type"] for weather_type in DAILY_WEATHER_TYPES]
     string_list_types = "'" + "','".join(list_types) + "'"
     return string_list_types
 
 
-def populate_weather_types():
+def populate_daily_weather_types():
     """Populate the weather types table with daily MM parameters listed and detailed in `weather_types.py`.
 
     NOTE: This function assumes that all parameters listed have a daily temporal extent.
@@ -47,10 +48,10 @@ def populate_weather_types():
     cursor = conn.connection.cursor()
     trans = conn.begin()
 
-    for weather_type_list in DAILY_WEATHER_TYPES:
-        weather_type = weather_type_list[0]
-        units = weather_type_list[1]
-        description = weather_type_list[2]
+    for weather_type_dict in DAILY_WEATHER_TYPES:
+        weather_type = weather_type_dict["weather_type"]
+        units = weather_type_dict["units"]
+        description = weather_type_dict["description"]
         maybe_insert_weather_type_to_db(
             cursor, weather_type, DAILY_TEMPORAL_EXTENT, units, description
         )
@@ -177,6 +178,7 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
             schema_sql = schema_sql.replace(
                 "weather_ro_user_password", getenv("weather_ro_user_password")
             )
+            schema_sql = schema_sql.replace("v0.0.0", "v" + __version__)
 
             # Add list of weather types
             schema_sql = schema_sql.replace("PARAMETER_LIST", weather_types)

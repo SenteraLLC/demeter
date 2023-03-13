@@ -17,6 +17,7 @@ from geo_utils.general import get_utc_offset
 from geopandas import read_file as gpd_read_file
 from sqlalchemy.engine import Connection
 
+from demeter._version import __version__
 from demeter.db import getConnection
 from demeter.weather._grid_utils import (
     add_rast_metadata,
@@ -24,6 +25,40 @@ from demeter.weather._grid_utils import (
     create_raster_for_utm_polygon,
     insert_utm_polygon,
 )
+from demeter.weather.meteomatics._insert import maybe_insert_weather_type_to_db
+from demeter.weather.schema.weather_types import DAILY_WEATHER_TYPES
+
+DAILY_TEMPORAL_EXTENT = timedelta(days=1)
+
+
+def get_weather_types_as_string():
+    """Extracts weather type names from `weather_types.py` and formats to be placed in schema creation SQL statement."""
+    list_types = [weather_type["weather_type"] for weather_type in DAILY_WEATHER_TYPES]
+    string_list_types = "'" + "','".join(list_types) + "'"
+    return string_list_types
+
+
+def populate_daily_weather_types():
+    """Populate the weather types table with daily MM parameters listed and detailed in `weather_types.py`.
+
+    NOTE: This function assumes that all parameters listed have a daily temporal extent.
+    """
+    # connect to database
+    conn = getConnection(env_name="DEMETER-DEV_LOCAL_WEATHER_SUPER")
+    cursor = conn.connection.cursor()
+    trans = conn.begin()
+
+    for weather_type_dict in DAILY_WEATHER_TYPES:
+        weather_type = weather_type_dict["weather_type"]
+        units = weather_type_dict["units"]
+        description = weather_type_dict["description"]
+        maybe_insert_weather_type_to_db(
+            cursor, weather_type, DAILY_TEMPORAL_EXTENT, units, description
+        )
+
+    trans.commit()
+    trans.close()
+    conn.close()
 
 
 def populate_weather_grid():
@@ -35,7 +70,7 @@ def populate_weather_grid():
 
     # load grid
     gdf_utm = (
-        gpd_read_file(join(file_dir, "utm_grid.geojson"))
+        gpd_read_file(join(file_dir, "schema", "utm_grid.geojson"))
         .sort_values(["row", "zone"])
         .reset_index(drop=True)
     )
@@ -129,8 +164,11 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
     # make temporary SQL file and overwrite schema name lines
     file_dir = realpath(join(dirname(__file__)))
 
+    # format weather type list
+    weather_types = get_weather_types_as_string()
+
     with NamedTemporaryFile() as tmp:
-        with open(join(file_dir, "schema_weather.sql"), "r") as schema_f:
+        with open(join(file_dir, "schema", "schema_weather.sql"), "r") as schema_f:
             schema_sql = schema_f.read()
 
             # Add user passwords
@@ -140,6 +178,11 @@ def initialize_weather_schema(conn: Connection, drop_existing: bool = False) -> 
             schema_sql = schema_sql.replace(
                 "weather_ro_user_password", getenv("weather_ro_user_password")
             )
+            schema_sql = schema_sql.replace("v0.0.0", "v" + __version__)
+
+            # Add list of weather types
+            schema_sql = schema_sql.replace("PARAMETER_LIST", weather_types)
+
         tmp.write(schema_sql.encode())  # Writes SQL script to a temp file
         tmp.flush()
         host = conn.engine.url.host

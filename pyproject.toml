@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demeter"
-version = "1.2.2"
+version = "1.2.3"
 description = "The database schema and API that supports agronomic modeling and data science activities."
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [
@@ -35,6 +35,8 @@ GeoAlchemy2 = "^0.12.5"
 sshtunnel = "^0.4.0"
 geo_utils = { git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "main"}
 utils = { git = "ssh://git@github.com/SenteraLLC/py-utils.git", branch = "master"}
+meteomatics = "^2.9.0"
+global-land-mask = "^1.0.0"
 
 [tool.poetry.group.docs]
 optional = true
@@ -81,7 +83,7 @@ build-backend = "poetry.core.masonry.api"
 example = "demeter.scripts.example:main"
 
 [tool.isort]
-line_length = 120
+line_length = 88
 multi_line_output = 3
 include_trailing_comma = true
 known_third_party = ["click"]

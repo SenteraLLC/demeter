@@ -16,13 +16,19 @@ from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection
-from demeter.weather._initialize import initialize_weather_schema, populate_weather_grid
+from demeter.weather._initialize import (
+    initialize_weather_schema,
+    populate_daily_weather_types,
+    populate_weather_grid,
+)
 
 if __name__ == "__main__":
     c = load_dotenv()
     logging_init()
 
-    parser = argparse.ArgumentParser(description="Initialize weather schema instance.")
+    parser = argparse.ArgumentParser(
+        description="Initialize weather schema instance and populate with weather grid and weather types."
+    )
 
     parser.add_argument(
         "--database_host",
@@ -72,9 +78,9 @@ if __name__ == "__main__":
             "Are you sure you want to drop existing schema?", default=False
         ):
             pass
-        else:
-            logging.info("Continuing command with `drop_existing` set to False.")
-            drop_existing = False
+    else:
+        logging.info("Continuing command with `drop_existing` set to False.")
+        drop_existing = False
 
     ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
     database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
@@ -88,3 +94,4 @@ if __name__ == "__main__":
     conn.close()
 
     populate_weather_grid()
+    populate_daily_weather_types()

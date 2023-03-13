@@ -21,6 +21,12 @@ poetry install
 poetry run pre-commit install
 ```
 
+### Release/Tags
+- A GitHub release is created on every push to the main branch using the `create_github_release.yml` Github Action Workflow
+- Releases can be created manually through the GitHub Actions UI as well.
+- The name of the Release/Tag will match the value of the version field specified in `pyproject.toml`
+- Release Notes will be generated automatically and linked to the Release/Tag
+
 ## Setup and Installation (used as a library)
 If using `demeter` as a dependency in your script, simply add it to the `pyproject.toml` in your project repo. Be sure to uuse the `ssh:` prefix so Travis has access to the repo for the library build process.
 

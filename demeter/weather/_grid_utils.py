@@ -352,6 +352,9 @@ def add_rast_metadata(cursor: Any, raster_5km_id: int, profile: dict) -> None:
     cursor.execute(stmt, args)
 
 
+# TODO: Separate out user- and lower-level functions into separate namespaces
+
+
 def query_weather_grid(conn: Connection, point: Point, crs: CRS = CRS.from_epsg(4326)):
     """
     Queries all the relevant information of the demeter weather grid from a Point geometry.

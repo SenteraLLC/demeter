@@ -49,7 +49,7 @@ CREATE TYPE weather_parameter AS ENUM (
 
 -- TABLE: 'weather_type'
 create table weather_type (
-    weather_type_id serial primary key,
+    weather_type_id smallserial primary key,
     weather_type weather_parameter not null,
     unique (weather_type),
     temporal_extent interval not null,
@@ -65,7 +65,7 @@ create table daily (
                  references world_utm(world_utm_id),
     cell_id integer not null,
     date date not null,
-    weather_type_id bigint not null references weather_type(weather_type_id),
+    weather_type_id smallint not null references weather_type(weather_type_id),
     value float,
     date_requested timestamp without time zone
                 not null
@@ -77,7 +77,7 @@ CREATE TYPE request_status AS ENUM (
 );
 
 create table request_log (
-    request_id bigserial primary key,
+    request_id serial primary key,
     zone smallint not null,
     utm_request_id smallint not null,
     n_pts_requested int not null,

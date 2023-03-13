@@ -59,6 +59,7 @@ create table weather_type (
 
 -- TABLE: 'daily'
 create table daily (
+    daily_id bigserial primary key,
     world_utm_id smallint
                  not null
                  references world_utm(world_utm_id),
@@ -76,8 +77,7 @@ CREATE TYPE request_status AS ENUM (
 );
 
 create table request_log (
-    request_id bigserial
-                 not null,
+    request_id bigserial primary key,
     zone smallint not null,
     utm_request_id smallint not null,
     n_pts_requested int not null,

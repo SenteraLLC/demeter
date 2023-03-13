@@ -474,12 +474,12 @@ def get_centroid(cursor: Any, world_utm_id: int, cell_id: int):
         where world_utm.world_utm_id= %(world_utm_id)s
         and world_utm.world_utm_id=raster_5km.world_utm_id
     ), q2 as (
-        select q.rast, (ST_PixelOfValue(q.rast, 1, %(cell_id)s)).*
+        select q1.rast, (ST_PixelOfValue(q1.rast, 1, %(cell_id)s)).*
         from q1
     ), q3 as (
         select ST_ReducePrecision(ST_Transform(ST_PixelAsCentroid(q2.rast, q2.x, q2.y), 4326), 0.00001) as point
         from q2
-    ),
+    )
     select ST_Point(ROUND(ST_X(q3.point)::numeric,5), ROUND(ST_Y(q3.point)::numeric,5)) as centroid
     from q3;
     """

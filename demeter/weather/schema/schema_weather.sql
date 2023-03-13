@@ -66,7 +66,7 @@ create table daily (
     cell_id integer not null,
     date date not null,
     weather_type_id smallint not null references weather_type(weather_type_id),
-    value float,
+    value real,
     date_requested timestamp without time zone
                 not null
 );
@@ -89,7 +89,7 @@ create table request_log (
     date_requested timestamp without time zone
                 not null,
     status request_status not null,
-    request_seconds float not null
+    request_seconds real not null
 );
 
 -- give `demeter_user` read and write access to `weather`

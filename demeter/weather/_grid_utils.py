@@ -443,19 +443,14 @@ def get_cell_id(
         geometry = reproject_shapely(
             epsg_src=epsg_src, epsg_dst=epsg_dst, geometry=geometry
         )
-
     stmt = """
-    select q.cell_id as cell_id
-    from (
-        select raster_5km.rast_cell_id as rast,
-            ST_Value(
+    select ST_Value(
             raster_5km.rast_cell_id,
-            ST_Transform(ST_Point( %(x)s, %(y)s, 4326), world_utm.raster_epsg)
-            ) as cell_id
-        from world_utm, raster_5km
-        where ST_intersects(ST_Point(%(x)s, %(y)s, 4326), world_utm.geom)
-        and world_utm.world_utm_id=raster_5km.world_utm_id
-    ) as q;
+            ST_Transform(ST_Point(%(x)s, %(y)s, 4326), world_utm.raster_epsg)
+        ) as cell_id
+    from world_utm, raster_5km
+    where ST_intersects(ST_Point(%(x)s, %(y)s, 4326), world_utm.geom)
+    and world_utm.world_utm_id=raster_5km.world_utm_id;
     """
     args = {"x": geometry.x, "y": geometry.y}
 

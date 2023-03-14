@@ -29,19 +29,19 @@ GDF_COLS = [
 ]
 
 
-def get_gdf_for_update(conn_weather: Connection) -> GeoDataFrame:
+def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
     """DOCSTRING."""
 
-    cursor_weather = conn_weather.connection.cursor()
+    cursor = conn.connection.cursor()
 
     # for each cell ID, determine most recent data extraction
-    df_last_requested = get_date_last_requested_for_cell_id(
-        cursor_weather, table="daily"
-    )
+    df_last_requested = get_date_last_requested_for_cell_id(cursor, table="daily")
+    if df_last_requested is None:
+        return None
 
     # change extraction time to local time for each cell ID
     world_utm_id = [int(val) for val in df_last_requested["world_utm_id"].unique()]
-    df_utm = get_info_for_world_utm(cursor_weather, world_utm_id)
+    df_utm = get_info_for_world_utm(cursor, world_utm_id)
 
     df_full = pd_merge(df_last_requested, df_utm, on="world_utm_id")
 
@@ -64,7 +64,7 @@ def get_gdf_for_update(conn_weather: Connection) -> GeoDataFrame:
 
     # get centroid for each cell ID
     df_full["centroid"] = df_full.apply(
-        lambda row: get_centroid(cursor_weather, row["world_utm_id"], row["cell_id"]),
+        lambda row: get_centroid(cursor, row["world_utm_id"], row["cell_id"]),
         axis=1,
     )
 
@@ -73,35 +73,38 @@ def get_gdf_for_update(conn_weather: Connection) -> GeoDataFrame:
     return gdf_full
 
 
-def get_gdf_for_add(conn_demeter: Connection, conn_weather: Connection):
+def get_gdf_for_add(conn: Connection):
     """DOCSTRING"""
 
-    cursor_demeter = conn_demeter.connection.cursor()
-    cursor_weather = conn_weather.connection.cursor()
+    cursor = conn.connection.cursor()
 
-    gdf_need = determine_needed_weather_for_demeter(cursor_demeter, cursor_weather)
+    gdf_need = determine_needed_weather_for_demeter(cursor)
 
     # find cell IDs which need more historical years of data
-    cell_id = get_cell_ids_in_weather_table(cursor_weather, table="daily")
-    gdf_available = get_first_available_data_year_for_cell_id(
-        cursor_weather, gdf_need["cell_id"].to_list()
-    )
+    cell_id = get_cell_ids_in_weather_table(cursor, table="daily")
 
-    gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
-    keep = gdf_new_years.apply(
-        lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1
-    )
-    gdf_new_years = gdf_new_years.loc[keep]
-    gdf_new_years["date_last"] = gdf_new_years["first_year"].map(
-        lambda yr: datetime(yr - 1, 12, 31)
-    )
+    if cell_id is not None:
+        gdf_available = get_first_available_data_year_for_cell_id(
+            cursor, gdf_need["cell_id"].to_list()
+        )
 
-    # find cell IDs which are not in the database at all
-    gdf_new_cells = gdf_need.loc[~gdf_need["cell_id"].isin(cell_id)]
+        gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
+        keep = gdf_new_years.apply(
+            lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1
+        )
+        gdf_new_years = gdf_new_years.loc[keep]
+        gdf_new_years["date_last"] = gdf_new_years["first_year"].map(
+            lambda yr: datetime(yr - 1, 12, 31)
+        )
 
-    gdf_add = pd_concat(
-        [gdf_new_years[gdf_new_cells.columns.values], gdf_new_cells], axis=0
-    )
+        # find cell IDs which are not in the database at all
+        gdf_new_cells = gdf_need.loc[~gdf_need["cell_id"].isin(cell_id)]
+
+        gdf_add = pd_concat(
+            [gdf_new_years[gdf_new_cells.columns.values], gdf_new_cells], axis=0
+        )
+    else:
+        gdf_add = gdf_need.copy()
 
     return gdf_add
 

@@ -55,6 +55,8 @@ def get_first_unstable_date_at_request_time(
 def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily") -> List:
     """Get list of all cell IDs that have data in a given data in the weather schema.
 
+    If no data exists in the database, None is returned.
+
     Args:
         cursor: Connection to demeter weather schema
 
@@ -71,7 +73,8 @@ def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily") -> List:
     cursor.execute(stmt)
     df_result = DataFrame(cursor.fetchall())
 
-    assert len(df_result) > 0, f"No data exists in table {table}"
+    if len(df_result) == 0:
+        return None
 
     return df_result["cell_id"].to_list()
 

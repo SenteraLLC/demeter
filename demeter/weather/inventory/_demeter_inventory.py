@@ -166,10 +166,7 @@ def get_field_centroid_for_field_id(
     return gdf_result
 
 
-def determine_needed_weather_for_demeter(
-    cursor_demeter: Any,
-    cursor_weather: Any,
-) -> DataFrame:
+def determine_needed_weather_for_demeter(cursor: Any) -> DataFrame:
     """Determine the spatiotemporal bounds of needed weather data based on available fields in Demeter.
 
     Args:
@@ -178,18 +175,18 @@ def determine_needed_weather_for_demeter(
     """
 
     # TODO: Are we requiring that all fields have a planting date? If so, fix assert function.
-    field_id = get_all_field_ids(cursor_demeter)
+    field_id = get_all_field_ids(cursor)
 
     assert len(field_id) > 0, "There are no fields in `demeter`."
 
-    gdf_field_space = get_field_centroid_for_field_id(cursor_demeter, field_id)
+    gdf_field_space = get_field_centroid_for_field_id(cursor, field_id)
     gdf_field_space["cell_id"] = gdf_field_space.apply(
-        lambda row: get_cell_id(cursor_weather, row["field_centroid"]), axis=1
+        lambda row: get_cell_id(cursor, row["field_centroid"]), axis=1
     )
 
     # get temporal bounds based on planting date, location, and `n_hist_years`
     df_field_time = get_temporal_bounds_for_field_id(
-        cursor_demeter, field_id, gdf_field_space["field_centroid"].to_list()
+        cursor, field_id, gdf_field_space["field_centroid"].to_list()
     )
 
     gdf_full = pd_merge(gdf_field_space, df_field_time, on="field_id")
@@ -200,9 +197,7 @@ def determine_needed_weather_for_demeter(
 
     # add world utm ID to make centroid queries faster and add UTM zone
     df_world_utm = gdf_unique.apply(
-        lambda row: get_world_utm_info_for_cell_id(cursor_weather, row["cell_id"]).iloc[
-            0
-        ],
+        lambda row: get_world_utm_info_for_cell_id(cursor, row["cell_id"]).iloc[0],
         axis=1,
     )
 
@@ -211,7 +206,7 @@ def determine_needed_weather_for_demeter(
     )
 
     gdf_world_utm["centroid"] = gdf_world_utm.apply(
-        lambda row: get_centroid(cursor_weather, row["world_utm_id"], row["cell_id"]),
+        lambda row: get_centroid(cursor, row["world_utm_id"], row["cell_id"]),
         axis=1,
     )
 

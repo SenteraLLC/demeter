@@ -20,7 +20,6 @@ psycopg2 = "^2.9.3"
 python-dotenv = "^0.21.0"
 requests = "^2.27.1"
 Rtree = "^1.0.0"
-scoping = "^0.1.2"
 shapely = "1.8.5.post1"
 typing_extensions = "^4.0.1"
 typing_inspect = "^0.8.0"
@@ -33,11 +32,11 @@ sqlalchemy_schemadisplay = {git = "https://github.com/fschulze/sqlalchemy_schema
 SQLAlchemy = "^1.4.45"
 GeoAlchemy2 = "^0.12.5"
 sshtunnel = "^0.4.0"
-geo_utils = { git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "main"}
-utils = { git = "ssh://git@github.com/SenteraLLC/py-utils.git", branch = "master"}
 meteomatics = "^2.9.0"
 global-land-mask = "^1.0.0"
 timezonefinder = "^6.1.9"
+aws_utils = {git = "ssh://git@github.com/SenteraLLC/py-aws-utils.git", branch = "master"}
+geo_utils = {git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "main"}
 
 [tool.poetry.group.docs]
 optional = true

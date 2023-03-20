@@ -30,8 +30,23 @@ GDF_COLS = [
 
 
 def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
-    """DOCSTRING."""
+    """Creates `gdf` for "update" step in weather workflow.
 
+    Performs an inventory of available data in the weather database. For all cell IDs that have data, data
+    is extracted to overwrite any unstable historical data at the previous request time up until 7 days after
+    the last full day. See `get_first_unstable_date_at_request_time()` for more information on data
+    stability and `get_min_current_date_for_world_utm()` for more information on the last full day.
+
+    This steps assumes that all cell IDs have been completely populated (i.e., have data up until 7 days
+    after the last request date) and will not check for nor fill gaps in the database.
+
+    Args:
+        conn (Connection): Connection to demeter database
+
+    Returns:
+        gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests needed to
+            perform "update" step
+    """
     cursor = conn.connection.cursor()
 
     # for each cell ID, determine most recent data extraction
@@ -74,7 +89,25 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
 
 
 def get_gdf_for_add(conn: Connection):
-    """DOCSTRING"""
+    """Creates `gdf` for "add" step in weather workflow.
+
+    This function performs an inventory of Demeter and determines which cell IDs and years need weather data.
+    Then, an inventory of the weather database determines which cell IDs already have data and retrieves the
+    first year of data for each cell ID. The final `gdf` is composed of cell ID x year combinations of the
+    following two types:
+    (1) a cell ID already exists in the database but needs earlier years of data than what is available
+    (2) a cell ID does not exist in the database and needs to be populated
+
+    This steps assumes that data is populated for each cell ID fully from the first data year up until the
+    present.
+
+    Args:
+        conn (Connection): Connection to demeter database
+
+    Returns:
+        gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests needed to
+            perform "add" step
+    """
 
     cursor = conn.connection.cursor()
 

@@ -66,7 +66,8 @@ if __name__ == "__main__":
             )
             farm_group_id = insertOrGetFieldGroup(cursor, field_group_farm)
             for i, row_fb in field_bounds[field_bounds["farm"] == farm].iterrows():
-                geom_fb = round_geometry(row_fb["geometry"], n_decimal_places=7)
+                # geom_fb = round_geometry(row_fb["geometry"], n_decimal_places=7)
+                geom_fb = row_fb["geometry"]
                 field_geom_id = insertOrGetGeom(cursor, geom_fb)
                 field = Field(
                     name=row_fb["field_id"],

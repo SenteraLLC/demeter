@@ -71,7 +71,7 @@ if len(update_requests) > n_requests:
 n_requests_used = len(update_requests)
 
 if len(update_requests) > 0:
-    run_requests(
+    update_requests = run_requests(
         conn,
         request_list=update_requests,
         gdf_request=gdf_update,

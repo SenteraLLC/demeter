@@ -55,6 +55,10 @@ create table weather_type (
     temporal_extent interval not null,
     units text,
     description text not null
+    min_available_date timestamp without time zone
+                        not null,
+    max_available_date timestamp without time zone
+                        not null
 );
 
 -- TABLE: 'daily'

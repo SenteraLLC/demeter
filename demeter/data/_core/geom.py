@@ -39,11 +39,13 @@ def getMaybeGeomId(
     FROM geom G
     where ST_Equals(
         G.geom, ST_QuantizeCoordinates(
-            ST_MakeValid(
-                ST_Transform(
-                    ST_SetSRID(%(geom)s::geometry, %(srid)s),
-                    4326
-                )
+            ST_ReducePrecision(
+                ST_MakeValid(
+                    ST_Transform(
+                        ST_SetSRID(%(geom)s::geometry, %(srid)s),
+                        4326
+                    )
+                ), 1e-%(precision)s
             ), %(precision)s
         )
     )
@@ -81,11 +83,13 @@ def insertOrGetGeom(
     insert into geom(geom)
     values(
         ST_QuantizeCoordinates(
-            ST_MakeValid(
-                ST_Transform(
-                    ST_SetSRID(%(geom)s::geometry, %(srid)s),
-                    4326
-                )
+            ST_ReducePrecision(
+                ST_MakeValid(
+                    ST_Transform(
+                        ST_SetSRID(%(geom)s::geometry, %(srid)s),
+                        4326
+                    )
+                ), 1e-%(precision)s
             ), %(precision)s
         )
     )

@@ -74,7 +74,7 @@ gdf = GeoDataFrame(df, geometry="centroid")
 
 # wind gusts has been removed for now to avoid problems
 # we use `n_cells_max_set` to control for parameter variability in request time
-full_parameters = [weather_type[0] for weather_type in DAILY_WEATHER_TYPES]
+full_parameters = [weather_type["weather_type"] for weather_type in DAILY_WEATHER_TYPES]
 parameter_sets = [full_parameters[:6], full_parameters[6:]]
 n_cells_max_set = [100, 100]
 

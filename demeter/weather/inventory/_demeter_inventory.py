@@ -17,10 +17,12 @@ from pandas import concat as pd_concat
 from pandas import merge as pd_merge
 from pytz import UTC
 from shapely.errors import ShapelyDeprecationWarning
+from shapely.geometry import Point
 from shapely.wkb import loads as wkb_loads
 
 from demeter.weather import get_cell_id
 from demeter.weather._grid_utils import get_centroid, get_world_utm_info_for_cell_id
+from demeter.weather.inventory._utils import localize_utc_datetime_with_timezonefinder
 
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
@@ -42,7 +44,7 @@ def get_all_field_ids(cursor: Any) -> List:
 def get_first_plant_date_for_field_id(
     cursor: Any, field_id: Union[int, List[int]]
 ) -> Union[DataFrame, None]:
-    """Gets first planting date for a field ID or list of field IDs that is stored in `demeter` as DataFrame.
+    """Gets first planting date (UTC) for a field ID or list of field IDs that is stored in `demeter` as DataFrame.
 
     Returns None if no planting date exists in demeter for given field IDs.
 
@@ -69,9 +71,15 @@ def get_first_plant_date_for_field_id(
 
 
 def get_temporal_bounds_for_field_id(
-    cursor: Any, field_id: list[int], n_hist_years: int = 10
+    cursor: Any,
+    field_id: list[int],
+    field_centroid: List[Point],
+    n_hist_years: int = 10,
 ) -> DataFrame:
     """Gets list of dates needed for a field ID (or list of field IDs) based on available planting dates.
+
+    Planting dates for each field are localized using `TimezoneFinder()` to ensure appropriate coverage
+    for weather in local times.
 
     Assumes data is desired from Jan 1 of the year `n_hist_years` years before the planting year.
     Then, it adds the last date with the current date so as to ensure that the last year is recognized
@@ -80,26 +88,51 @@ def get_temporal_bounds_for_field_id(
     Args:
         cursor (Any): Connection to `demeter` schema
         field_id (int): Demeter field ID[s] for which to determine bounds
+        field_centroid (Point): Centroid (or location on field) to use to determine time zone
         n_hist_years (int): The number of years before the first planting date to get data
     """
     if not isinstance(field_id, list):
         field_id = [field_id]
 
-    df = get_first_plant_date_for_field_id(cursor, field_id).rename(
+    if not isinstance(field_centroid, list):
+        field_centroid = [field_centroid]
+
+    msg = "There must be one field centroid for each field ID passed."
+    assert len(field_id) == len(field_centroid), msg
+
+    gdf = GeoDataFrame(
+        data={"field_id": field_id, "field_centroid": field_centroid},
+        geometry="field_centroid",
+    )
+
+    df_plant = get_first_plant_date_for_field_id(cursor, field_id).rename(
         columns={"date_performed": "date_planted"}
     )
+    gdf = pd_merge(gdf, df_plant, on="field_id", how="left")
 
-    df["year_planted"] = df["date_planted"].dt.year
-    df["date_first"] = df["year_planted"].map(
+    msg = "Planting dates are missing for the given field ID[s]."
+    assert len(gdf.loc[gdf["date_planted"].isna()]) == 0, msg
+
+    # localize planting date with political time zones to ensure appropriate weather coverage
+    gdf["date_planted_local"] = gdf.apply(
+        lambda row: localize_utc_datetime_with_timezonefinder(
+            d=row["date_planted"], geom=row["field_centroid"]
+        ),
+        axis=1,
+    )
+
+    gdf["year_planted"] = gdf["date_planted_local"].map(lambda d: d.year)
+    gdf["date_first"] = gdf["year_planted"].map(
         lambda yr: datetime(yr - n_hist_years, 1, 1)
     )
-    df["date_last"] = datetime.now(tz=UTC).date()
+    gdf["date_last"] = datetime.now(tz=UTC).date()
 
-    return df[["field_id", "date_first", "date_last"]]
+    return gdf[["field_id", "date_first", "date_last"]]
 
 
 def get_field_centroid_for_field_id(
-    cursor: Any, field_id: Union[int, List[int]]
+    cursor: Any,
+    field_id: Union[int, List[int]],
 ) -> GeoDataFrame:
     """Get centroid of field ID's geom and returns as GeoDataFrame.
 
@@ -133,10 +166,7 @@ def get_field_centroid_for_field_id(
     return gdf_result
 
 
-def determine_needed_weather_for_demeter(
-    cursor_demeter: Any,
-    cursor_weather: Any,
-) -> DataFrame:
+def determine_needed_weather_for_demeter(cursor: Any) -> DataFrame:
     """Determine the spatiotemporal bounds of needed weather data based on available fields in Demeter.
 
     Args:
@@ -145,17 +175,19 @@ def determine_needed_weather_for_demeter(
     """
 
     # TODO: Are we requiring that all fields have a planting date? If so, fix assert function.
-    field_id = get_all_field_ids(cursor_demeter)
+    field_id = get_all_field_ids(cursor)
 
     assert len(field_id) > 0, "There are no fields in `demeter`."
 
-    gdf_field_space = get_field_centroid_for_field_id(cursor_demeter, field_id)
+    gdf_field_space = get_field_centroid_for_field_id(cursor, field_id)
     gdf_field_space["cell_id"] = gdf_field_space.apply(
-        lambda row: get_cell_id(cursor_weather, row["field_centroid"]), axis=1
+        lambda row: get_cell_id(cursor, row["field_centroid"]), axis=1
     )
 
-    # based on planting date and `n_hist_years`
-    df_field_time = get_temporal_bounds_for_field_id(cursor_demeter, field_id)
+    # get temporal bounds based on planting date, location, and `n_hist_years`
+    df_field_time = get_temporal_bounds_for_field_id(
+        cursor, field_id, gdf_field_space["field_centroid"].to_list()
+    )
 
     gdf_full = pd_merge(gdf_field_space, df_field_time, on="field_id")
 
@@ -163,11 +195,9 @@ def determine_needed_weather_for_demeter(
         ["cell_id"], keep="first"
     )  # only need to worry about `date_first`
 
-    # add world utm ID
+    # add world utm ID to make centroid queries faster and add UTM zone
     df_world_utm = gdf_unique.apply(
-        lambda row: get_world_utm_info_for_cell_id(cursor_weather, row["cell_id"]).iloc[
-            0
-        ],
+        lambda row: get_world_utm_info_for_cell_id(cursor, row["cell_id"]).iloc[0],
         axis=1,
     )
 
@@ -176,7 +206,7 @@ def determine_needed_weather_for_demeter(
     )
 
     gdf_world_utm["centroid"] = gdf_world_utm.apply(
-        lambda row: get_centroid(cursor_weather, row["world_utm_id"], row["cell_id"]),
+        lambda row: get_centroid(cursor, row["world_utm_id"], row["cell_id"]),
         axis=1,
     )
 

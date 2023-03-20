@@ -38,7 +38,7 @@ def get_all_field_ids(cursor: Any) -> List:
     if len(df_result) > 0:
         return df_result["field_id"].to_list()
     else:
-        return None
+        return []
 
 
 def get_first_plant_date_for_field_id(

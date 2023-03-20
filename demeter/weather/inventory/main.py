@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from geopandas import GeoDataFrame
 from pandas import concat as pd_concat
 from pandas import merge as pd_merge
+from pyproj import CRS
 from sqlalchemy.engine import Connection
 
 from demeter.weather._grid_utils import get_centroid, get_info_for_world_utm
@@ -68,7 +69,9 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
         axis=1,
     )
 
-    gdf_full = GeoDataFrame(df_full[GDF_COLS], geometry="centroid")
+    gdf_full = GeoDataFrame(
+        df_full[GDF_COLS], geometry="centroid", crs=CRS.from_epsg(4326)
+    )
 
     return gdf_full
 

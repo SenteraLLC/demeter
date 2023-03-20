@@ -80,7 +80,7 @@ def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily") -> List:
 
 
 def get_first_available_data_year_for_cell_id(
-    cursor_weather: Any,
+    cursor: Any,
     cell_id: Union[int, List[int]],
     table: str = "daily",
 ) -> Union[DataFrame, None]:
@@ -118,8 +118,8 @@ def get_first_available_data_year_for_cell_id(
     stmt = doPgFormat(template, Identifier(table))
     args = {"cell_id": cell_id}
 
-    cursor_weather.execute(stmt, args)
-    df_result = DataFrame(cursor_weather.fetchall())
+    cursor.execute(stmt, args)
+    df_result = DataFrame(cursor.fetchall())
 
     if len(df_result) == 0:
         return None
@@ -129,7 +129,7 @@ def get_first_available_data_year_for_cell_id(
 
 
 def get_date_last_requested_for_cell_id(
-    cursor_weather: Any,
+    cursor: Any,
     table: str = "daily",
 ) -> Union[DataFrame, None]:
     """Get last request datetime (in UTC) for all cell IDs in weather.`table`
@@ -162,8 +162,8 @@ def get_date_last_requested_for_cell_id(
     """
 
     stmt = doPgFormat(template, Identifier(table))
-    cursor_weather.execute(stmt)
-    df_result = DataFrame(cursor_weather.fetchall())
+    cursor.execute(stmt)
+    df_result = DataFrame(cursor.fetchall())
 
     if len(df_result) == 0:
         return None

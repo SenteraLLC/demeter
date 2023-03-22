@@ -123,8 +123,8 @@ def get_gdf_for_add(conn: Connection):
         cursor_weather=cursor, cell_id_list=gdf_need["cell_id"].to_list()
     )
 
-    # If both are true, we need to find which cell_ids/fields need weather data for any "new years" (gdf_new_years) and
-    # cell_ids/fields that are not yet present in the daily table at all (gdf_new_cells).
+    # If any cell IDs from `gdf_need` exist already in the database, we need to see which cell IDs need weather data for
+    # any "new years" (gdf_new_years), as well as identify cell_ids/fields that are not yet present in the daily table at all (gdf_new_cells).
     if len(gdf_available) > 0:
         gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
         keep = gdf_new_years.apply(

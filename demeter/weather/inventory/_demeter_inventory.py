@@ -167,12 +167,11 @@ def get_field_centroid_for_field_id(
     return gdf_result
 
 
-def determine_needed_weather_for_demeter(cursor: Any) -> DataFrame:
+def get_weather_grid_info_for_all_demeter_fields(cursor: Any) -> DataFrame:
     """Determine the spatiotemporal bounds of needed weather data based on available fields in Demeter.
 
     Args:
-        cursor_demeter: Connection to demeter schema
-        cursor_weather: Connection to demeter weather schema
+        cursor: Connection with access to both the demeter and weather schemas.
     """
 
     # TODO: Are we requiring that all fields have a planting date? If so, fix assert function.

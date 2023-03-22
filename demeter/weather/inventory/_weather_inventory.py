@@ -11,7 +11,6 @@ from typing import (
     Union,
 )
 
-from numpy import datetime64
 from pandas import DataFrame, to_datetime
 from psycopg2.sql import Identifier
 from pytz import UTC
@@ -53,13 +52,15 @@ def get_first_unstable_date_at_request_time(
     )
 
 
-def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily") -> List:
-    """Get list of all cell IDs that have data in a given data in the weather schema.
+def get_weather_grid_info_for_all_populated_cell_ids(
+    cursor: Any, table: str = "daily"
+) -> List:
+    """Get list of all cell IDs that have data in a given table in the weather schema.
 
-    If no data exists in the database, None is returned.
+    If no data exists in the database, `None` is returned.
 
     Args:
-        cursor: Connection to demeter weather schema
+        cursor: Connection with access to the weather schema.
 
         table (str): Name of weather table to consider; defaults to "daily" which is currently
             the only weather data table in use.
@@ -116,20 +117,19 @@ def get_first_available_data_year_for_cell_id(
     """
     stmt = doPgFormat(template, Identifier(table))
     args = {"cell_id": tuple(cell_id_list)}
-
     cursor_weather.execute(stmt, args)
-    first_date_dtypes = {"cell_id": int, "first_date": datetime64}
-    df_result = (
-        DataFrame(cursor_weather.fetchall())
-        if len(cursor_weather.fetchall()) > 0
-        else DataFrame([], columns=first_date_dtypes.keys()).astype(first_date_dtypes)
-    )
+    df_result = DataFrame(cursor_weather.fetchall())
 
-    # if len(df_result) == 0:
-    #     return None
-    # else:
-    df_result["first_year"] = to_datetime(df_result["first_date"]).dt.year
-    return df_result[["cell_id", "first_year"]]
+    if len(df_result) == 0:
+        first_year_dtypes = {"cell_id": int, "first_year": int}
+        return (
+            DataFrame([], columns=first_year_dtypes.keys())
+            .astype(first_year_dtypes)
+            .dtypes
+        )
+    else:
+        df_result["first_year"] = to_datetime(df_result["first_date"]).dt.year
+        return df_result[["cell_id", "first_year"]]
 
 
 def get_date_last_requested_for_cell_id(

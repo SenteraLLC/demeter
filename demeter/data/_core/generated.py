@@ -51,6 +51,15 @@ insertOrGetFieldGroup: ReturnId[FieldGroup] = g.partialInsertOrGetId(
     getMaybeFieldGroupId, insertFieldGroup
 )
 insertOrGetField: ReturnId[Field] = g.partialInsertOrGetId(getMaybeFieldId, insertField)
+"""
+A note on the date_end (and created) columns of Field
+    1. `date_end=None` is NOT VALID because setting explicitly to `None` bypasses the default `datetime.max`
+    2. When insertOrGetField() is called, date_end is assigned an infinity value because of the schema.sql default.
+        I don't know how to reconcile the SQL default with the Field() class default if `None` is passed.
+    So, DO NOT pass `None` to either the `date_end` or "Detailed" columns (i.e., `details`, `created`,
+    `last_updated`).
+"""
+
 insertOrGetCropType: ReturnId[CropType] = g.partialInsertOrGetId(
     getMaybeCropTypeId, insertCropType
 )

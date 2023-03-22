@@ -40,14 +40,8 @@ if __name__ == "__main__":
 
     c = load_dotenv()
     conn = getConnection(env_name="DEMETER-DEV_LOCAL").connection
-    # cursor = Connection.cursor()
-    # Session = getSession(env_name="DEMETER-DEV_LOCAL", autocommit=True)
-    # cursor = Session().connection().connection.cursor()
 
     with conn.cursor() as cursor:
-        # print(cursor.closed)
-        # Add data to demeter - FieldGroups and Fields
-        # trans = conn.begin()
         field_group_owner = FieldGroup(
             name="Tyler Nigon2",
             parent_field_group_id=None,
@@ -83,12 +77,6 @@ if __name__ == "__main__":
                         field_group_id=farm_group_id,
                     )
                     field_id = insertOrGetField(cursor, field)
-                    # A note on the date_end (and created) columns of Field
-                    #     1. `date_end=None` is NOT VALID because setting explicitly to `None` bypasses the default `datetime.max`
-                    #     2. When insertOrGetField() is called, date_end is assigned an infinity value because of the schema.sql default. I
-                    #        don't know how to reconcile the SQL default with the Field() class default if `None` is passed.
-                    #     So, DO NOT pass `None` to either the `date_end` or "Detailed" columns (i.e., `details`, `created`, `last_updated`).
-
                     # for i, row_ap in as_planted[as_planted["field_id"] == row_fb["field_id"]].iterrows():
                     #     # RaiseException: Field geometry must cover act geometry.
                     #     if not geom_fb.covers(row_ap["geometry"]):
@@ -110,10 +98,6 @@ if __name__ == "__main__":
                             == 1
                         ):
                             # Assumes that if there is only one planting record, then it has same geometry as the field
-
-                            # print(round_geometry(row_fb["geometry"], n_decimal_places=7))
-                            # print(round_geometry(row_ap["geometry"], n_decimal_places=7))
-                            # assert row_fb["geometry"].equals_exact(row_ap["geometry"], tolerance=1e-6), "Not exact!"
                             geom_ap = getMaybeGeom(cursor, geom_id=field_geom_id)
                             ap_geom_id = insertOrGetGeom(cursor, geom_ap)
                             if field_geom_id != ap_geom_id:
@@ -129,14 +113,13 @@ if __name__ == "__main__":
                             if not geom_fb.buffer(1e-7).covers(
                                 geom_ap
                             ):  # Would cause RaiseException: Field geometry must cover act geometry.
-                                # print(
-                                #     f"As-planted geometry is not covered by field boundary; interecting geometries for "
-                                #     f'field "{row_ap["field_id"]}" index "{row_ap["index"]}"'
-                                # )
+                                print(
+                                    f"As-planted geometry is not covered by field boundary; interecting geometries for "
+                                    f'field "{row_ap["field_id"]}" index "{row_ap["index"]}"'
+                                )
                                 geom_ap = round_geometry(
                                     geom_ap.intersection(geom_fb), n_decimal_places=7
                                 )
-                            # cursor = conn.cursor()
                             ap_geom_id = insertOrGetGeom(cursor, geom_ap)
                             geom_ap = getMaybeGeom(cursor, geom_id=ap_geom_id)
                         crop = (
@@ -168,7 +151,6 @@ if __name__ == "__main__":
                         )
 
                         if date_performed is None:
-                            # conn.commit()
                             continue
                         else:
                             # if crop in ["alfalfa"] and date_performed is None:

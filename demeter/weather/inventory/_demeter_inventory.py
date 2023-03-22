@@ -110,8 +110,9 @@ def get_temporal_bounds_for_field_id(
     )
     gdf = pd_merge(gdf, df_plant, on="field_id", how="left")
 
-    msg = "Planting dates are missing for the given field ID[s]."
-    assert len(gdf.loc[gdf["date_planted"].isna()]) == 0, msg
+    # msg = "Planting dates are missing for the given field ID[s]."
+    # assert len(gdf.loc[gdf["date_planted"].isna()]) == 0, msg
+    gdf.dropna(axis=0, subset=["date_planted"], inplace=True)
 
     # localize planting date with political time zones to ensure appropriate weather coverage
     gdf["date_planted_local"] = gdf.apply(
@@ -186,7 +187,7 @@ def determine_needed_weather_for_demeter(cursor: Any) -> DataFrame:
 
     # get temporal bounds based on planting date, location, and `n_hist_years`
     df_field_time = get_temporal_bounds_for_field_id(
-        cursor, field_id, gdf_field_space["field_centroid"].to_list()
+        cursor, field_id, field_centroid=gdf_field_space["field_centroid"].to_list()
     )
 
     gdf_full = pd_merge(gdf_field_space, df_field_time, on="field_id")

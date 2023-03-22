@@ -117,13 +117,13 @@ def get_gdf_for_add(conn: Connection):
     gdf_need = determine_needed_weather_for_demeter(cursor)
 
     # find cell IDs which need more historical years of data
-    cell_id = get_cell_ids_in_weather_table(cursor, table="daily")
+    cell_id_list = get_cell_ids_in_weather_table(cursor, table="daily")
 
-    if cell_id is not None:
-        gdf_available = get_first_available_data_year_for_cell_id(
-            cursor, gdf_need["cell_id"].to_list()
-        )
+    gdf_available = get_first_available_data_year_for_cell_id(
+        cursor_weather=cursor, cell_id_list=gdf_need["cell_id"].to_list()
+    )
 
+    if cell_id_list is not None and len(gdf_available) > 0:
         gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
         keep = gdf_new_years.apply(
             lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1
@@ -134,7 +134,7 @@ def get_gdf_for_add(conn: Connection):
         )
 
         # find cell IDs which are not in the database at all
-        gdf_new_cells = gdf_need.loc[~gdf_need["cell_id"].isin(cell_id)]
+        gdf_new_cells = gdf_need.loc[~gdf_need["cell_id"].isin(cell_id_list)]
 
         gdf_add = pd_concat(
             [gdf_new_years[gdf_new_cells.columns.values], gdf_new_cells], axis=0

@@ -11,6 +11,7 @@ from typing import (
     Union,
 )
 
+from numpy import datetime64
 from pandas import DataFrame, to_datetime
 from psycopg2.sql import Identifier
 from pytz import UTC
@@ -81,10 +82,10 @@ def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily") -> List:
 
 def get_first_available_data_year_for_cell_id(
     cursor_weather: Any,
-    cell_id: Union[int, List[int]],
+    cell_id_list: Union[int, List[int]],
     table: str = "daily",
 ) -> Union[DataFrame, None]:
-    """Gets the first year where data are available for `cell_id` in weather.`table`
+    """Gets the first year where data are available for `cell_id_list` in weather.`table`
 
     If no data is available, None is returned.
 
@@ -96,7 +97,7 @@ def get_first_available_data_year_for_cell_id(
     Args:
         cursor (Any): Connection to Demeter weather schema
 
-        cell_id (int or list or int): Cell ID[s] for which to determine first date of
+        cell_id_list (int or list or int): Cell ID[s] for which to determine first date of
             available data in the database
 
         table (str): Name of data table to search; defaults to "daily".
@@ -107,8 +108,6 @@ def get_first_available_data_year_for_cell_id(
         "daily"
     ], "Only the following table names are currently implemented: 'daily'"
 
-    cell_id = tuple(cell_id)
-
     template = """
     select cell_id, MIN(date) as first_date
     from {0}
@@ -116,16 +115,21 @@ def get_first_available_data_year_for_cell_id(
     group by cell_id;
     """
     stmt = doPgFormat(template, Identifier(table))
-    args = {"cell_id": cell_id}
+    args = {"cell_id": tuple(cell_id_list)}
 
     cursor_weather.execute(stmt, args)
-    df_result = DataFrame(cursor_weather.fetchall())
+    first_date_dtypes = {"cell_id": int, "first_date": datetime64}
+    df_result = (
+        DataFrame(cursor_weather.fetchall())
+        if len(cursor_weather.fetchall()) > 0
+        else DataFrame([], columns=first_date_dtypes.keys()).astype(first_date_dtypes)
+    )
 
-    if len(df_result) == 0:
-        return None
-    else:
-        df_result["first_year"] = to_datetime(df_result["first_date"]).dt.year
-        return df_result[["cell_id", "first_year"]]
+    # if len(df_result) == 0:
+    #     return None
+    # else:
+    df_result["first_year"] = to_datetime(df_result["first_date"]).dt.year
+    return df_result[["cell_id", "first_year"]]
 
 
 def get_date_last_requested_for_cell_id(

@@ -127,7 +127,7 @@ def get_gdf_for_add(conn: Connection):
 
     # If both are true, we need to find which cell_ids/fields need weather data for any "new years" (gdf_new_years) and
     # cell_ids/fields that are not yet present in the daily table at all (gdf_new_cells).
-    if cell_ids_weather is not None and len(gdf_available) > 0:
+    if len(gdf_available) > 0:
         gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
         keep = gdf_new_years.apply(
             lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1

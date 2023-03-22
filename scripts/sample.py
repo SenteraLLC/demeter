@@ -19,7 +19,7 @@ from demeter.data import (
     getFieldGroupAncestors,
     getFieldGroupDescendants,
     getFieldGroupFields,
-    getGeom,
+    getMaybeGeom,
     getObservation,
     getObservationType,
     getUnitType,
@@ -102,7 +102,7 @@ field_geom = Polygon(
 
 field_geom_id = insertOrGetGeom(cursor, field_geom)
 print(f"Field Geom id: {field_geom_id}")
-inserted_geom = getGeom(cursor, field_geom_id)
+inserted_geom = getMaybeGeom(cursor, field_geom_id)
 
 # A note on the date_end (and created) columns of Field
 #     1. `date_end=None` is NOT VALID because setting explicitly to `None` bypasses the default `datetime.max`

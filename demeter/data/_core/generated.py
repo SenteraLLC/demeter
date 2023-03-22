@@ -1,4 +1,11 @@
-"""Constructs insert functions for core types using `SQLGenerator`"""
+"""
+Constructs insert functions for core types using `SQLGenerator`
+
+The following functions are generated based on the schema. Using `getGeom()` as an example:
+`getGeom()` is of type `GetTable()` which is a function that takes a table ID (here `geom_id`) and returns the demeter
+type object associated with that ID (here it would be a `Geom` type). The demeter objects are used as a way to map these
+function generation functions to the right ID and table. More specific functions should be written using SQL.
+"""
 
 from ...db import SQLGenerator
 from ...db._generic_types import (

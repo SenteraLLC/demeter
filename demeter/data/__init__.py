@@ -93,7 +93,6 @@ __all__ = (
     "getMaybeTemporalKeyId",
     # Geom
     "Geom",
-    "getMaybeGeom",
     "getMaybeGeomId",
     "getMaybeGeom",
     "insertOrGetGeom",

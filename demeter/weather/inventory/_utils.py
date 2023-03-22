@@ -13,8 +13,6 @@ tzf = TimezoneFinder()
 def localize_utc_datetime_with_utc_offset(
     d: datetime, utc_offset: timezone
 ) -> datetime:
-    d = d.replace(tzinfo=UTC)
-
     return d.tz_localize(UTC).astimezone(utc_offset)
 
 

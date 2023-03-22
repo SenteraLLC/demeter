@@ -3,19 +3,20 @@ from datetime import datetime, timedelta
 from geopandas import GeoDataFrame
 from pandas import concat as pd_concat
 from pandas import merge as pd_merge
+from pyproj import CRS
 from sqlalchemy.engine import Connection
 
 from demeter.weather._grid_utils import get_centroid, get_info_for_world_utm
 from demeter.weather.inventory._demeter_inventory import (
-    determine_needed_weather_for_demeter,
+    get_weather_grid_info_for_all_demeter_fields,
 )
 from demeter.weather.inventory._utils import localize_utc_datetime_with_utc_offset
 from demeter.weather.inventory._weather_inventory import (
-    get_cell_ids_in_weather_table,
     get_date_last_requested_for_cell_id,
     get_first_available_data_year_for_cell_id,
     get_first_unstable_date_at_request_time,
     get_min_current_date_for_world_utm,
+    get_populated_cell_ids,
 )
 
 GDF_COLS = [
@@ -83,7 +84,9 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
         axis=1,
     )
 
-    gdf_full = GeoDataFrame(df_full[GDF_COLS], geometry="centroid")
+    gdf_full = GeoDataFrame(
+        df_full[GDF_COLS], geometry="centroid", crs=CRS.from_epsg(4326)
+    )
 
     return gdf_full
 
@@ -111,16 +114,18 @@ def get_gdf_for_add(conn: Connection):
 
     cursor = conn.connection.cursor()
 
-    gdf_need = determine_needed_weather_for_demeter(cursor)
+    # Find cell IDs currently present in `weather.daily` that need more historical years of data
+    cell_ids_weather = get_populated_cell_ids(cursor, table="daily")
 
-    # find cell IDs which need more historical years of data
-    cell_id = get_cell_ids_in_weather_table(cursor, table="daily")
+    # Find cell IDs represented by all demeter fields (their cell IDs may or may not be present in `weather.daily`)
+    gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)
+    gdf_available = get_first_available_data_year_for_cell_id(
+        cursor_weather=cursor, cell_id_list=gdf_need["cell_id"].to_list()
+    )
 
-    if cell_id is not None:
-        gdf_available = get_first_available_data_year_for_cell_id(
-            cursor, gdf_need["cell_id"].to_list()
-        )
-
+    # If any cell IDs from `gdf_need` exist already in the database, we need to see which cell IDs need weather data for
+    # any "new years" (gdf_new_years), as well as identify cell_ids/fields that are not yet present in the daily table at all (gdf_new_cells).
+    if len(gdf_available) > 0:
         gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
         keep = gdf_new_years.apply(
             lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1
@@ -130,15 +135,16 @@ def get_gdf_for_add(conn: Connection):
             lambda yr: datetime(yr - 1, 12, 31)
         )
 
-        # find cell IDs which are not in the database at all
-        gdf_new_cells = gdf_need.loc[~gdf_need["cell_id"].isin(cell_id)]
+        # find cell IDs for the fields that are present, but don't have any weather data yet
+        gdf_new_cells = gdf_need.loc[~gdf_need["cell_id"].isin(cell_ids_weather)]
 
         gdf_add = pd_concat(
             [gdf_new_years[gdf_new_cells.columns.values], gdf_new_cells], axis=0
         )
-    else:
+    else:  # Of the needed cell_ids/fields, nothing is available yet. This is the first weather data to be populated.
         gdf_add = gdf_need.copy()
 
+    # represents the grid info for all cell_ids that need new weather added (could be new years, new cell_ids, or both)
     return gdf_add
 
 

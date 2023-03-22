@@ -27,20 +27,21 @@ def split_gdf_for_update(
     parameter_sets: List[List[str]],
     n_cells_per_set: List[int],
 ):
-    """Creates `request_list` for extracting weather data needed to update the database with recent data as given in `gdf`.
+    """
+    Creates `request_list` for extracting weather data needed to update the database with recent data as given in `gdf`.
 
-    This splitting strategy should be used only for "update" data requests, because it assumes each cell ID requires a short
-    time series (e.g. 1-3 weeks). As a consequence, no splitting is done along the temporal dimension.
+    This splitting strategy should be used only for "update" data requests, because it assumes each cell ID requires a
+    short time series (e.g. 1-3 weeks). As a consequence, no splitting is done along the temporal dimension.
 
     The splitting strategy at this step is as follows:
-    1. Split by parameter sets as specified in `parameter_sets`. This is required because MM only allows one
-    to request 10 parameters at a time. This also allows us to more easily customize how big requests get depending on
-    the parameter, which is important because request time depends on parameter.
+    1. Split by parameter sets as specified in `parameter_sets`. This is required because MM only allows 10 parameters
+    to be requested at a time. This also allows us to more easily customize how big requests get depending on the
+    parameter, which is important because request time depends on parameter.
 
-    2. Split by UTM zone since we cannot differentiate start and end dates within one request and each zone has a different
-    offset for end of day.
+    2. Split by UTM zone since we cannot differentiate start and end dates within one request and each zone has a
+    different offset for end of day.
 
-    3. Split by number of cell IDS. This is not always necessary since we can extract many more cell IDs per UTM request
+    3. Split by number of cell IDs. This is not always necessary since we can extract many more cell IDs per UTM request
     with fewer time points per cell ID.
 
     Args:

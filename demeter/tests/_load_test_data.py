@@ -190,9 +190,7 @@ if __name__ == "__main__":
                                 },
                             )
                             planting_id = insertOrGetAct(cursor, planting)
-                            conn.commit()
-    conn.commit()
-    # trans.commit()  # Make a commit for every field
-    # trans.close()
+                    conn.commit()  # Make a commit for every field
+    conn.commit()  # Commit outside the with statment
 
 # %%

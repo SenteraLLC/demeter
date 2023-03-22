@@ -23,7 +23,11 @@ from ._core.generated import (
     insertOrGetGeoSpatialKey,
     insertOrGetTemporalKey,
 )
-from ._core.geom import getMaybeGeomId, insertOrGetGeom
+from ._core.geom import (
+    getMaybeGeom,
+    getMaybeGeomId,
+    insertOrGetGeom,
+)
 from ._core.st_types import (
     Geom,
     GeoSpatialKey,
@@ -92,6 +96,7 @@ __all__ = (
     "Geom",
     "getGeom",
     "getMaybeGeomId",
+    "getMaybeGeom",
     "insertOrGetGeom",
     # Observation
     "Observation",

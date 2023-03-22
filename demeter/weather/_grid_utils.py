@@ -533,6 +533,8 @@ def get_info_for_world_utm(
 
     Returns dataframe with two columns: "world_utm_id", "utc_offset", "utm_zone", "utm_row"
     """
+    if not isinstance(world_utm_id, list):
+        world_utm_id = [world_utm_id]
     world_utm_id_tuple = tuple(world_utm_id)
 
     stmt = """

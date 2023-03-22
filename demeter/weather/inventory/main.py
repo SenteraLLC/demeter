@@ -16,7 +16,7 @@ from demeter.weather.inventory._weather_inventory import (
     get_first_available_data_year_for_cell_id,
     get_first_unstable_date_at_request_time,
     get_min_current_date_for_world_utm,
-    get_weather_grid_info_for_all_populated_cell_ids,
+    get_populated_cell_ids,
 )
 
 GDF_COLS = [
@@ -115,9 +115,7 @@ def get_gdf_for_add(conn: Connection):
     cursor = conn.connection.cursor()
 
     # Find cell IDs currently present in `weather.daily` that need more historical years of data
-    cell_ids_weather = get_weather_grid_info_for_all_populated_cell_ids(
-        cursor, table="daily"
-    )
+    cell_ids_weather = get_populated_cell_ids(cursor, table="daily")
 
     # Find cell IDs represented by all demeter fields (their cell IDs may or may not be present in `weather.daily`)
     gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)

@@ -52,9 +52,7 @@ def get_first_unstable_date_at_request_time(
     )
 
 
-def get_weather_grid_info_for_all_populated_cell_ids(
-    cursor: Any, table: str = "daily"
-) -> List:
+def get_populated_cell_ids(cursor: Any, table: str = "daily") -> List:
     """Get list of all cell IDs that have data in a given table in the weather schema.
 
     If no data exists in the database, `None` is returned.
@@ -122,11 +120,7 @@ def get_first_available_data_year_for_cell_id(
 
     if len(df_result) == 0:
         first_year_dtypes = {"cell_id": int, "first_year": int}
-        return (
-            DataFrame([], columns=first_year_dtypes.keys())
-            .astype(first_year_dtypes)
-            .dtypes
-        )
+        return DataFrame([], columns=first_year_dtypes.keys()).astype(first_year_dtypes)
     else:
         df_result["first_year"] = to_datetime(df_result["first_date"]).dt.year
         return df_result[["cell_id", "first_year"]]

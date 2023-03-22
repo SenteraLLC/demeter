@@ -281,7 +281,7 @@ $$BEGIN
         SELECT Q1.geom, Q2.geom
         FROM (SELECT * FROM field F INNER JOIN geom GEO on F.geom_id = GEO.geom_id WHERE F.field_id = NEW.field_id) Q1
         CROSS JOIN geom Q2
-        WHERE Q2.geom_id = NEW.geom_id AND ST_COVERS(ST_BUFFER(Q1.geom, 1e-7), Q2.geom)
+        WHERE Q2.geom_id = NEW.geom_id AND ST_COVERS(ST_BUFFER(Q1.geom, 1e-6), Q2.geom)
       )
     )
     THEN

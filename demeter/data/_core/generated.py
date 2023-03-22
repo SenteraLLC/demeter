@@ -13,11 +13,7 @@ from .._core.types import (
     Field,
 )
 from .field_group import FieldGroup
-from .st_types import (
-    Geom,
-    GeoSpatialKey,
-    TemporalKey,
-)
+from .st_types import GeoSpatialKey, TemporalKey
 
 g = SQLGenerator(
     "demeter.data",
@@ -58,7 +54,8 @@ insertOrGetAct: ReturnId[Act] = g.partialInsertOrGetId(getMaybeActId, insertAct)
 getMaybeGeoSpatialKeyId: GetId[GeoSpatialKey] = g.getMaybeIdFunction(GeoSpatialKey)
 getMaybeTemporalKeyId: GetId[TemporalKey] = g.getMaybeIdFunction(TemporalKey)
 
-getGeom: GetTable[Geom] = g.getTableFunction(Geom)
+## Redundant with `getMaybeGeom()` in `geom.py`
+# getGeom: GetTable[Geom] = g.getTableFunction(Geom)
 
 insertGeoSpatialKey: ReturnId[GeoSpatialKey] = g.getInsertReturnIdFunction(
     GeoSpatialKey

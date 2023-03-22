@@ -4,12 +4,11 @@ from ._core.field_group import (  # searchFieldGroup,
     getFieldGroupDescendants,
     getFieldGroupFields,
 )
-from ._core.generated import (
+from ._core.generated import (  # getGeom,
     getAct,
     getCropType,
     getField,
     getFieldGroup,
-    getGeom,
     getMaybeActId,
     getMaybeCropTypeId,
     getMaybeFieldGroupId,
@@ -94,7 +93,7 @@ __all__ = (
     "getMaybeTemporalKeyId",
     # Geom
     "Geom",
-    "getGeom",
+    "getMaybeGeom",
     "getMaybeGeomId",
     "getMaybeGeom",
     "insertOrGetGeom",

@@ -37,6 +37,10 @@ def cut_request_list_along_utm_zone(
     Returns `cut_request_list` (list of dict) which contains a maximum of `n_requests` complete UTM-zone
     requests from `request_list`.
     """
+
+    if len(request_list) <= n_requests:
+        return request_list
+
     df_zone = (
         DataFrame(
             data={"count": Series([rq["zone"] for rq in request_list]).value_counts()}

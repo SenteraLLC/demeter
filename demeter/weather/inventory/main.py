@@ -94,10 +94,10 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
 def get_gdf_for_add(conn: Connection):
     """Creates `gdf` for "add" step in weather workflow.
 
-    This function performs an inventory of Demeter and determines which cell IDs and years need weather data.
-    Then, an inventory of the weather database determines which cell IDs already have data and retrieves the
-    first year of data for each cell ID. The final `gdf` is composed of cell ID x year combinations of the
-    following two types:
+    This function performs an inventory of Demeter and determines which cell IDs and years need weather data
+    to fully represent `demeter.fields`. Then, an inventory of the weather database determines which cell IDs
+    already have data and retrieves the first year of data for each cell ID. The final `gdf` is composed of
+    cell ID x year combinations of the following two types:
     (1) a cell ID already exists in the database but needs earlier years of data than what is available
     (2) a cell ID does not exist in the database and needs to be populated
 

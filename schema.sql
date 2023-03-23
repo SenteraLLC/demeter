@@ -270,6 +270,7 @@ CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
+-- TODO: Rethink the 1e-7 tol if we ever store geoms at variable precision (i.e., expose tol as arg to insertOrGetGeom())
 create function field_geom_covers_act_geom() RETURNS trigger
   LANGUAGE plpgsql as
 $$BEGIN
@@ -280,7 +281,7 @@ $$BEGIN
         SELECT Q1.geom, Q2.geom
         FROM (SELECT * FROM field F INNER JOIN geom GEO on F.geom_id = GEO.geom_id WHERE F.field_id = NEW.field_id) Q1
         CROSS JOIN geom Q2
-        WHERE Q2.geom_id = NEW.geom_id AND ST_COVERS(Q1.geom, Q2.geom)
+        WHERE Q2.geom_id = NEW.geom_id AND ST_COVERS(ST_BUFFER(Q1.geom, 1e-6), Q2.geom)
       )
     )
     THEN

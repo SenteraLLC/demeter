@@ -4,12 +4,11 @@ from ._core.field_group import (  # searchFieldGroup,
     getFieldGroupDescendants,
     getFieldGroupFields,
 )
-from ._core.generated import (
+from ._core.generated import (  # getGeom,
     getAct,
     getCropType,
     getField,
     getFieldGroup,
-    getGeom,
     getMaybeActId,
     getMaybeCropTypeId,
     getMaybeFieldGroupId,
@@ -23,7 +22,11 @@ from ._core.generated import (
     insertOrGetGeoSpatialKey,
     insertOrGetTemporalKey,
 )
-from ._core.geom import getMaybeGeomId, insertOrGetGeom
+from ._core.geom import (
+    getMaybeGeom,
+    getMaybeGeomId,
+    insertOrGetGeom,
+)
 from ._core.st_types import (
     Geom,
     GeoSpatialKey,
@@ -90,8 +93,8 @@ __all__ = (
     "getMaybeTemporalKeyId",
     # Geom
     "Geom",
-    "getGeom",
     "getMaybeGeomId",
+    "getMaybeGeom",
     "insertOrGetGeom",
     # Observation
     "Observation",

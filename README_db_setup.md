@@ -95,7 +95,7 @@ sudo apt install postgresql-14
 #### Initial setup of server
 Be sure the database service is running:
 ```bash
-sudo service postrgresql start
+sudo service postgresql start
 ```
 
 Add the `postgres` user

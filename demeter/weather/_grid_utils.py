@@ -5,7 +5,12 @@ import subprocess
 from datetime import timezone
 from os.path import isfile
 from tempfile import NamedTemporaryFile
-from typing import Any, Tuple
+from typing import (
+    Any,
+    List,
+    Tuple,
+    Union,
+)
 
 from geo_utils.general import estimate_utm_crs, hemisphere_from_centroid
 from geo_utils.raster import build_transform_utm, create_array_skeleton
@@ -515,3 +520,30 @@ def get_world_utm_info_for_cell_id(cursor: Any, cell_id: int):
 def pt_is_on_land(point: Point) -> bool:
     """Indicates whether the passed Point geometry is on land or not."""
     return is_land(lat=point.y, lon=point.x)
+
+
+def get_info_for_world_utm(
+    cursor_weather: Any, world_utm_id: Union[int, List[int]]
+) -> DataFrame:
+    """Return 'utc_offset', 'utm_zone', 'utm_row' for list of `weather.world_utm` IDs.
+
+    Args:
+        cursor (Any): Connection to Demeter weather schema
+        world_utm_id (int or list of int): IDS from world_utm table to extract utc_offset for
+
+    Returns dataframe with two columns: "world_utm_id", "utc_offset", "utm_zone", "utm_row"
+    """
+    world_utm_id_tuple = tuple(world_utm_id)
+
+    stmt = """
+    select world_utm_id, utc_offset, zone, row
+    from world_utm
+    where world_utm_id in %(world_utm_id)s
+    """
+    args = {"world_utm_id": world_utm_id_tuple}
+    cursor_weather.execute(stmt, args)
+    df_result = DataFrame(cursor_weather.fetchall())
+
+    assert len(df_result) > 0, "This `world_utm_id` does not exist in the DB."
+
+    return df_result.rename(columns={"zone": "utm_zone", "row": "utm_row"})

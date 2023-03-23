@@ -133,7 +133,7 @@ def get_request_for_single_gdf(
 
     # Create dict
     request = {
-        "zone": utm_zone,
+        "zone": int(utm_zone),
         "utm_request_id": utm_request_id,
         "utc_offset": utc_offset,
         "n_pts_requested": get_n_pts_requested(gdf_request, len(parameters)),

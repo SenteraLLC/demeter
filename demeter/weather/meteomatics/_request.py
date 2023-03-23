@@ -59,7 +59,10 @@ def cut_request_list_along_utm_zone(
 
 
 def get_n_requests_remaining() -> int:
-    """Determines how many requests are remaining on Sentera's Meteomatics license for today."""
+    """Determines how many requests are remaining on Sentera's Meteomatics license for today based on hard limit.
+
+    The soft limit for our account is not given through this api request function.
+    """
     res = query_user_limits(
         "sentera",
         getenv("METEOMATICS_KEY"),

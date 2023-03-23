@@ -6,7 +6,6 @@ STEPS:
 1. Run "update" on those cell IDs which already exist in the database
 2. Run "add" on those cell ID x year combinations which are new
 """
-# TODO: Make `demeter_user` able to search `weather` schema.
 # %% imports
 from dotenv import load_dotenv
 

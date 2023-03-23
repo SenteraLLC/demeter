@@ -178,7 +178,7 @@ def getExistingSearchPath(
         SELECT rs.setconfig
         FROM pg_db_role_setting rs
         LEFT JOIN pg_roles r ON r.oid = rs.setrole
-        WHERE r.rolname = '%(username)s';
+        WHERE r.rolname = %(username)s;
         """
         cursor = conn.connection.cursor()
         args = {"username": db_fields["username"]}

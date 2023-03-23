@@ -52,13 +52,13 @@ def get_first_unstable_date_at_request_time(
     )
 
 
-def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily") -> List:
-    """Get list of all cell IDs that have data in a given data in the weather schema.
+def get_populated_cell_ids(cursor: Any, table: str = "daily") -> List:
+    """Get list of all cell IDs that have data in a given table in the weather schema.
 
-    If no data exists in the database, None is returned.
+    If no data exists in the database, `None` is returned.
 
     Args:
-        cursor: Connection to demeter weather schema
+        cursor: Connection with access to the weather schema.
 
         table (str): Name of weather table to consider; defaults to "daily" which is currently
             the only weather data table in use.
@@ -81,10 +81,10 @@ def get_cell_ids_in_weather_table(cursor: Any, table: str = "daily") -> List:
 
 def get_first_available_data_year_for_cell_id(
     cursor_weather: Any,
-    cell_id: Union[int, List[int]],
+    cell_id_list: Union[int, List[int]],
     table: str = "daily",
 ) -> Union[DataFrame, None]:
-    """Gets the first year where data are available for `cell_id` in weather.`table`
+    """Gets the first year where data are available for `cell_id_list` in weather.`table`
 
     If no data is available, None is returned.
 
@@ -96,7 +96,7 @@ def get_first_available_data_year_for_cell_id(
     Args:
         cursor (Any): Connection to Demeter weather schema
 
-        cell_id (int or list or int): Cell ID[s] for which to determine first date of
+        cell_id_list (int or list or int): Cell ID[s] for which to determine first date of
             available data in the database
 
         table (str): Name of data table to search; defaults to "daily".
@@ -107,8 +107,6 @@ def get_first_available_data_year_for_cell_id(
         "daily"
     ], "Only the following table names are currently implemented: 'daily'"
 
-    cell_id = tuple(cell_id)
-
     template = """
     select cell_id, MIN(date) as first_date
     from {0}
@@ -116,13 +114,13 @@ def get_first_available_data_year_for_cell_id(
     group by cell_id;
     """
     stmt = doPgFormat(template, Identifier(table))
-    args = {"cell_id": cell_id}
-
+    args = {"cell_id": tuple(cell_id_list)}
     cursor_weather.execute(stmt, args)
     df_result = DataFrame(cursor_weather.fetchall())
 
     if len(df_result) == 0:
-        return None
+        first_year_dtypes = {"cell_id": int, "first_year": int}
+        return DataFrame([], columns=first_year_dtypes.keys()).astype(first_year_dtypes)
     else:
         df_result["first_year"] = to_datetime(df_result["first_date"]).dt.year
         return df_result[["cell_id", "first_year"]]

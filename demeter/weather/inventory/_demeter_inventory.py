@@ -38,7 +38,7 @@ def get_all_field_ids(cursor: Any) -> List:
     if len(df_result) > 0:
         return df_result["field_id"].to_list()
     else:
-        return None
+        return []
 
 
 def get_first_plant_date_for_field_id(
@@ -110,8 +110,9 @@ def get_temporal_bounds_for_field_id(
     )
     gdf = pd_merge(gdf, df_plant, on="field_id", how="left")
 
-    msg = "Planting dates are missing for the given field ID[s]."
-    assert len(gdf.loc[gdf["date_planted"].isna()]) == 0, msg
+    # msg = "Planting dates are missing for the given field ID[s]."
+    # assert len(gdf.loc[gdf["date_planted"].isna()]) == 0, msg
+    gdf.dropna(axis=0, subset=["date_planted"], inplace=True)
 
     # localize planting date with political time zones to ensure appropriate weather coverage
     gdf["date_planted_local"] = gdf.apply(
@@ -166,12 +167,11 @@ def get_field_centroid_for_field_id(
     return gdf_result
 
 
-def determine_needed_weather_for_demeter(cursor: Any) -> DataFrame:
+def get_weather_grid_info_for_all_demeter_fields(cursor: Any) -> DataFrame:
     """Determine the spatiotemporal bounds of needed weather data based on available fields in Demeter.
 
     Args:
-        cursor_demeter: Connection to demeter schema
-        cursor_weather: Connection to demeter weather schema
+        cursor: Connection with access to both the demeter and weather schemas.
     """
 
     # TODO: Are we requiring that all fields have a planting date? If so, fix assert function.
@@ -186,7 +186,7 @@ def determine_needed_weather_for_demeter(cursor: Any) -> DataFrame:
 
     # get temporal bounds based on planting date, location, and `n_hist_years`
     df_field_time = get_temporal_bounds_for_field_id(
-        cursor, field_id, gdf_field_space["field_centroid"].to_list()
+        cursor, field_id, field_centroid=gdf_field_space["field_centroid"].to_list()
     )
 
     gdf_full = pd_merge(gdf_field_space, df_field_time, on="field_id")

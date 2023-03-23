@@ -126,17 +126,17 @@ if len(update_requests) > 0:
 
 # run ADD requests
 n_requests_remaining = n_requests - n_requests_used
-if n_requests_remaining > 0 and len(add_requests) > 0:
+if n_requests_remaining > 0:
     add_requests = cut_request_list_along_utm_zone(add_requests, n_requests_remaining)
-
     n_requests_used += len(add_requests)
 
-    add_requests = run_requests(
-        conn,
-        request_list=add_requests,
-        gdf_request=gdf_add,
-        params_to_weather_types=params_to_weather_types,
-    )
+    if len(add_requests) > 0:
+        add_requests = run_requests(
+            conn,
+            request_list=add_requests,
+            gdf_request=gdf_add,
+            params_to_weather_types=params_to_weather_types,
+        )
 
-    # TODO: Re-try failed requests if relevant; add to `n_requests_used`
-    Series(data=[r["status"] for r in add_requests]).value_counts()
+        # TODO: Re-try failed requests if relevant; add to `n_requests_used`
+        Series(data=[r["status"] for r in add_requests]).value_counts()

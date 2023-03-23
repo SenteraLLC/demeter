@@ -67,12 +67,6 @@ def getMaybeGeom(
     cursor: Any,
     geom_id: int,
 ) -> Optional[TableId]:
-    # SELECT G.geom as geom
-    # SELECT ST_QuantizeCoordinates(
-    #     ST_ReducePrecision(
-    #         geom, 1e-%(precision)s
-    #     ), %(precision)s
-    # ) as geom
     stmt = """
     SELECT G.geom as geom
     FROM geom G
@@ -88,8 +82,6 @@ def getMaybeGeom(
         return round_geometry(
             wkb_loads(result[0].geom, hex=True), n_decimal_places=precision
         )
-        # return wkb_loads(result[0].geom, hex=True)
-    # geom_fb2 = wkb_loads(cursor.fetchall()[0].geom, hex=True).wkt
 
 
 # TODO: Warn the user when the geometry is modified by ST_MakeValid

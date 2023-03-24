@@ -20,15 +20,15 @@ from shapely.errors import ShapelyDeprecationWarning
 from shapely.geometry import Point
 from shapely.wkb import loads as wkb_loads
 
-from demeter.weather.inventory._weather_inventory import (
-    get_min_current_date_for_world_utm,
-)
 from demeter.weather.utils.grid import (
     get_cell_id,
     get_centroid,
     get_world_utm_info_for_cell_id,
 )
-from demeter.weather.utils.time import localize_utc_datetime_with_timezonefinder
+from demeter.weather.utils.time import (
+    get_min_current_date_for_world_utm,
+    localize_utc_datetime_with_timezonefinder,
+)
 
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 

@@ -5,7 +5,7 @@ from typing import List
 from geopandas import GeoDataFrame
 
 from demeter.weather.request._format import get_request_list_from_gdfs_list
-from demeter.weather.request.split._split_functions import (
+from demeter.weather.request.split._split_utils import (
     split_by_n_cells,
     split_by_utm_zone,
     split_by_year,

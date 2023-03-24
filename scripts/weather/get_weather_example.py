@@ -14,13 +14,11 @@ from pandas import DataFrame
 from pandas import concat as pd_concat
 
 from demeter.db import getConnection
-from demeter.weather._grid_utils import get_centroid, get_world_utm_info_for_cell_id
-from demeter.weather.meteomatics._insert import get_weather_type_id_from_db
-from demeter.weather.meteomatics.main import (
-    attempt_and_maybe_insert_meteomatics_request,
-    split_gdf_for_add,
-)
-from demeter.weather.schema.weather_types import DAILY_WEATHER_TYPES
+from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
+from demeter.weather.insert import get_weather_type_id_from_db
+from demeter.weather.request import submit_and_maybe_insert_meteomatics_request
+from demeter.weather.request.split import split_gdf_for_add
+from demeter.weather.utils.grid import get_centroid, get_world_utm_info_for_cell_id
 
 c = load_dotenv()
 conn = getConnection(env_name="DEMETER-DEV_LOCAL_WEATHER")
@@ -103,7 +101,7 @@ else:
     for ind in range(len(request_list)):
         print(ind)
         request = request_list[ind]
-        request = attempt_and_maybe_insert_meteomatics_request(
+        request = submit_and_maybe_insert_meteomatics_request(
             conn=conn,
             request=request,
             gdf_cell_id=gdf_cell_id,

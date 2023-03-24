@@ -5,7 +5,7 @@ For help: python3 -m scripts.initialize_weather_schema --help
 This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that you have passwords
 for the two weather schema users--weather_user and weather_ro_user-- in your .env file.
 
-Once you have those things ready to go, set up the schema by running: python3 -m scripts.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
+Once you have those things ready to go, set up the schema by running: python3 -m scripts.weather.initialize_weather_schema --database_env='DEV' --database_host='LOCAL'
 """
 import argparse
 import logging
@@ -16,7 +16,7 @@ from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection
-from demeter.weather._initialize import (
+from demeter.weather.initialize import (
     initialize_weather_schema,
     populate_daily_weather_types,
     populate_weather_grid,

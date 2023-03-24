@@ -1,22 +1,26 @@
+"""High-level functions to perform inventory and generate `gdf` for different steps of weather process."""
 from datetime import datetime, timedelta
 
 from geopandas import GeoDataFrame
 from pandas import concat as pd_concat
 from pandas import merge as pd_merge
 from pyproj import CRS
+from pytz import UTC
 from sqlalchemy.engine import Connection
 
-from demeter.weather._grid_utils import get_centroid, get_info_for_world_utm
 from demeter.weather.inventory._demeter_inventory import (
     get_weather_grid_info_for_all_demeter_fields,
 )
-from demeter.weather.inventory._utils import localize_utc_datetime_with_utc_offset
 from demeter.weather.inventory._weather_inventory import (
     get_date_last_requested_for_cell_id,
     get_first_available_data_year_for_cell_id,
     get_first_unstable_date_at_request_time,
-    get_min_current_date_for_world_utm,
     get_populated_cell_ids,
+)
+from demeter.weather.utils.grid import get_centroid, get_info_for_world_utm
+from demeter.weather.utils.time import (
+    get_min_current_date_for_world_utm,
+    localize_utc_datetime_with_utc_offset,
 )
 
 GDF_COLS = [
@@ -53,6 +57,15 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
     # for each cell ID, determine most recent data extraction
     df_last_requested = get_date_last_requested_for_cell_id(cursor, table="daily")
     if df_last_requested is None:
+        return None
+
+    # ensure that data hasn't already been extracted for a given cell ID
+    utc_date_now = datetime.now(tz=UTC).date()
+    keep = df_last_requested["date_last_requested"].map(
+        lambda dt: dt.date() < utc_date_now
+    )
+    df_last_requested = df_last_requested.loc[keep]
+    if len(df_last_requested) == 0:
         return None
 
     # change extraction time to local time for each cell ID
@@ -94,10 +107,10 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
 def get_gdf_for_add(conn: Connection):
     """Creates `gdf` for "add" step in weather workflow.
 
-    This function performs an inventory of Demeter and determines which cell IDs and years need weather data.
-    Then, an inventory of the weather database determines which cell IDs already have data and retrieves the
-    first year of data for each cell ID. The final `gdf` is composed of cell ID x year combinations of the
-    following two types:
+    This function performs an inventory of Demeter and determines which cell IDs and years need weather data
+    to fully represent `demeter.fields`. Then, an inventory of the weather database determines which cell IDs
+    already have data and retrieves the first year of data for each cell ID. The final `gdf` is composed of
+    cell ID x year combinations of the following two types:
     (1) a cell ID already exists in the database but needs earlier years of data than what is available
     (2) a cell ID does not exist in the database and needs to be populated
 
@@ -126,7 +139,7 @@ def get_gdf_for_add(conn: Connection):
     # If any cell IDs from `gdf_need` exist already in the database, we need to see which cell IDs need weather data for
     # any "new years" (gdf_new_years), as well as identify cell_ids/fields that are not yet present in the daily table at all (gdf_new_cells).
     if len(gdf_available) > 0:
-        gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
+        gdf_new_years = pd_merge(gdf_need, gdf_available, on="cell_id")
         keep = gdf_new_years.apply(
             lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1
         )

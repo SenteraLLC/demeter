@@ -13,26 +13,11 @@ from typing import (
 
 from pandas import DataFrame, to_datetime
 from psycopg2.sql import Identifier
-from pytz import UTC
 from shapely.errors import ShapelyDeprecationWarning
 
 from demeter.db._postgres.tools import doPgFormat
 
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
-
-
-def get_min_current_date_for_world_utm() -> datetime:
-    """Get the earliest curent date (according to the UTM offset approach) across all zones."""
-    now = datetime.now(tz=UTC)
-    yesterday_eod = datetime(now.year, now.month, now.day, tzinfo=UTC) + timedelta(
-        hours=12
-    )
-
-    # we have passed the EOD for yesterday across all UTM zones, then return today
-    if now > yesterday_eod:
-        return datetime(now.year, now.month, now.day)
-    else:
-        return datetime(now.year, now.month, now.day) - timedelta(days=1)
 
 
 def get_first_unstable_date_at_request_time(

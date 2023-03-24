@@ -11,16 +11,15 @@ from dotenv import load_dotenv
 from pandas import Series
 
 from demeter.db import getConnection
+from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
+from demeter.weather.insert import get_weather_type_id_from_db
 from demeter.weather.inventory import get_gdf_for_add, get_gdf_for_update
-from demeter.weather.meteomatics import (
+from demeter.weather.request import (
     cut_request_list_along_utm_zone,
     get_n_requests_remaining,
-    get_weather_type_id_from_db,
-    run_requests,
-    split_gdf_for_add,
-    split_gdf_for_update,
+    submit_requests,
 )
-from demeter.weather.schema.weather_types import DAILY_WEATHER_TYPES
+from demeter.weather.request.split import split_gdf_for_add, split_gdf_for_update
 
 # %% Create connections to databases
 c = load_dotenv()
@@ -114,7 +113,7 @@ n_requests_used = len(update_requests)
 
 # run UPDATE requests
 if len(update_requests) > 0:
-    update_requests = run_requests(
+    update_requests = submit_requests(
         conn,
         request_list=update_requests,
         gdf_request=gdf_update,
@@ -131,7 +130,7 @@ if n_requests_remaining > 0:
     n_requests_used += len(add_requests)
 
     if len(add_requests) > 0:
-        add_requests = run_requests(
+        add_requests = submit_requests(
             conn,
             request_list=add_requests,
             gdf_request=gdf_add,

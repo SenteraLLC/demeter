@@ -14,11 +14,62 @@ from typing import (
 )
 
 from geopandas import GeoDataFrame
-from meteomatics.api import query_time_series
+from meteomatics.api import query_time_series, query_user_limits
 from meteomatics.exceptions import NotFound
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from pytz import UTC
 from requests import ReadTimeout
+
+
+def cut_request_list_along_utm_zone(
+    request_list: List[dict], n_requests: int
+) -> List[dict]:
+    """Cuts request list along UTM zone boundaries so we do not request partial data for a UTM zone in a given day.
+
+    By cutting request lists along UTM zone boundaries, we ensure that cell IDs are not half populated in
+    the "add" step. Any data which is "cut" from the `request_list` will still be picked up by the "add" step
+    tomorrow.
+
+    Args:
+        request_list (list of dict): List of `request` dictionaries for Meteomatics requests
+        n_requests (int): Maximum number of requests to return
+
+    Returns `cut_request_list` (list of dict) which contains a maximum of `n_requests` complete UTM-zone
+    requests from `request_list`.
+    """
+
+    if len(request_list) <= n_requests:
+        return request_list
+
+    df_zone = (
+        DataFrame(
+            data={"count": Series([rq["zone"] for rq in request_list]).value_counts()}
+        )
+        .reset_index(names="zone")
+        .sort_values(["count"])
+    )
+    df_zone["n_requests"] = df_zone["count"].cumsum()
+
+    df_cut = df_zone.loc[df_zone["n_requests"] < n_requests]
+    cut_request_list = [
+        rq for rq in request_list if rq["zone"] in df_cut["zone"].to_list()
+    ]
+
+    return cut_request_list
+
+
+def get_n_requests_remaining() -> int:
+    """Determines how many requests are remaining on Sentera's Meteomatics license for today based on hard limit.
+
+    The soft limit for our account is not given through this api request function.
+    """
+    res = query_user_limits(
+        "sentera",
+        getenv("METEOMATICS_KEY"),
+    )
+    used, total = res["requests since last UTC midnight"]
+
+    return total - used
 
 
 def get_utc_date_range_with_offset(
@@ -234,6 +285,9 @@ def submit_single_meteomatics_request(
     assert all(
         [check_coordinate_rounding(tup) for tup in request["coordinate_list"]]
     ), msg
+
+    n_requests_remaining = get_n_requests_remaining()
+    assert n_requests_remaining > 0, "Meteomatics request limit reached for today."
 
     date_requested = datetime.now().astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S%z")
     request["date_requested"] = date_requested

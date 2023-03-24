@@ -4,6 +4,7 @@ from geopandas import GeoDataFrame
 from pandas import concat as pd_concat
 from pandas import merge as pd_merge
 from pyproj import CRS
+from pytz import UTC
 from sqlalchemy.engine import Connection
 
 from demeter.weather._grid_utils import get_centroid, get_info_for_world_utm
@@ -55,6 +56,15 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
     if df_last_requested is None:
         return None
 
+    # ensure that data hasn't already been extracted for a given cell ID
+    utc_date_now = datetime.now(tz=UTC).date()
+    keep = df_last_requested["date_last_requested"].map(
+        lambda dt: dt.date() < utc_date_now
+    )
+    df_last_requested = df_last_requested.loc[keep]
+    if len(df_last_requested) == 0:
+        return None
+
     # change extraction time to local time for each cell ID
     world_utm_id = [int(val) for val in df_last_requested["world_utm_id"].unique()]
     df_utm = get_info_for_world_utm(cursor, world_utm_id)
@@ -94,10 +104,10 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
 def get_gdf_for_add(conn: Connection):
     """Creates `gdf` for "add" step in weather workflow.
 
-    This function performs an inventory of Demeter and determines which cell IDs and years need weather data.
-    Then, an inventory of the weather database determines which cell IDs already have data and retrieves the
-    first year of data for each cell ID. The final `gdf` is composed of cell ID x year combinations of the
-    following two types:
+    This function performs an inventory of Demeter and determines which cell IDs and years need weather data
+    to fully represent `demeter.fields`. Then, an inventory of the weather database determines which cell IDs
+    already have data and retrieves the first year of data for each cell ID. The final `gdf` is composed of
+    cell ID x year combinations of the following two types:
     (1) a cell ID already exists in the database but needs earlier years of data than what is available
     (2) a cell ID does not exist in the database and needs to be populated
 

@@ -1,3 +1,5 @@
+"""High-level functions for initializing the weather schema within an existing Postgres database."""
+
 import logging
 import subprocess
 from datetime import (
@@ -19,14 +21,14 @@ from sqlalchemy.engine import Connection
 
 from demeter._version import __version__
 from demeter.db import getConnection
-from demeter.weather._grid_utils import (
+from demeter.weather.initialize._grid_utils import (
     add_rast_metadata,
     add_raster,
     create_raster_for_utm_polygon,
     insert_utm_polygon,
 )
-from demeter.weather.meteomatics._insert import maybe_insert_weather_type_to_db
-from demeter.weather.schema.weather_types import DAILY_WEATHER_TYPES
+from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
+from demeter.weather.insert._insert import maybe_insert_weather_type_to_db
 
 DAILY_TEMPORAL_EXTENT = timedelta(days=1)
 

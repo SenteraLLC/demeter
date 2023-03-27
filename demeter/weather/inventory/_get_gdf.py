@@ -1,3 +1,4 @@
+"""High-level functions to perform inventory and generate `gdf` for different steps of weather process."""
 from datetime import datetime, timedelta
 
 from geopandas import GeoDataFrame
@@ -7,17 +8,19 @@ from pyproj import CRS
 from pytz import UTC
 from sqlalchemy.engine import Connection
 
-from demeter.weather._grid_utils import get_centroid, get_info_for_world_utm
 from demeter.weather.inventory._demeter_inventory import (
     get_weather_grid_info_for_all_demeter_fields,
 )
-from demeter.weather.inventory._utils import localize_utc_datetime_with_utc_offset
 from demeter.weather.inventory._weather_inventory import (
     get_date_last_requested_for_cell_id,
     get_first_available_data_year_for_cell_id,
     get_first_unstable_date_at_request_time,
-    get_min_current_date_for_world_utm,
     get_populated_cell_ids,
+)
+from demeter.weather.utils.grid import get_centroid, get_info_for_world_utm
+from demeter.weather.utils.time import (
+    get_min_current_date_for_world_utm,
+    localize_utc_datetime_with_utc_offset,
 )
 
 GDF_COLS = [
@@ -136,7 +139,7 @@ def get_gdf_for_add(conn: Connection):
     # If any cell IDs from `gdf_need` exist already in the database, we need to see which cell IDs need weather data for
     # any "new years" (gdf_new_years), as well as identify cell_ids/fields that are not yet present in the daily table at all (gdf_new_cells).
     if len(gdf_available) > 0:
-        gdf_new_years = pd_merge(gdf_available, gdf_need, on="cell_id")
+        gdf_new_years = pd_merge(gdf_need, gdf_available, on="cell_id")
         keep = gdf_new_years.apply(
             lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1
         )

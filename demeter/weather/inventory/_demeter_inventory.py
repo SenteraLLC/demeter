@@ -1,4 +1,4 @@
-"""Helper functions for running inventory on Demeter in terms of spatiotemporal needs for inserted fields.
+"""Helper functions for running inventory on Demeter to assess where and when we need weather to fully represent the inserted fields.
 
 Focuses on "add" step in weather extraction process.
 """
@@ -20,11 +20,14 @@ from shapely.errors import ShapelyDeprecationWarning
 from shapely.geometry import Point
 from shapely.wkb import loads as wkb_loads
 
-from demeter.weather import get_cell_id
-from demeter.weather._grid_utils import get_centroid, get_world_utm_info_for_cell_id
-from demeter.weather.inventory._utils import localize_utc_datetime_with_timezonefinder
-from demeter.weather.inventory._weather_inventory import (
+from demeter.weather.utils.grid import (
+    get_cell_id,
+    get_centroid,
+    get_world_utm_info_for_cell_id,
+)
+from demeter.weather.utils.time import (
     get_min_current_date_for_world_utm,
+    localize_utc_datetime_with_timezonefinder,
 )
 
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)

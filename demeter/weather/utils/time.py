@@ -1,11 +1,14 @@
 """Public helper functions for handling time in weather grid processing."""
 
 from datetime import (
+    date,
     datetime,
     timedelta,
     timezone,
 )
+from typing import List
 
+from pandas import Timestamp, date_range
 from pytz import UTC
 from pytz import timezone as pytz_timezone
 from shapely.geometry import Point
@@ -45,3 +48,16 @@ def get_min_current_date_for_world_utm() -> datetime:
         return datetime(now.year, now.month, now.day)
     else:
         return datetime(now.year, now.month, now.day) - timedelta(days=1)
+
+
+def get_date_list_for_date_range(
+    date_first: datetime, date_last: date
+) -> List[Timestamp]:
+    """Get a full list of the dates from `date_first` until `date_last`."""
+
+    list_timestamps = (
+        date_range(start=date_first, end=date_last, freq="d").to_pydatetime().tolist()
+    )
+    list_dates = [d.date() for d in list_timestamps]
+
+    return list_dates

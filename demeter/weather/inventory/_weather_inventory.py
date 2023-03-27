@@ -152,3 +152,42 @@ def get_date_last_requested_for_cell_id(
         return None
     else:
         return df_result
+
+
+def get_daily_weather_type_for_cell_id(
+    cursor: Any, cell_id_list: Union[int, List[int]], weather_type_id: int
+) -> DataFrame:
+    """Get all rows from "daily" table for list of cell IDs and a weather type ID.
+
+    Args:
+        cursor: Connection to demeter weather schema
+        cell_id_list (int or list of int): List of cell ID[s] for which to get weather data
+        weather_type_id (int): ID of weather type for which to query data.
+
+    Returns the resulting "daily" table rows as a dataframe
+    """
+    if not isinstance(list, cell_id_list):
+        cell_id_list = [cell_id_list]
+
+    tuple_cell_id_list = tuple(cell_id_list)
+
+    stmt = """
+    select * from daily
+    where cell_id in %(cell_id)s
+    and weather_type_id = %(weather_type_id)s
+    """
+    args = {"cell_id": tuple_cell_id_list, "weather_type_id": weather_type_id}
+    cursor.execute(stmt, args)
+    df_result = DataFrame(cursor.fetchall())
+
+    return df_result
+
+
+def get_all_weather_types(cursor: Any) -> DataFrame:
+    """Get all rows from "weather_type" table and return as DataFrame."""
+
+    stmt = """select * from weather_type"""
+    cursor.execute(stmt)
+    df_result = DataFrame(cursor.fetchall())
+
+    return df_result

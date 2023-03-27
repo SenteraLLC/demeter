@@ -12,6 +12,8 @@ from demeter.weather.inventory._demeter_inventory import (
     get_weather_grid_info_for_all_demeter_fields,
 )
 from demeter.weather.inventory._weather_inventory import (
+    get_all_weather_types,
+    get_daily_weather_type_for_cell_id,
     get_date_last_requested_for_cell_id,
     get_first_available_data_year_for_cell_id,
     get_first_unstable_date_at_request_time,
@@ -19,6 +21,7 @@ from demeter.weather.inventory._weather_inventory import (
 )
 from demeter.weather.utils.grid import get_centroid, get_info_for_world_utm
 from demeter.weather.utils.time import (
+    get_date_list_for_date_range,
     get_min_current_date_for_world_utm,
     localize_utc_datetime_with_utc_offset,
 )
@@ -161,5 +164,128 @@ def get_gdf_for_add(conn: Connection):
     return gdf_add
 
 
-def get_gdf_for_fill():
-    pass
+def get_gdf_for_fill(conn: Connection):
+    """Creates `gdf` for "fill" step in weather workflow.
+
+    This function performs an inventory of Demeter and determines which cell IDs, parameters, and dates need
+    weather data. Then, an exhuastive inventory of the weather database is performed to determine which data has
+    already been extracted. The final `gdf` is composed of cell ID x date x parameter combinations which are missing
+    from the database. Realistically, this shouldn't really require too many requests since data will be checked
+    regularly and the "update" and "add" steps are completed before this step.
+
+    The exhuastive inventory is a somewhat brute force method. After determining the weather grid needs for
+    `demeter`, the function loops through unique world utm polygon x parameter combinations, gets all of the
+    extracted weather data that is relevant to each combination, and verifies the following two things:
+    (1) at the current UTC datetime, all dates have stable data available where it is possible (i.e., extracted
+    more than 24 hours after the local end of day)
+    (2) at the current UTC datetime, there is at least one row of data available for each date up until 7 days
+    past the current minimum UTM date (following same protocol in "update")
+
+    This step will NOT check for gaps for cell IDs that are not currently relevant to `demeter.field`. However, the
+    update step will continue to get the majority of the data for these cell IDs. Then, once a specific cell ID is
+    again relevant in `demeter.field`, the next "fill" step would fll in these gaps.
+
+    Args:
+        conn (Connection): Connection to demeter database
+
+    Returns:
+        gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date x parameter informaton for MM requests needed to
+            perform "fill" step
+    """
+
+    cursor = conn.connection.cursor()
+
+    gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)
+
+    # get unique world_utm_id
+    world_utm_id = list(gdf_need["world_utm_id"].unique())
+
+    # get all weather types in the database
+    # this will change once we allow for optional weather types
+    df_parameters = get_all_weather_types(cursor)
+    df_fill = None
+
+    # like in "update" step, we ensure data is available until 7 days from min current date
+    min_current_date = get_min_current_date_for_world_utm()
+    last_date_forecast = min_current_date + timedelta(days=7)
+
+    # the following is a brute force inventory at this point to avoid querying too much data at once
+    # at most, this loop will have n_params (12) x 1201 iterations => 14412 (not that bad)
+    # first, we loop through world utm polygons
+    for world_utm in world_utm_id:
+        gdf_world_utm = gdf_need.loc[gdf_need["world_utm_id"] == world_utm]
+
+        utc_offset = (
+            get_info_for_world_utm(cursor, int(world_utm)).at[0, "utc_offset"].tzinfo
+        )
+
+        # determine last date that should be stable after this fill step
+        current_datetime_local = datetime.now(tz=utc_offset)
+        first_date_unstable_local = get_first_unstable_date_at_request_time(
+            current_datetime_local
+        )
+        last_date_stable_local = first_date_unstable_local + timedelta(days=-1)
+
+        # determine date range bounds for each cell ID and explode to make one row per cell id x date
+        df = gdf_world_utm[["cell_id", "date_first", "date_last"]]
+        df["date"] = df.apply(
+            lambda row: get_date_list_for_date_range(
+                row["date_first"], last_date_forecast
+            ),
+            axis=1,
+        )
+        df_long = df.explode(["date"])[["cell_id", "date"]]
+
+        # then, we loop through parameters
+        for _, row in df_parameters.iterrows():
+            # get all weather and, for each cell ID x date, keep most recent row
+            df_weather = get_daily_weather_type_for_cell_id(
+                cursor,
+                cell_id=gdf_world_utm["cell_id"].to_list(),
+                weather_type_id=row["weather_type_id"],
+            )
+            df_weather.sort_values(["date_requested"], inplace=True)
+            df_weather.drop_duplicates(
+                ["weather_type_id", "cell_id", "date"], keep="last", inplace=True
+            )
+
+            # localize date requested
+            df_weather["local_date_requested"] = df_weather.apply(
+                lambda row: localize_utc_datetime_with_utc_offset(
+                    row["date_requested"], utc_offset
+                ),
+                axis=1,
+            )
+
+            # mark if data row is "stable" (i.e., less than first unstable date)
+            which_stable = df_weather.apply(
+                lambda row: get_first_unstable_date_at_request_time(
+                    row["local_date_requested"]
+                ).date()
+                > row["date"],
+                axis=1,
+            )
+
+            # mark if data row is forecast or recent historical
+            which_recent = df_weather["date"].map(
+                lambda dt: dt > last_date_stable_local.date()
+            )
+
+            which_keep = list(which_stable | which_recent)
+            df_keep = df_weather.loc[which_keep]
+
+            # join "stable" data with `df_long` to highlight data gaps
+            df_join = pd_merge(df_long, df_keep, how="left", on=["cell_id", "date"])
+            df_gaps = df_join.loc[df_join["daily_id"].isna()][["cell_id", "date"]]
+            df_gaps.insert(df_gaps.shape[1], "parameter", row["weather_type"])
+
+            if df_fill is None:
+                df_fill = df_gaps.copy()
+            else:
+                df_fill = pd_concat([df_fill, df_gaps], axis=0)
+
+    # START HERE: Add centroid for each cell ID and utm information and then send off to the splitting step to optimize requests
+    # Will need to adjust the "filter" step (maybe based on column names in final gdf?)
+    # TODO: Do we want to consolidate this based on cell ID and date? Does it depend on the splitting logic?
+
+    return df_fill

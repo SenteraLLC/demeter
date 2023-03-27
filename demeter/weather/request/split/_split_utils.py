@@ -81,3 +81,37 @@ def split_by_year(gdf: GeoDataFrame, n_forecast_days: int = 7) -> List[GeoDataFr
         list_gdf += [gdf_year_subset[GDF_COLS]]
 
     return list_gdf
+
+
+def split_by_year_for_fill(gdf: GeoDataFrame) -> List[GeoDataFrame]:
+    """Split `gdf` into one request per year for all years that fall within at least one cell IDs
+    temporal bounds.
+
+    This function determines `date_first` and `date_last` as the minimum values of "date"
+    for that year within `gdf`.
+
+    Args:
+        gdf (GeoDataFrame): GeoDataFrame to split
+    """
+    list_gdf = []
+
+    gdf["year"] = gdf["date"].map(lambda dt: dt.year)
+    unique_years = list(gdf["year"].unique())
+
+    for year in unique_years:
+        gdf_year_subset = gdf.loc[gdf["year"] == year]
+
+        date_min = gdf_year_subset["date"].min()
+        date_max = gdf_year_subset["date"].max()
+
+        gdf_year_subset["date_first"] = datetime(
+            date_min.year, date_min.month, date_min.day
+        )
+
+        gdf_year_subset["date_last"] = datetime(
+            date_max.year, date_max.month, date_max.day
+        )
+
+        list_gdf += [gdf_year_subset[GDF_COLS]]
+
+    return list_gdf

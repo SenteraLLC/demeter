@@ -166,7 +166,7 @@ def get_daily_weather_type_for_cell_id(
 
     Returns the resulting "daily" table rows as a dataframe
     """
-    if not isinstance(list, cell_id_list):
+    if not isinstance(cell_id_list, list):
         cell_id_list = [cell_id_list]
 
     tuple_cell_id_list = tuple(cell_id_list)

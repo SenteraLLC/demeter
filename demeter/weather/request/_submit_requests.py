@@ -33,10 +33,13 @@ def submit_and_maybe_insert_meteomatics_request(
     Returns `request` with updated information on request metadata (i.e., "status", "request_seconds")
     """
 
-    rq_gdf_cols = ["world_utm_id", "cell_id", "date_first", "date_last", "lat", "lon"]
-    assert set(rq_gdf_cols).issubset(
-        gdf_request.columns
-    ), f"The following columns must be in `gdf_request`: {rq_gdf_cols}"
+    rq_gdf_cols_1 = ["world_utm_id", "cell_id", "date_first", "date_last", "centroid"]
+    rq_gdf_cols_2 = ["world_utm_id", "cell_id", "date", "parameter", "centroid"]
+    assert_stmt_1 = set(rq_gdf_cols_1).issubset(gdf_request.columns)
+    assert_stmt_2 = set(rq_gdf_cols_2).issubset(gdf_request.columns)
+    assert (
+        assert_stmt_1 or assert_stmt_2
+    ), f"The columns of `gdf_request` must contain {rq_gdf_cols_1} or {rq_gdf_cols_2}"
 
     df_wx, request = submit_single_meteomatics_request(request=request)
 
@@ -85,10 +88,13 @@ def submit_requests(
         params_to_weather_types (dict): Dictionary mapping weather parameters to db weather types IDs
         parallel (bool): Indicates whether requests should be run in parallel (not currently implemented); defaults to False.
     """
-    rq_gdf_cols = ["world_utm_id", "cell_id", "date_first", "date_last", "centroid"]
-    assert set(rq_gdf_cols).issubset(
-        gdf_request.columns
-    ), f"The following columns must be in `gdf_request`: {rq_gdf_cols}"
+    rq_gdf_cols_1 = ["world_utm_id", "cell_id", "date_first", "date_last", "centroid"]
+    rq_gdf_cols_2 = ["world_utm_id", "cell_id", "date", "parameter", "centroid"]
+    assert_stmt_1 = set(rq_gdf_cols_1).issubset(gdf_request.columns)
+    assert_stmt_2 = set(rq_gdf_cols_2).issubset(gdf_request.columns)
+    assert (
+        assert_stmt_1 or assert_stmt_2
+    ), f"The columns of `gdf_request` must contain {rq_gdf_cols_1} or {rq_gdf_cols_2}"
 
     # add lat/lon if not already added
     if not set(["lon", "lat"]).issubset(gdf_request.columns):

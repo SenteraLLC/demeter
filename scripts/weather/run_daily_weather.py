@@ -5,6 +5,7 @@ This is the working draft of a script that would execute on daily weather extrac
 STEPS:
 1. Run "update" on those cell IDs which already exist in the database
 2. Run "add" on those cell ID x year combinations which are new
+3. Run "fill" to fill in any gaps in the database
 """
 # %% imports
 from dotenv import load_dotenv
@@ -13,13 +14,21 @@ from pandas import Series
 from demeter.db import getConnection
 from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
 from demeter.weather.insert import get_weather_type_id_from_db
-from demeter.weather.inventory import get_gdf_for_add, get_gdf_for_update
+from demeter.weather.inventory import (
+    get_gdf_for_add,
+    get_gdf_for_fill,
+    get_gdf_for_update,
+)
 from demeter.weather.request import (
     cut_request_list_along_utm_zone,
-    get_n_requests_remaining,
+    get_n_requests_remaining_for_demeter,
     submit_requests,
 )
-from demeter.weather.request.split import split_gdf_for_add, split_gdf_for_update
+from demeter.weather.request.split import (
+    split_gdf_for_add,
+    split_gdf_for_fill,
+    split_gdf_for_update,
+)
 
 # %% Create connections to databases
 c = load_dotenv()
@@ -48,52 +57,13 @@ params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
 
 # %% 1. Prepare "update_requests" list which will get updated data for recent historical and forecast dates
 
-# `n_cells_per_set` is a user lever to control for parameter variability in request time
-n_cells_per_set = [
-    1000,
-    1000,
-]
-
-# get the cell ID x date information for where we need data
-# this information is derived based on which cell IDs are populated in `daily` and the last `date_requested` for each cell ID
-gdf_update = get_gdf_for_update(conn)
-
-# TODO: Should `get_gdf_for_update` take the most recent request date into account when deciding to
-# update a cell ID? If I run the "update" step and then immediately re-run it, it will try to update again.
-
-if gdf_update is not None:
-    update_requests = split_gdf_for_update(gdf_update, parameter_sets, n_cells_per_set)
-else:
-    update_requests = []
 
 # %%  2. Prepare "add_requests" list which gets new cell ID x year combinations for `demeter.fields` that do not yet exist in `weather`
-n_cells_per_set = [100, 100]
 
-# get the cell ID x date information for where we need data
-# this information is derived based on `demeter` (field location and planting dates) and already available data in `weather`
-gdf_add = get_gdf_for_add(conn)
 
-if gdf_add is not None:
-    add_requests = split_gdf_for_add(gdf_add, parameter_sets, n_cells_per_set)
-else:
-    add_requests = []
+# %% 3. Actually complete the requests
 
-# %% 3. Actually complete the requests: start with "update" and then do "add"
-
-# I spent way too long thinking about the order in which we should be completing requests
-# across these two steps (i.e., "add" and "update"). Realistically, I'm not sure we will
-# have to deal with this problem very often. However, I think it's worth thinking about.
-# The central question is: On a given day, if we have to choose between the "add" and the
-# "update", which one is more important to do?
-
-# ensure we are tracking the number of requests we are using and that are remaining
-n_requests_demeter = (
-    2500  # our team's self-imposed maximum daily usage out of 5000 hard limit
-)
-n_requests_limit = get_n_requests_remaining()
-
-# `n_requests` represents the total number of requests that we will allow ourselves to run today
-n_requests = min([n_requests_limit, n_requests_demeter])
+# We extract "update" first because it is bound to have far fewer requests.
 
 # Another important consideration that came up in this story was the resilience of the
 # two inventory functions (`get_gdf_for_add` and `get_gdf_for_update`) in the case that we
@@ -108,26 +78,64 @@ n_requests = min([n_requests_limit, n_requests_demeter])
 # for a given UTM zone. That way, parameter groups are run in completion for a given cell ID x date.
 # This is the purpose of the `cut_request_list_along_utm_zone()` function.
 
-update_requests = cut_request_list_along_utm_zone(update_requests, n_requests)
-n_requests_used = len(update_requests)
+# %% Run UPDATE requests
+n_requests_available = get_n_requests_remaining_for_demeter(conn)
 
-# run UPDATE requests
-if len(update_requests) > 0:
-    update_requests = submit_requests(
-        conn,
-        request_list=update_requests,
-        gdf_request=gdf_update,
-        params_to_weather_types=params_to_weather_types,
-    )
+# `n_cells_per_set` is a user lever to control for parameter variability in request time
+n_cells_per_set = [1000, 1000]
 
-    # TODO: Re-try failed requests if relevant; add to `n_requests_used`
-    Series(data=[r["status"] for r in update_requests]).value_counts()
+if n_requests_available > 0:
+    # get the cell ID x date information for where we need data
+    # this information is derived based on which cell IDs are populated in `daily` and the last `date_requested` for each cell ID
+    gdf_update = get_gdf_for_update(conn)
 
-# run ADD requests
-n_requests_remaining = n_requests - n_requests_used
-if n_requests_remaining > 0:
-    add_requests = cut_request_list_along_utm_zone(add_requests, n_requests_remaining)
-    n_requests_used += len(add_requests)
+    if gdf_update is not None:
+        update_requests = split_gdf_for_update(
+            gdf_update, parameter_sets, n_cells_per_set
+        )
+        update_requests = cut_request_list_along_utm_zone(
+            update_requests, n_requests_available
+        )
+    else:
+        print("Nothing to UPDATE.")
+        update_requests = []
+
+    # run UPDATE requests
+    if len(update_requests) > 0:
+        update_requests = submit_requests(
+            conn,
+            request_list=update_requests,
+            gdf_request=gdf_update,
+            params_to_weather_types=params_to_weather_types,
+        )
+
+        # TODO: Re-try failed requests if relevant; add to `n_requests_used`
+        Series(data=[r["status"] for r in update_requests]).value_counts()
+    else:
+        "No requests running for UPDATE step."
+
+else:
+    print("No more requests remaining to run UPDATE step.")
+
+
+# %% Run ADD requests
+n_requests_available = get_n_requests_remaining_for_demeter(conn)
+
+n_cells_per_set = [100, 100]
+
+if n_requests_available > 0:
+    # get the cell ID x date information for where we need data
+    # this information is derived based on `demeter` (field location and planting dates) and already available data in `weather`
+    gdf_add = get_gdf_for_add(conn)
+
+    if gdf_add is not None:
+        add_requests = split_gdf_for_add(gdf_add, parameter_sets, n_cells_per_set)
+        add_requests = cut_request_list_along_utm_zone(
+            add_requests, n_requests_available
+        )
+    else:
+        print("Nothing to ADD.")
+        add_requests = []
 
     if len(add_requests) > 0:
         add_requests = submit_requests(
@@ -139,3 +147,42 @@ if n_requests_remaining > 0:
 
         # TODO: Re-try failed requests if relevant; add to `n_requests_used`
         Series(data=[r["status"] for r in add_requests]).value_counts()
+    else:
+        "No requests running for ADD step."
+
+else:
+    print("No more requests remaining to run ADD step.")
+
+
+# %% 4. Run FILL step if needed
+n_requests_available = get_n_requests_remaining_for_demeter(conn)
+
+if n_requests_available > 0:
+    # perform exhaustive inventory to find data gaps
+    gdf_fill = get_gdf_for_fill(conn)
+
+    if len(gdf_fill) > 0:
+        fill_requests = split_gdf_for_fill(gdf_fill)
+        fill_requests = cut_request_list_along_utm_zone(
+            fill_requests, n_requests_available
+        )
+    else:
+        print("Nothing to FILL.")
+        fill_requests = []
+
+    if len(fill_requests) > 0:
+        fill_requests = submit_requests(
+            conn,
+            request_list=fill_requests,
+            gdf_request=gdf_fill,
+            params_to_weather_types=params_to_weather_types,
+        )
+
+        # TODO: Re-try failed requests if relevant; add to `n_requests_used`
+        Series(data=[r["status"] for r in fill_requests]).value_counts()
+    else:
+        "No requests running for FILL step."
+else:
+    print("No more requests remaining to run FILL step.")
+
+# %%

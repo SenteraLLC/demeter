@@ -14,6 +14,7 @@ from meteomatics.exceptions import NotFound
 from pandas import DataFrame, Series
 from pytz import UTC
 from requests import ReadTimeout
+from sqlalchemy.engine import Connection
 
 
 def cut_request_list_along_utm_zone(
@@ -65,6 +66,43 @@ def get_n_requests_remaining() -> int:
     used, total = res["requests since last UTC midnight"]
 
     return total - used
+
+
+def get_n_requests_used_today(conn: Connection) -> int:
+    """Determines how many requests were made today (UTC) according to weather.request_log table."""
+
+    with conn.connection.cursor() as cursor:
+        today_utc = datetime.now(tz=UTC).strftime("%Y%m%d")
+
+        stmt = """
+        select COUNT(*) from weather.request_log
+        where date_requested > %(date)s"""
+        args = {"date": today_utc}
+
+        cursor.execute(stmt, args)
+
+        rec = cursor.fetchall()
+
+    return rec[0].count
+
+
+def get_n_requests_remaining_for_demeter(
+    conn: Connection, n_requests_demeter_limit: int = 2500
+) -> int:
+    """Determines how many requests are available today to populate Demeter based on self-imposed and account limits.
+
+    As of right now, we impose a 2500 daily request limit on our team.
+
+    This function determines how many requests have been used to populate Demeter data UTC today (based on `request_log`)
+    and how many requests are remaining on the Sentera Meteomatics account and returns the minimum value between:
+    - `n_requests_demeter_limit` - total number of requests Demeter has used today
+    - total remaining number of requests left on Sentera's account
+    """
+    n_requests_demeter_remaining = n_requests_demeter_limit - get_n_requests_used_today(
+        conn
+    )
+    n_requests_sentera_remaining = get_n_requests_remaining()
+    return min([n_requests_demeter_remaining, n_requests_sentera_remaining])
 
 
 def check_coordinate_rounding(coord: Tuple[float, float], n: int = 5) -> bool:

@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 
 from geopandas import GeoDataFrame
+from pandas import DataFrame
 from pandas import concat as pd_concat
 from pandas import merge as pd_merge
 from pyproj import CRS
@@ -164,7 +165,7 @@ def get_gdf_for_add(conn: Connection):
     return gdf_add
 
 
-def get_gdf_for_fill(conn: Connection):
+def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
     """Creates `gdf` for "fill" step in weather workflow.
 
     This function performs an inventory of Demeter and determines which cell IDs, parameters, and dates need
@@ -241,7 +242,7 @@ def get_gdf_for_fill(conn: Connection):
             # get all weather and, for each cell ID x date, keep most recent row
             df_weather = get_daily_weather_type_for_cell_id(
                 cursor,
-                cell_id=gdf_world_utm["cell_id"].to_list(),
+                cell_id_list=gdf_world_utm["cell_id"].to_list(),
                 weather_type_id=row["weather_type_id"],
             )
             df_weather.sort_values(["date_requested"], inplace=True)
@@ -284,8 +285,20 @@ def get_gdf_for_fill(conn: Connection):
             else:
                 df_fill = pd_concat([df_fill, df_gaps], axis=0)
 
-    # START HERE: Add centroid for each cell ID and utm information and then send off to the splitting step to optimize requests
-    # Will need to adjust the "filter" step (maybe based on column names in final gdf?)
-    # TODO: Do we want to consolidate this based on cell ID and date? Does it depend on the splitting logic?
+    cell_id_keys = [
+        "utm_zone",
+        "utc_offset",
+        "world_utm_id",
+        "cell_id",
+        "centroid",
+    ]
 
-    return df_fill
+    if len(df_fill) > 0:
+        gdf_world_utm = gdf_need[cell_id_keys].drop_duplicates()
+        gdf_fill = pd_merge(gdf_world_utm, df_fill, on="cell_id")
+
+        return gdf_fill
+
+    else:
+        df = DataFrame(data=[], columns=cell_id_keys + ["date", "parameter"])
+        return GeoDataFrame(df, geometry="centroid")

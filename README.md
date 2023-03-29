@@ -16,6 +16,10 @@ poetry config virtualenvs.in-project true
 poetry env use $(cat .python-version)
 poetry install
 ```
+**CAUTION**: On WSL, some dependencies (e.g., psycopg2) return a `ChefBuildError` and fail to install. Installing `libpq-dev` and `python3-dev` should solve this.
+``` bash
+sudo apt install libpq-dev python3-dev
+```
 4) Set up `pre-commit` to ensure all commits to adhere to **black** and **PEP8** style conventions.
 ``` bash
 poetry run pre-commit install

@@ -20,6 +20,8 @@ from demeter.weather.inventory._weather_inventory import (
     get_first_unstable_date_at_request_time,
     get_populated_cell_ids,
 )
+
+# from demeter.weather.query import get_daily_weather_types
 from demeter.weather.utils.grid import get_centroid, get_info_for_world_utm
 from demeter.weather.utils.time import (
     get_date_list_for_date_range,
@@ -204,6 +206,7 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
     # get all weather types in the database
     # this will change once we allow for optional weather types
     df_parameters = get_all_weather_types(cursor)
+    # df_parameters = get_daily_weather_types(cursor)
     df_fill = None
 
     # like in "update" step, we ensure data is available until 7 days from min current date

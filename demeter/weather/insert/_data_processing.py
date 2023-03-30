@@ -22,10 +22,13 @@ def clean_meteomatics_data(
     Returns:
         df_melt_clean (pandas.DataFrame): Cleaned Meteomatics data
     """
+    rq_cols = ["world_utm_id", "cell_id", "lat", "lon"]
+    msg = f"The following columns must be in `gdf_request`: {rq_cols}"
+    assert set(rq_cols).issubset(gdf_request.columns), msg
 
     df_wx_in = df_wx.copy()
 
-    gdf_clean = gdf_request[["world_utm_id", "cell_id", "lat", "lon"]].drop_duplicates()
+    gdf_clean = gdf_request[rq_cols].drop_duplicates()
 
     # add cell ID back to MM data
     df_wx_full = pd_merge(

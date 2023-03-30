@@ -298,17 +298,14 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
             else:
                 df_fill = pd_concat([df_fill, df_gaps], axis=0)
 
-    cell_id_keys = [
-        "utm_zone",
-        "utc_offset",
-        "world_utm_id",
-        "cell_id",
-        "centroid",
-    ]
+    cell_id_keys = ["utm_zone", "utc_offset", "world_utm_id", "cell_id", "centroid"]
 
     if len(df_fill) > 0:
-        gdf_world_utm = gdf_need[cell_id_keys].drop_duplicates()
+        gdf_world_utm = gdf_need[cell_id_keys].drop_duplicates(["cell_id"])
         gdf_fill = pd_merge(gdf_world_utm, df_fill, on="cell_id")
+
+        if not isinstance(gdf_fill, GeoDataFrame):
+            gdf_fill = GeoDataFrame(gdf_fill, geometry="centroid")
 
         return gdf_fill
 

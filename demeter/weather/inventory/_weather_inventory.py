@@ -204,26 +204,6 @@ def get_weather_grid_info_for_populated_cell_ids(cursor: Any) -> GeoDataFrame:
     gdf_available = get_first_available_data_year_for_cell_id(
         cursor_weather=cursor, cell_id_list=cell_ids_weather
     )
-    gdf_available["date_first"] = gdf_available["first_year"].map(
-        lambda yr: datetime(yr, 1, 1)
-    )
-
-    # set "date_last" as 7 days from the last full day across all UTM zones
-    today = get_min_current_date_for_world_utm()
-    gdf_available["date_last"] = today + timedelta(days=7)
-
-    # get world UTM polygon information for each cell ID
-    df_utm = gdf_available.apply(
-        lambda row: get_world_utm_info_for_cell_id(cursor, row["cell_id"]).loc[0],
-        axis=1,
-    ).rename(columns={"zone": "utm_zone"})
-    gdf_available = pd_concat([gdf_available, df_utm], axis=1)
-
-    # get centroid for each cell ID
-    gdf_available["centroid"] = gdf_available.apply(
-        lambda row: get_centroid(cursor, row["world_utm_id"], row["cell_id"]),
-        axis=1,
-    )
 
     cols = [
         "utm_zone",
@@ -234,6 +214,30 @@ def get_weather_grid_info_for_populated_cell_ids(cursor: Any) -> GeoDataFrame:
         "date_first",
         "date_last",
     ]
-    gdf_final = gdf_available[cols]
 
-    return gdf_final
+    if len(gdf_available) > 0:
+        gdf_available["date_first"] = gdf_available["first_year"].map(
+            lambda yr: datetime(yr, 1, 1)
+        )
+
+        # set "date_last" as 7 days from the last full day across all UTM zones
+        today = get_min_current_date_for_world_utm()
+        gdf_available["date_last"] = today + timedelta(days=7)
+
+        # get world UTM polygon information for each cell ID
+        df_utm = gdf_available.apply(
+            lambda row: get_world_utm_info_for_cell_id(cursor, row["cell_id"]).loc[0],
+            axis=1,
+        ).rename(columns={"zone": "utm_zone"})
+        gdf_available = pd_concat([gdf_available, df_utm], axis=1)
+
+        # get centroid for each cell ID
+        gdf_available["centroid"] = gdf_available.apply(
+            lambda row: get_centroid(cursor, row["world_utm_id"], row["cell_id"]),
+            axis=1,
+        )
+
+        return gdf_available[cols]
+    else:
+        df = DataFrame(data=[], columns=cols)
+        return GeoDataFrame(df, geometry="centroid")

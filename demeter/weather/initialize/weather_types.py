@@ -48,16 +48,16 @@ DAILY_WEATHER_TYPES = [
     {
         "weather_type": "volumetric_soil_water_-50cm:m3m3",
         "units": "cubic meters/cubic meters",
-        "description": "Volumetric soil water between soil depth of 28-100cm",
+        "description": "Instantaneous volumetric soil water between soil depth of 28-100cm",
     },
     {
         "weather_type": "soil_moisture_deficit:mm",
         "units": "millimeters",
-        "description": "Difference between the actual water content of the soil (mm) and the soil's field capacity (mm)",
+        "description": "Instantaneous difference between the actual water content of the soil (mm) and the soil's field capacity (mm)",
     },
     {
         "weather_type": "leaf_wetness:idx",
         "units": "unitless",
-        "description": "Amount of dew left on surfaces to be used for detection of fog and dew conditions; value of 1 indicates wetness",
+        "description": "Instantaneous amount of dew left on surfaces to be used for detection of fog and dew conditions; value of 1 indicates wetness",
     },
 ]

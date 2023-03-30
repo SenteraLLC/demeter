@@ -180,8 +180,6 @@ def get_weather_grid_info_for_all_demeter_fields(cursor: Any) -> DataFrame:
     Args:
         cursor: Connection with access to both the demeter and weather schemas.
     """
-
-    # TODO: Are we requiring that all fields have a planting date? If so, fix assert function.
     field_id = get_all_field_ids(cursor)
 
     assert len(field_id) > 0, "There are no fields in `demeter`."

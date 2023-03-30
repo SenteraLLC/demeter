@@ -13,13 +13,14 @@ from demeter.weather.inventory._demeter_inventory import (
     get_weather_grid_info_for_all_demeter_fields,
 )
 from demeter.weather.inventory._weather_inventory import (
-    get_all_weather_types,
     get_daily_weather_type_for_cell_id,
     get_date_last_requested_for_cell_id,
     get_first_available_data_year_for_cell_id,
     get_first_unstable_date_at_request_time,
     get_populated_cell_ids,
+    get_weather_grid_info_for_populated_cell_ids,
 )
+from demeter.weather.query import get_daily_weather_types
 from demeter.weather.utils.grid import get_centroid, get_info_for_world_utm
 from demeter.weather.utils.time import (
     get_date_list_for_date_range,
@@ -168,11 +169,15 @@ def get_gdf_for_add(conn: Connection):
 def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
     """Creates `gdf` for "fill" step in weather workflow.
 
-    This function performs an inventory of Demeter and determines which cell IDs, parameters, and dates need
-    weather data. Then, an exhuastive inventory of the weather database is performed to determine which data has
-    already been extracted. The final `gdf` is composed of cell ID x date x parameter combinations which are missing
-    from the database. Realistically, this shouldn't really require too many requests since data will be checked
-    regularly and the "update" and "add" steps are completed before this step.
+    This function first performs an inventory of Demeter and determines which cell IDs, parameters, and dates need
+    weather data. Second, it determines all cell IDs which already have data in the `daily` table and identifies
+    the first year of data available for each, setting Jan 1 of that year as the first date of data needed at the cell
+    ID level. Finally, the two inventories are merged together.
+
+    Next, an exhuastive inventory of the weather database is performed to determine which data has
+    already been extracted and identifies data gaps. The final `gdf` is composed of cell ID x date x parameter
+    combinations which are missing from the database. Realistically, this shouldn't really require too many
+    requests since data will be checked regularly and the "update" and "add" steps are completed before this step.
 
     The exhuastive inventory is a somewhat brute force method. After determining the weather grid needs for
     `demeter`, the function loops through unique world utm polygon x parameter combinations, gets all of the
@@ -196,14 +201,22 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
 
     cursor = conn.connection.cursor()
 
-    gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)
+    # perform two inventories
+    gdf_need_fields = get_weather_grid_info_for_all_demeter_fields(cursor)
+    gdf_need_weather = get_weather_grid_info_for_populated_cell_ids(cursor)
+
+    # merge inventories together; keeping the later `date_first` for duplicates
+    gdf_need = (
+        pd_concat([gdf_need_fields, gdf_need_weather], axis=0)
+        .sort_values(["cell_id", "date_first"])
+        .drop_duplicates(["cell_id"], keep="last")
+    )
 
     # get unique world_utm_id
     world_utm_id = list(gdf_need["world_utm_id"].unique())
 
-    # get all weather types in the database
-    # this will change once we allow for optional weather types
-    df_parameters = get_all_weather_types(cursor)
+    # get all daily weather types in the database
+    df_parameters = get_daily_weather_types(cursor)
     df_fill = None
 
     # like in "update" step, we ensure data is available until 7 days from min current date

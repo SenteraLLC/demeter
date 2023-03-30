@@ -11,11 +11,16 @@ from typing import (
     Union,
 )
 
-from pandas import DataFrame, to_datetime
+from geopandas import GeoDataFrame
+from pandas import DataFrame
+from pandas import concat as pd_concat
+from pandas import to_datetime
 from psycopg2.sql import Identifier
 from shapely.errors import ShapelyDeprecationWarning
 
 from demeter.db._postgres.tools import doPgFormat
+from demeter.weather.utils.grid import get_centroid, get_world_utm_info_for_cell_id
+from demeter.weather.utils.time import get_min_current_date_for_world_utm
 
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
 
@@ -183,11 +188,52 @@ def get_daily_weather_type_for_cell_id(
     return df_result
 
 
-def get_all_weather_types(cursor: Any) -> DataFrame:
-    """Get all rows from "weather_type" table and return as DataFrame."""
+def get_weather_grid_info_for_populated_cell_ids(cursor: Any) -> GeoDataFrame:
+    """Determine the spatiotemporal bounds of needed weather data for all populated cell IDs in `weather.daily`.
 
-    stmt = """select * from weather_type"""
-    cursor.execute(stmt)
-    df_result = DataFrame(cursor.fetchall())
+    This function assumes the first date of needed data is Jan 1 of the first year where data exists
+    for a given cell ID.
 
-    return df_result
+    Args:
+        cursor: Connection with access to the weather schemas.
+    """
+    # get all cell IDs with data in `daily` table
+    cell_ids_weather = get_populated_cell_ids(cursor, table="daily")
+
+    # get first year of data available and set "date_first"
+    gdf_available = get_first_available_data_year_for_cell_id(
+        cursor_weather=cursor, cell_id_list=cell_ids_weather
+    )
+    gdf_available["date_first"] = gdf_available["first_year"].map(
+        lambda yr: datetime(yr, 1, 1)
+    )
+
+    # set "date_last" as 7 days from the last full day across all UTM zones
+    today = get_min_current_date_for_world_utm()
+    gdf_available["date_last"] = today + timedelta(days=7)
+
+    # get world UTM polygon information for each cell ID
+    df_utm = gdf_available.apply(
+        lambda row: get_world_utm_info_for_cell_id(cursor, row["cell_id"]).loc[0],
+        axis=1,
+    ).rename(columns={"zone": "utm_zone"})
+    gdf_available = pd_concat([gdf_available, df_utm], axis=1)
+
+    # get centroid for each cell ID
+    gdf_available["centroid"] = gdf_available.apply(
+        lambda row: get_centroid(cursor, row["world_utm_id"], row["cell_id"]),
+        axis=1,
+    )
+
+    cols = [
+        "utm_zone",
+        "utc_offset",
+        "world_utm_id",
+        "cell_id",
+        "centroid",
+        "date_first",
+        "date_last",
+    ]
+    gdf_final = gdf_available[cols]
+
+    return gdf_final

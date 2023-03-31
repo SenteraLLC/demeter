@@ -133,7 +133,9 @@ def get_gdf_for_add(conn: Connection):
     cursor = conn.connection.cursor()
 
     # Find cell IDs currently present in `weather.daily` that need more historical years of data
-    cell_ids_weather = get_populated_cell_ids(cursor, table="daily")
+    cell_ids_weather = get_populated_cell_ids(cursor, table="daily")[
+        "cell_id"
+    ].to_list()
 
     # Find cell IDs represented by all demeter fields (their cell IDs may or may not be present in `weather.daily`)
     gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)
@@ -242,12 +244,13 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
 
         # determine date range bounds for each cell ID and explode to make one row per cell id x date
         df = gdf_world_utm[["cell_id", "date_first", "date_last"]]
-        df["date"] = df.apply(
+        cell_id_date_lists = df.apply(
             lambda row: get_date_list_for_date_range(
                 row["date_first"], last_date_forecast
             ),
             axis=1,
         )
+        df.insert(df.shape[1], "date", cell_id_date_lists)
         df_long = df.explode(["date"])[["cell_id", "date"]]
 
         # then, we loop through parameters
@@ -257,10 +260,7 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
                 cursor,
                 cell_id_list=gdf_world_utm["cell_id"].to_list(),
                 weather_type_id=row["weather_type_id"],
-            )
-            df_weather.sort_values(["date_requested"], inplace=True)
-            df_weather.drop_duplicates(
-                ["weather_type_id", "cell_id", "date"], keep="last", inplace=True
+                keep="recent",
             )
 
             # localize date requested

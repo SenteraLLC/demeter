@@ -21,14 +21,15 @@ from sqlalchemy.engine import Connection
 
 from demeter._version import __version__
 from demeter.db import getConnection
-from demeter.weather.initialize._grid_utils import (
+from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
+
+from ..workflow.insert import maybe_insert_weather_type_to_db
+from ._grid_utils import (
     add_rast_metadata,
     add_raster,
     create_raster_for_utm_polygon,
     insert_utm_polygon,
 )
-from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
-from demeter.weather.insert._insert import maybe_insert_weather_type_to_db
 
 DAILY_TEMPORAL_EXTENT = timedelta(days=1)
 

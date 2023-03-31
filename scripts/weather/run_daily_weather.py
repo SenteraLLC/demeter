@@ -13,18 +13,18 @@ from pandas import Series
 
 from demeter.db import getConnection
 from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
-from demeter.weather.insert import get_weather_type_id_from_db
-from demeter.weather.inventory import (
+from demeter.weather.query import get_weather_type_id_from_db
+from demeter.weather.workflow.inventory import (
     get_gdf_for_add,
     get_gdf_for_fill,
     get_gdf_for_update,
 )
-from demeter.weather.request import (
+from demeter.weather.workflow.request import (
     cut_request_list_along_utm_zone,
     get_n_requests_remaining_for_demeter,
     submit_requests,
 )
-from demeter.weather.request.split import (
+from demeter.weather.workflow.split import (
     split_gdf_for_add,
     split_gdf_for_fill,
     split_gdf_for_update,

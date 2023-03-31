@@ -244,12 +244,13 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
 
         # determine date range bounds for each cell ID and explode to make one row per cell id x date
         df = gdf_world_utm[["cell_id", "date_first", "date_last"]]
-        df["date"] = df.apply(
+        cell_id_date_lists = df.apply(
             lambda row: get_date_list_for_date_range(
                 row["date_first"], last_date_forecast
             ),
             axis=1,
         )
+        df.insert(df.shape[1], "date", cell_id_date_lists)
         df_long = df.explode(["date"])[["cell_id", "date"]]
 
         # then, we loop through parameters

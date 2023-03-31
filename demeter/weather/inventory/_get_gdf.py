@@ -259,10 +259,7 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
                 cursor,
                 cell_id_list=gdf_world_utm["cell_id"].to_list(),
                 weather_type_id=row["weather_type_id"],
-            )
-            df_weather.sort_values(["date_requested"], inplace=True)
-            df_weather.drop_duplicates(
-                ["weather_type_id", "cell_id", "date"], keep="last", inplace=True
+                keep="recent",
             )
 
             # localize date requested
@@ -292,7 +289,7 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
 
             # join "stable" data with `df_long` to highlight data gaps
             df_join = pd_merge(df_long, df_keep, how="left", on=["cell_id", "date"])
-            df_gaps = df_join.loc[df_join["daily_id"].isna()][["cell_id", "date"]]
+            df_gaps = df_join.loc[df_join["value"].isna()][["cell_id", "date"]]
             df_gaps.insert(df_gaps.shape[1], "parameter", row["weather_type"])
 
             if df_fill is None:

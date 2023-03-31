@@ -13,13 +13,13 @@ from typing import (
 
 from geopandas import GeoDataFrame
 from pandas import DataFrame
-from pandas import concat as pd_concat
+from pandas import merge as pd_merge
 from pandas import to_datetime
 from psycopg2.sql import Identifier
 from shapely.errors import ShapelyDeprecationWarning
 
 from demeter.db._postgres.tools import doPgFormat
-from demeter.weather.utils.grid import get_centroid, get_world_utm_info_for_cell_id
+from demeter.weather.utils.grid import get_centroid, get_info_for_world_utm
 from demeter.weather.utils.time import get_min_current_date_for_world_utm
 
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)
@@ -42,7 +42,7 @@ def get_first_unstable_date_at_request_time(
     )
 
 
-def get_populated_cell_ids(cursor: Any, table: str = "daily") -> List:
+def get_populated_cell_ids(cursor: Any, table: str = "daily") -> DataFrame:
     """Get list of all cell IDs that have data in a given table in the weather schema.
 
     If no data exists in the database, `None` is returned.
@@ -58,7 +58,7 @@ def get_populated_cell_ids(cursor: Any, table: str = "daily") -> List:
         "daily"
     ], "Only the following table names are currently implemented: 'daily'"
 
-    template = "select distinct cell_id from {}"
+    template = "select distinct cell_id, world_utm_id from {}"
     stmt = doPgFormat(template, Identifier(table))
     cursor.execute(stmt)
     df_result = DataFrame(cursor.fetchall())
@@ -66,7 +66,7 @@ def get_populated_cell_ids(cursor: Any, table: str = "daily") -> List:
     if len(df_result) == 0:
         return None
 
-    return df_result["cell_id"].to_list()
+    return df_result
 
 
 def get_first_available_data_year_for_cell_id(
@@ -198,11 +198,11 @@ def get_weather_grid_info_for_populated_cell_ids(cursor: Any) -> GeoDataFrame:
         cursor: Connection with access to the weather schemas.
     """
     # get all cell IDs with data in `daily` table
-    cell_ids_weather = get_populated_cell_ids(cursor, table="daily")
+    df_cell_ids = get_populated_cell_ids(cursor, table="daily")
 
     # get first year of data available and set "date_first"
     gdf_available = get_first_available_data_year_for_cell_id(
-        cursor_weather=cursor, cell_id_list=cell_ids_weather
+        cursor_weather=cursor, cell_id_list=df_cell_ids["cell_id"].to_list()
     )
 
     cols = [
@@ -224,12 +224,16 @@ def get_weather_grid_info_for_populated_cell_ids(cursor: Any) -> GeoDataFrame:
         today = get_min_current_date_for_world_utm()
         gdf_available["date_last"] = today + timedelta(days=7)
 
-        # get world UTM polygon information for each cell ID
-        df_utm = gdf_available.apply(
-            lambda row: get_world_utm_info_for_cell_id(cursor, row["cell_id"]).loc[0],
-            axis=1,
-        ).rename(columns={"zone": "utm_zone"})
-        gdf_available = pd_concat([gdf_available, df_utm], axis=1)
+        # add back world UTM polygon information for each cell ID and add utm info
+        gdf_available = pd_merge(gdf_available, df_cell_ids, on="cell_id")
+
+        world_utm_list = [
+            int(world_utm_id) for world_utm_id in df_cell_ids["world_utm_id"].unique()
+        ]
+        df_utm = get_info_for_world_utm(cursor, world_utm_list).rename(
+            columns={"zone": "utm_zone"}
+        )
+        gdf_available = pd_merge(gdf_available, df_utm, on="world_utm_id")
 
         # get centroid for each cell ID
         gdf_available["centroid"] = gdf_available.apply(

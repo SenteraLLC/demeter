@@ -58,6 +58,8 @@ def get_first_plant_date_for_field_id(
         cursor (Any): Connection to `demeter` schema
         field_id (int): Demeter field ID to get planting date for
     """
+    if not isinstance(field_id, list):
+        field_id = [field_id]
     field_id = tuple(field_id)
 
     stmt = """
@@ -78,8 +80,8 @@ def get_first_plant_date_for_field_id(
 
 def get_temporal_bounds_for_field_id(
     cursor: Any,
-    field_id: list[int],
-    field_centroid: List[Point],
+    field_id: Union[int, List[int]],
+    field_centroid: Union[Point, List[Point]],
     n_hist_years: int = 10,
 ) -> DataFrame:
     """Gets list of dates needed for a field ID (or list of field IDs) based on available planting dates.
@@ -93,8 +95,8 @@ def get_temporal_bounds_for_field_id(
 
     Args:
         cursor (Any): Connection to `demeter` schema
-        field_id (int): Demeter field ID[s] for which to determine bounds
-        field_centroid (Point): Centroid (or location on field) to use to determine time zone
+        field_id (int or list of int): Demeter field ID[s] for which to determine bounds
+        field_centroid (Point or list of Points): Centroid (or location on field) to use to determine time zone
         n_hist_years (int): The number of years before the first planting date to get data
     """
     if not isinstance(field_id, list):
@@ -148,6 +150,8 @@ def get_field_centroid_for_field_id(
         cursor: Connection to demeter database
         field_id (int or list of int): Field ID[s] for which to get field centroid[s]
     """
+    if not isinstance(field_id, list):
+        field_id = [field_id]
     field_id_tuple = tuple(field_id)
 
     stmt = """

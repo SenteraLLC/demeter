@@ -289,7 +289,7 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
 
             # join "stable" data with `df_long` to highlight data gaps
             df_join = pd_merge(df_long, df_keep, how="left", on=["cell_id", "date"])
-            df_gaps = df_join.loc[df_join["value"].isna()][["cell_id", "date"]]
+            df_gaps = df_join.loc[df_join["daily_id"].isna()][["cell_id", "date"]]
             df_gaps.insert(df_gaps.shape[1], "parameter", row["weather_type"])
 
             if df_fill is None:

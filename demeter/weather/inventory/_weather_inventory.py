@@ -190,22 +190,22 @@ def get_daily_weather_type_for_cell_id(
 
     if keep == "all":
         stmt = """
-        select cell_id, date, weather_type_id, value, date_requested from daily
+        select daily_id, cell_id, date, weather_type_id, value, date_requested from daily
         where cell_id in %(cell_id)s
         and weather_type_id in %(weather_type_id)s
         """
     else:
         stmt = """
         with q1 AS (
-            SELECT d.cell_id, d.date, d.weather_type_id, d.value, d.date_requested
+            SELECT d.daily_id, d.cell_id, d.date, d.weather_type_id, d.value, d.date_requested
             FROM daily AS d
             WHERE cell_id in %(cell_id)s and
             weather_type_id in %(weather_type_id)s
         ), q2 AS (
-            SELECT q1.cell_id, q1.date, q1.weather_type_id, q1.value, q1.date_requested,
+            SELECT q1.daily_id, q1.cell_id, q1.date, q1.weather_type_id, q1.value, q1.date_requested,
                 ROW_NUMBER() OVER(PARTITION BY q1.cell_id, q1.weather_type_id, q1.date ORDER BY q1.date_requested desc) as rn
             FROM q1
-        ) SELECT q2.cell_id, q2.date, q2.weather_type_id, q2.value, q2.date_requested FROM q2
+        ) SELECT q2.daily_id, q2.cell_id, q2.date, q2.weather_type_id, q2.value, q2.date_requested FROM q2
         WHERE q2.rn = 1
         """
 

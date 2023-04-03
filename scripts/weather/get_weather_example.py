@@ -15,10 +15,10 @@ from pandas import concat as pd_concat
 
 from demeter.db import getConnection
 from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
-from demeter.weather.insert import get_weather_type_id_from_db
-from demeter.weather.request import submit_and_maybe_insert_meteomatics_request
-from demeter.weather.request.split import split_gdf_for_add
-from demeter.weather.utils.grid import get_centroid, get_world_utm_info_for_cell_id
+from demeter.weather.query import get_weather_type_id_from_db
+from demeter.weather.query._grid import get_centroid, get_world_utm_info_for_cell_id
+from demeter.weather.workflow.request import submit_and_maybe_insert_meteomatics_request
+from demeter.weather.workflow.split import split_gdf_for_add
 
 c = load_dotenv()
 conn = getConnection(env_name="DEMETER-DEV_LOCAL_WEATHER")

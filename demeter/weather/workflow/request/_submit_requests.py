@@ -5,12 +5,12 @@ from typing import List
 from geopandas import GeoDataFrame
 from sqlalchemy.engine import Connection
 
-from demeter.weather.insert._data_processing import (
+from ...workflow.insert._data_processing import (
     clean_meteomatics_data,
     filter_meteomatics_data_by_gdf_bounds,
 )
-from demeter.weather.insert._insert import insert_daily_weather, log_meteomatics_request
-from demeter.weather.request._request_utils import submit_single_meteomatics_request
+from ...workflow.insert._insert import insert_daily_weather, log_meteomatics_request
+from ...workflow.request._request_utils import submit_single_meteomatics_request
 
 
 def submit_and_maybe_insert_meteomatics_request(

@@ -1,11 +1,7 @@
 """Helper functions for cleaning and inserting MM data into the demeter weather schema."""
 
 from datetime import timedelta
-from typing import (
-    Any,
-    List,
-    Union,
-)
+from typing import Any
 
 from pandas import DataFrame
 from sqlalchemy.engine import Connection
@@ -35,40 +31,6 @@ def maybe_insert_weather_type_to_db(
             "description": description,
         }
         cursor.execute(stmt, args)
-
-
-def get_weather_type_id_from_db(cursor: Any, parameters: Union[str, List[str]]) -> dict:
-    """
-    Creates dictionary mapping desired parameters to Demeter weather type IDs.
-
-    Args:
-        cursor (Any): Connection to demeter weather database
-        parameters (str or list of str): Parameter name[s] to determine `weather_type_id` from demeter
-
-    Returns:
-        Dictionary mapping parameter names (as keys) to Demeter weather type IDs (as values).
-    """
-    if not isinstance(parameters, list):
-        parameters = [parameters]
-    tuple_parameters = tuple(parameters)
-
-    stmt = """select weather_type_id, weather_type from weather_type
-    where weather_type in %(parameters)s"""
-    args = {"parameters": tuple_parameters}
-    cursor.execute(stmt, args)
-    df_result = DataFrame(cursor.fetchall())
-
-    param_missing = [
-        param
-        for param in parameters
-        if param not in df_result["weather_type"].to_list()
-    ]
-    msg = f"The following parameters were not found in the db: {str(param_missing)}"
-    assert len(param_missing) == 0, msg
-
-    df_result.set_index("weather_type", inplace=True)
-
-    return df_result.to_dict()["weather_type_id"]
 
 
 def log_meteomatics_request(conn: Connection, request: dict) -> None:

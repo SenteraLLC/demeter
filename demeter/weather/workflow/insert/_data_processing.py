@@ -22,12 +22,20 @@ def clean_meteomatics_data(
     Returns:
         df_melt_clean (pandas.DataFrame): Cleaned Meteomatics data
     """
+    rq_cols = ["world_utm_id", "cell_id", "lat", "lon"]
+    msg = f"The following columns must be in `gdf_request`: {rq_cols}"
+    assert set(rq_cols).issubset(gdf_request.columns), msg
 
     df_wx_in = df_wx.copy()
 
+    gdf_clean = gdf_request[rq_cols].drop_duplicates()
+
     # add cell ID back to MM data
     df_wx_full = pd_merge(
-        df_wx_in.reset_index(), gdf_request, how="left", on=["lat", "lon"]
+        df_wx_in.reset_index(),
+        gdf_clean,
+        how="left",
+        on=["lat", "lon"],
     )
 
     # adjust validdate column to aware of `utc_offset` before converting to date
@@ -39,11 +47,6 @@ def clean_meteomatics_data(
             "lat",
             "lon",
             "validdate",
-            "centroid",
-            "utm_zone",
-            "utc_offset",
-            "date_first",
-            "date_last",
         ]
     )
 
@@ -58,16 +61,29 @@ def clean_meteomatics_data(
 def filter_meteomatics_data_by_gdf_bounds(
     df_clean: DataFrame, gdf_request: GeoDataFrame
 ) -> DataFrame:
-    """Filters out data that is outside of ID's "date_first" and "date_last" in `gdf_request` from `df_clean`.
+    """Filters out data based on temporal bounds given by `gdf_request`.
+
+    This filtering approach depends on the columns in `gdf_request`:
+    - If "date_first" and "date_last" available, uses those columns as temporal bounds.
+    - If "date" and "parameter" available, uses those columns to directly match with those in `df_clean`
 
     Args:
         df_clean (DataFrame): Cleaned MM weather (i.e., passed through `clean_meteomatics_data()`)
         gdf_request (GeoDataFrame): Full `gdf` that was used to generate the requests for `df_clean`
     """
 
-    df_combined = pd_merge(df_clean, gdf_request, on="cell_id")
-    keep = (df_combined["date"] >= df_combined["date_first"]) * (
-        df_combined["date"] <= df_combined["date_last"]
-    )
+    if set(["date_first", "date_last"]).issubset(gdf_request.columns):
+        df_combined = pd_merge(df_clean, gdf_request, on="cell_id")
+        keep = (df_combined["date"] >= df_combined["date_first"]) * (
+            df_combined["date"] <= df_combined["date_last"]
+        )
+        return df_clean.loc[keep]
 
-    return df_clean.loc[keep]
+    else:
+        df_combined = pd_merge(
+            df_clean,
+            gdf_request.drop(columns=["world_utm_id"]),
+            left_on=["cell_id", "date", "variable"],
+            right_on=["cell_id", "date", "parameter"],
+        )
+        return df_combined[df_clean.columns.values]

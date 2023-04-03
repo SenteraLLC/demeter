@@ -3,12 +3,14 @@
 from typing import List
 
 from geopandas import GeoDataFrame
+from numpy import ceil
 
-from demeter.weather.request._format import get_request_list_from_gdfs_list
-from demeter.weather.request.split._split_utils import (
+from ..request._format import get_request_list_from_gdfs_list
+from ._split_utils import (
     split_by_n_cells,
     split_by_utm_zone,
     split_by_year,
+    split_by_year_for_fill,
 )
 
 
@@ -134,5 +136,68 @@ def split_gdf_for_add(
             list_gdfs=gdf_split_cells,
             parameters=this_parameter_set,
         )
+
+    return request_list
+
+
+def split_gdf_for_fill(
+    gdf: GeoDataFrame,
+    n_cells_max: int = 100,
+):
+    """
+    Creates `request_list` for extracting weather data needed to fill in database gaps as given in `gdf`.
+
+    This splitting strategy imposes the following constraints on requests to keep things simple:
+
+    1. UTM zones must be requested in separate requests to control for the "utc offset" problem.
+    2. No more than 10 parameters can be requested in a given request.
+    3. A single request must be constrained to getting data for one calendar year.
+    4. No more than `n_cells_max` can be included in a given request.
+
+    Args:
+        gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date x parameter informaton for MM requests.
+        n_cells_max (int): Maximum number of cell IDs to include in any single request.
+
+    Returns:
+        request_list (list of dict): List containing a dictionary for each request required to get data for `gdf`
+        under the specified split protocol.
+    """
+
+    request_list = []
+
+    # we always have to split by UTM because of UTC offset problem
+    gdf_split_utm = split_by_utm_zone(
+        gdf.rename(columns={"date": "date_first", "parameter": "date_last"})
+    )
+
+    gdf_split_utm = [
+        this_gdf.rename(columns={"date_first": "date", "date_last": "parameter"})
+        for this_gdf in gdf_split_utm
+    ]
+
+    # start loops within UTM zone GDFs to keep parameter lists minimal
+    for gdf_utm_zone in gdf_split_utm:
+        parameters = list(gdf_utm_zone["parameter"].unique())
+        if len(parameters) > 10:
+            n = int(ceil(len(parameters) / 10))
+            parameter_sets = [parameters[i::n] for i in range(n)]
+        else:
+            parameter_sets = [parameters]
+
+        gdf_split_year = split_by_year_for_fill(gdf_utm_zone)
+        gdf_split_year = [
+            this_gdf.drop_duplicates(["cell_id"]) for this_gdf in gdf_split_year
+        ]
+
+        gdf_split_cells = [
+            split_by_n_cells(this_gdf, n_cells_max) for this_gdf in gdf_split_year
+        ]
+        gdf_split_cells = [item for sublist in gdf_split_cells for item in sublist]
+
+        for pars in parameter_sets:
+            request_list += get_request_list_from_gdfs_list(
+                list_gdfs=gdf_split_cells,
+                parameters=pars,
+            )
 
     return request_list

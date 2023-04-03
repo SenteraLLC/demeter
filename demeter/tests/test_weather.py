@@ -3,7 +3,7 @@ from pyproj import CRS
 from shapely.geometry import Point
 from sure import expect
 
-from demeter.weather.utils.grid import query_weather_grid
+from demeter.weather.query._grid import query_weather_grid
 
 
 class TestUpsertGeom:

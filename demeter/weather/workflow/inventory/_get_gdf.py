@@ -9,8 +9,12 @@ from pyproj import CRS
 from pytz import UTC
 from sqlalchemy.engine import Connection
 
-from ...query import get_daily_weather_type_for_cell_id, get_daily_weather_types
-from ...utils.grid import get_centroid, get_info_for_world_utm
+from ...query import (
+    get_centroid,
+    get_daily_weather_type_for_cell_id,
+    get_daily_weather_types,
+    get_info_for_world_utm,
+)
 from ...utils.time import (
     get_date_list_for_date_range,
     get_min_current_date_for_world_utm,

@@ -20,7 +20,7 @@ from shapely.errors import ShapelyDeprecationWarning
 
 from demeter.db._postgres.tools import doPgFormat
 
-from ...utils.grid import get_centroid, get_info_for_world_utm
+from ...query import get_centroid, get_info_for_world_utm
 from ...utils.time import get_min_current_date_for_world_utm
 
 warnings.filterwarnings("ignore", category=ShapelyDeprecationWarning)

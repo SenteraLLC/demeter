@@ -20,7 +20,7 @@ from shapely.errors import ShapelyDeprecationWarning
 from shapely.geometry import Point
 from shapely.wkb import loads as wkb_loads
 
-from ...utils.grid import (
+from ...query import (
     get_cell_id,
     get_centroid,
     get_world_utm_info_for_cell_id,

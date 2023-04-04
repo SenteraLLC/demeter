@@ -2,7 +2,7 @@
 
 Focuses on "add" step in weather extraction process.
 """
-
+import logging
 import warnings
 from datetime import datetime, timedelta
 from typing import (
@@ -15,6 +15,7 @@ from geopandas import GeoDataFrame
 from pandas import DataFrame
 from pandas import concat as pd_concat
 from pandas import merge as pd_merge
+from pyproj import CRS
 from pytz import UTC
 from shapely.errors import ShapelyDeprecationWarning
 from shapely.geometry import Point
@@ -184,9 +185,22 @@ def get_weather_grid_info_for_all_demeter_fields(cursor: Any) -> DataFrame:
     Args:
         cursor: Connection with access to both the demeter and weather schemas.
     """
+    cols = [
+        "utm_zone",
+        "utc_offset",
+        "world_utm_id",
+        "cell_id",
+        "centroid",
+        "date_first",
+        "date_last",
+    ]
     field_id = get_all_field_ids(cursor)
 
-    assert len(field_id) > 0, "There are no fields in `demeter`."
+    if len(field_id) == 0:
+        logging.info("There are no fields in `demeter`.")
+        return GeoDataFrame(
+            [], columns=cols, geometry="centroid", crs=CRS.from_epsg(4326)
+        )
 
     gdf_field_space = get_field_centroid_for_field_id(cursor, field_id)
     gdf_field_space["cell_id"] = gdf_field_space.apply(
@@ -195,7 +209,9 @@ def get_weather_grid_info_for_all_demeter_fields(cursor: Any) -> DataFrame:
 
     # get temporal bounds based on planting date, location, and `n_hist_years`
     df_field_time = get_temporal_bounds_for_field_id(
-        cursor, field_id, field_centroid=gdf_field_space["field_centroid"].to_list()
+        cursor,
+        field_id=gdf_field_space["field_id"].to_list(),
+        field_centroid=gdf_field_space["field_centroid"].to_list(),
     )
 
     # change last day to be 7 days from the last full day across all UTM zones
@@ -207,6 +223,9 @@ def get_weather_grid_info_for_all_demeter_fields(cursor: Any) -> DataFrame:
     gdf_unique = gdf_full.sort_values(["cell_id", "date_first"]).drop_duplicates(
         ["cell_id"], keep="first"
     )  # only need to worry about `date_first`
+
+    # TODO: This needs to be removed until we figure out which cell IDs already exist
+    # in demeter. Just returning "cell_id" at this stage is fine.
 
     # add world utm ID to make centroid queries faster and add UTM zone
     df_world_utm = gdf_unique.apply(
@@ -223,15 +242,6 @@ def get_weather_grid_info_for_all_demeter_fields(cursor: Any) -> DataFrame:
         axis=1,
     )
 
-    cols = [
-        "utm_zone",
-        "utc_offset",
-        "world_utm_id",
-        "cell_id",
-        "centroid",
-        "date_first",
-        "date_last",
-    ]
     gdf_clean = GeoDataFrame(
         gdf_world_utm[cols],
         geometry="centroid",

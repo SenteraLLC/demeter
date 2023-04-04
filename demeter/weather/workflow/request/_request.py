@@ -1,16 +1,24 @@
 """High-level functions to submit and store Meteomatics requests and any extracted data."""
 
-from typing import List
+import logging
+from typing import List, Tuple
 
 from geopandas import GeoDataFrame
+from meteomatics.exceptions import TooManyRequests
 from sqlalchemy.engine import Connection
+from tqdm import tqdm
 
-from ...workflow.insert._data_processing import (
+from ..insert._data_processing import (
     clean_meteomatics_data,
     filter_meteomatics_data_by_gdf_bounds,
 )
-from ...workflow.insert._insert import insert_daily_weather, log_meteomatics_request
-from ...workflow.request._request_utils import submit_single_meteomatics_request
+from ..insert._insert import insert_daily_weather, log_meteomatics_request
+from ._failed import ERROR_CODES, reformat_failed_requests
+from ._request_utils import (
+    cut_request_list_along_utm_zone,
+    get_n_requests_remaining_for_demeter,
+    submit_single_meteomatics_request,
+)
 
 
 def submit_and_maybe_insert_meteomatics_request(
@@ -67,16 +75,56 @@ def submit_and_maybe_insert_meteomatics_request(
     return request
 
 
-def submit_requests(
+def submit_request_list(
     conn: Connection,
     request_list: List[dict],
     gdf_request: GeoDataFrame,
     params_to_weather_types: dict,
     parallel: bool = False,
-):
+) -> Tuple[List[dict], bool]:
+    """DOCSTRING."""
+    if parallel:
+        pass
+    else:
+        for ind in tqdm(range(len(request_list)), desc="Submitting requests:"):
+            request = request_list[ind]
+            request = submit_and_maybe_insert_meteomatics_request(
+                conn=conn,
+                request=request,
+                gdf_request=gdf_request,
+                params_to_weather_types=params_to_weather_types,
+            )
+            request_list[ind] = request
+
+            # if we ran out of requests, return just those which were completed
+            if request["request_seconds"] == ERROR_CODES[TooManyRequests]:
+                logging.info(
+                    "Unable to complete requests. No more requests available for today."
+                )
+                completed_request_list = [
+                    r for r in request_list if "status" in r.keys()
+                ]
+                return completed_request_list, False
+
+    return request_list, True
+
+
+def run_request_step(
+    conn: Connection,
+    request_list: List[dict],
+    gdf_request: GeoDataFrame,
+    params_to_weather_types: dict,
+    parallel: bool = False,
+    max_attempts: int = 3,
+) -> List[dict]:
     """Loops through passed `request_list` and submits each request to Meteomatics and stores data to the database.
 
     Parallelizable if desired, but this is not currently implemented. Default behavior is running requests consecutively.
+
+    One very important (and simple) way to ensure missing requests are filled in later is by cutting
+    the request list along UTM zones, such that we are either running all or none of the requests
+    for a given UTM zone. That way, parameter groups are run in completion for a given cell ID x date.
+    This is the purpose of the `cut_request_list_along_utm_zone()` function used in this function.
 
     Args:
         conn: Connection to Demeter weather schema
@@ -101,17 +149,34 @@ def submit_requests(
         gdf_request.insert(0, "lon", gdf_request.geometry.x)
         gdf_request.insert(0, "lat", gdf_request.geometry.y)
 
-    if parallel:
-        pass
-    else:
-        for ind in range(len(request_list)):
-            request = request_list[ind]
-            request = submit_and_maybe_insert_meteomatics_request(
-                conn=conn,
-                request=request,
-                gdf_request=gdf_request,
-                params_to_weather_types=params_to_weather_types,
-            )
-            request_list[ind] = request
+    pending_requests = request_list.copy()
+    completed_requests = []
+    tries = 0
 
-    return request_list
+    while (len(pending_requests) > 0) and (tries < max_attempts):
+        tries += 1
+
+        # trim down request list based on available requests
+        n_requests_available = get_n_requests_remaining_for_demeter(conn)
+        cut_requests = cut_request_list_along_utm_zone(
+            pending_requests, n_requests_available
+        )
+
+        if len(cut_requests) > 0:
+            # run these requests and add to list of completed requests
+            cut_requests, completed = submit_request_list(
+                conn, cut_requests, gdf_request, params_to_weather_types, parallel
+            )
+            completed_requests += cut_requests
+
+            # stop while loop if we ran out of requests during `submit_request_list` (completed = False)
+            # otherwise, check for failed requests and maybe re-run
+            if completed:
+                pending_requests = reformat_failed_requests(cut_requests)
+                logging.info("Re-requesting in %s requests", len(pending_requests))
+            else:
+                pending_requests = []
+        else:
+            pending_requests = []
+
+    return completed_requests

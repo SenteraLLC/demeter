@@ -82,7 +82,14 @@ def submit_request_list(
     params_to_weather_types: dict,
     parallel: bool = False,
 ) -> Tuple[List[dict], bool]:
-    """DOCSTRING."""
+    """Passes requests in `request_list` to `submit_and_maybe_insert_meteomatics_request()`.
+
+    If not all requests can be submitted due to Meteomatics user limits (i.e., TooManyRequests),
+    just the completed requests are returned.
+
+    Returns the list of completed requests and a boolean value indicating whether or not all of the
+    requests were completed.
+    """
     if parallel:
         pass
     else:
@@ -117,7 +124,17 @@ def run_request_step(
     parallel: bool = False,
     max_attempts: int = 3,
 ) -> List[dict]:
-    """Loops through passed `request_list` and submits each request to Meteomatics and stores data to the database.
+    """Submits `request_list` and attempts to re-format and re-submit failed requests where possible.
+
+    This step follows the below logic:
+    (1) Determines how many requests are available using `get_n_requests_remaining_for_demeter()`.
+    (2) Crops `request_list` along UTM boundaries following the number of requests available.
+    (3) Submits the requests in the cropped list.
+    --- () If all requests were completed by `submit_request_list()`, all requests are added to `complete_requests`.
+    --- Checks for failed requests that need to be reformatted. Reformatted requests are organized and
+    --- passed back to Step 1 if the cycle has not already been completed `max_attempts` times.
+    --- () Else, only completed requests are added to `complete_requests`.
+    (4) Full `completed_requests` is returned.
 
     Parallelizable if desired, but this is not currently implemented. Default behavior is running requests consecutively.
 
@@ -135,6 +152,9 @@ def run_request_step(
 
         params_to_weather_types (dict): Dictionary mapping weather parameters to db weather types IDs
         parallel (bool): Indicates whether requests should be run in parallel (not currently implemented); defaults to False.
+        max_attempts (int): Maximum number of times to complete the "run" cycle before ending function; default is 3.
+
+    Returns a list of all of the `request` dictionaries which were submitted/completed during the function process.
     """
     rq_gdf_cols_1 = ["world_utm_id", "cell_id", "date_first", "date_last", "centroid"]
     rq_gdf_cols_2 = ["world_utm_id", "cell_id", "date", "parameter", "centroid"]

@@ -21,14 +21,19 @@ ERROR_PRINT = [NotFound, InternalServerError]
 
 
 def get_meteomatics_error_info(e: Exception, request: dict) -> dict:
-    """DOCSTRING."""
+    """Add information to `request` to better inform the user of request failures and allow for tracking."""
     request["error"] = repr(e)
     request["request_seconds"] = ERROR_CODES[type(e)]
     return request
 
 
 def _reformat_not_found_request(request: dict) -> List[dict]:
-    """DOCSTRING."""
+    """Reformats a failed request due to `NotFound` error so other parameter requests can be resubmitted.
+
+    This function identifies the problem parameter[s] as those which are included by name in the
+    error message. The problem parameter[s] are removed from the parameter list and the request is
+    re-submitted as is.
+    """
     # clean up
     r = request.copy()
     error = r["error"]
@@ -38,7 +43,7 @@ def _reformat_not_found_request(request: dict) -> List[dict]:
     # determine the problem parameter
     good_parameters = [p for p in r["parameters"] if p not in error]
 
-    if len(good_parameters) == r["parameters"]:
+    if len(good_parameters) == r["parameters"] or len(good_parameters) == 0:
         # avoid possible insanity (i.e., infinite loops)
         return []
     else:
@@ -47,10 +52,13 @@ def _reformat_not_found_request(request: dict) -> List[dict]:
 
 
 def _reformat_read_time_out_request(request: dict) -> List[dict]:
-    """DOCSTRING.
+    """Reformats a failed request due to `ReadTimeout` error into two smaller requests.
 
-    (408) RequestTimeOut: First, split the request temporally. If not possible, split the
-    the request spatially (i.e., reduce the number of coordinates requested per request).
+    The splits follow this logic given `request`:
+    () If only one day of data is requested:
+    --- () If only one coordinate is requested, split `parameters` list in half.
+    --- () Else, split `coordinate_list` in half.
+    () Else, split number of days in half.
     """
     # clean up
     r = request.copy()
@@ -92,18 +100,13 @@ ERROR_FORMAT = {
 def reformat_failed_requests(request_list: List[dict]) -> List[dict]:
     """Identify and reformat failed requests in `request_list`.
 
-    Desired behavior for Meteomatics API exceptions:
-
-    (404) NotFound: Use regular expression to identify the problem parameter.
-    Remove that parameter from the list, re-try the remaining parameters, and print the
-    error message for the user.
-
-    (408) RequestTimeOut: First, split the request temporally. If not possible, split the
-    the request spatially (i.e., reduce the number of coordinates requested per request).
-
+    Currently, the following two handled errors are not reformatted:
     (429) TooManyRequests: No more requests are available today on our account.
-
     (500) InternalServerError: Poorly understood error. For now, we will just report.
+
+    Returns `reformat_request_list` which is a list of requests reformatted from
+    failed requests in `request_list`. Otherwise, if no requests need to be reformatted,
+    an empty list is returned.
     """
     reformat_request_list = []
 
@@ -123,12 +126,18 @@ def reformat_failed_requests(request_list: List[dict]) -> List[dict]:
             if error_type in ERROR_FORMAT.keys():
                 reformat_function = ERROR_FORMAT[error_type]
                 reformat_request_list += reformat_function(r)
+
     logging.info("%s requests failed of %s", n_failed, len(request_list))
 
     return reformat_request_list
 
 
-def print_meteomatics_request_report(request_list: List[dict]):
+def print_meteomatics_request_report(request_list: List[dict]) -> None:
+    """Prints report on weather data request performance.
+
+    This report will provide the user with an overview on the weather processing
+    workflow, its efficiency, and any unhandled request errors.
+    """
     n_completed = len(request_list)
 
     failed_requests = [r for r in request_list if r["status"] == "FAIL"]

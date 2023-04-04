@@ -38,14 +38,43 @@ def run_daily_weather(
     parallel: bool = False,
 ):
     """
+    Perform weather processing steps to maintain `demeter.weather`.
+
+    Each step involves the same 3 steps:
+    - "get": Collected spatiotemporal information on what data is needed to complete this step.
+    - "split": Splits the information and translates into practical Meteomatics requests.
+    - "run": Submits, tracks, and inserts requests.
+
     Steps:
-    (1) UPDATE: this information is derived based on which cell IDs are populated in `daily`
-    and the last `date_requested` for each cell ID
+    (1) UPDATE: This step updates the database, such that all populated cell IDs have up-to-date
+    stable historical and forecast data. The data requested in this step is derived based on which
+    cell IDs are populated in `daily` and the last `date_requested` for each cell ID.
 
-    (2) ADD: this information is derived based on `demeter` (field location and planting dates)
-    and already available data in `weather`
+    (2) ADD: This step adds data for any cell ID which is needed to represent a planted field in
+    `demeter` but is not yet in the weather database OR a cell ID x year combination needed for a new
+    planted field in demeter whose cell ID is already in the database. This information is derived
+    based on `demeter` (field location and planting dates) and already available data in `weather`.
 
-    (3) FILL: (optional) perform exhaustive inventory to find data gaps
+    (3) FILL: (optional) This step performs an exhaustive inventory to find data gaps in the weather
+    database based on those cell IDs populated in the database as well as cell IDs x dates need for `demeter`.
+
+    Args:
+        conn (Connection): Connection to Demeter and weather database
+        parameter_sets (list of list of str): List of parameter groupings to be requested together.
+
+        n_cells_per_set_add (list of int): List of values to be passed to `split_by_n_cells()` as
+            `max_n_cells` for each parameter grouping, respectively, in the ADD step
+
+        n_cells_per_set_update (list of int): List of values to be passed to `split_by_n_cells()` as
+            `max_n_cells` for each parameter grouping, respectively, in the UPDATE step
+
+        n_cells_fill (int): Value to be passed to `split_by_n_cells()` as `max_n_cells` for the
+            "fill" step.
+
+        fill (bool): If "True", "fill" step is run after "update" and "add"; otherwise, it is not.
+
+        parallel (bool): If "True", "run" step is run in parallel for all steps; otherwise, requests are
+            run in series.
     """
 
     # get information on parameters from DB and check that they exist there (errors if they don't)

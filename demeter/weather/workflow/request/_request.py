@@ -91,7 +91,11 @@ def submit_request_list(
     requests were completed.
     """
     if parallel:
-        pass
+        logging.warning(
+            "`parallel = True` has not yet been implemented in this workflow. No requests will be made."
+        )
+        # return `completed = False` and an empty list for completed requests to end process
+        return [], False
     else:
         for ind in tqdm(range(len(request_list)), desc="Submitting requests:"):
             request = request_list[ind]

@@ -22,6 +22,12 @@ from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection
 
+from .defaults import (
+    N_CELLS_FILL,
+    N_CELLS_PER_SET_ADD,
+    N_CELLS_PER_SET_UPDATE,
+    PARAMETER_SETS,
+)
 from .main import run_daily_weather
 
 if __name__ == "__main__":
@@ -90,4 +96,12 @@ if __name__ == "__main__":
 
     # TODO: Enable this CLI to take a configuration file name to customize `run_daily_weather()`?
     logging.info("Starting weather process")
-    run_daily_weather(conn=conn, fill=fill, parallel=parallel)
+    run_daily_weather(
+        conn=conn,
+        parameter_sets=PARAMETER_SETS,
+        n_cells_per_set_add=N_CELLS_PER_SET_ADD,
+        n_cells_per_set_update=N_CELLS_PER_SET_UPDATE,
+        n_cells_fill=N_CELLS_FILL,
+        fill=fill,
+        parallel=parallel,
+    )

@@ -71,9 +71,16 @@ def _reformat_read_time_out_request(request: dict) -> List[dict]:
     if request["startdate"] == request["enddate"]:
         if len(request["coordinate_list"]) > 1:
             split_dim = "coordinate_list"
+            arr_split = array_split(request[split_dim], 2)
+            splits = [[tuple(coord) for coord in splt] for splt in arr_split]
+
         else:
             split_dim = "parameters"
-        splits = array_split(request[split_dim], 2)
+            arr_split = array_split(request[split_dim], 2)
+            splits = [list(spl) for spl in arr_split]
+
+        for i in range(2):
+            request_list[i][split_dim] = splits[i]
 
     # otherwise, always split by days
     else:

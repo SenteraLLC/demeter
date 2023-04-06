@@ -154,7 +154,7 @@ def run_daily_weather(
             else:
                 fill_requests = []
         else:
-            logging.info("No more requests remaining to run FILL step.")
+            logging.info("   No more requests remaining to run FILL step.")
 
     #### STEP 4: Generate and print report
     print_meteomatics_request_report(all_completed_requests)

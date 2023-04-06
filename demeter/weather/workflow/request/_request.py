@@ -75,6 +75,20 @@ def submit_and_maybe_insert_meteomatics_request(
     return request
 
 
+def _logging_request_summary(request_list) -> None:
+    n_completed = len(request_list)
+
+    failed_requests = [r for r in request_list if r["status"] == "FAIL"]
+    n_failed = len(failed_requests)
+    percent_failed = round(100 * (n_failed / n_completed))
+
+    n_success = n_completed - n_failed
+    percent_success = round(100 * (n_success / n_completed))
+
+    logging.info("     SUCCESS: %s/%s (%s%)", n_success, n_completed, percent_success)
+    logging.info("     FAIL: %s/%s (%s%)", n_failed, n_completed, percent_failed)
+
+
 def submit_request_list(
     conn: Connection,
     request_list: List[dict],
@@ -90,6 +104,8 @@ def submit_request_list(
     Returns the list of completed requests and a boolean value indicating whether or not all of the
     requests were completed.
     """
+    logging.info("   NUMBER OF REQUESTS: %s", len(request_list))
+
     if parallel:
         logging.warning(
             "`parallel = True` has not yet been implemented in this workflow. No requests will be made."
@@ -110,13 +126,15 @@ def submit_request_list(
             # if we ran out of requests, return just those which were completed
             if request["request_seconds"] == ERROR_CODES[TooManyRequests]:
                 logging.info(
-                    "Unable to complete requests. No more requests available for today."
+                    "     Unable to complete requests. No more requests available for today."
                 )
                 completed_request_list = [
                     r for r in request_list if "status" in r.keys()
                 ]
+                _logging_request_summary(completed_request_list)
                 return completed_request_list, False
 
+    _logging_request_summary(request_list)
     return request_list, True
 
 
@@ -180,6 +198,12 @@ def run_request_step(
     while (len(pending_requests) > 0) and (tries < max_attempts):
         tries += 1
 
+        if tries > 1:
+            logging.info(
+                "   ATTEMPTING RE-REQUEST WITH %s REQUESTS",
+                len(pending_requests),
+            )
+
         # trim down request list based on available requests
         n_requests_available = get_n_requests_remaining_for_demeter(conn)
         cut_requests = cut_request_list_along_utm_zone(
@@ -187,6 +211,7 @@ def run_request_step(
         )
 
         if len(cut_requests) > 0:
+            logging.info("   (%s) REQUEST SUMMARY:", tries)
             # run these requests and add to list of completed requests
             cut_requests, completed = submit_request_list(
                 conn, cut_requests, gdf_request, params_to_weather_types, parallel
@@ -197,7 +222,6 @@ def run_request_step(
             # otherwise, check for failed requests and maybe re-run
             if completed:
                 pending_requests = reformat_failed_requests(cut_requests)
-                logging.info("Re-requesting in %s requests", len(pending_requests))
             else:
                 pending_requests = []
         else:

@@ -1,12 +1,12 @@
 """Create all database users for Demeter database.
 
-Initialize users for the first time:
+Initialize users for the first time on local `demeter-dev`:
 python3 -m initialize.users
 
-Drop all users and re-create them:
+Drop all users and re-create them on local `demeter-dev`:
 python3 -m initialize.users --drop_existing
 
-Drop just the weather users and re-create them:
+Drop just the weather users and re-create them on local `demeter-dev`:
 python3 -m initialize.users --drop_existing --user_list weather_user weather_ro_user
 
 For help: python3 -m initialize.users --help

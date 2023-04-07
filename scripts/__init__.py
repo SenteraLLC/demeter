@@ -1,11 +1,6 @@
-from . import (
-    explore,
-    grid,
-    to_graphviz,
-)
+from . import explore, to_graphviz
 
 __all__ = (
-    "grid",
     "to_graphviz",
     "explore",
 )

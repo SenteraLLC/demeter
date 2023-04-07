@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     # ensure appropriate set-up
     database_env_name, ssh_env_name = check_and_format_db_connection_args(
-        host=database_host, env=database_env
+        host=database_host, env=database_env, superuser=True
     )
 
     # confirm user choice

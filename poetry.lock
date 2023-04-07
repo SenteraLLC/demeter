@@ -97,14 +97,14 @@ limiter = ["cachecontrol[filecache] (>=0.12.6)", "lockfile (>=0.12.2)"]
 
 [[package]]
 name = "apeye-core"
-version = "1.1.1"
+version = "1.1.2"
 description = "Core (offline) functionality for the apeye library."
 category = "dev"
 optional = false
 python-versions = ">=3.6.1"
 files = [
-    {file = "apeye_core-1.1.1-py3-none-any.whl", hash = "sha256:3a5d61889a40a8b71394cd7d15ece7e6af3ec2f8450c3f5c2d5c4881fcae8743"},
-    {file = "apeye_core-1.1.1.tar.gz", hash = "sha256:53265cd76c0255009921a16789705c7ee0151d6df801aca7a02790ed775b2493"},
+    {file = "apeye_core-1.1.2-py3-none-any.whl", hash = "sha256:7c38930ecc9a9bf002187a7d59fedd7442f995013fa1cd9501e4564d600886f6"},
+    {file = "apeye_core-1.1.2.tar.gz", hash = "sha256:06f9c147b12b24ceafefe6a48f52ac628e3b94d2df375f1b88c0aa41d6b24276"},
 ]
 
 [package.dependencies]
@@ -365,14 +365,14 @@ typecheck = ["mypy"]
 
 [[package]]
 name = "beautifulsoup4"
-version = "4.12.0"
+version = "4.12.2"
 description = "Screen-scraping library"
 category = "dev"
 optional = false
 python-versions = ">=3.6.0"
 files = [
-    {file = "beautifulsoup4-4.12.0-py3-none-any.whl", hash = "sha256:2130a5ad7f513200fae61a17abb5e338ca980fa28c439c0571014bc0217e9591"},
-    {file = "beautifulsoup4-4.12.0.tar.gz", hash = "sha256:c5fceeaec29d09c84970e47c65f2f0efe57872f7cff494c9691a26ec0ff13234"},
+    {file = "beautifulsoup4-4.12.2-py3-none-any.whl", hash = "sha256:bd2520ca0d9d7d12694a53d44ac482d181b4ec1888909b035a3dbf40d0f57d4a"},
+    {file = "beautifulsoup4-4.12.2.tar.gz", hash = "sha256:492bbc69dca35d12daac71c4db1bfff0c876c00ef4a2ffacce226d4638eb72da"},
 ]
 
 [package.dependencies]
@@ -438,18 +438,18 @@ css = ["tinycss2 (>=1.1.0,<1.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.26.106"
+version = "1.26.109"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "boto3-1.26.106-py3-none-any.whl", hash = "sha256:53d449bc3445da0a8812857f3e24e143dc56573bc365f36a5610900b09d06faf"},
-    {file = "boto3-1.26.106.tar.gz", hash = "sha256:bdabab7ad27ae86de22a8687cbf55d8a152c6d6f178ffb452e560bac0be957a7"},
+    {file = "boto3-1.26.109-py3-none-any.whl", hash = "sha256:a1c48674c2ff25ddced599c51d14ba7a6dbe9fd51641e8d63a6887bebd9712d7"},
+    {file = "boto3-1.26.109.tar.gz", hash = "sha256:d388cb7f54f1a3056f91ffcfb5cf18b226454204e5df7a5c10774718c3fbb166"},
 ]
 
 [package.dependencies]
-botocore = ">=1.29.106,<1.30.0"
+botocore = ">=1.29.109,<1.30.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -458,14 +458,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.26.106"
-description = "Type annotations for boto3 1.26.106 generated with mypy-boto3-builder 7.14.5"
+version = "1.26.109"
+description = "Type annotations for boto3 1.26.109 generated with mypy-boto3-builder 7.14.5"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "boto3-stubs-1.26.106.tar.gz", hash = "sha256:62afc5fa532a2574ec16b9351286938d9d41558d1e2f7f6bc7439dfae9cf1585"},
-    {file = "boto3_stubs-1.26.106-py3-none-any.whl", hash = "sha256:d4893103e9d095394d2f01c83fbaf244a3ead694836afd6c1fcac2a5ec39f57d"},
+    {file = "boto3-stubs-1.26.109.tar.gz", hash = "sha256:d2dff9b509f476ab8d63c9bf5b8090e52f4cba07dbaced6ff9a64ae47d273220"},
+    {file = "boto3_stubs-1.26.109-py3-none-any.whl", hash = "sha256:f0e865259804d47d3221f2cfd2e79ce132d273eeb751e2418c1821f5c4d8a10c"},
 ]
 
 [package.dependencies]
@@ -507,7 +507,7 @@ backup-gateway = ["mypy-boto3-backup-gateway (>=1.26.0,<1.27.0)"]
 backupstorage = ["mypy-boto3-backupstorage (>=1.26.0,<1.27.0)"]
 batch = ["mypy-boto3-batch (>=1.26.0,<1.27.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.26.0,<1.27.0)"]
-boto3 = ["boto3 (==1.26.106)", "botocore (==1.29.106)"]
+boto3 = ["boto3 (==1.26.109)", "botocore (==1.29.109)"]
 braket = ["mypy-boto3-braket (>=1.26.0,<1.27.0)"]
 budgets = ["mypy-boto3-budgets (>=1.26.0,<1.27.0)"]
 ce = ["mypy-boto3-ce (>=1.26.0,<1.27.0)"]
@@ -822,14 +822,14 @@ xray = ["mypy-boto3-xray (>=1.26.0,<1.27.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.106"
+version = "1.29.109"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 files = [
-    {file = "botocore-1.29.106-py3-none-any.whl", hash = "sha256:d50df9a39da1b0e475727c6c2ba141b44d9df527d3dc1936b264ee4cb1525ab7"},
-    {file = "botocore-1.29.106.tar.gz", hash = "sha256:eaaa669fe33a0ef2e9d345a98ed0befac1ea33395d63620913c1bb738c387d4d"},
+    {file = "botocore-1.29.109-py3-none-any.whl", hash = "sha256:cf43dddb7e2ba5425fe19fad68b10043307b61d9103d06566f1ab6034e38b8db"},
+    {file = "botocore-1.29.109.tar.gz", hash = "sha256:2e449525f0ccedb31fdb962a77caac48b4c486c23515b84c5989a39a1823a024"},
 ]
 
 [package.dependencies]
@@ -842,14 +842,14 @@ crt = ["awscrt (==0.16.9)"]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.29.106"
+version = "1.29.109"
 description = "Type annotations and code completion for botocore"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "botocore_stubs-1.29.106-py3-none-any.whl", hash = "sha256:c8c52e0030a33ad352d20549a44f66ccd3d4f8c720ec6512be732bf6f525e26f"},
-    {file = "botocore_stubs-1.29.106.tar.gz", hash = "sha256:0efc88ce7b76d7ce4a230eb594f18b8fc6da7d1478ba5f5f7cc2c9036dc1cc13"},
+    {file = "botocore_stubs-1.29.109-py3-none-any.whl", hash = "sha256:e3181ee8493384ebf70f12d56a35341dfbaa7b34e3f241ed01c58df89ee8410b"},
+    {file = "botocore_stubs-1.29.109.tar.gz", hash = "sha256:5464cd79076d4f9d36c3163167c3d435fd73367168345f9637c4b8e88f5b54fe"},
 ]
 
 [package.dependencies]
@@ -1205,29 +1205,30 @@ testing = ["cssselect", "flake8 (<5)", "importlib-resources", "jaraco.test (>=5.
 
 [[package]]
 name = "debugpy"
-version = "1.6.6"
+version = "1.6.7"
 description = "An implementation of the Debug Adapter Protocol for Python"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "debugpy-1.6.6-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:0ea1011e94416e90fb3598cc3ef5e08b0a4dd6ce6b9b33ccd436c1dffc8cd664"},
-    {file = "debugpy-1.6.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dff595686178b0e75580c24d316aa45a8f4d56e2418063865c114eef651a982e"},
-    {file = "debugpy-1.6.6-cp310-cp310-win32.whl", hash = "sha256:87755e173fcf2ec45f584bb9d61aa7686bb665d861b81faa366d59808bbd3494"},
-    {file = "debugpy-1.6.6-cp310-cp310-win_amd64.whl", hash = "sha256:72687b62a54d9d9e3fb85e7a37ea67f0e803aaa31be700e61d2f3742a5683917"},
-    {file = "debugpy-1.6.6-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:78739f77c58048ec006e2b3eb2e0cd5a06d5f48c915e2fc7911a337354508110"},
-    {file = "debugpy-1.6.6-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:23c29e40e39ad7d869d408ded414f6d46d82f8a93b5857ac3ac1e915893139ca"},
-    {file = "debugpy-1.6.6-cp37-cp37m-win32.whl", hash = "sha256:7aa7e103610e5867d19a7d069e02e72eb2b3045b124d051cfd1538f1d8832d1b"},
-    {file = "debugpy-1.6.6-cp37-cp37m-win_amd64.whl", hash = "sha256:f6383c29e796203a0bba74a250615ad262c4279d398e89d895a69d3069498305"},
-    {file = "debugpy-1.6.6-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:23363e6d2a04d726bbc1400bd4e9898d54419b36b2cdf7020e3e215e1dcd0f8e"},
-    {file = "debugpy-1.6.6-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9b5d1b13d7c7bf5d7cf700e33c0b8ddb7baf030fcf502f76fc061ddd9405d16c"},
-    {file = "debugpy-1.6.6-cp38-cp38-win32.whl", hash = "sha256:70ab53918fd907a3ade01909b3ed783287ede362c80c75f41e79596d5ccacd32"},
-    {file = "debugpy-1.6.6-cp38-cp38-win_amd64.whl", hash = "sha256:c05349890804d846eca32ce0623ab66c06f8800db881af7a876dc073ac1c2225"},
-    {file = "debugpy-1.6.6-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a771739902b1ae22a120dbbb6bd91b2cae6696c0e318b5007c5348519a4211c6"},
-    {file = "debugpy-1.6.6-cp39-cp39-win32.whl", hash = "sha256:549ae0cb2d34fc09d1675f9b01942499751d174381b6082279cf19cdb3c47cbe"},
-    {file = "debugpy-1.6.6-cp39-cp39-win_amd64.whl", hash = "sha256:de4a045fbf388e120bb6ec66501458d3134f4729faed26ff95de52a754abddb1"},
-    {file = "debugpy-1.6.6-py2.py3-none-any.whl", hash = "sha256:be596b44448aac14eb3614248c91586e2bc1728e020e82ef3197189aae556115"},
-    {file = "debugpy-1.6.6.zip", hash = "sha256:b9c2130e1c632540fbf9c2c88341493797ddf58016e7cba02e311de9b0a96b67"},
+    {file = "debugpy-1.6.7-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:b3e7ac809b991006ad7f857f016fa92014445085711ef111fdc3f74f66144096"},
+    {file = "debugpy-1.6.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e3876611d114a18aafef6383695dfc3f1217c98a9168c1aaf1a02b01ec7d8d1e"},
+    {file = "debugpy-1.6.7-cp310-cp310-win32.whl", hash = "sha256:33edb4afa85c098c24cc361d72ba7c21bb92f501104514d4ffec1fb36e09c01a"},
+    {file = "debugpy-1.6.7-cp310-cp310-win_amd64.whl", hash = "sha256:ed6d5413474e209ba50b1a75b2d9eecf64d41e6e4501977991cdc755dc83ab0f"},
+    {file = "debugpy-1.6.7-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:38ed626353e7c63f4b11efad659be04c23de2b0d15efff77b60e4740ea685d07"},
+    {file = "debugpy-1.6.7-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:279d64c408c60431c8ee832dfd9ace7c396984fd7341fa3116aee414e7dcd88d"},
+    {file = "debugpy-1.6.7-cp37-cp37m-win32.whl", hash = "sha256:dbe04e7568aa69361a5b4c47b4493d5680bfa3a911d1e105fbea1b1f23f3eb45"},
+    {file = "debugpy-1.6.7-cp37-cp37m-win_amd64.whl", hash = "sha256:f90a2d4ad9a035cee7331c06a4cf2245e38bd7c89554fe3b616d90ab8aab89cc"},
+    {file = "debugpy-1.6.7-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:5224eabbbeddcf1943d4e2821876f3e5d7d383f27390b82da5d9558fd4eb30a9"},
+    {file = "debugpy-1.6.7-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bae1123dff5bfe548ba1683eb972329ba6d646c3a80e6b4c06cd1b1dd0205e9b"},
+    {file = "debugpy-1.6.7-cp38-cp38-win32.whl", hash = "sha256:9cd10cf338e0907fdcf9eac9087faa30f150ef5445af5a545d307055141dd7a4"},
+    {file = "debugpy-1.6.7-cp38-cp38-win_amd64.whl", hash = "sha256:aaf6da50377ff4056c8ed470da24632b42e4087bc826845daad7af211e00faad"},
+    {file = "debugpy-1.6.7-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:0679b7e1e3523bd7d7869447ec67b59728675aadfc038550a63a362b63029d2c"},
+    {file = "debugpy-1.6.7-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:de86029696e1b3b4d0d49076b9eba606c226e33ae312a57a46dca14ff370894d"},
+    {file = "debugpy-1.6.7-cp39-cp39-win32.whl", hash = "sha256:d71b31117779d9a90b745720c0eab54ae1da76d5b38c8026c654f4a066b0130a"},
+    {file = "debugpy-1.6.7-cp39-cp39-win_amd64.whl", hash = "sha256:c0ff93ae90a03b06d85b2c529eca51ab15457868a377c4cc40a23ab0e4e552a3"},
+    {file = "debugpy-1.6.7-py2.py3-none-any.whl", hash = "sha256:53f7a456bc50706a0eaabecf2d3ce44c4d5010e46dfc65b6b81a518b42866267"},
+    {file = "debugpy-1.6.7.zip", hash = "sha256:c4c2f0810fa25323abfdfa36cbbbb24e5c3b1a42cb762782de64439c575d67f2"},
 ]
 
 [[package]]
@@ -1396,18 +1397,18 @@ devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "filelock"
-version = "3.10.7"
+version = "3.11.0"
 description = "A platform independent file lock."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "filelock-3.10.7-py3-none-any.whl", hash = "sha256:bde48477b15fde2c7e5a0713cbe72721cb5a5ad32ee0b8f419907960b9d75536"},
-    {file = "filelock-3.10.7.tar.gz", hash = "sha256:892be14aa8efc01673b5ed6589dbccb95f9a8596f0507e232626155495c18105"},
+    {file = "filelock-3.11.0-py3-none-any.whl", hash = "sha256:f08a52314748335c6460fc8fe40cd5638b85001225db78c2aa01c8c0db83b318"},
+    {file = "filelock-3.11.0.tar.gz", hash = "sha256:3618c0da67adcc0506b015fd11ef7faf1b493f0b40d87728e19986b536890c37"},
 ]
 
 [package.extras]
-docs = ["furo (>=2022.12.7)", "sphinx (>=6.1.3)", "sphinx-autodoc-typehints (>=1.22,!=1.23.4)"]
+docs = ["furo (>=2023.3.27)", "sphinx (>=6.1.3)", "sphinx-autodoc-typehints (>=1.22,!=1.23.4)"]
 testing = ["covdefaults (>=2.3)", "coverage (>=7.2.2)", "diff-cover (>=7.5)", "pytest (>=7.2.2)", "pytest-cov (>=4)", "pytest-mock (>=3.10)", "pytest-timeout (>=2.1)"]
 
 [[package]]
@@ -1481,7 +1482,7 @@ files = [
 
 [[package]]
 name = "geo-utils"
-version = "1.3.1"
+version = "1.3.2"
 description = "Python modules for performing GIS-related functionality."
 category = "main"
 optional = false
@@ -1505,7 +1506,7 @@ shapely = "^1.8.4"
 type = "git"
 url = "ssh://git@github.com/SenteraLLC/py-geo-utils.git"
 reference = "main"
-resolved_reference = "e92176d7215a82cf0732549820e3fb2f2fcd83e2"
+resolved_reference = "6032add11997845362d0a9ea42f4b3053bbae6e8"
 
 [[package]]
 name = "geoalchemy2"
@@ -1804,14 +1805,14 @@ files = [
 
 [[package]]
 name = "importlib-metadata"
-version = "6.1.0"
+version = "6.2.0"
 description = "Read metadata from Python packages"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "importlib_metadata-6.1.0-py3-none-any.whl", hash = "sha256:ff80f3b5394912eb1b108fcfd444dc78b7f1f3e16b16188054bd01cb9cb86f09"},
-    {file = "importlib_metadata-6.1.0.tar.gz", hash = "sha256:43ce9281e097583d758c2c708c4376371261a02c34682491a8e98352365aad20"},
+    {file = "importlib_metadata-6.2.0-py3-none-any.whl", hash = "sha256:8388b74023a138c605fddd0d47cb81dd706232569f56c9aca7d9c7fdb54caeba"},
+    {file = "importlib_metadata-6.2.0.tar.gz", hash = "sha256:9127aad2f49d7203e7112098c12b92e4fd1061ccd18548cdfdc49171a8c073cc"},
 ]
 
 [package.dependencies]
@@ -2702,14 +2703,14 @@ icu = ["PyICU (>=1.0.0)"]
 
 [[package]]
 name = "nbclassic"
-version = "0.5.4"
+version = "0.5.5"
 description = "Jupyter Notebook as a Jupyter Server extension."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "nbclassic-0.5.4-py3-none-any.whl", hash = "sha256:df78e4ba143f35084ad060deec16cb1d4839dde47bfdbc4232beb7071a6d70ea"},
-    {file = "nbclassic-0.5.4.tar.gz", hash = "sha256:312b3f7d7ff2e6c261d51799bb12e6493498ab47d3469d3a01015d5533fd4d2b"},
+    {file = "nbclassic-0.5.5-py3-none-any.whl", hash = "sha256:47791b04dbcb89bf7fde910a3d848fd4793a4248a8936202453631a87da37d51"},
+    {file = "nbclassic-0.5.5.tar.gz", hash = "sha256:d2c91adc7909b0270c73e3e253d3687a6704b4f0a94bc156a37c85eba09f4d37"},
 ]
 
 [package.dependencies]
@@ -2848,14 +2849,14 @@ setuptools = "*"
 
 [[package]]
 name = "notebook"
-version = "6.5.3"
+version = "6.5.4"
 description = "A web-based notebook environment for interactive computing"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "notebook-6.5.3-py3-none-any.whl", hash = "sha256:50a334ad9d60b30cb759405168ef6fc3d60350ab5439fb1631544bb09dcb2cce"},
-    {file = "notebook-6.5.3.tar.gz", hash = "sha256:b12bee3292211d85dd7e588a790ddce30cb3e8fbcfa1e803522a207f60819e05"},
+    {file = "notebook-6.5.4-py3-none-any.whl", hash = "sha256:dd17e78aefe64c768737b32bf171c1c766666a21cc79a44d37a1700771cab56f"},
+    {file = "notebook-6.5.4.tar.gz", hash = "sha256:517209568bd47261e2def27a140e97d49070602eea0d226a696f42a7f16c9a4e"},
 ]
 
 [package.dependencies]

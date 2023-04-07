@@ -81,9 +81,6 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_existing` set to False.",
     )
 
-    ssh_env_name = f"SSH_DEMETER_{database_host}" if database_host == "AWS" else None
-    database_env_name = f"DEMETER-{database_env}_{database_host}_SUPER"
-
     # set up database connection
     logging.info("Connecting to database: %s", database_env_name)
     conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)

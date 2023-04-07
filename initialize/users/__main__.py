@@ -1,6 +1,15 @@
 """Create all database users for Demeter database.
 
-For help: python3 -m scripts.create_demeter_users --help
+Initialize users for the first time:
+python3 -m initialize.users
+
+Drop all users and re-create them:
+python3 -m initialize.users --drop_existing
+
+Drop just the weather users and re-create them:
+python3 -m initialize.users --drop_existing --user_list weather_user weather_ro_user
+
+For help: python3 -m initialize.users --help
 
 This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as
 the necessary passwords for all database users. See "Setting up Demeter" in Confluence.
@@ -46,27 +55,27 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--drop_user_list",
-        help="Optional list of users to drop and re-create.",
-        nargs="+",
-        default=USER_LIST,
-    )
-
-    parser.add_argument(
         "--drop_existing",
         action="store_true",
         help="Should existing roles be dropped and recreated?",
         default=False,
     )
 
+    parser.add_argument(
+        "--user_list",
+        help="Optional list of users to drop and re-create. Defaults to all demeter users.",
+        nargs="+",
+        default=USER_LIST,
+    )
+
     # parse args
     args = parser.parse_args()
     database_host = args.database_host
     database_env = args.database_env
-    drop_user_list = args.drop_user_list
+    user_list = args.user_list
 
-    if not isinstance(drop_user_list, Iterable):
-        drop_user_list = [drop_user_list]
+    if not isinstance(user_list, Iterable):
+        user_list = [user_list]
 
     drop_existing = get_flag_as_bool(args.drop_existing)
 
@@ -82,13 +91,13 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_existing` set to False.",
     )
 
-    # set up database connection
+    # set up database connectionx
     logging.info("Connecting to database: %s", database_env_name)
     conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
 
     # main program
     if drop_existing:
-        drop_existing_demeter_users(conn, user_list=drop_user_list)
+        drop_existing_demeter_users(conn, user_list=user_list)
 
     logging.info("Creating demeter users")
     create_demeter_users(conn)

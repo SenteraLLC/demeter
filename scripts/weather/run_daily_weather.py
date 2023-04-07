@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 from pandas import Series
 
 from demeter.db import getConnection
-from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
 from demeter.weather.query import get_weather_type_id_from_db
+from demeter.weather.weather_types import DAILY_WEATHER_TYPES
 from demeter.weather.workflow.inventory import (
     get_gdf_for_add,
     get_gdf_for_fill,

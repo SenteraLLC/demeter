@@ -49,7 +49,7 @@ def check_schema_users(conn: Connection, user_list: Iterable[str]) -> Iterable[s
     assert len(missing_users) == 0, msg
 
 
-def check_and_format_db_connection_args(host: str, env: str):
+def check_and_format_db_connection_args(host: str, env: str, superuser: bool = False):
     """DOCSTRING"""
 
     assert host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
@@ -64,7 +64,11 @@ def check_and_format_db_connection_args(host: str, env: str):
             sys.exit()
 
     ssh_env_name = f"SSH_DEMETER_{host}" if host == "AWS" else None
-    database_env_name = f"DEMETER-{env}_{host}_SUPER"
+
+    if superuser:
+        database_env_name = f"DEMETER-{env}_{host}_SUPER"
+    else:
+        database_env_name = f"DEMETER-{env}_{host}"
 
     return database_env_name, ssh_env_name
 

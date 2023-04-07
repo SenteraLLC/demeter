@@ -118,11 +118,8 @@ def reformat_failed_requests(request_list: List[dict]) -> List[dict]:
     reformat_request_list = []
 
     # identify failed requests and reformat using error-based function
-    n_failed = 0
     for r in request_list:
         if r["status"] == "FAIL":
-            n_failed += 1
-
             error_code = r["request_seconds"]
             error_type = [
                 error
@@ -133,8 +130,6 @@ def reformat_failed_requests(request_list: List[dict]) -> List[dict]:
             if error_type in ERROR_FORMAT.keys():
                 reformat_function = ERROR_FORMAT[error_type]
                 reformat_request_list += reformat_function(r)
-
-    logging.info("%s requests failed of %s", n_failed, len(request_list))
 
     return reformat_request_list
 

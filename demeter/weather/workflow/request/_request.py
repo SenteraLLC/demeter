@@ -85,8 +85,8 @@ def _logging_request_summary(request_list) -> None:
     n_success = n_completed - n_failed
     percent_success = round(100 * (n_success / n_completed))
 
-    logging.info("     SUCCESS: %s/%s (%s%)", n_success, n_completed, percent_success)
-    logging.info("     FAIL: %s/%s (%s%)", n_failed, n_completed, percent_failed)
+    logging.info("     SUCCESS: %s/%s (%s%%)", n_success, n_completed, percent_success)
+    logging.info("     FAIL: %s/%s (%s%%)", n_failed, n_completed, percent_failed)
 
 
 def submit_request_list(

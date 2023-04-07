@@ -39,6 +39,10 @@ GDF_COLS = [
     "date_last",
 ]
 
+GDF_EMPTY = GeoDataFrame(
+    [], columns=GDF_COLS, geometry="centroid", crs=CRS.from_epsg(4326)
+)
+
 
 def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
     """Creates `gdf` for "update" step in weather workflow.
@@ -63,7 +67,7 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
     # for each cell ID, determine most recent data extraction
     df_last_requested = get_date_last_requested_for_cell_id(cursor, table="daily")
     if df_last_requested is None:
-        return None
+        return GDF_EMPTY
 
     # ensure that data hasn't already been extracted for a given cell ID
     utc_date_now = datetime.now(tz=UTC).date()
@@ -72,7 +76,7 @@ def get_gdf_for_update(conn: Connection) -> GeoDataFrame:
     )
     df_last_requested = df_last_requested.loc[keep]
     if len(df_last_requested) == 0:
-        return None
+        return GDF_EMPTY
 
     # change extraction time to local time for each cell ID
     world_utm_id = [int(val) for val in df_last_requested["world_utm_id"].unique()]
@@ -140,6 +144,9 @@ def get_gdf_for_add(conn: Connection):
 
     # Find cell IDs represented by all demeter fields (their cell IDs may or may not be present in `weather.daily`)
     gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)
+    if len(gdf_need) == 0:
+        return GDF_EMPTY
+
     gdf_available = get_first_available_data_year_for_cell_id(
         cursor_weather=cursor, cell_id_list=gdf_need["cell_id"].to_list()
     )
@@ -164,6 +171,8 @@ def get_gdf_for_add(conn: Connection):
         )
     else:  # Of the needed cell_ids/fields, nothing is available yet. This is the first weather data to be populated.
         gdf_add = gdf_need.copy()
+
+        # TODO: This is where world UTM information would be added (see TODO in `get_weather_grid_info_for_all_demeter_fields()`)
 
     # represents the grid info for all cell_ids that need new weather added (could be new years, new cell_ids, or both)
     return gdf_add

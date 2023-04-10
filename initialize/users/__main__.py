@@ -20,7 +20,7 @@ from typing import Iterable
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from .._utils import confirm_user_choice, get_flag_as_bool
+from .._utils import confirm_user_choice
 from ._users import USER_LIST
 from .main import main
 
@@ -62,12 +62,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     database_host = args.database_host
     database_env = args.database_env
+    drop_existing = args.drop_existing
     user_list = args.user_list
 
     if not isinstance(user_list, Iterable):
         user_list = [user_list]
-
-    drop_existing = get_flag_as_bool(args.drop_existing)
 
     # confirm user choice
     drop_existing = confirm_user_choice(

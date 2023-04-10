@@ -16,7 +16,7 @@ import logging
 from dotenv import load_dotenv
 from utils.logging.tqdm import logging_init
 
-from .._utils import confirm_user_choice, get_flag_as_bool
+from .._utils import confirm_user_choice
 from ..schema.demeter.main import main as run_initialize_demeter
 from ..schema.raster.main import main as run_initialize_raster
 from ..schema.weather.main import main as run_initialize_weather
@@ -62,8 +62,7 @@ if __name__ == "__main__":
     demeter_schema_name = args.demeter_schema_name
     database_host = args.database_host
     database_env = args.database_env
-
-    drop_existing = get_flag_as_bool(args.drop_existing)
+    drop_existing = args.drop_existing
 
     # confirm user choices
     drop_existing = confirm_user_choice(

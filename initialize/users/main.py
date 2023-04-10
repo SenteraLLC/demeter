@@ -17,6 +17,14 @@ def main(
     drop_existing: bool,
     user_list: Iterable[str] = USER_LIST,
 ):
+    """Create demeter users in `user_list` on specified DB host and environment.
+
+    Args:
+        database_host (str): Host of database to query/change; can be 'AWS' or 'LOCAL'.
+        database_env (str): Database instance to query/change; can be 'DEV' or 'PROD'.
+        drop_existing (bool): Should the schema be re-created if it exists?
+        user_list (list of str): Optional list of users to drop and re-create. Defaults to all demeter users.
+    """
     # ensure appropriate set-up
     database_env_name, ssh_env_name = check_and_format_db_connection_args(
         host=database_host, env=database_env, superuser=True

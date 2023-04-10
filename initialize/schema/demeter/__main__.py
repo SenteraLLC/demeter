@@ -16,7 +16,7 @@ import argparse
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from ..._utils import confirm_user_choice, get_flag_as_bool
+from ..._utils import confirm_user_choice
 from .main import main
 
 if __name__ == "__main__":
@@ -58,8 +58,7 @@ if __name__ == "__main__":
     schema_name = args.schema_name
     database_host = args.database_host
     database_env = args.database_env
-
-    drop_existing = get_flag_as_bool(args.drop_existing)
+    drop_existing = args.drop_existing
 
     # confirm user choice
     drop_existing = confirm_user_choice(

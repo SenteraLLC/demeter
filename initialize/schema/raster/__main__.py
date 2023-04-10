@@ -17,7 +17,7 @@ import argparse
 from dotenv import load_dotenv
 from utils.logging.tqdm import logging_init
 
-from ..._utils import confirm_user_choice, get_flag_as_bool
+from ..._utils import confirm_user_choice
 from .main import main as run_initialize_raster
 
 if __name__ == "__main__":
@@ -51,8 +51,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     database_host = args.database_host
     database_env = args.database_env
-
-    drop_existing = get_flag_as_bool(args.drop_existing)
+    drop_existing = args.drop_existing
 
     drop_existing = confirm_user_choice(
         drop_existing,

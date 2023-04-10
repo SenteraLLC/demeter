@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from utils.logging.tqdm import logging_init
 
 from ..._utils import confirm_user_choice
-from .._utils.workflow import main
+from .._utils.workflow import run_schema_initialization
 
 if __name__ == "__main__":
     c = load_dotenv()
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_existing` set to False.",
     )
 
-    main(
+    run_schema_initialization(
         database_host=database_host,
         database_env=database_env,
         schema_name="raster",

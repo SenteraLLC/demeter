@@ -59,7 +59,7 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_existing` set to False.",
     )
 
-    run_schema_initialization(
+    _ = run_schema_initialization(
         database_host=database_host,
         database_env=database_env,
         schema_name="raster",

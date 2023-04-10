@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from utils.logging.tqdm import logging_init
 
 from ..._utils import confirm_user_choice
-from .main import main as run_initialize_raster
+from .._utils.workflow import main
 
 if __name__ == "__main__":
     c = load_dotenv()
@@ -59,8 +59,10 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_existing` set to False.",
     )
 
-    run_initialize_raster(
+    main(
         database_host=database_host,
         database_env=database_env,
+        schema_name="raster",
+        schema_type="RASTER",
         drop_existing=drop_existing,
     )

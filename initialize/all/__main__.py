@@ -17,11 +17,9 @@ from dotenv import load_dotenv
 from utils.logging.tqdm import logging_init
 
 from .._utils import confirm_user_choice
-from ..schema.demeter.main import main as run_initialize_demeter
-from ..schema.raster.main import main as run_initialize_raster
-from ..schema.weather.main import main as run_initialize_weather
-from ..users._users import USER_LIST
-from ..users.main import main as run_initialize_users
+from ..schema._utils.workflow import run_schema_initialization
+from ..schema.weather._populate_weather import populate_weather
+from ..users._create_users import USER_LIST, create_db_users
 
 if __name__ == "__main__":
     logging_init()  # enables tqdm progress bar to work with logging
@@ -71,9 +69,15 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_schemas` set to False.",
     )
 
+    schema_names = {
+        "DEMETER": demeter_schema_name,
+        "RASTER": "raster",
+        "WEATHER": "weather",
+    }
+
     # create users
     logging.info("CREATING USERS")
-    run_initialize_users(
+    create_db_users(
         database_host=database_host,
         database_env=database_env,
         drop_existing=drop_existing,
@@ -81,26 +85,14 @@ if __name__ == "__main__":
     )
 
     # create demeter
-    logging.info("CREATING DEMETER")
-    run_initialize_demeter(
-        database_host=database_host,
-        database_env=database_env,
-        schema_name=demeter_schema_name,
-        drop_existing=drop_existing,
-    )
-
-    # create weather
-    logging.info("CREATING WEATHER")
-    run_initialize_weather(
-        database_host=database_host,
-        database_env=database_env,
-        drop_existing=drop_existing,
-    )
-
-    # create raster
-    logging.info("CREATING RASTER")
-    run_initialize_raster(
-        database_host=database_host,
-        database_env=database_env,
-        drop_existing=drop_existing,
-    )
+    for schema_type in schema_names.keys():
+        logging.info("CREATING %s", schema_type)
+        initialized = run_schema_initialization(
+            database_host=database_host,
+            database_env=database_env,
+            schema_name=schema_names[schema_type],
+            schema_type=schema_type,
+            drop_existing=drop_existing,
+        )
+        if schema_type == "WEATHER" and initialized:
+            populate_weather(database_host=database_host, database_env=database_env)

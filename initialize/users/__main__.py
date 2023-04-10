@@ -21,8 +21,7 @@ from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
 from .._utils import confirm_user_choice
-from ._users import USER_LIST
-from .main import main
+from ._create_users import USER_LIST, create_db_users
 
 if __name__ == "__main__":
     c = load_dotenv()
@@ -75,7 +74,7 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_existing` set to False.",
     )
 
-    main(
+    create_db_users(
         database_host=database_host,
         database_env=database_env,
         drop_existing=drop_existing,

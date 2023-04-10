@@ -12,7 +12,8 @@ from psycopg2.extensions import AsIs
 from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker
 
-from demeter.db import getConnection, initialize_demeter_instance
+from demeter.db import getConnection
+from initialize.schema.demeter._initialize import initialize_demeter_instance
 
 load_dotenv()
 

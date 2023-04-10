@@ -109,7 +109,7 @@ grant usage, select on all sequences in schema weather to weather_user;
 alter default privileges in schema weather grant usage on sequences to weather_user;
 grant usage on schema weather to weather_user;
 
--- give `demeter_ro_user` read  access to `weather`
+-- give `weather_ro_user` read  access to `weather`
 grant select on all tables in schema weather to weather_ro_user;
 grant select on all sequences in schema weather to weather_ro_user;
 grant usage on schema weather to weather_ro_user;

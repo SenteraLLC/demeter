@@ -1,4 +1,4 @@
-from demeter.weather.initialize.weather_types import DAILY_WEATHER_TYPES
+from demeter.weather.weather_types import DAILY_WEATHER_TYPES
 
 # TODO: This section is one of the sections that will be most impacted by future stories on parameters.
 # We are keeping this part very basic (i.e., letting the user define how parameters are split up

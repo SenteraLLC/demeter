@@ -13,7 +13,7 @@ from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker
 
 from demeter.db import getConnection
-from initialize.schema.demeter._initialize import initialize_demeter_instance
+from initialize.schema._utils.initialize import initialize_schema_type
 
 load_dotenv()
 
@@ -35,8 +35,8 @@ engine = c.engine
 
 # check to make sure a test demeter instance doesn't already exist; if so, we need to manually drop that schema
 # else create instance for running tests
-created_test_demeter_instance = initialize_demeter_instance(
-    conn=c, schema_name=SCHEMA_NAME, drop_existing=False
+created_test_demeter_instance = initialize_schema_type(
+    conn=c, schema_name=SCHEMA_NAME, schema_type="DEMETER", drop_existing=False
 )
 msg = "Test schema already exists. Did you create a test schema for dev work? Please check and manually drop it."
 assert created_test_demeter_instance, msg

@@ -138,9 +138,11 @@ def get_gdf_for_add(conn: Connection):
     cursor = conn.connection.cursor()
 
     # Find cell IDs currently present in `weather.daily` that need more historical years of data
-    cell_ids_weather = get_populated_cell_ids(cursor, table="daily")[
-        "cell_id"
-    ].to_list()
+    df_populated = get_populated_cell_ids(cursor, table="daily")
+    if df_populated is not None:
+        cell_ids_weather = df_populated["cell_id"].to_list()
+    else:
+        cell_ids_weather = []
 
     # Find cell IDs represented by all demeter fields (their cell IDs may or may not be present in `weather.daily`)
     gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)

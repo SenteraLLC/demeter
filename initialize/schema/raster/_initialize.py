@@ -10,6 +10,7 @@ from demeter._version import __version__
 from initialize._utils import initialize_schema
 
 
+# schema_name must be a part of this formatting function
 def _format_raster_schema_sql(schema_name: str, schema_sql: str) -> str:
     """Formats `demeter` schema SQL file with new `schema_name` and version."""
 

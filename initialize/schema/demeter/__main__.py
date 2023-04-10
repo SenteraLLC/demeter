@@ -12,22 +12,12 @@ This script requires that you have the appropriate superuser credentials for the
 and have set up `demeter_user` and `demeter_ro_user` as users on the database.
 """
 import argparse
-import logging
 
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from demeter.db import getConnection
-
-from ..._utils import (
-    check_and_format_db_connection_args,
-    check_schema_users,
-    confirm_user_choice,
-    get_flag_as_bool,
-)
-from ._initialize import initialize_demeter_instance
-
-RQ_USERS = ("demeter_user", "demeter_ro_user")
+from ..._utils import confirm_user_choice, get_flag_as_bool
+from .main import main
 
 if __name__ == "__main__":
     c = load_dotenv()
@@ -71,11 +61,6 @@ if __name__ == "__main__":
 
     drop_existing = get_flag_as_bool(args.drop_existing)
 
-    # ensure appropriate set-up
-    database_env_name, ssh_env_name = check_and_format_db_connection_args(
-        host=database_host, env=database_env, superuser=True
-    )
-
     # confirm user choice
     drop_existing = confirm_user_choice(
         drop_existing,
@@ -83,13 +68,9 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_existing` set to False.",
     )
 
-    # set up database connection
-    logging.info("Connecting to database: %s", database_env_name)
-    conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
-
-    # check that users have been created
-    check_schema_users(conn=conn, user_list=RQ_USERS)
-
-    logging.info("Initializing demeter schema instance with name: %s", schema_name)
-    _ = initialize_demeter_instance(conn, schema_name, drop_existing)
-    conn.close()
+    main(
+        database_host=database_host,
+        database_env=database_env,
+        schema_name=schema_name,
+        drop_existing=drop_existing,
+    )

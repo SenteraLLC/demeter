@@ -15,24 +15,14 @@ This script requires that you have the appropriate superuser credentials for the
 the necessary passwords for all database users. See "Setting up Demeter" in Confluence.
 """
 import argparse
-import logging
 from typing import Iterable
 
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from demeter.db import getConnection
-
-from .._utils import (
-    check_and_format_db_connection_args,
-    confirm_user_choice,
-    get_flag_as_bool,
-)
-from ._users import (
-    USER_LIST,
-    create_demeter_users,
-    drop_existing_demeter_users,
-)
+from .._utils import confirm_user_choice, get_flag_as_bool
+from ._users import USER_LIST
+from .main import main
 
 if __name__ == "__main__":
     c = load_dotenv()
@@ -79,11 +69,6 @@ if __name__ == "__main__":
 
     drop_existing = get_flag_as_bool(args.drop_existing)
 
-    # ensure appropriate set-up
-    database_env_name, ssh_env_name = check_and_format_db_connection_args(
-        host=database_host, env=database_env, superuser=True
-    )
-
     # confirm user choice
     drop_existing = confirm_user_choice(
         drop_existing,
@@ -91,18 +76,9 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_existing` set to False.",
     )
 
-    # set up database connectionx
-    logging.info("Connecting to database: %s", database_env_name)
-    conn = getConnection(env_name=database_env_name, ssh_env_name=ssh_env_name)
-
-    # main program
-    if drop_existing:
-        drop_existing_demeter_users(conn, user_list=user_list)
-
-    logging.info("Creating demeter users")
-    create_demeter_users(conn)
-    conn.close()
-
-    logging.info(
-        "All users have been created. User access to schemas is provided upon schema initialization."
+    main(
+        database_host=database_host,
+        database_env=database_env,
+        drop_existing=drop_existing,
+        user_list=user_list,
     )

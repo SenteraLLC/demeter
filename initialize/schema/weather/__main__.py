@@ -50,8 +50,16 @@ if __name__ == "__main__":
         default=False,
     )
 
+    parser.add_argument(
+        "--schema_name",
+        type=str,
+        help="Schema name to use for new `weather` instance.",
+        default="weather",
+    )
+
     # set up args
     args = parser.parse_args()
+    schema_name = args.schema_name
     database_host = args.database_host
     database_env = args.database_env
     drop_existing = args.drop_existing
@@ -65,7 +73,7 @@ if __name__ == "__main__":
     initialized = run_schema_initialization(
         database_host=database_host,
         database_env=database_env,
-        schema_name="weather",
+        schema_name=schema_name,
         schema_type="WEATHER",
         drop_existing=drop_existing,
     )

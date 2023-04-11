@@ -88,7 +88,9 @@ def run_schema_initialization(
     # check that users have been created
     _check_schema_users(conn=conn, user_list=RQ_USERS[schema_type])
 
-    logging.info("Initializing demeter schema instance with name: %s", schema_name)
+    logging.info(
+        "Initializing %s schema instance with name: %s", schema_type, schema_name
+    )
     initialized = initialize_schema_type(
         conn=conn,
         schema_name=schema_name,

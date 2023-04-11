@@ -21,6 +21,13 @@ from ..schema._utils.workflow import run_schema_initialization
 from ..schema.weather._populate_weather import populate_weather
 from ..users._create_users import USER_LIST, create_db_users
 
+SCHEMA_NAMES = {
+    "DEMETER": "demeter",
+    "RASTER": "raster",
+    "WEATHER": "weather",
+}
+
+
 if __name__ == "__main__":
     logging_init()  # enables tqdm progress bar to work with logging
     c = load_dotenv()
@@ -48,16 +55,8 @@ if __name__ == "__main__":
         default=False,
     )
 
-    parser.add_argument(
-        "--demeter_schema_name",
-        type=str,
-        help="Schema name to use for new Demeter instance.",
-        default="demeter",
-    )
-
     # set up args
     args = parser.parse_args()
-    demeter_schema_name = args.demeter_schema_name
     database_host = args.database_host
     database_env = args.database_env
     drop_existing = args.drop_existing
@@ -69,12 +68,6 @@ if __name__ == "__main__":
         no_response="Continuing command with `drop_schemas` set to False.",
     )
 
-    schema_names = {
-        "DEMETER": demeter_schema_name,
-        "RASTER": "raster",
-        "WEATHER": "weather",
-    }
-
     # create users
     logging.info("CREATING USERS")
     create_db_users(
@@ -85,12 +78,12 @@ if __name__ == "__main__":
     )
 
     # create demeter
-    for schema_type in schema_names.keys():
+    for schema_type in SCHEMA_NAMES.keys():
         logging.info("CREATING %s", schema_type)
         initialized = run_schema_initialization(
             database_host=database_host,
             database_env=database_env,
-            schema_name=schema_names[schema_type],
+            schema_name=SCHEMA_NAMES[schema_type],
             schema_type=schema_type,
             drop_existing=drop_existing,
         )

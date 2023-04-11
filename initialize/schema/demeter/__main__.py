@@ -26,13 +26,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Initialize Demeter instance.")
 
     parser.add_argument(
-        "--schema_name",
-        type=str,
-        help="Schema name to use for new Demeter instance.",
-        required=True,
-    )
-
-    parser.add_argument(
         "--database_host",
         type=str,
         help="Host of database to query/change; can be 'AWS' or 'LOCAL'.",
@@ -51,6 +44,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Should the schema be re-created if it exists?",
         default=False,
+    )
+
+    parser.add_argument(
+        "--schema_name",
+        type=str,
+        help="Schema name to use for new Demeter instance.",
+        default="demeter",
     )
 
     # set up args

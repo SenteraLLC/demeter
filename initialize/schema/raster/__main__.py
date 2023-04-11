@@ -47,11 +47,19 @@ if __name__ == "__main__":
         default=False,
     )
 
+    parser.add_argument(
+        "--schema_name",
+        type=str,
+        help="Schema name to use for new `raster` instance.",
+        default="raster",
+    )
+
     # set up args
     args = parser.parse_args()
     database_host = args.database_host
     database_env = args.database_env
     drop_existing = args.drop_existing
+    schema_name = args.schema_name
 
     drop_existing = confirm_user_choice(
         drop_existing,
@@ -62,7 +70,7 @@ if __name__ == "__main__":
     _ = run_schema_initialization(
         database_host=database_host,
         database_env=database_env,
-        schema_name="raster",
+        schema_name=schema_name,
         schema_type="RASTER",
         drop_existing=drop_existing,
     )

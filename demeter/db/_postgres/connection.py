@@ -34,7 +34,7 @@ def _check_and_get_env_dictionary(
     required_keys: list = None,
 ) -> dict:
     """
-    Get the environment value for a given environment name.
+    Get the environment dictionary variable for a given environment name and check that it is valid.
 
     Args:
         env_name (str): Environment key.
@@ -50,7 +50,7 @@ def _check_and_get_env_dictionary(
         SyntaxError: If `required_keys` is `True` and environment value cannot be parsed as a json/dict.
 
     Returns:
-        str: Environment value.
+        dict: Environment dictionary.
     """
     env_value = os.environ.get(env_name, default)
 
@@ -145,7 +145,7 @@ def getExistingSearchPath(
     ssh_env_name: str = None,
 ) -> str:
     """
-    Gets existing `search_path` of database connection.
+    Gets existing `search_path` of database connection based on connecting user.
 
     Args:
         env_name (str): Environment key.

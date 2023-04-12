@@ -5,10 +5,10 @@ The database schema and API that supports agronomic modeling and data science ac
 ## Documentation
 ### [Demeter Postgres Setup](https://sentera.atlassian.net/wiki/spaces/GML/pages/3297148971/Demeter+Setup)
 A guide for configuring your project to connect to a `demeter` PostgreSQL database.
-#### [Initializing Database Server](https://sentera.atlassian.net/wiki/spaces/GML/pages/3299639330/Initializing+database+server)
-#### [Connecting to AWS RDS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3301048336/Connecting+to+AWS+RDS)
-#### [README_wsl](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md)
-Contains information about how to set up PostgreSQL and PostGIS on Windows Subsystem for Linux.
+- __[Initializing Database Server](https://sentera.atlassian.net/wiki/spaces/GML/pages/3299639330/Initializing+database+server)__
+- __[Connecting to AWS RDS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3301048336/Connecting+to+AWS+RDS)__
+- __[README_wsl](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md)__
+  - Contains information about how to set up PostgreSQL and PostGIS on Windows Subsystem for Linux.
 
 ## Setup and Installation (for development)
 1) [Set up SSH](https://github.com/SenteraLLC/install-instructions/blob/master/ssh_setup.md)

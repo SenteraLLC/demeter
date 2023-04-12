@@ -15,7 +15,6 @@ from ._json_type import EMPTY_JSON, JSON
 from ._postgres.connection import (  # unlikely that anything besides Postgres will ever be supported
     getConnection,
     getEngine,
-    getEnv,
     getExistingSearchPath,
     getSession,
 )
@@ -32,7 +31,6 @@ __all__ = [
     "getEngine",
     "getExistingSearchPath",
     "getSession",
-    "getEnv",
     "SQLGenerator",
     "generateInsertMany",
     "doPgFormat",

@@ -9,11 +9,6 @@ from typing import (
 
 import psycopg2
 import psycopg2.extras
-from psycopg2.extensions import (
-    adapt,
-    connection,
-    register_adapter,
-)
 from sqlalchemy.engine import (
     URL,
     Connection,
@@ -23,13 +18,21 @@ from sqlalchemy.engine import (
 from sqlalchemy.orm import Session, sessionmaker
 from sshtunnel import SSHTunnelForwarder
 
+DB_DICT_KEYS = ("host", "port", "username", "password", "database")
+SSH_DICT_KEYS = (
+    "ssh_address_or_host",
+    "ssh_username",
+    "ssh_pkey",
+    "remote_bind_address",
+)
 
-def getEnv(
+
+def _check_and_get_env_dictionary(
     env_name: str,
     default: Optional[Any] = None,
     is_required: bool = False,
     required_keys: list = None,
-) -> str:
+) -> dict:
     """
     Get the environment value for a given environment name.
 
@@ -66,39 +69,43 @@ def getEnv(
         assert set(required_keys).issubset(
             list(v_dict.keys())
         ), f"These keys must be present in {env_name}: {required_keys}"
-    return env_value
+    return literal_eval(env_value)
 
 
-def getConnection(
-    env_name: str,
-    cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
-    dialect: str = "postgresql+psycopg2",
-    ssh_env_name: str = None,
-) -> Connection:
+def _get_ssh_bind_port(
+    ssh_address_or_host: str,
+    ssh_username: str,
+    ssh_private_key: str,
+    remote_bind_address: str,
+) -> str:
     """
-    Establish a database connection (via sqlalchemy).
+    Use SSHTunnelForwarder to bind host to a local port.
 
     Args:
-        env_name (str): Environment key.
-        cursor_type (Type[psycopg2.extensions.cursor], optional): Psycopg2 cursor type to use. Defaults to
-        `psycopg2.extras.NamedTupleCursor`.
-        dialect (str, optional): Database dialect to be used in creation of database connection URL. Defaults to
-        "postgresql+psycopg2".
-        ssh_env_name (str, optional): The environment key that holds credentials for an SSH tunnel; setting to `None`
-        will establish a connection without use of an SSH tunnel. Defaults to None.
+        ssh_address_or_host (str): IP or hostname of REMOTE GATEWAY. It may be a two-element tuple (str, int)
+        representing IP and port respectively, or a str representing the IP address only.
+        ssh_username (str): Username to authenticate as in REMOTE SERVER.
+        ssh_private_key (str): Private key file name (str) to obtain the public key from or a public key
+        (paramiko.pkey.PKey)
+        remote_bind_address (str): The IP of the remote side of the tunnel.
 
     Returns:
-        Connection: The sqlalchemy database connection.
+        str: Local port after binding SHH host.
     """
-    return getEngine(
-        env_name=env_name,
-        cursor_type=cursor_type,
-        dialect=dialect,
-        ssh_env_name=ssh_env_name,
-    ).connect()
+    server = SSHTunnelForwarder(
+        ssh_address_or_host=(ssh_address_or_host, 22),
+        ssh_username=ssh_username,
+        ssh_private_key=ssh_private_key,
+        remote_bind_address=(remote_bind_address, 5432),
+        set_keepalive=15,
+    )
+    server.daemon_forward_servers = True
+    server.start()
+    local_port = str(server.local_bind_port)
+    return local_port
 
 
-def check_ssh_env(
+def _maybe_setup_ssh_env(
     db_fields: Dict,
     ssh_env_name: str = None,
 ) -> Dict:
@@ -116,20 +123,16 @@ def check_ssh_env(
         Dict: Key/value pairs of database connection arguments, adapted for SSH tunneling if available.
     """
     if ssh_env_name:
-        cols_ssh = [
-            "ssh_address_or_host",
-            "ssh_username",
-            "ssh_pkey",
-            "remote_bind_address",
-        ]
-        ssh_meta = literal_eval(
-            getEnv(ssh_env_name, is_required=True, required_keys=cols_ssh)
+        ssh_meta = _check_and_get_env_dictionary(
+            ssh_env_name, is_required=True, required_keys=SSH_DICT_KEYS
         )
+
         ssh_address_or_host = ssh_meta["ssh_address_or_host"]
         ssh_username = ssh_meta["ssh_username"]
         ssh_private_key = ssh_meta["ssh_pkey"]
         remote_bind_address = ssh_meta["remote_bind_address"]
-        db_fields["port"] = ssh_bind_port(
+
+        db_fields["port"] = _get_ssh_bind_port(
             ssh_address_or_host, ssh_username, ssh_private_key, remote_bind_address
         )
     return db_fields
@@ -156,15 +159,17 @@ def getExistingSearchPath(
     Returns:
         str: `search_path` for passed database connection (e.g., "search_path=demeter,weather,public").
     """
-    cols_env = ["host", "port", "username", "password", "database", "schema_name"]
-    db_fields = check_ssh_env(
-        literal_eval(getEnv(env_name, is_required=True, required_keys=cols_env)),
-        ssh_env_name,
-    )  # make into dictionary
+    # Organize connection details
+    db_env_fields = _check_and_get_env_dictionary(
+        env_name, is_required=True, required_keys=DB_DICT_KEYS
+    )
+    db_fields = _maybe_setup_ssh_env(db_env_fields, ssh_env_name)
+
     connect_args = {
         "cursor_factory": cursor_type,
     }
-    #  Can't use getEngine() because getEngine() needs getExistingSearchPath()
+
+    # Can't use getEngine() because getEngine() needs getExistingSearchPath()
     url_object = URL.create(
         dialect,
         host=db_fields["host"],
@@ -199,6 +204,10 @@ def getEngine(
     """
     Establish a database engine (via sqlalchemy).
 
+    Search path is assumed to be the default "search_path" for the given user unless "search_path" is set
+    in the passed `env_name` permission dictionary. Any "search_path" value in the permission dictionary
+    will overwrite the default search path for created connection.
+
     Args:
         env_name (str): Environment key.
         cursor_type (Type[psycopg2.extensions.cursor], optional): Psycopg2 cursor type to use. Defaults to
@@ -211,29 +220,29 @@ def getEngine(
     Returns:
         Engine: The sqlalchemy database engine.
     """
-    cols_env = ["host", "port", "username", "password", "database", "schema_name"]
-    db_fields = check_ssh_env(
-        literal_eval(getEnv(env_name, is_required=True, required_keys=cols_env)),
-        ssh_env_name,
-    )  # make into dictionary
+    # Organize connection details
+    db_env_fields = _check_and_get_env_dictionary(
+        env_name, is_required=True, required_keys=DB_DICT_KEYS
+    )
+    db_fields = _maybe_setup_ssh_env(db_env_fields, ssh_env_name)
 
-    # Get existing search_path and combine with whatever is in db_fields["schema_name"] (if anything)
-    search_path = getExistingSearchPath(env_name, cursor_type, dialect, ssh_env_name)
-    if search_path is None:
-        search_path_list = []
-    else:
-        search_path_list = search_path.split("=")[-1].split(",")
-    if "schema_name" in db_fields.keys():
-        if db_fields["schema_name"] not in search_path_list:
-            # ensure "public" is in search path no matter the initial order; remove "public", then add it back
-            search_path_list.remove(
-                "public"
-            ) if "public" in search_path_list else search_path_list
-            # prepend schema_name to search_path
-            if len(search_path_list) == 0:
-                search_path = f"search_path={db_fields['schema_name']},public"
-            else:
-                search_path = f"search_path={db_fields['schema_name']},{','.join(search_path_list)},public"
+    if "search_path" in db_fields.keys():
+        search_path_arg = db_fields["search_path"]
+        search_path_list = search_path_arg.split(",")
+
+        # Ensure "public" is in search path and is last
+        if "public" in search_path_list:
+            search_path_list.remove("public")
+        search_path_list += ["public"]
+
+        search_path_str = ",".join(search_path_list)
+        search_path = f"search_path={search_path_str}"
+
+    else:  # get existing search_path and combine with whatever is in db_fields["schema_name"] (if anything)
+        search_path = getExistingSearchPath(
+            env_name, cursor_type, dialect, ssh_env_name
+        )
+
     connect_args = {
         "options": f"-c {search_path}",  # overwrites search path, but gets according to getExistingSearchPath()
         "cursor_factory": cursor_type,
@@ -247,40 +256,37 @@ def getEngine(
         password=db_fields["password"],
         database=db_fields["database"],
     )
+
     return create_engine(url_object, connect_args=connect_args)
 
 
-def ssh_bind_port(
-    ssh_address_or_host: str,
-    ssh_username: str,
-    ssh_private_key: str,
-    remote_bind_address: str,
-) -> str:
+def getConnection(
+    env_name: str,
+    cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
+    dialect: str = "postgresql+psycopg2",
+    ssh_env_name: str = None,
+) -> Connection:
     """
-    Use SSHTunnelForwarder to bind host to a local port.
+    Establish a database connection (via sqlalchemy).
 
     Args:
-        ssh_address_or_host (str): IP or hostname of REMOTE GATEWAY. It may be a two-element tuple (str, int)
-        representing IP and port respectively, or a str representing the IP address only.
-        ssh_username (str): Username to authenticate as in REMOTE SERVER.
-        ssh_private_key (str): Private key file name (str) to obtain the public key from or a public key
-        (paramiko.pkey.PKey)
-        remote_bind_address (str): The IP of the remote side of the tunnel.
+        env_name (str): Environment key.
+        cursor_type (Type[psycopg2.extensions.cursor], optional): Psycopg2 cursor type to use. Defaults to
+        `psycopg2.extras.NamedTupleCursor`.
+        dialect (str, optional): Database dialect to be used in creation of database connection URL. Defaults to
+        "postgresql+psycopg2".
+        ssh_env_name (str, optional): The environment key that holds credentials for an SSH tunnel; setting to `None`
+        will establish a connection without use of an SSH tunnel. Defaults to None.
 
     Returns:
-        str: Local port after binding SHH host.
+        Connection: The sqlalchemy database connection.
     """
-    server = SSHTunnelForwarder(
-        ssh_address_or_host=(ssh_address_or_host, 22),
-        ssh_username=ssh_username,
-        ssh_private_key=ssh_private_key,
-        remote_bind_address=(remote_bind_address, 5432),
-        set_keepalive=15,
-    )
-    server.daemon_forward_servers = True
-    server.start()
-    local_port = str(server.local_bind_port)
-    return local_port
+    return getEngine(
+        env_name=env_name,
+        cursor_type=cursor_type,
+        dialect=dialect,
+        ssh_env_name=ssh_env_name,
+    ).connect()
 
 
 def getSession(
@@ -314,35 +320,54 @@ def getSession(
     )
 
 
-def getConnection_psycopg2(
-    env_name: str,
-    cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
-) -> connection:
-    """
-    Establish a database connection (via psycopg2).
+# from psycopg2.extensions import (
+#     adapt,
+#     connection,
+#     register_adapter,
+# )
+# def getConnection_psycopg2(
+#     env_name: str,
+#     cursor_type: Type[psycopg2.extensions.cursor] = psycopg2.extras.NamedTupleCursor,
+# ) -> connection:
+#     """
+#     Establish a database connection (via psycopg2).
 
-    Args:
-        env_name (str): Environment key.
-        cursor_type (Type[psycopg2.extensions.cursor], optional): Psycopg2 cursor type to use. Defaults to
-        `psycopg2.extras.NamedTupleCursor`.
+#     Args:
+#         env_name (str): Environment key.
+#         cursor_type (Type[psycopg2.extensions.cursor], optional): Psycopg2 cursor type to use. Defaults to
+#         `psycopg2.extras.NamedTupleCursor`.
 
-    Returns:
-        connection: The psycopg2 database connection.
-    """
-    register_adapter(set, lambda s: adapt(list(s)))  # type: ignore - not sure what this does?
+#     Returns:
+#         connection: The psycopg2 database connection.
+#     """
+#     register_adapter(set, lambda s: adapt(list(s)))  # type: ignore - not sure what this does?
 
-    db_fields = literal_eval(getEnv(env_name))  # make into dictionary
-    schema_name = (
-        db_fields["schema_name"] + "," if "schema_name" in db_fields.keys() else ""
-    )
-    options = "-c search_path={}public".format(schema_name)
+#     # Organize connection details
+#     db_fields = _check_and_get_env_dictionary(env_name)  # make into dictionary
 
-    return psycopg2.connect(
-        host=db_fields["host"],
-        port=db_fields["port"],
-        password=db_fields["password"],
-        options=options,
-        database=db_fields["database"],
-        username=db_fields["username"],
-        cursor_factory=cursor_type,
-    )
+#     if "search_path" in db_fields.keys():
+#         search_path_arg = db_fields["search_path"]
+#         search_path_list = search_path_arg.split(",")
+
+#         # Ensure "public" is in search path and is last
+#         if "public" in search_path_list:
+#             search_path_list.remove("public")
+#         search_path_list += ["public"]
+
+#         search_path_str = ",".join(search_path_list)
+#         search_path = f"search_path={search_path_str}"
+
+#     else:  # get existing search_path and combine with whatever is in db_fields["schema_name"] (if anything)
+#         search_path = getExistingSearchPath(env_name, cursor_type)
+
+#     options = "-c {}".format(search_path)
+
+#     return psycopg2.connect(
+#         host=db_fields["host"],
+#         port=db_fields["port"],
+#         password=db_fields["password"],
+#         options=options,
+#         database=db_fields["database"],
+#         username=db_fields["username"],
+#         cursor_factory=cursor_type,
+#     )

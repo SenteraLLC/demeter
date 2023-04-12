@@ -143,6 +143,7 @@ def initialize_schema_type(
     Args:
         conn (sqlalchemy.engine.Connection): Connection to demeter database where schema should be created.
         schema_name (str): Name to give schema.
+        schema_type (str): Name of schema definition to initialize; must be mapped in `SQL_FNAMES`.
         drop_existing (bool): Indicates whether or not an existing schema called `schema_name` should be dropped if exists.
     """
 

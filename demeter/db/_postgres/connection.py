@@ -269,6 +269,11 @@ def getConnection(
     """
     Establish a database connection (via sqlalchemy).
 
+    Search path is assumed to be the default "search_path" for the given user unless "search_path" is set
+    in the passed `env_name` permission dictionary. Any "search_path" value in the permission dictionary
+    will overwrite the default search path for created connection.
+
+
     Args:
         env_name (str): Environment key.
         cursor_type (Type[psycopg2.extensions.cursor], optional): Psycopg2 cursor type to use. Defaults to

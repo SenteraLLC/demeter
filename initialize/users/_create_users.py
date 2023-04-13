@@ -13,10 +13,9 @@ from pandas import DataFrame
 from psycopg2.sql import Identifier
 from sqlalchemy.engine import Connection
 
+from demeter.cli import check_and_format_db_connection_args
 from demeter.db import getConnection
 from demeter.db._postgres.tools import doPgFormat
-
-from .._utils import check_and_format_db_connection_args
 
 USER_LIST = (
     "demeter_user",

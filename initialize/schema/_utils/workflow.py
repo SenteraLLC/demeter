@@ -4,9 +4,9 @@ from typing import Iterable
 from pandas import DataFrame
 from sqlalchemy.engine import Connection
 
+from demeter.cli import check_and_format_db_connection_args
 from demeter.db import getConnection
 
-from ..._utils import check_and_format_db_connection_args
 from .initialize import initialize_schema_type
 
 RQ_USERS = {

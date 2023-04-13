@@ -15,11 +15,11 @@ from geo_utils.general import get_utc_offset
 from geopandas import read_file as gpd_read_file
 from sqlalchemy.engine import Connection
 
+from demeter.cli import check_and_format_db_connection_args
 from demeter.db import getConnection
 from demeter.weather.weather_types import DAILY_WEATHER_TYPES
 from demeter.weather.workflow.insert import maybe_insert_weather_type_to_db
 
-from ..._utils import check_and_format_db_connection_args
 from ._grid_utils import (
     add_rast_metadata,
     add_raster,

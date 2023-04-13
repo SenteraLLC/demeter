@@ -16,7 +16,8 @@ import argparse
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from ..._utils import confirm_user_choice
+from demeter.cli import confirm_user_choice
+
 from .._utils.workflow import run_schema_initialization
 
 if __name__ == "__main__":

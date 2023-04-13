@@ -16,7 +16,8 @@ import logging
 from dotenv import load_dotenv
 from utils.logging.tqdm import logging_init
 
-from .._utils import confirm_user_choice
+from demeter.cli import confirm_user_choice
+
 from ..schema._utils.workflow import run_schema_initialization
 from ..schema.weather._populate_weather import populate_weather
 from ..users._create_users import USER_LIST, create_db_users

@@ -49,7 +49,7 @@ create table collections (
 -- TABLE: 'raster_meta'
 
 CREATE TYPE rast_type AS ENUM ('RAW','PRIMARY','DERIVED','UNKNOWN');
-CREATE TYPE rast_subtype AS ENUM ('RGB','MULTISPECTRAL','THERMAL','HYPERSPECTRAL','DEM','SENTERA');
+CREATE TYPE rast_subtype AS ENUM ('RGB','MULTISPECTRAL','THERMAL','HYPERSPECTRAL','DEM','INTERPOLATED','PREDICTION','BANDMATH','ELEVATION');
 
 create table raster_meta (
     rid bigserial primary key,
@@ -76,6 +76,16 @@ create table raster_meta (
                   default '{}'::jsonb,
     geom geometry(Geometry, 4326) not null
 );
+
+ALTER TABLE raster_meta
+  ADD CONSTRAINT raster_subtypes_belong
+  CHECK (
+    (raster_type = 'RAW' AND raster_subtype in ('RGB','MULTISPECTRAL','THERMAL','HYPERSPECTRAL')) OR
+    (raster_type = 'PRIMARY' AND raster_subtype in ('RGB','MULTISPECTRAL','THERMAL','HYPERSPECTRAL','DEM', 'INTERPOLATED')) OR
+    (raster_type = 'DERIVED' AND raster_subtype in ('PREDICTION','BANDMATH','ELEVATION')) OR
+    (raster_type = 'UNKNOWN')
+  );
+
 
 -- give `demeter_user` read and write access to `raster`
 grant select, insert on all tables in schema raster to demeter_user;

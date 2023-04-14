@@ -19,6 +19,7 @@ from utils.logging.tqdm import logging_init
 
 from demeter.cli import confirm_user_choice
 
+from .._utils.initialize import SQL_FNAMES
 from .._utils.workflow import run_schema_initialization
 from ._populate_weather import populate_weather
 
@@ -77,6 +78,7 @@ if __name__ == "__main__":
         schema_name=schema_name,
         schema_type="WEATHER",
         drop_existing=drop_existing,
+        sql_fnames=SQL_FNAMES,
     )
 
     if initialized:

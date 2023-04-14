@@ -6,6 +6,7 @@ The database schema and API that supports agronomic modeling and data science ac
 ### [Demeter Postgres Setup](https://sentera.atlassian.net/wiki/spaces/GML/pages/3297148971/Demeter+Setup)
 A guide for configuring your project to connect to a `demeter` PostgreSQL database.
 - __[Initializing Database Server](https://sentera.atlassian.net/wiki/spaces/GML/pages/3299639330/Initializing+database+server)__
+  - Includes Mac and Windows set-up
 - __[WSL Setup](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302850561/WSL+Setup)__
   - Contains information about how to set up PostgreSQL and PostGIS on Windows Subsystem for Linux.
   - __[Upgrade GEOS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302522986/Upgrade+GEOSp)__ 
@@ -59,8 +60,7 @@ poetry install
 
 ## Requirements
 - Python `3.10.4`+
-- Access to a Postgres database (with connection credentials)
-- A local installation of PostgreSQL (i.e., `psql`)
+- Access to a Postgres database with appropriate connection credentials (see Documentation above)
 - OSX Users may need to manually install the 'gdal' system requirement (e.g. brew install gdal)
 
 ## Demeter Data Types
@@ -70,45 +70,32 @@ See these Confluence pages for some background on data types and tables that the
 
 ## Tests
 
-Before running tests, you must initialize the schema
+Before running tests, you must
+1) Have a local instance of the `demeter` database with appropriate users created and the `weather` and `demeter` schemas initialized and populated.
+  - See `Demeter Postgres Setup` Confluence doc above.
+2) Set up the three test permission dictionaries: `TEST_DEMETER_SETUP`, `TEST_DEMETER_RW`, and `TEST_DEMETER_RO`
+  - For each dictionary, set `search_path` = `test_demeter,weather,public`.
+  - Ask Tyler or Marissa for more details on how to set up permissions for these users.
 
-``` bash
-psql --host localhost --user postgres -f schema.sql postgres
-```
+Then, you can run `pytest` with
 
-**scripts/sample.py**
 ```bash
-$ poetry run python scripts/sample.py
-
-Root group id: 75910
-Argentina group id: 75911
-Field Geom id: 105669
-Field id: 250158
-Irrigation type id: 90
-Gallons type id: 118
-Observation geom id:  105669
-Local value id: 228730
+poetry run pytest
 ```
 
 ## Troubleshooting
 ### Installing `geopandas` on Mac
 [See this SO thread](https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1)
 
-### Installing PostgreSQL on WSL2
-[See README_wsl](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md)
-
 ## Diagram Generation
 Graphviz is required for automatic diagram generation. Ensure `graphviz` is installed (note that it's present in the `dev-dependencies`).
 
-A `schema-test_demeter.png` can be automatically generated with the following:
+A `schema-demeter.png` can be automatically generated with the following:
 
 ```bash
-pg_dump --schema-only --schema test_demeter -h localhost -U postgres -d postgres | poetry run python -m scripts.to_graphviz | dot -Tpng > schema-test_demeter.png
+pg_dump --schema-only --schema demeter -h localhost -U postgres -d demeter-dev | poetry run python -m scripts.to_graphviz | dot -Tpng > schema-demeter.png
 ```
 
-## TODO
-- Guide for setting up user account postgres using `postgres` account and `read_and_write` role and password `<user>`
-- Grant `read_and_write` to `<user>`
 
 #### Example Schema
-![Example Schema](./schema-test_demeter.png)
+![Example Schema](./schema-demeter.png)

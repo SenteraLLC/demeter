@@ -7,8 +7,10 @@ The database schema and API that supports agronomic modeling and data science ac
 A guide for configuring your project to connect to a `demeter` PostgreSQL database.
 - __[Initializing Database Server](https://sentera.atlassian.net/wiki/spaces/GML/pages/3299639330/Initializing+database+server)__
 - __[Connecting to AWS RDS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3301048336/Connecting+to+AWS+RDS)__
-- __[README_wsl](https://github.com/SenteraLLC/demeter/blob/main/README_wsl.md)__
+- __[WSL Setup](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302850561/WSL+Setup)__
   - Contains information about how to set up PostgreSQL and PostGIS on Windows Subsystem for Linux.
+- __[Upgrade GEOS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302522986/Upgrade+GEOSp)__ 
+  - Contains information on upgrading GEOS to GEOS v3.9+ to enable some PostGIS functions.
 
 ## Setup and Installation (for development)
 1) [Set up SSH](https://github.com/SenteraLLC/install-instructions/blob/master/ssh_setup.md)

@@ -134,7 +134,11 @@ def _maybe_initialize_schema(
 
 
 def initialize_schema_type(
-    conn: Connection, schema_name: str, schema_type: str, drop_existing: bool = False
+    conn: Connection,
+    schema_name: str,
+    schema_type: str,
+    drop_existing: bool = False,
+    sql_fnames: dict = SQL_FNAMES,
 ) -> bool:
     """Initializes schema with given `schema_name` using database connection.
 
@@ -145,14 +149,15 @@ def initialize_schema_type(
         schema_name (str): Name to give schema.
         schema_type (str): Name of schema definition to initialize; must be mapped in `SQL_FNAMES`.
         drop_existing (bool): Indicates whether or not an existing schema called `schema_name` should be dropped if exists.
+        sql_fnames (dict): Mapping from `schema_type` to a SQL schema file to initialize; defaults to `SQL_FNAMES`.
     """
 
     assert (
-        schema_type in SQL_FNAMES.keys()
-    ), f"`schema_type` = {schema_type} not implemented."
+        schema_type in sql_fnames.keys()
+    ), f"`schema_type` = {schema_type} not mapped in `sql_fnames`. Did you add the SQL file name to `SQL_FNAMES`?"
 
     file_dir = realpath(join(dirname(__file__), ".."))
-    sql_fname = join(file_dir, "_sql", SQL_FNAMES[schema_type])
+    sql_fname = join(file_dir, "_sql", sql_fnames[schema_type])
 
     sql_function = SQL_FUNCTIONS[schema_type]
 

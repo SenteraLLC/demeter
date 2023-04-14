@@ -16,7 +16,9 @@ import argparse
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from ..._utils import confirm_user_choice
+from demeter.cli import confirm_user_choice
+
+from .._utils.initialize import SQL_FNAMES
 from .._utils.workflow import run_schema_initialization
 
 if __name__ == "__main__":
@@ -73,4 +75,5 @@ if __name__ == "__main__":
         schema_name=schema_name,
         schema_type="DEMETER",
         drop_existing=drop_existing,
+        sql_fnames=SQL_FNAMES,
     )

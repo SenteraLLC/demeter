@@ -20,7 +20,8 @@ from typing import Iterable
 from dotenv import load_dotenv  # type: ignore
 from utils.logging.tqdm import logging_init
 
-from .._utils import confirm_user_choice
+from demeter.cli import confirm_user_choice
+
 from ._create_users import USER_LIST, create_db_users
 
 if __name__ == "__main__":

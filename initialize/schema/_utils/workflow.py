@@ -4,10 +4,10 @@ from typing import Iterable
 from pandas import DataFrame
 from sqlalchemy.engine import Connection
 
+from demeter.cli import check_and_format_db_connection_args
 from demeter.db import getConnection
 
-from ..._utils import check_and_format_db_connection_args
-from .initialize import initialize_schema_type
+from .initialize import SQL_FNAMES, initialize_schema_type
 
 RQ_USERS = {
     "DEMETER": ("demeter_user", "demeter_ro_user"),
@@ -57,6 +57,7 @@ def run_schema_initialization(
     schema_name: str,
     schema_type: str,
     drop_existing: bool,
+    sql_fnames: dict = SQL_FNAMES,
 ) -> bool:
     """Initialize  `schema_type` schema on specified DB host and environment.
 
@@ -68,6 +69,7 @@ def run_schema_initialization(
         schema_name (str): Schema name to use for new schema.
         schema_type (str): Type of schema for which to run initialization.
         drop_existing (bool): Should the schema be re-created if it exists?
+        sql_fnames (dict): Mapping from `schema_type` to a SQL schema file to initialize; defaults to `SQL_FNAMES`.
 
     Returns True if the schema was initialized. Returns False if the schema already exists and was not
         reinitialized.
@@ -96,6 +98,7 @@ def run_schema_initialization(
         schema_name=schema_name,
         schema_type=schema_type,
         drop_existing=drop_existing,
+        sql_fnames=sql_fnames,
     )
     conn.close()
 

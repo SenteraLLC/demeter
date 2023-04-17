@@ -242,6 +242,10 @@ def getEngine(
         search_path = getExistingSearchPath(
             env_name, cursor_type, dialect, ssh_env_name
         )
+    if search_path is None:
+        raise ValueError(
+            "`seach_path` cannot be None. Try `ALTER ROLE postgres set search_path = public;`"
+        )
 
     connect_args = {
         "options": f"-c {search_path}",  # overwrites search path, but gets according to getExistingSearchPath()

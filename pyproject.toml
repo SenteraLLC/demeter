@@ -37,6 +37,7 @@ global-land-mask = "^1.0.0"
 timezonefinder = "^6.1.9"
 aws_utils = {git = "ssh://git@github.com/SenteraLLC/py-aws-utils.git", branch = "master"}
 geo_utils = {git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "main"}
+rioxarray = "^0.14.1"
 
 [tool.poetry.group.docs]
 optional = true

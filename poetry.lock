@@ -4065,6 +4065,32 @@ files = [
 ]
 
 [[package]]
+name = "rioxarray"
+version = "0.14.1"
+description = "geospatial xarray extension powered by rasterio"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "rioxarray-0.14.1-py3-none-any.whl", hash = "sha256:de8142fcc960fd2121632d1bf50a7e08adad958efc056f52aa78226a6f22e955"},
+    {file = "rioxarray-0.14.1.tar.gz", hash = "sha256:54e993828ee02f3cfc2f8a1c7a5c599cab95cedca965c16c76d8521cdda7d45b"},
+]
+
+[package.dependencies]
+numpy = ">=1.21"
+packaging = "*"
+pyproj = ">=2.2"
+rasterio = ">=1.2"
+xarray = ">=0.17"
+
+[package.extras]
+all = ["dask", "mypy", "nbsphinx", "netcdf4", "pre-commit", "pylint", "pytest (>=3.6)", "pytest-cov", "pytest-timeout", "scipy", "sphinx-click", "sphinx-rtd-theme"]
+dev = ["dask", "mypy", "nbsphinx", "netcdf4", "pre-commit", "pylint", "pytest (>=3.6)", "pytest-cov", "pytest-timeout", "scipy", "sphinx-click", "sphinx-rtd-theme"]
+doc = ["nbsphinx", "sphinx-click", "sphinx-rtd-theme"]
+interp = ["scipy"]
+test = ["dask", "netcdf4", "pytest (>=3.6)", "pytest-cov", "pytest-timeout"]
+
+[[package]]
 name = "rtree"
 version = "1.0.1"
 description = "R-Tree spatial index for Python GIS"
@@ -5395,6 +5421,31 @@ files = [
 notebook = ">=4.4.1"
 
 [[package]]
+name = "xarray"
+version = "2023.4.1"
+description = "N-D labeled arrays and datasets in Python"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "xarray-2023.4.1-py3-none-any.whl", hash = "sha256:1c5b8d21e8a2416789e5458efeb635a2a7cf660b6d24af84aaf817224b9cabca"},
+    {file = "xarray-2023.4.1.tar.gz", hash = "sha256:f424c5d8ee283a8bfb3d481db4c9d8e006cbe3352489af434d1c110e6b806b39"},
+]
+
+[package.dependencies]
+numpy = ">=1.21"
+packaging = ">=21.3"
+pandas = ">=1.4"
+
+[package.extras]
+accel = ["bottleneck", "flox", "numbagg", "scipy"]
+complete = ["bottleneck", "cftime", "dask[complete]", "flox", "fsspec", "h5netcdf", "matplotlib", "nc-time-axis", "netCDF4", "numbagg", "pooch", "pydap", "scipy", "seaborn", "zarr"]
+docs = ["bottleneck", "cftime", "dask[complete]", "flox", "fsspec", "h5netcdf", "ipykernel", "ipython", "jupyter-client", "matplotlib", "nbsphinx", "nc-time-axis", "netCDF4", "numbagg", "pooch", "pydap", "scanpydoc", "scipy", "seaborn", "sphinx-autosummary-accessors", "sphinx-rtd-theme", "zarr"]
+io = ["cftime", "fsspec", "h5netcdf", "netCDF4", "pooch", "pydap", "scipy", "zarr"]
+parallel = ["dask[complete]"]
+viz = ["matplotlib", "nc-time-axis", "seaborn"]
+
+[[package]]
 name = "y-py"
 version = "0.5.9"
 description = "Python bindings for the Y-CRDT built from yrs (Rust)"
@@ -5509,4 +5560,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.4"
-content-hash = "d3c25469583d59537edd4a2ec50df474d36eb452c9b05727226752f46b3a529a"
+content-hash = "052ec6c4245bd3177f8368a072bf8d4bc87d65bd08d21e3762bf1a04f6c2ffbf"

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+
+	<head>
+		<meta charset="utf-8" />
+		<title>Demeter Weather Grid Demo</title>
+
+		<link rel="stylesheet" href="style.css" />
+		<link rel="stylesheet" href="../../../leaflet/lib/leaflet/leaflet.css" />
+		<script src="../../../leaflet/lib/leaflet/leaflet.js"></script>
+		<script src="../../../leaflet/lib/plotly/plotly.min.js"></script>
+		<script src="../../../leaflet/lib/geostats-master/lib/geostats.min.js"></script>
+
+		<script src="../data/world_utm_polygons.js"></script>
+		<script src="../data/raster.js"></script>
+		<script src="utils.js"></script>
+
+	</head>
+
+	<body>
+
+		<div id='container'>
+			<div id='map_container'>
+				<h1 style="font-family: verdana; text-align: center;">Demeter Weather Grid Network</h1>
+				<div id="map"></div>
+			</div>
+			Latitude:<input type="text" name="lat" id='lat'><br>
+			Longitude:<input type="text" name="long" id='long'><br>
+			<input type="button" onclick="zoomToUTM();" value="Find World UTM Polygon" /><br>
+			<input type="button" onclick="highlightCell();" value="Find Cell ID" />
+			<input type="button" onclick="zoomToCell();" value="Zoom to Cell ID" />
+		</div>
+
+		<script type="text/javascript">
+
+			// creating base map 
+			var base_map = L.tileLayer('https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey={apikey}', {
+				attribution: '&copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+				apikey: '6a50b0a0379e46829df0c7b73b0e110d',
+				maxZoom: 22
+			});
+			var map = L.map(document.getElementById('map'), {
+				center: [0, 0],
+				zoom: 2,
+				layers: [base_map]
+			});
+			var marker = L.marker([0, 0])
+
+			// add info box on map
+			var info = L.control();
+			info.onAdd = function (map) {
+				this._div = L.DomUtil.create('div', 'info');
+				this.update('Default');
+				return this._div;
+			}
+			info.update = function (layer_type, feature) {
+				this._div.innerHTML = text_for_layer(layer_type, feature);
+			}
+			info.addTo(map);
+
+
+			// add world UTM polygon layer
+			world_utm = add_world_utm_polygons().addTo(map);
+			world_utm.on("click", function (e) {
+				map.removeLayer(world_utm);
+			});
+
+			// add raster layer
+			raster = add_raster_layer();
+
+			// add overlay control
+			var layers = {
+				"World UTM Polygons": world_utm,
+				"Raster": raster
+			};
+
+			// L.control.layers([], layers).addTo(map);
+
+
+
+
+			// // add zone field points
+			// NAZ = zone_points_layer("North American Zone (NAZ)").addTo(map);
+			// SAZ = zone_points_layer("South American Zone (SAZ)").addTo(map);
+			// MAZ = zone_points_layer("Middle American Zone (MAZ)").addTo(map);
+			// EUR = zone_points_layer("European Zone (EUR)").addTo(map);
+			// APAC = zone_points_layer("Asia Pacific Zone (APAC)").addTo(map);
+			// AFRICA = zone_points_layer("African Zone (Africa)").addTo(map);
+
+			// // add legend for region colors
+			// var legend = L.control({ position: 'bottomright' });
+			// legend.onAdd = function (map) {
+			// 	var div = L.DomUtil.create('div', 'info legend');
+			// 	var labels = getLegendLabels();
+			// 	div.innerHTML = labels
+			// 	return div
+			// }
+			// legend.addTo(map);
+
+			// // add overlay control
+			// var overlays = {
+			// 	// "Regions": regions,
+			// 	"NAZ": NAZ,
+			// 	"MAZ": MAZ,
+			// 	"SAZ": SAZ,
+			// 	"EUR": EUR,
+			// 	"AFRICA": AFRICA,
+			// 	"APAC": APAC
+			// };
+
+			// L.control.layers([], overlays).addTo(map);
+
+			// full_layer = L.geoJson(ABI_FIELDS);
+
+			// // get currently displayed features
+			// var current_features = get_displayed_features(full_layer);
+
+			// // create histogram of planting date
+			// add_histogram(data = current_features, div_name = "chart");
+
+			// // add statistics from histogram
+			// add_statistics(data = current_features, div_name = 'stats');
+
+			// // add listener for layer removal and addition
+			// map.on("overlayadd", function (e) {
+			// 	current_features = get_displayed_features(full_layer, colors);
+			// 	add_histogram(data = current_features, div_name = 'chart');
+			// 	add_statistics(data = current_features, div_name = 'stats');
+			// });
+			// map.on("overlayremove", function (e) {
+			// 	current_features = get_displayed_features(full_layer, colors);
+			// 	add_histogram(data = current_features, div_name = 'chart');
+			// 	add_statistics(data = current_features, div_name = 'stats');
+			// });
+
+			// remove region mapping when zoomed to level
+			// map.on("zoomend", function (e) {
+			// 	remove_layer_when_zoom(regions, 3);
+			// 	current_features = get_displayed_features(full_layer, colors);
+			// 	add_histogram(data = current_features, div_name = 'chart');
+			// 	add_statistics(data = current_features, div_name = 'stats');
+			// });
+
+			// adjust histogram when moving map
+			// map.on("moveend", function (e) {
+			// 	current_features = get_displayed_features(full_layer, colors);
+			// 	add_histogram(data = current_features, div_name = 'chart');
+			// 	add_statistics(data = current_features, div_name = 'stats');
+			// });
+
+
+		</script>
+
+	</body>
+
+</html>

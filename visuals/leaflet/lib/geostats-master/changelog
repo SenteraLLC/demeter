@@ -1,0 +1,63 @@
+From version 1.8.0 to 2.0.0
+---------------------------
+- Typescript compatibility | issue #51
+- Switch from 1.8.0 to 2.0.0 because of npm error 
+
+
+From version 1.7.0 to 1.8.0
+---------------------------
+- Fixing bug on counter when using using getClassUniqueValues() method | issue #50 
+- Ensure nbClass param is an integer | issue #45
+- Optimized getClassJenks() method | issue #49
+- Old Jenks method still available by calling getClassJenks2() method
+- Fix the default legend style, so items are aligned vertically | issue #48
+
+
+From version 1.6.0 to 1.7.0
+---------------------------
+- Creating temporary variables instead of calling functions several times | issue #40
+- Fix minified version | issue #43
+- Updating NPM | issue #43
+
+
+From version 1.5.0 to 1.6.0
+---------------------------
+- Typo bug converting string to float | issue #32
+- Force precision to 20 if user defined is superior - to prevent browser error | issue #34
+- Mean calculation outside loop | issue #35
+- Min / Max methods handled without using Math function | supposed to prevent issue #33
+- Cast values to Float on decimalFormat method | issue #36
+
+
+From version 1.4.0 to 1.5.0
+---------------------------
+- Reset attributes after setting a new serie | issue #29
+
+
+From version 1.3.0 to 1.4.0
+---------------------------
+- Return legend to wanted float format using decimals if needed - with 'distinct' mode | issue #26
+- Ability to match min / max bounds when calling getClassStdDeviation() | issue #27
+
+
+From version 1.2.0 to 1.3.0
+---------------------------
+- Fixing decimalFormat() bug returned values | issue #19
+- Fixing Quantile classification bug | issue #18
+- Modularisation, for use with nodeJS or requireJS  | issue #16
+- Ability to reverse legend order | issue #24 
+- Introducing a silent mode on input errors | issue #25
+
+
+From version 1.1.0 to 1.2.0
+---------------------------
+- Introducing geometric progression classification (getGeometricProgression() method)
+- Introducing user defined classification (setManualClassification() method)
+- Introducing CommonJS and NodeJS or RequireJS module formats
+- Use of indexOf native version
+
+
+From version 1.0.0 to 1.1.0
+---------------------------
+- Removing useless lib/jenks.util.js file
+- Introducing changelog

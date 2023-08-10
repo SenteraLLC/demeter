@@ -48,11 +48,11 @@ def getExistingDuplicate(
                 right_value = right.get(left_key)
             except KeyError:
                 right_value = None
-            if all(type(v) == dict for v in [left_value, right_value]):
+            if all(type(v) is dict for v in [left_value, right_value]):
                 nested_eq = eq(left_value, right_value)
                 if not nested_eq:
                     return nested_eq
-            elif all(type(v) == list for v in [left_value, right_value]):
+            elif all(type(v) is list for v in [left_value, right_value]):
                 if len(left_value) != len(right_value):
                     return False
                 left_sorted = sorted(left_value)

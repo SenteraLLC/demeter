@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demeter"
-version = "1.2.11"
+version = "1.2.12"
 description = "The database schema and API that supports agronomic modeling and data science activities."
 authors = ["Joel Larson <JoelLarson@sentera.com>"]
 packages = [
@@ -35,7 +35,7 @@ meteomatics = "^2.9.0"
 global-land-mask = "^1.0.0"
 timezonefinder = "^6.1.9"
 aws_utils = {git = "ssh://git@github.com/SenteraLLC/py-aws-utils.git", branch = "master"}
-geo_utils = {git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "update-shapely"}
+geo_utils = {git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "main"}
 
 [tool.poetry.group.docs]
 optional = true

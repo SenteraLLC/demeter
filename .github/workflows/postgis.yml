@@ -9,6 +9,8 @@ jobs:
   test:
     name: Test demeter module
     runs-on: ubuntu-latest
+    env:
+      working-directory: ./
 
     services:
       postgres:
@@ -47,11 +49,12 @@ jobs:
     #       cache: 'poetry'
     #   - run: poetry install
       - name: Initialize Test Database
-        run: python3 -m intialize.schema.demeter --schema_name demeter --drop_existing
+        run: pwd
+        # run: python3 -m intialize.schema.demeter --schema_name demeter --drop_existing
         # run: psql -d postgresql://postgres@localhost/your_test_db_name -f your_seed_data.sql
-        # working-directory: ./
+        working-directory: ${{env.working-directory}}
         env:
           DEMETER-DEV_DOCKER_SUPER: "{'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }} ', 'database':'postgres'}"
       - name: Test some module
-        # working-directory: ./
+        working-directory: ./
         run: poetry run pytest

@@ -10,7 +10,7 @@ jobs:
     name: Test demeter module
     runs-on: ubuntu-latest
     env:
-      working-directory: ../
+      working-directory: ./
 
     services:
       postgres:
@@ -35,8 +35,6 @@ jobs:
     #     driver: local
 
     steps:
-      - name: Print working directory
-        run: pwd
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Register SSH key(s) for private dependencies
@@ -44,12 +42,13 @@ jobs:
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
-      - name: Install poetry
+      - name: Setup Python
         run: pipx install poetry
       - uses: actions/setup-python@v4
         with:
           cache: 'poetry'
-      - run: poetry install
+      - name: Install project
+        run: poetry install
       - name: Print contents of working directory
         run: ls
         working-directory: ${{env.working-directory}}

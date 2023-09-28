@@ -44,12 +44,12 @@ jobs:
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
-    #   - name: Install poetry
-    #     run: pipx install poetry
-    #   - uses: actions/setup-python@v4
-    #     with:
-    #       cache: 'poetry'
-    #   - run: poetry install
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          cache: 'poetry'
+      - run: poetry install
       - name: Print contents of working directory
         run: ls
         working-directory: ${{env.working-directory}}

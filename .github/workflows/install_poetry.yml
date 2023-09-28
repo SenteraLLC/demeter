@@ -1,10 +1,10 @@
-name: Install poetry
+# name: Install poetry
 
-on: push
+# on: push
 
-jobs:
-  poetry:
-    runs-on: ubuntu-latest
+# jobs:
+#   poetry:
+#     runs-on: ubuntu-latest
 #     steps:
 #     - uses: actions/checkout@v3
 #     - name: Register SSH key(s) for private dependencies

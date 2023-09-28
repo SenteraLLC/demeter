@@ -42,18 +42,18 @@ jobs:
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
-      - name: Setup Python
+      - name: Install Poetry
         run: pipx install poetry
       - uses: actions/setup-python@v4
         with:
           cache: 'poetry'
       - name: Install project
         run: poetry install
-      - name: Print contents of working directory
-        run: ls
-        working-directory: ${{env.working-directory}}
+    #   - name: Print contents of working directory
+    #     run: ls
+    #     working-directory: ${{env.working-directory}}
       - name: Initialize Test Database
-        run: poetry run python3 -m initialize.schema.demeter --schema_name demeter --drop_existing
+        run: poetry run python3 -m initialize.schema.demeter --schema_name demeter
         # run: psql -d postgresql://postgres@localhost/your_test_db_name -f your_seed_data.sql
         working-directory: ${{env.working-directory}}
         env:

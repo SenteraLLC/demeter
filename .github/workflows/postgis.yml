@@ -54,7 +54,7 @@ jobs:
         run: ls
         working-directory: ${{env.working-directory}}
       - name: Initialize Test Database
-        run: python3 -m intialize.schema.demeter --schema_name demeter --drop_existing
+        run: poetry run python3 -m initialize.schema.demeter --schema_name demeter --drop_existing
         # run: psql -d postgresql://postgres@localhost/your_test_db_name -f your_seed_data.sql
         working-directory: ${{env.working-directory}}
         env:

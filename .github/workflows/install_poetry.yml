@@ -5,16 +5,16 @@ on: push
 jobs:
   poetry:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Register SSH key(s) for private dependencies
-      # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
-      uses: webfactory/ssh-agent@v0.8.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
-    - name: Install poetry
-      run: pipx install poetry
-    - uses: actions/setup-python@v4
-      with:
-        cache: 'poetry'
-    - run: poetry install
+#     steps:
+#     - uses: actions/checkout@v3
+#     - name: Register SSH key(s) for private dependencies
+#       # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
+#       uses: webfactory/ssh-agent@v0.8.0
+#       with:
+#         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+#     - name: Install poetry
+#       run: pipx install poetry
+#     - uses: actions/setup-python@v4
+#       with:
+#         cache: 'poetry'
+#     - run: poetry install

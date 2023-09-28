@@ -1,0 +1,57 @@
+name: Testing PostgreSQL + PostGIS
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test demeter module
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # name: Attach to PostGIS Docker Image
+        # container_name: postgisTestContainer
+        image: postgis/postgis:14-3.4
+        # restart: always
+        env:
+          # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: ${{ secrets.GHA_POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        volumes:
+          - postgres:/var/lib/postgresql/data
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    # volumes:
+    #   postgres:
+    #     driver: local
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Register SSH key(s) for private dependencies
+        # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          cache: 'poetry'
+      - run: poetry install
+      - name: Initialize Test Database
+        run: python3 -m intialize.schema.demeter --schema_name demeter --drop_existing
+        # run: psql -d postgresql://postgres@localhost/your_test_db_name -f your_seed_data.sql
+        working-directory: ./.
+        env:
+          DEMETER-DEV_DOCKER_SUPER: "{'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }} ', 'database':'postgres'}"
+      - name: Test some module
+        working-directory: ./.
+        run: poetry run pytest

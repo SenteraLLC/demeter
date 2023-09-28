@@ -1,5 +1,6 @@
 import os
 from ast import literal_eval
+from socket import gethostbyname
 from typing import (
     Any,
     Dict,
@@ -69,6 +70,9 @@ def _check_and_get_env_dictionary(
         assert set(required_keys).issubset(
             list(v_dict.keys())
         ), f"These keys must be present in {env_name}: {required_keys}"
+    env_dict = literal_eval(env_value)
+    if env_dict.get("host") == "host.docker.internal":
+        env_dict["host"] = gethostbyname("host.docker.internal")
     return literal_eval(env_value)
 
 

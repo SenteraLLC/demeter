@@ -9,7 +9,7 @@ A guide for configuring your project to connect to a `demeter` PostgreSQL databa
   - Includes Mac and Windows set-up
 - __[WSL Setup](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302850561/WSL+Setup)__
   - Contains information about how to set up PostgreSQL and PostGIS on Windows Subsystem for Linux.
-  - __[Upgrade GEOS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302522986/Upgrade+GEOSp)__ 
+  - __[Upgrade GEOS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302522986/Upgrade+GEOSp)__
     - Contains information on upgrading GEOS to GEOS v3.9+ to enable some PostGIS functions.
 - __[Connecting to AWS RDS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3301048336/Connecting+to+AWS+RDS)__
 
@@ -99,3 +99,48 @@ pg_dump --schema-only --schema demeter -h localhost -U postgres -d demeter-dev |
 
 #### Example Schema
 ![Example Schema](./schema-demeter.png)
+
+
+## Docker Setup
+1. Install and start Docker Desktop. Be sure to enable WSL2 integration. Test Docker installation with:
+```bash
+docker --version
+```
+2. Pull suitable PostGIS Docker image:
+```bash
+docker pull postgis/postgis:14-3.4
+```
+3. Create a Docker Container with the postgis/postgis:14-3.4 image (only have to do this once):
+```bash
+docker run --name postgisContainer --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=postgres -e PGDATA=/var/lib/postgresql/data/pgdata -v /tmp:/var/lib/postgresql/data -p 5432:5432 -it postgis/postgis:14-3.4
+```
+
+After the container is created, you can start and stop it with:
+```bash
+docker container start postgisContainer
+docker container stop postgisContainer
+```
+
+Or you can open Docker Desktop and start/stop it from the UI.
+
+4. Connect to the Docker Container via psql:
+```bash
+docker exec -it postgisContainer bash
+```
+
+```bash
+psql -h localhost -U postgres
+```
+
+5. To connet via pgAdmin, use the following credentials (be sure the Docker image is running):
+Hostname/address: `host.docker.internal`
+Port: `8090`
+Username: postgres
+Password: mysecretpassword
+
+## Test Database with Docker Compose
+
+1. Run `docker-compose` to create the `postgisTestContainer` (port 5432)...
+```bash
+docker-compose -f demeter/tests/docker-compose.yml up
+```

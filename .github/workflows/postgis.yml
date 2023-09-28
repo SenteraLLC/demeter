@@ -10,7 +10,7 @@ jobs:
     name: Test demeter module
     runs-on: ubuntu-latest
     env:
-      working-directory: ./
+      working-directory: ../
 
     services:
       postgres:
@@ -35,6 +35,8 @@ jobs:
     #     driver: local
 
     steps:
+      - name: Print working directory
+        run: pwd
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Register SSH key(s) for private dependencies
@@ -49,8 +51,7 @@ jobs:
     #       cache: 'poetry'
     #   - run: poetry install
       - name: Initialize Test Database
-        run: pwd
-        # run: python3 -m intialize.schema.demeter --schema_name demeter --drop_existing
+        run: python3 -m intialize.schema.demeter --schema_name demeter --drop_existing
         # run: psql -d postgresql://postgres@localhost/your_test_db_name -f your_seed_data.sql
         working-directory: ${{env.working-directory}}
         env:

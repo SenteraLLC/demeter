@@ -10,7 +10,9 @@ jobs:
     name: Test demeter module
     runs-on: ubuntu-latest
     env:
-      working-directory: ./
+      working_directory: ./
+      SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+      DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
 
     services:
       postgres:
@@ -22,17 +24,13 @@ jobs:
           # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
           POSTGRES_USER: postgres
           POSTGRES_DB: postgres
-          POSTGRES_PASSWORD: ${{ secrets.GHA_POSTGRES_PASSWORD }}
+          POSTGRES_PASSWORD: ${{ env.SSH_KEY }}
         ports:
           - 5432:5432
         volumes:
           - postgres:/var/lib/postgresql/data
         # needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
-    # volumes:
-    #   postgres:
-    #     driver: local
 
     steps:
       - name: Checkout code
@@ -41,7 +39,7 @@ jobs:
         # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
         uses: webfactory/ssh-agent@v0.8.0
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+          ssh-private-key: ${{ env.SSH_KEY }}
       - name: Install Poetry
         run: pipx install poetry
       - uses: actions/setup-python@v4
@@ -49,15 +47,13 @@ jobs:
           cache: 'poetry'
       - name: Install project
         run: poetry install
-    #   - name: Print contents of working directory
-    #     run: ls
-    #     working-directory: ${{env.working-directory}}
       - name: Initialize Test Database
         run: poetry run python3 -m initialize.schema.demeter --schema_name demeter
-        # run: psql -d postgresql://postgres@localhost/your_test_db_name -f your_seed_data.sql
-        working-directory: ${{env.working-directory}}
+        working-directory: ${{env.working_directory}}
         env:
-          DEMETER-DEV_DOCKER_SUPER: "{'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }} ', 'database':'postgres'}"
+          DEMETER-DEV_LOCAL_SUPER: "{'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ env.DB_PW }} ', 'database':'demeter-dev'}"
       - name: Test some module
-        working-directory: ./
         run: poetry run pytest
+        working-directory: ${{env.working_directory}}
+        env:
+          DEMETER-DEV_LOCAL_SUPER: "{'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ env.DB_PW }} ', 'database':'demeter-dev'}"

@@ -6,7 +6,7 @@ python3 -m intialize.schema.demeter --schema_name demeter
 To re-initialize `demeter` from scratch on local `demeter-dev`:
 python3 -m intialize.schema.demeter --schema_name demeter --drop_existing
 
-For help: python3 -m intialize.schema.demeter --help
+For help: python3 -m initialize.schema.demeter --help
 
 This script requires that you have the appropriate superuser credentials for the database in your .env file
 and have set up `demeter_user` and `demeter_ro_user` as users on the database.

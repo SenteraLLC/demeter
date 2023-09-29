@@ -10,29 +10,30 @@ on:
         required: true
   workflow_dispatch:
 
+env:
+  working_directory: ./
+  DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
+  DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev'}"
+  TEST_DEMETER_SETUP: "{'host':'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
+  TEST_DEMETER_RW: "{'host':'localhost', 'port':'5432', 'username':'demeter_user', 'password':'icanreadwrite', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
+  TEST_DEMETER_RO: "{'host':'localhost', 'port':'5432', 'username':'demeter_ro_user', 'password':'icanonlyread', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
+  demeter_user_password: 'icanreadwrite'
+  demeter_ro_user_password: 'icanonlyread'
+  weather_user_password: 'icanreadwritewx'
+  weather_ro_user_password: 'icanonlyreadwx'
+  raster_user_password: 'icanreadwriterast'
+  raster_ro_user_password: 'icanonlyreadrast'
+
 jobs:
   install-project:
     uses: ./.github/workflows/install_project.yml
     secrets: inherit  # pass all secrets
 
-  postgres:
+  postgres-setup:
     # name: Setup database
-    runs-on: ubuntu-latest
     needs: install-project
-    env:
-      working_directory: ./
-      DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
-      DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev'}"
-      TEST_DEMETER_SETUP: "{'host':'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
-      TEST_DEMETER_RW: "{'host':'localhost', 'port':'5432', 'username':'demeter_user', 'password':'icanreadwrite', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
-      TEST_DEMETER_RO: "{'host':'localhost', 'port':'5432', 'username':'demeter_ro_user', 'password':'icanonlyread', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
-      demeter_user_password: 'icanreadwrite'
-      demeter_ro_user_password: 'icanonlyread'
-      weather_user_password: 'icanreadwritewx'
-      weather_ro_user_password: 'icanonlyreadwx'
-      raster_user_password: 'icanreadwriterast'
-      raster_ro_user_password: 'icanonlyreadrast'
-
+    runs-on: ubuntu-latest
+    container:
     services:
       db:
         # name: Attach to PostGIS Docker Image
@@ -64,6 +65,10 @@ jobs:
           poetry run python3 -m initialize.schema.raster
           poetry run python3 -m initialize.schema.weather
         working-directory: ${{ env.working_directory }}
+  testing:
+    needs: [install-project, postgres-setup]
+    runs-on: ubuntu-latest
+    steps:
       - name: Test demeter module
         run: poetry run pytest
         working-directory: ${{ env.working_directory }}

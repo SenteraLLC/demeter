@@ -1,10 +1,10 @@
 """Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
 
 To initialize `demeter`:
-python3 -m intialize.schema.demeter --schema_name demeter
+python3 -m initialize.schema.demeter --schema_name demeter
 
 To re-initialize `demeter` from scratch on local `demeter-dev`:
-python3 -m intialize.schema.demeter --schema_name demeter --drop_existing
+python3 -m initialize.schema.demeter --schema_name demeter --drop_existing
 
 For help: python3 -m initialize.schema.demeter --help
 

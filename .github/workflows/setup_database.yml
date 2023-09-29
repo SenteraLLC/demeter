@@ -8,6 +8,8 @@ on:
     secrets:
       token:
         required: true
+  workflow_dispatch:
+
 jobs:
   install-project:
     uses: ./.github/workflows/install_project.yml

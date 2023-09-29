@@ -54,7 +54,9 @@ jobs:
           cache: 'poetry'
       - name: Install project
         run: poetry install
-      - name: Create demeter-dev Database
+      - name: Install PostGIS  # Needed to use raster2pgsql
+        run: sudo apt install postgis
+      - name: Create Test Database
         run: PGPASSWORD=${{ env.DB_PW }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
       - name: Initialize Database Users and Schemas
         # poetry run python3 -m intialize.all

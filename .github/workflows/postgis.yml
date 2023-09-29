@@ -23,7 +23,7 @@ jobs:
         env:
           # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
           POSTGRES_USER: postgres
-        #   POSTGRES_DB: postgres
+          POSTGRES_DB: demeter-dev
           POSTGRES_PASSWORD: ${{ env.SSH_KEY }}
         ports:
           - 5432:5432
@@ -48,7 +48,7 @@ jobs:
       - name: Install project
         run: poetry install
       - name: Create demeter-dev Database
-        run: PGPASSWORD=${{ env.DB_PW }} sudo -u postgres psql -c 'CREATE DATABASE "demeter-dev";'
+        run: PGPASSWORD=${{ env.DB_PW }} psql -h db -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
       - name: Initialize Test Database
         run: poetry run python3 -m initialize.schema.demeter --schema_name demeter
         working-directory: ${{env.working_directory}}

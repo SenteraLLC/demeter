@@ -9,13 +9,14 @@ on:
       token:
         required: true
 jobs:
-  call-install-project-worklow:
+  install-project:
     uses: ./.github/workflows/install_project.yml
     secrets: inherit  # pass all secrets
 
   postgres:
     # name: Setup database
     runs-on: ubuntu-latest
+    needs: install-project
     env:
       working_directory: ./
       DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}

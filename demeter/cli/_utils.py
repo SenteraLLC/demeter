@@ -14,8 +14,10 @@ def check_and_format_db_connection_args(host: str, env: str, superuser: bool = F
         superuser (bool): If True, the superuser permissions will be used. Otherwise,
             `demeter_user` credentials will be used (i.e., read and write). Defaults to False.
     """
-    assert host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
-    assert env in ["DEV", "PROD"], "`database_env` can be 'DEV' or 'PROD'"
+    if host not in ["AWS", "DOCKER", "LOCAL"]:
+        raise ValueError('`database_host` must be one of "AWS", "DOCKER", or "LOCAL"')
+    if env not in ["DEV", "PROD"]:
+        raise ValueError('`database_env` must be one of "DEV", or "PROD"')
 
     if host == "AWS":
         if click.confirm(

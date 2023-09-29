@@ -1,4 +1,4 @@
-name: Setup PostgreSQL + PostGIS
+name: Testing
 
 on:
   pull_request:
@@ -12,6 +12,7 @@ on:
 
 env:
   working_directory: ./
+  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
   DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
   DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev'}"
   TEST_DEMETER_SETUP: "{'host':'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
@@ -26,9 +27,22 @@ env:
 
 jobs:
   install-project:
-    uses: ./.github/workflows/install_project.yml
-    secrets: inherit  # pass all secrets
-
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Register SSH key(s) for private dependencies
+        # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ env.SSH_KEY }}
+      - name: Install Poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          cache: 'poetry'
+      - name: Install project
+        run: poetry install
   postgres-setup:
     # name: Setup database
     needs: install-project

@@ -13,7 +13,7 @@ jobs:
       working_directory: ./
       SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
       DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
-      DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ env.DB_PW }}', 'database':'demeter-dev'}"
+      DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev'}"
 
     services:
       db:
@@ -50,7 +50,7 @@ jobs:
         run: poetry install
       - name: Create demeter-dev Database
         run: PGPASSWORD=${{ env.DB_PW }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
-      - name: Initialize Test Database
+      - name: Initialize Database Users and Schemas
         # poetry run python3 -m intialize.all
         run: |
           poetry run python3 -m initialize.users
@@ -58,6 +58,6 @@ jobs:
           poetry run python3 -m initialize.schema.raster
           poetry run python3 -m initialize.schema.weather
         working-directory: ${{env.working_directory}}
-      - name: Test some module
+      - name: Test demeter module
         run: poetry run pytest
         working-directory: ${{env.working_directory}}

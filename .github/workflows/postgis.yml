@@ -53,9 +53,9 @@ jobs:
         run: poetry run python3 -m initialize.schema.demeter --schema_name demeter
         working-directory: ${{env.working_directory}}
         env:
-          DEMETER-DEV_LOCAL_SUPER: "{'host': 'db', 'port':'5432', 'username':'postgres', 'password':'${{ env.DB_PW }} ', 'database':'demeter-dev'}"
+          DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ env.DB_PW }} ', 'database':'demeter-dev'}"
       - name: Test some module
         run: poetry run pytest
         working-directory: ${{env.working_directory}}
         env:
-          DEMETER-DEV_LOCAL_SUPER: "{'host': 'db', 'port':'5432', 'username':'postgres', 'password':'${{ env.DB_PW }} ', 'database':'demeter-dev'}"
+          DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ env.DB_PW }} ', 'database':'demeter-dev'}"

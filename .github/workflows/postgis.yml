@@ -24,7 +24,7 @@ jobs:
           # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
           POSTGRES_USER: postgres
         #   POSTGRES_DB: postgres
-          POSTGRES_PASSWORD: ${{ env.SSH_KEY }}
+          POSTGRES_PASSWORD: ${{ env.DB_PW }}
         ports:
           - 5432:5432
         volumes:

@@ -54,18 +54,6 @@ jobs:
     #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
     #     run: docker build . -t $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG_CS --build-arg SSH_PRIVATE_KEY="${{ env.SSH_KEY }}"
 
-    #   - name: Docker Run
-    #     id: docker-run
-    #     env:
-    #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     run: docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG_CS $ECR_REPOSITORY --help
-
-    #   - name: Docker Push
-    #     id: docker-push
-    #     env:
-    #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG_CS
-
       - name: Docker Compose
         uses: isbang/compose-action@v1.5.1
         with:
@@ -75,4 +63,19 @@ jobs:
             postgres
             python
         env:
+            REGISTRY: $REGISTRY
+            ECR_REPOSITORY: $ECR_REPOSITORY
+            GITHUB_REF_SLUG_CS: $GITHUB_REF_SLUG_CS
             SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
+
+      - name: Docker Run
+        id: docker-run
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: docker compose run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG_CS $ECR_REPOSITORY --help
+
+      - name: Docker Push
+        id: docker-push
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: docker compose push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG_CS

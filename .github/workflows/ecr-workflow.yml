@@ -64,15 +64,18 @@ jobs:
             postgres
             python
         env:
-            REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-            # ECR_REPOSITORY: ${ECR_REPOSITORY}
-            # GITHUB_REF_SLUG: ${GITHUB_REF_SLUG}
-            SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          # ECR_REPOSITORY: ${ECR_REPOSITORY}
+          # GITHUB_REF_SLUG: ${GITHUB_REF_SLUG}
+          SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
 
       - name: Docker Run
         id: docker-run
         # env:
         #   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
         run:
           docker compose run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
 
@@ -80,4 +83,5 @@ jobs:
         id: docker-push
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        #   SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
         run: docker compose push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG

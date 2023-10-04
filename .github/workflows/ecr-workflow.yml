@@ -81,7 +81,7 @@ jobs:
           secret-access-key: ${{ env.AWS_SECRET }}
           region: ${{ env.AWS_REGION }}
           local-image: ${{ env.IMAGE }}
-          image: ${{ env.IMAGE }}, my-image:latest
+          image: my-image:latest
 
     #   - name: Docker Run
     #     id: docker-run

@@ -73,6 +73,6 @@ jobs:
         #   down-flags: "--volumes"
           services: |
             postgres
-            demeter-python
+            python
         env:
             SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"

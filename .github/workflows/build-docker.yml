@@ -43,7 +43,7 @@ env:
   SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
   AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  BRANCH_NAME: ${{ github.ref_name }}
+#   BRANCH_NAME: ${{ github.ref_name }}
 
 permissions:
   contents: read
@@ -82,7 +82,7 @@ jobs:
 
         # All pre-commit and pytest are taken care of by py-build-support
         # install:
-        git checkout $BRANCH_NAME
+        git checkout ${GITHUB_REF##*/}
         pip install git+ssh://git@github.com/SenteraLLC/py-build-support.git@v1.0.3
         VERSION=$(build-support get-build-version)
         LOCAL_IMAGE=$(build-support build $ECR_REPOSITORY $VERSION --use_cache)

@@ -67,6 +67,7 @@ jobs:
             python
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
           # ECR_REPOSITORY: ${ECR_REPOSITORY}
           # GITHUB_REF_SLUG: ${GITHUB_REF_SLUG}
           SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
@@ -75,13 +76,13 @@ jobs:
         id: ecr
         uses: jwalton/gh-ecr-push@v1
         env:
-          IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+            IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
         with:
           access-key-id: ${{ env.AWS_KEY }}
           secret-access-key: ${{ env.AWS_SECRET }}
           region: ${{ env.AWS_REGION }}
           local-image: ${{ env.IMAGE }}
-          image: my-image:latest
+          image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
 
     #   - name: Docker Run
     #     id: docker-run

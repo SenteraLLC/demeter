@@ -30,6 +30,9 @@ services:
       - postgres
     networks:
       - app-tier
+    credentials:
+      username: ${DOCKER_USERNAME}
+      password: ${DOCKER_PASSWORD}
 
     command: tail -f /dev/null
 

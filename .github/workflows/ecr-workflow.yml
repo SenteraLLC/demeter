@@ -6,7 +6,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: demeter
-  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
   AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   BRANCH_NAME: ${{ github.head_ref }}
@@ -30,7 +30,7 @@ jobs:
         # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
         uses: webfactory/ssh-agent@v0.8.0
         with:
-          ssh-private-key: ${{ env.SSH_KEY }}
+          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -52,12 +52,13 @@ jobs:
     #     id: docker-build
     #     env:
     #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     run: docker build . -t $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG --build-arg SSH_PRIVATE_KEY="${{ env.SSH_KEY }}"
+    #     run: docker build . -t $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG --build-arg SSH_PRIVATE_KEY="${{ env.SSH_PRIVATE_KEY }}"
 
       - name: Prepare Images
         run: |
-          echo "WEB_IMAGE=$(echo ${{env.WEB_IMAGE}} )" >> $GITHUB_ENV
-          echo "WEB_IMAGE_BASE=$(echo ${{env.WEB_IMAGE_BASE}} )" >> $GITHUB_ENV
+          echo "REGISTRY=$(echo ${{ steps.login-ecr.outputs.registry }} )" >> $GITHUB_ENV
+          echo "IMAGE_NAME=$(echo ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }} )" >> $GITHUB_ENV
 
       - name: Docker Compose
         id: docker-compose
@@ -71,28 +72,21 @@ jobs:
             postgres
             python
         env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
-          IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
-          IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
-          # ECR_REPOSITORY: ${ECR_REPOSITORY}
-          # GITHUB_REF_SLUG: ${GITHUB_REF_SLUG}
-          SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
           DOCKER_USERNAME: ${{ steps.login-ecr.outputs.docker_username_123456789012_dkr_ecr_us_east_1_amazonaws_com }}
           DOCKER_PASSWORD: ${{ steps.login-ecr.outputs.docker_password_123456789012_dkr_ecr_us_east_1_amazonaws_com  }}
 
       - name: Push to ECR
         id: ecr
         uses: jwalton/gh-ecr-push@v1.3.6
-        env:
-          IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
+        # env:
+        #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
         #   IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ env.AWS_REGION }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
         #   local-image: ${{ env.IMAGE }}
-          image: demeter:dem-349-update-dotenv
         #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
 
     #   - name: Docker Run
@@ -101,7 +95,6 @@ jobs:
     #     #   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
     #     env:
     #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #       SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
     #     run:
     #       docker compose run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
 
@@ -109,5 +102,4 @@ jobs:
     #     id: docker-push
     #     env:
     #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     #   SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
     #     run: docker compose push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG

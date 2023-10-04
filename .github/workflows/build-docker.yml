@@ -83,13 +83,12 @@ jobs:
 
         # All pre-commit and pytest are taken care of by py-build-support
         # install:
-        echo $BRANCH_NAME
-        git checkout $BRANCH_NAME
-        # pip install git+ssh://git@github.com/SenteraLLC/py-build-support.git@v1.0.3
-        # VERSION=$(build-support get-build-version)
-        # LOCAL_IMAGE=$(build-support build $ECR_REPOSITORY $VERSION --use_cache)
-        # docker run --entrypoint pre-commit ${LOCAL_IMAGE} run --all-files
-        # build-support deploy $LOCAL_IMAGE
+        # git checkout $BRANCH_NAME
+        pip install git+ssh://git@github.com/SenteraLLC/py-build-support.git@v1.0.3
+        VERSION=$(build-support get-build-version)
+        LOCAL_IMAGE=$(build-support build $ECR_REPOSITORY $VERSION --use_cache)
+        docker run --entrypoint pre-commit ${LOCAL_IMAGE} run --all-files
+        build-support deploy $LOCAL_IMAGE
 
         # # Build a docker container and push it to ECR so that it can be deployed to ECS.
         # # ssh -T git@github.com

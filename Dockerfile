@@ -1,4 +1,4 @@
-FROM python:3.10-slim as base
+FROM python:3.10 as base
 
 # ARG SSH_PRIVATE_KEY
 # RUN mkdir /root/.ssh/
@@ -31,7 +31,6 @@ RUN apt-get update && \
     python3-dev \
     ssh \
     git \
-    postgresql-14 \
     postgis \
     ffmpeg \
     libsm6 \

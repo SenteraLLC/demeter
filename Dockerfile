@@ -31,6 +31,7 @@ RUN apt-get update && \
     python3-dev \
     ssh \
     git \
+    postgresql-14 \
     postgis \
     ffmpeg \
     libsm6 \

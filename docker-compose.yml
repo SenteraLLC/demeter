@@ -21,7 +21,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
+        SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
     volumes:
       - ~/.ssh:/root/.ssh
     depends_on:

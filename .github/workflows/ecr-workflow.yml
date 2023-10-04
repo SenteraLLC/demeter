@@ -59,7 +59,10 @@ jobs:
         with:
           compose-file: "./docker-compose.yml"
         #   down-flags: "--volumes"
-          up-flags: "--build"
+        #   up-flags: "--build"
+          compose-flags:
+            --build
+            --push
           services: |
             postgres
             python

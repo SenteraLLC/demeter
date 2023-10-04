@@ -63,9 +63,9 @@ jobs:
             postgres
             python
         env:
-            REGISTRY: $REGISTRY
-            ECR_REPOSITORY: $ECR_REPOSITORY
-            GITHUB_REF_SLUG: $GITHUB_REF_SLUG
+            REGISTRY: ${REGISTRY}
+            ECR_REPOSITORY: ${ECR_REPOSITORY}
+            GITHUB_REF_SLUG: ${GITHUB_REF_SLUG}
             SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
 
       - name: Docker Run

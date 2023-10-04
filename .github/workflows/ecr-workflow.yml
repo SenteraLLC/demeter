@@ -68,6 +68,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+          IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
           # ECR_REPOSITORY: ${ECR_REPOSITORY}
           # GITHUB_REF_SLUG: ${GITHUB_REF_SLUG}
           SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
@@ -78,11 +79,12 @@ jobs:
         env:
             IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
         with:
-          access-key-id: ${{ env.AWS_KEY }}
-          secret-access-key: ${{ env.AWS_SECRET }}
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ env.AWS_REGION }}
-          local-image: ${{ env.IMAGE }}
-          image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
+        #   local-image: ${{ env.IMAGE }}
+          image: ${{ env.IMAGE }}
+        #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
 
     #   - name: Docker Run
     #     id: docker-run

@@ -61,8 +61,8 @@ jobs:
         #   down-flags: "--volumes"
         #   up-flags: "--build"
           compose-flags: |
-            "--build"
-            "--push"
+            --build
+            --push
           services: |
             postgres
             python

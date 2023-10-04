@@ -82,7 +82,7 @@ jobs:
 
         # All pre-commit and pytest are taken care of by py-build-support
         # install:
-        git checkout ${GITHUB_REF##*/}
+        git checkout
         pip install git+ssh://git@github.com/SenteraLLC/py-build-support.git@v1.0.3
         VERSION=$(build-support get-build-version)
         LOCAL_IMAGE=$(build-support build $ECR_REPOSITORY $VERSION --use_cache)

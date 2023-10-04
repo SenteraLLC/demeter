@@ -18,7 +18,7 @@ services:
 
   python:
     # image: ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_REF_SLUG}
-    image: ${IMAGE}
+    image: ${IMAGE_NAME}
     build:
       context: .
       dockerfile: Dockerfile

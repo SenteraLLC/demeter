@@ -71,9 +71,9 @@ jobs:
           services: |
             postgres
             python
-        env:
-          DOCKER_USERNAME: ${{ steps.login-ecr.outputs.docker_username_123456789012_dkr_ecr_us_east_1_amazonaws_com }}
-          DOCKER_PASSWORD: ${{ steps.login-ecr.outputs.docker_password_123456789012_dkr_ecr_us_east_1_amazonaws_com  }}
+        # env:
+        #   DOCKER_USERNAME: ${{ steps.login-ecr.outputs.docker_username_123456789012_dkr_ecr_us_east_1_amazonaws_com }}
+        #   DOCKER_PASSWORD: ${{ steps.login-ecr.outputs.docker_password_123456789012_dkr_ecr_us_east_1_amazonaws_com  }}
 
       - name: Push to ECR
         id: ecr

@@ -17,7 +17,7 @@ services:
       - postgres:/var/lib/postgresql/data
 
   python:
-    image: $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG_CS
+    image: ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_REF_SLUG}
     build:
       context: .
       dockerfile: Dockerfile

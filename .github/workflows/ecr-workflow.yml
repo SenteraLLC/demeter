@@ -59,6 +59,7 @@ jobs:
         with:
           compose-file: "./docker-compose.yml"
         #   down-flags: "--volumes"
+          up-flags: "--build"
           services: |
             postgres
             python
@@ -70,9 +71,10 @@ jobs:
 
       - name: Docker Run
         id: docker-run
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: docker compose run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
+        # env:
+        #   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run:
+          docker compose run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
 
       - name: Docker Push
         id: docker-push

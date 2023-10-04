@@ -75,7 +75,7 @@ jobs:
         id: ecr
         uses: jwalton/gh-ecr-push@v1
         env:
-          IMAGE: ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$GITHUB_REF_SLUG
+          IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
         with:
           access-key-id: ${{ env.AWS_KEY }}
           secret-access-key: ${{ env.AWS_SECRET }}

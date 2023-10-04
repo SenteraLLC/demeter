@@ -3,16 +3,36 @@ version: '3.8'
 
 services:
   postgres:
-    container_name: postgisTestContainer
+    # container_name: postgisTestContainer
     image: postgis/postgis:14-3.4
-    restart: always
+    # restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mysecretpassword
     ports:
       - 5432:5432
+    networks:
+      - app-tier
     volumes:
       - postgres:/var/lib/postgresql/data
+
+  python:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY}
+    volumes:
+      - ~/.ssh:/root/.ssh
+    depends_on:
+      - postgres
+    networks:
+      - app-tier
+    command: tail -f /dev/null
+
+networks:
+  app-tier:
+    driver: bridge
 
 volumes:
   postgres:

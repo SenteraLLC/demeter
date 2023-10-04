@@ -13,13 +13,13 @@ FROM python:3.10-slim as base
 # RUN chmod 0700 /root/.ssh
 # RUN ssh -T git@github.com
 
-FROM base as builder
+# FROM base as builder
 
 ENV PIP_DEFAULT_TIMEOUT=100 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1 \
-    POETRY_VERSION=1.6.1 \
-    PYTHONPATH=${PYTHONPATH}:${PWD}
+    POETRY_VERSION=1.6.1
+# PYTHONPATH=${PYTHONPATH}:${PWD}
 
 # Install PostGIS (needed to use raster2pgsql)
 RUN apt-get update && \

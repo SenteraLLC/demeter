@@ -40,6 +40,9 @@ env:
 #                                                # file, e.g. .aws/task-definition.json
 #   CONTAINER_NAME: MY_CONTAINER_NAME           # set this to the name of the container in the
 #                                                # containerDefinitions section of your task definition
+  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+  AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 permissions:
   contents: read
@@ -51,14 +54,18 @@ jobs:
     environment: production
 
     steps:
-    - name: Checkout
+    - name: Checkout code
       uses: actions/checkout@v3
-
+    - name: Register SSH key(s) for private dependencies
+      # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ env.SSH_KEY }}
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ env.AWS_KEY }}
+        aws-secret-access-key: ${{ env.AWS_SECRET }}
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
@@ -74,7 +81,9 @@ jobs:
         # Build a docker container and
         # push it to ECR so that it can
         # be deployed to ECS.
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        ssh -T git@github.com
+        docker build --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG Dockerfile
+        # docker build --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 

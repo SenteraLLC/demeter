@@ -74,3 +74,5 @@ jobs:
           services: |
             postgres
             demeter-python
+        env:
+            SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"

@@ -41,9 +41,9 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
         with:
-          mask-password: true
+          mask-password: 'true'
 
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v4
@@ -53,6 +53,11 @@ jobs:
     #     env:
     #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
     #     run: docker build . -t $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG --build-arg SSH_PRIVATE_KEY="${{ env.SSH_KEY }}"
+
+      - name: Prepare Images
+        run: |
+          echo "WEB_IMAGE=$(echo ${{env.WEB_IMAGE}} )" >> $GITHUB_ENV
+          echo "WEB_IMAGE_BASE=$(echo ${{env.WEB_IMAGE_BASE}} )" >> $GITHUB_ENV
 
       - name: Docker Compose
         id: docker-compose
@@ -67,23 +72,27 @@ jobs:
             python
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+        #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+          IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
           IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
           # ECR_REPOSITORY: ${ECR_REPOSITORY}
           # GITHUB_REF_SLUG: ${GITHUB_REF_SLUG}
           SSH_PRIVATE_KEY: "${{ env.SSH_KEY }}"
+          DOCKER_USERNAME: ${{ steps.login-ecr.outputs.docker_username_123456789012_dkr_ecr_us_east_1_amazonaws_com }}
+          DOCKER_PASSWORD: ${{ steps.login-ecr.outputs.docker_password_123456789012_dkr_ecr_us_east_1_amazonaws_com  }}
 
       - name: Push to ECR
         id: ecr
         uses: jwalton/gh-ecr-push@v1.3.6
         env:
-            IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+          IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
+        #   IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ env.AWS_REGION }}
         #   local-image: ${{ env.IMAGE }}
-          image: ${{ env.IMAGE }}
+          image: demeter:dem-349-update-dotenv
         #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
 
     #   - name: Docker Run

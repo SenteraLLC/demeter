@@ -91,10 +91,9 @@ jobs:
         #   run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
         run: |
           docker tag python_demeter:${GITHUB_REF_SLUG} $REGISTRY/python_demeter:$GITHUB_REF_SLUG
-          docker tag postgis_demeter:${GITHUB_REF_SLUG} $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
           docker push $REGISTRY/python_demeter:$GITHUB_REF_SLUG
-          docker push $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
-        #   docker push $REGISTRY/demeter:v0
+        #   docker tag postgis_demeter:${GITHUB_REF_SLUG} $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
+        #   docker push $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
 
     #   - name: Push to ECR
     #     id: ecr

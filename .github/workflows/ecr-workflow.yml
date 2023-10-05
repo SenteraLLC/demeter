@@ -105,8 +105,8 @@ jobs:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ env.AWS_REGION }}
-          local-image: demeter:${GITHUB_REF_SLUG}
-          image: demeter:${GITHUB_REF_SLUG}
+          local-image: demeter:dem-349-update-dotenv
+          image: demeter:dem-349-update-dotenv
         #   local-image: ${{ env.IMAGE }}
         #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
 

@@ -4,7 +4,8 @@ version: '3.8'
 services:
   postgres:
     # container_name: postgisTestContainer
-    image: postgis/postgis:14-3.4
+    # image: postgis/postgis:14-3.4
+    image: postgis_demeter:${GITHUB_REF_SLUG}
     # restart: always
     environment:
       POSTGRES_USER: postgres
@@ -18,7 +19,7 @@ services:
 
   python:
     # image: ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_REF_SLUG}
-    image: demeter
+    image: python_demeter:${GITHUB_REF_SLUG}
     build:
       context: .
       dockerfile: Dockerfile

@@ -90,8 +90,10 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         #   run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
         run: |
-          docker tag demeter $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
-          docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
+          docker tag python_demeter:${GITHUB_REF_SLUG} $REGISTRY/python_demeter:$GITHUB_REF_SLUG
+          docker tag postgis_demeter:${GITHUB_REF_SLUG} $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
+          docker push $REGISTRY/python_demeter:$GITHUB_REF_SLUG
+          docker push $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
         #   docker push $REGISTRY/demeter:v0
 
     #   - name: Push to ECR

@@ -79,10 +79,10 @@ jobs:
         id: docker-run
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run:
+        run: |
           echo "DOCKER_IMAGES=$(echo $(docker images))" >> $GITHUB_ENV
           docker run demeter:${GITHUB_REF_SLUG} --help
-          # docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
+        #   docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
 
       - name: Docker Push
         id: docker-push

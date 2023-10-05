@@ -84,31 +84,31 @@ jobs:
         #   docker run demeter:${GITHUB_REF_SLUG} --help
         #   docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
 
-      - name: Docker Push
-        id: docker-push
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        #   run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
-        run: |
-          docker tag demeter:${GITHUB_REF_SLUG} $REGISTRY/demeter:${GITHUB_REF_SLUG}
-          docker push $REGISTRY/demeter:${GITHUB_REF_SLUG}
-        #   docker tag postgis_demeter:${GITHUB_REF_SLUG} $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
-        #   docker push $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
+    #   - name: Docker Push
+    #     id: docker-push
+    #     env:
+    #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #     #   run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
+    #     run: |
+    #       docker tag demeter:${GITHUB_REF_SLUG} $REGISTRY/demeter:${GITHUB_REF_SLUG}
+    #       docker push $REGISTRY/demeter:${GITHUB_REF_SLUG}
+    #     #   docker tag postgis_demeter:${GITHUB_REF_SLUG} $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
+    #     #   docker push $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
 
-    #   - name: Push to ECR
-    #     id: ecr
-    #     uses: jwalton/gh-ecr-push@v1.3.6
-    #     # env:
-    #     #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
-    #     #   IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
-    #     with:
-    #       access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    #       secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #       region: ${{ env.AWS_REGION }}
-    #       local-image: demeter
-    #       image: ${{ env.IMAGE_TAG }}, ${{ env.ECR_REPOSITORY }}:latest
-    #     #   local-image: ${{ env.IMAGE }}
-    #     #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
+      - name: Push to ECR
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1.3.6
+        # env:
+        #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
+        #   IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ env.AWS_REGION }}
+          local-image: demeter:${GITHUB_REF_SLUG}
+          image: demeter:${GITHUB_REF_SLUG}
+        #   local-image: ${{ env.IMAGE }}
+        #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
 
     #   - name: Docker Run
     #     id: docker-run

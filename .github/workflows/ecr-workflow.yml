@@ -48,41 +48,57 @@ jobs:
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v4
 
-    #   - name: Docker Build
-    #     id: docker-build
-    #     env:
-    #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-    #     run: docker build . -t $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG --build-arg SSH_PRIVATE_KEY="${{ env.SSH_PRIVATE_KEY }}"
-
-      - name: Prepare Images
-        run: |
-          echo "REGISTRY=$(echo ${{ steps.login-ecr.outputs.registry }} )" >> $GITHUB_ENV
-          echo "IMAGE_NAME=$(echo ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }} )" >> $GITHUB_ENV
-          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }} )" >> $GITHUB_ENV
-
-      - name: Docker Compose
-        id: docker-compose
-        uses: isbang/compose-action@v1.5.1
-        with:
-          compose-file: "./docker-compose.yml"
-        #   down-flags: "--volumes"
-          up-flags: "--build"
-        #   compose-flags: "--push"
-          services: |
-            postgres
-            python
-        # env:
-        #   DOCKER_USERNAME: ${{ steps.login-ecr.outputs.docker_username_123456789012_dkr_ecr_us_east_1_amazonaws_com }}
-        #   DOCKER_PASSWORD: ${{ steps.login-ecr.outputs.docker_password_123456789012_dkr_ecr_us_east_1_amazonaws_com  }}
+      - name: Docker Build
+        id: docker-build
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: demeter
+        run: docker build . -t  $REGISTRY/$REPOSITORY:$GITHUB_REF_SLUG --build-arg SSH_PRIVATE_KEY="${{ secrets.SSH_PRIVATE_KEY }}"
 
       - name: Docker Run
         id: docker-run
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          echo "DOCKER_IMAGES=$(echo $(docker images))" >> $GITHUB_ENV
-        #   docker run demeter:${GITHUB_REF_SLUG} --help
-        #   docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
+          REPOSITORY: demeter
+        run: docker run $REGISTRY/$REPOSITORY:$GITHUB_REF_SLUG  demeter --help
+
+      - name: Docker Push
+        id: docker-push
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: demeter
+        run: docker push $REGISTRY/$REPOSITORY:$GITHUB_REF_SLUG
+
+
+    #   - name: Prepare Images
+    #     run: |
+    #       echo "REGISTRY=$(echo ${{ steps.login-ecr.outputs.registry }} )" >> $GITHUB_ENV
+    #       echo "IMAGE_NAME=$(echo ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }} )" >> $GITHUB_ENV
+    #       echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }} )" >> $GITHUB_ENV
+
+    #   - name: Docker Compose
+    #     id: docker-compose
+    #     uses: isbang/compose-action@v1.5.1
+    #     with:
+    #       compose-file: "./docker-compose.yml"
+    #     #   down-flags: "--volumes"
+    #       up-flags: "--build"
+    #     #   compose-flags: "--push"
+    #       services: |
+    #         postgres
+    #         python
+    #     # env:
+    #     #   DOCKER_USERNAME: ${{ steps.login-ecr.outputs.docker_username_123456789012_dkr_ecr_us_east_1_amazonaws_com }}
+    #     #   DOCKER_PASSWORD: ${{ steps.login-ecr.outputs.docker_password_123456789012_dkr_ecr_us_east_1_amazonaws_com  }}
+
+    #   - name: Docker Run
+    #     id: docker-run
+    #     env:
+    #       REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #     run: |
+    #       echo "DOCKER_IMAGES=$(echo $(docker images))" >> $GITHUB_ENV
+    #     #   docker run demeter:${GITHUB_REF_SLUG} --help
+    #     #   docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
 
     #   - name: Docker Push
     #     id: docker-push
@@ -95,20 +111,20 @@ jobs:
     #     #   docker tag postgis_demeter:${GITHUB_REF_SLUG} $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
     #     #   docker push $REGISTRY/postgis_demeter:$GITHUB_REF_SLUG
 
-      - name: Push to ECR
-        id: ecr
-        uses: jwalton/gh-ecr-push@v1.3.6
-        # env:
-        #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
-        #   IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
-        with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ env.AWS_REGION }}
-          local-image: demeter:dem-349-update-dotenv
-          image: demeter:dem-349-update-dotenv
-        #   local-image: ${{ env.IMAGE }}
-        #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
+    #   - name: Push to ECR
+    #     id: ecr
+    #     uses: jwalton/gh-ecr-push@v1.3.6
+    #     # env:
+    #     #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
+    #     #   IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+    #     with:
+    #       access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #       secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #       region: ${{ env.AWS_REGION }}
+    #       local-image: demeter:dem-349-update-dotenv
+    #       image: demeter:dem-349-update-dotenv
+    #     #   local-image: ${{ env.IMAGE }}
+    #     #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
 
     #   - name: Docker Run
     #     id: docker-run

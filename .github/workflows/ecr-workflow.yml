@@ -75,11 +75,22 @@ jobs:
         #   DOCKER_USERNAME: ${{ steps.login-ecr.outputs.docker_username_123456789012_dkr_ecr_us_east_1_amazonaws_com }}
         #   DOCKER_PASSWORD: ${{ steps.login-ecr.outputs.docker_password_123456789012_dkr_ecr_us_east_1_amazonaws_com  }}
 
+      - name: Docker Run
+        id: docker-run
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run:
+          # docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
+          docker run demeter:v0 demeter --help
+
       - name: Docker Push
         id: docker-push
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
+        #   run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
+        run: |
+          docker tag demeter:v0 $REGISTRY/demeter:v0
+          docker push $REGISTRY/demeter1:v0
 
     #   - name: Push to ECR
     #     id: ecr

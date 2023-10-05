@@ -80,7 +80,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run:
-          echo "DOCKER_IMAGES=$(echo docker images)" >> $GITHUB_ENV
+          echo "DOCKER_IMAGES=$(echo $(docker images))" >> $GITHUB_ENV
           # docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
         #   docker run p:v0 demeter --help
 

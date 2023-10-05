@@ -75,20 +75,26 @@ jobs:
         #   DOCKER_USERNAME: ${{ steps.login-ecr.outputs.docker_username_123456789012_dkr_ecr_us_east_1_amazonaws_com }}
         #   DOCKER_PASSWORD: ${{ steps.login-ecr.outputs.docker_password_123456789012_dkr_ecr_us_east_1_amazonaws_com  }}
 
-      - name: Push to ECR
-        id: ecr
-        uses: jwalton/gh-ecr-push@v1.3.6
-        # env:
-        #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
-        #   IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
-        with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ env.AWS_REGION }}
-          local-image: demeter
-          image: ${{ env.IMAGE_TAG }}, ${{ env.ECR_REPOSITORY }}:latest
-        #   local-image: ${{ env.IMAGE }}
-        #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
+      - name: Docker Push
+        id: docker-push
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
+
+    #   - name: Push to ECR
+    #     id: ecr
+    #     uses: jwalton/gh-ecr-push@v1.3.6
+    #     # env:
+    #     #   IMAGE_NAME: ${{ steps.login-ecr.outputs.registry }}/demeter:dem-349-update-dotenv
+    #     #   IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+    #     with:
+    #       access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #       secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #       region: ${{ env.AWS_REGION }}
+    #       local-image: demeter
+    #       image: ${{ env.IMAGE_TAG }}, ${{ env.ECR_REPOSITORY }}:latest
+    #     #   local-image: ${{ env.IMAGE }}
+    #     #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
 
     #   - name: Docker Run
     #     id: docker-run

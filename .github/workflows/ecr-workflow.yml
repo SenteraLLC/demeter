@@ -85,7 +85,7 @@ jobs:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ env.AWS_REGION }}
-          local-image: ${{ env.IMAGE_TAG }}
+          local-image: demeter
           image: ${{ env.IMAGE_TAG }}, ${{ env.ECR_REPOSITORY }}:latest
         #   local-image: ${{ env.IMAGE }}
         #   image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest

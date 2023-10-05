@@ -18,7 +18,7 @@ services:
 
   python:
     # image: ${REGISTRY}/${ECR_REPOSITORY}:${GITHUB_REF_SLUG}
-    image: ${IMAGE_NAME}
+    image: demeter
     build:
       context: .
       dockerfile: Dockerfile

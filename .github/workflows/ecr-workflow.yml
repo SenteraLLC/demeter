@@ -80,8 +80,9 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run:
+          echo "docker images" >> $GITHUB_OUTPUT
           # docker run $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG $ECR_REPOSITORY --help
-          docker run demeter:v0 demeter --help
+        #   docker run p:v0 demeter --help
 
       - name: Docker Push
         id: docker-push
@@ -89,8 +90,9 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         #   run: docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
         run: |
-          docker tag demeter:v0 $REGISTRY/demeter:v0
-          docker push $REGISTRY/demeter1:v0
+          docker tag demeter $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
+          docker push $REGISTRY/$ECR_REPOSITORY:$GITHUB_REF_SLUG
+        #   docker push $REGISTRY/demeter:v0
 
     #   - name: Push to ECR
     #     id: ecr

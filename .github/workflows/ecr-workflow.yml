@@ -48,9 +48,7 @@ jobs:
 
       - name: Prepare Images
         run: |
-          echo "REGISTRY=$(echo ${{ steps.login-ecr.outputs.registry }} )" >> $GITHUB_ENV
-          echo "IMAGE_NAME=$(echo ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }} )" >> $GITHUB_ENV
-          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }} )" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_NAME_SLUG }} )" >> $GITHUB_ENV
 
       - name: Docker Compose
         id: docker-compose
@@ -68,10 +66,10 @@ jobs:
         id: ecr
         uses: jwalton/gh-ecr-push@v1.3.6
         env:
-          IMAGE: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_SLUG }}
+          IMAGE_TAG: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_NAME_SLUG }}
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ env.AWS_REGION }}
-          local-image: ${{ env.IMAGE }}
-          image: ${{ env.IMAGE }}, ${{ env.ECR_REPOSITORY }}:latest
+          local-image: ${{ env.IMAGE_TAG }}
+          image: ${{ env.IMAGE_TAG }}, ${{ env.ECR_REPOSITORY }}:latest

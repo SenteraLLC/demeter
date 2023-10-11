@@ -48,16 +48,14 @@ jobs:
 
       - name: Prepare Images
         run: |
-          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_NAME_SLUG }} )" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
 
       - name: Docker Compose
         id: docker-compose
         uses: isbang/compose-action@v1.5.1
         with:
           compose-file: "./docker-compose.yml"
-        #   down-flags: "--volumes"
           up-flags: "--build"
-        #   compose-flags: "--push"
           services: |
             postgres
             python
@@ -66,7 +64,7 @@ jobs:
         id: ecr
         uses: jwalton/gh-ecr-push@v1.3.6
         env:
-          IMAGE_TAG: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_REF_NAME_SLUG }}
+          IMAGE_TAG: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }}
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

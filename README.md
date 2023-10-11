@@ -132,15 +132,8 @@ docker exec -it postgisContainer bash
 psql -h localhost -U postgres
 ```
 
-5. To connet via pgAdmin, use the following credentials (be sure the Docker image is running):
+5. To connet via pgAdmin, use the following credentials. Note: be sure the Docker image is running and pgAdmin and Docker are installed on same OS (e.g., Windows).
 Hostname/address: `host.docker.internal`
-Port: `8090`
+Port: `5432`
 Username: postgres
 Password: mysecretpassword
-
-## Test Database with Docker Compose
-
-1. Run `docker-compose` to create the `postgisTestContainer` (port 5432)...
-```bash
-docker-compose -f demeter/tests/docker-compose.yml up
-```

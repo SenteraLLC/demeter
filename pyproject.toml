@@ -2,7 +2,7 @@
 name = "demeter"
 version = "1.2.13"
 description = "The database schema and API that supports agronomic modeling and data science activities."
-authors = ["Joel Larson <JoelLarson@sentera.com>"]
+authors = []
 packages = [
   {include = "demeter"},
   {include = "demeter/py.typed"},

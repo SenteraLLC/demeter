@@ -64,6 +64,7 @@ jobs:
         id: ecr
         uses: jwalton/gh-ecr-push@v1.3.6
         env:
+          # Be sure this matches the image name in the docker-compose.yml file
           IMAGE_TAG: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }}
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}

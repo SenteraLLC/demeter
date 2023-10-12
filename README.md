@@ -83,6 +83,15 @@ Then, you can run `pytest` with
 poetry run pytest
 ```
 
+## Github Actions CI
+There are three Github Actions workflows that run for PRs:
+- `pre-commit.yml`: Runs `pre-commit` hooks on the codebase to ensure all commits adhere to **black** and **PEP8** style conventions.
+- `build-test-ecr.yml`: Performs a builds and runs `pytest`, then pushes the built Docker image to ECR.
+- `create_github_release.yml`: Creates a Github Release on every push to the main branch. The name of the Release/Tag will match the value of the version field specified in `pyproject.toml`. Release Notes will be generated automatically and linked to the Release/Tag.
+
+## Connecting to AWS RDS
+- See the Confluence document describing how to [connecting to AWS RDS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3301048336/Connecting+to+AWS+RDS)
+
 ## Troubleshooting
 ### Installing `geopandas` on Mac
 [See this SO thread](https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1)
@@ -96,44 +105,5 @@ A `schema-demeter.png` can be automatically generated with the following:
 pg_dump --schema-only --schema demeter -h localhost -U postgres -d demeter-dev | poetry run python -m scripts.to_graphviz | dot -Tpng > schema-demeter.png
 ```
 
-
 #### Example Schema
 ![Example Schema](./schema-demeter.png)
-
-
-## Docker Setup
-1. Install and start Docker Desktop. Be sure to enable WSL2 integration. Test Docker installation with:
-```bash
-docker --version
-```
-2. Pull suitable PostGIS Docker image:
-```bash
-docker pull postgis/postgis:14-3.4
-```
-3. Create a Docker Container with the postgis/postgis:14-3.4 image (only have to do this once):
-```bash
-docker run --name postgisContainer --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=postgres -e PGDATA=/var/lib/postgresql/data/pgdata -v /tmp:/var/lib/postgresql/data -p 5432:5432 -it postgis/postgis:14-3.4
-```
-
-After the container is created, you can start and stop it with:
-```bash
-docker container start postgisContainer
-docker container stop postgisContainer
-```
-
-Or you can open Docker Desktop and start/stop it from the UI.
-
-4. Connect to the Docker Container via psql:
-```bash
-docker exec -it postgisContainer bash
-```
-
-```bash
-psql -h localhost -U postgres
-```
-
-5. To connet via pgAdmin, use the following credentials. Note: be sure the Docker image is running and pgAdmin and Docker are installed on same OS (e.g., Windows).
-Hostname/address: `host.docker.internal`
-Port: `5432`
-Username: postgres
-Password: mysecretpassword

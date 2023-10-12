@@ -9,17 +9,13 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: demeter
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
-  AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  BRANCH_NAME: ${{ github.head_ref }}
-  IMAGE_TAG: ${{ github.sha }}
-
 
 jobs:
   aws-ecr:
     name: Publish Docker Image
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
+    outputs:
+      IMAGE_TAG: ${{ steps.prepare-images.outputs.IMAGE_TAG }}
 
     steps:
       - name: Checkout code
@@ -30,11 +26,35 @@ jobs:
         with:
           ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
 
+      - name: Install Poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          cache: 'poetry'
+      - name: Install project
+        run: poetry install
+      - name: Install PostGIS  # Needed to use raster2pgsql
+        run: sudo apt install postgis
+      - name: Create Test Database
+        run: PGPASSWORD=${{ env.DB_PW }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
+      - name: Initialize Database Users and `demeter` Schema
+        run: |
+          poetry run python3 -m initialize.users
+          poetry run python3 -m initialize.schema.demeter --schema_name demeter
+      - name: Initialize `raster` Schemas
+        run: |
+          poetry run python3 -m initialize.schema.raster
+      - name: Initialize `weather` Schemas
+        run: |
+          poetry run python3 -m initialize.schema.weather
+      - name: Run Tests
+        run: poetry run pytest
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ env.AWS_KEY }}
-          aws-secret-access-key: ${{ env.AWS_SECRET }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -47,9 +67,9 @@ jobs:
         uses: rlespinasse/github-slug-action@v4
 
       - name: Prepare Images
+        id: prepare-images
         run: |
           echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
-
       - name: Docker Compose
         id: docker-compose
         uses: isbang/compose-action@v1.5.1
@@ -63,12 +83,38 @@ jobs:
       - name: Push to ECR
         id: ecr
         uses: jwalton/gh-ecr-push@v1.3.6
-        env:
-          # Be sure this matches the image name in the docker-compose.yml file
-          IMAGE_TAG: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }}
+        # env:
+        #   # Be sure this matches the image name in the docker-compose.yml file
+        #   IMAGE_TAG: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }}
         with:
           access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: ${{ env.AWS_REGION }}
           local-image: ${{ env.IMAGE_TAG }}
           image: ${{ env.IMAGE_TAG }}, ${{ env.ECR_REPOSITORY }}:latest
+
+
+  test-ecr-connection:
+    name: Test ECR Connection
+    needs: aws-ecr
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ needs.aws-ecr.outputs.IMAGE_TAG }}
+        env:
+          # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ env.DB_PW }}
+        ports:
+          - 5432:5432
+        volumes:
+          - db:/var/lib/postgresql/data
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: List available databases
+        run: |
+          echo "${{ needs.aws-ecr.outputs.IMAGE_TAG }}"
+          psql -U postgres -c "\l"

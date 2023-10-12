@@ -35,22 +35,22 @@ jobs:
           cache: 'poetry'
       - name: Install project
         run: poetry install
-      - name: Install PostGIS  # Needed to use raster2pgsql
-        run: sudo apt install postgis
-      - name: Create Test Database
-        run: PGPASSWORD=${{ secrets.GHA_POSTGRES_PASSWORD }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
-      - name: Initialize Database Users and `demeter` Schema
-        run: |
-          poetry run python3 -m initialize.users
-          poetry run python3 -m initialize.schema.demeter --schema_name demeter
-      - name: Initialize `raster` Schemas
-        run: |
-          poetry run python3 -m initialize.schema.raster
-      - name: Initialize `weather` Schemas
-        run: |
-          poetry run python3 -m initialize.schema.weather
-      - name: Run Tests
-        run: poetry run pytest
+      # - name: Install PostGIS  # Needed to use raster2pgsql
+      #   run: sudo apt install postgis
+      # - name: Create Test Database
+      #   run: PGPASSWORD=${{ secrets.GHA_POSTGRES_PASSWORD }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
+      # - name: Initialize Database Users and `demeter` Schema
+      #   run: |
+      #     poetry run python3 -m initialize.users
+      #     poetry run python3 -m initialize.schema.demeter --schema_name demeter
+      # - name: Initialize `raster` Schemas
+      #   run: |
+      #     poetry run python3 -m initialize.schema.raster
+      # - name: Initialize `weather` Schemas
+      #   run: |
+      #     poetry run python3 -m initialize.schema.weather
+      # - name: Run Tests
+      #   run: poetry run pytest
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1

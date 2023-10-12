@@ -11,6 +11,7 @@ from geoalchemy2 import Geometry  # Required import for sqlalchemy to use Geomet
 from psycopg2.extensions import AsIs
 from sqlalchemy import MetaData
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import text
 
 from demeter.db import getConnection
 from initialize.schema._utils.initialize import initialize_schema_type
@@ -57,7 +58,7 @@ def session_scope(engine, schema=None):
     Session = sessionmaker(bind=engine)  # noqa
     session = Session()
     session.execute(
-        "SET search_path TO :schema,public", {"schema": schema}
+        text("SET search_path TO :schema,public"), params={"schema": schema}
     )  # public needed because that's where PostGIS ext lives
 
     try:
@@ -73,7 +74,10 @@ def session_scope(engine, schema=None):
 def clear_tables():
     with session_scope(engine, schema=SCHEMA_NAME) as conn:
         for table in metadata_obj.sorted_tables:
-            conn.execute(f"TRUNCATE {table.name} RESTART IDENTITY CASCADE;")
+            conn.execute(
+                text("TRUNCATE :table_name RESTART IDENTITY CASCADE;"),
+                params={"table_name": AsIs(table.name)},
+            )
         conn.commit()
 
 
@@ -101,9 +105,9 @@ def test_db_session_teardown():
     yield None
     with engine.connect() as conn:
         with conn.begin():
-            stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
-            params = AsIs(SCHEMA_NAME)
-            conn.execute(stmt, params)
+            stmt = """DROP SCHEMA IF EXISTS :schema CASCADE;"""
+            params = {"schema": AsIs(SCHEMA_NAME)}
+            conn.execute(text(stmt), params)
     c_read_write.close()
     c.close()
 

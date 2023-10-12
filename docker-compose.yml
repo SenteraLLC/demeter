@@ -12,7 +12,7 @@ services:
     # restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_PASSWORD: ${DB_PW}
     ports:
       - 5432:5432
     networks:

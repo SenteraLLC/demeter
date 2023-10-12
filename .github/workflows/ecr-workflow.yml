@@ -9,13 +9,15 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: demeter
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+  DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
 
 jobs:
   aws-ecr:
     name: Publish Docker Image
     runs-on: ubuntu-latest
     outputs:
-      IMAGE_TAG: ${{ steps.prepare-images.outputs.IMAGE_TAG }}
+      IMAGE_URI: ${{ steps.prepare-images.outputs.IMAGE_URI }}
+      DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
 
     steps:
       - name: Checkout code
@@ -36,7 +38,7 @@ jobs:
       - name: Install PostGIS  # Needed to use raster2pgsql
         run: sudo apt install postgis
       - name: Create Test Database
-        run: PGPASSWORD=${{ env.DB_PW }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
+        run: PGPASSWORD=${{ secrets.GHA_POSTGRES_PASSWORD }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
       - name: Initialize Database Users and `demeter` Schema
         run: |
           poetry run python3 -m initialize.users
@@ -70,6 +72,7 @@ jobs:
         id: prepare-images
         run: |
           echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
+          echo "IMAGE_URI=$(echo ${{ secrets.AWS_ACCOUNT_ID }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }} )" >> $GITHUB_ENV
       - name: Docker Compose
         id: docker-compose
         uses: isbang/compose-action@v1.5.1
@@ -101,11 +104,11 @@ jobs:
 
     services:
       db:
-        image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ needs.aws-ecr.outputs.IMAGE_TAG }}
+        image: ${{ needs.aws-ecr.outputs.IMAGE_URI }}
         env:
           # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ env.DB_PW }}
+          POSTGRES_PASSWORD: ${{ needs.aws-ecr.outputs.DB_PW }}
         ports:
           - 5432:5432
         volumes:
@@ -116,5 +119,5 @@ jobs:
     steps:
       - name: List available databases
         run: |
-          echo "${{ needs.aws-ecr.outputs.IMAGE_TAG }}"
+          echo "${{ needs.aws-ecr.outputs.IMAGE_URI }}"
           psql -U postgres -c "\l"

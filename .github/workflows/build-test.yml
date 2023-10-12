@@ -7,7 +7,9 @@ on:
 
 env:
   working_directory: ./
-  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: demeter
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
   DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
   DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev'}"
   TEST_DEMETER_SETUP: "{'host':'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
@@ -47,7 +49,7 @@ jobs:
         # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
         uses: webfactory/ssh-agent@v0.8.0
         with:
-          ssh-private-key: ${{ env.SSH_KEY }}
+          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
       - name: Install Poetry
         run: pipx install poetry
       - uses: actions/setup-python@v4
@@ -71,3 +73,63 @@ jobs:
           poetry run python3 -m initialize.schema.weather
       - name: Run Tests
         run: poetry run pytest
+
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: 'true'
+
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Prepare Images
+        id: prepare-images
+        run: |
+          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
+          echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }} )" >> $GITHUB_ENV
+
+      # - name: Docker Compose
+      #   id: docker-compose
+      #   uses: isbang/compose-action@v1.5.1
+      #   with:
+      #     compose-file: "./docker-compose.yml"
+      #     up-flags: "--build"
+      #     services: |
+      #       postgres
+      #       python
+
+      - name: Docker Build
+        id: docker-build
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: prospero
+        run: docker build . -t  $IMAGE_TAG --build-arg SSH_PRIVATE_KEY="${{ env.SSH_PRIVATE_KEY }}"
+
+      - name: Docker Run
+        id: docker-run
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: demeter
+        run: docker run $IMAGE_TAG demeter --help
+
+      - name: Push to ECR
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1.3.6
+        # env:
+        #   # Be sure this matches the image name in the docker-compose.yml file
+        #   IMAGE_TAG: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }}
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ env.AWS_REGION }}
+          local-image: ${{ env.IMAGE_TAG }}
+          image: ${{ env.IMAGE_TAG }}, ${{ env.ECR_REPOSITORY }}:latest

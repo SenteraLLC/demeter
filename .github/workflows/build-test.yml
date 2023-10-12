@@ -109,17 +109,14 @@ jobs:
 
       - name: Docker Build
         id: docker-build
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: prospero
         run: docker build . -t  $IMAGE_TAG --build-arg SSH_PRIVATE_KEY="${{ env.SSH_PRIVATE_KEY }}"
 
-      - name: Docker Run
-        id: docker-run
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: demeter
-        run: docker run $IMAGE_TAG demeter --help
+      # - name: Docker Run
+      #   id: docker-run
+      #   env:
+      #     REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #     REPOSITORY: demeter
+      #   run: docker run $IMAGE_TAG demeter --help
 
       - name: Push to ECR
         id: ecr

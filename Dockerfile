@@ -39,4 +39,4 @@ RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 WORKDIR /app
 COPY . .
 
-RUN poetry install --only=main --no-root --no-interaction --no-ansi
+RUN poetry install

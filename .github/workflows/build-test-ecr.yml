@@ -1,4 +1,4 @@
-name: Build & Test
+name: Build, Test, & Push to ECR
 
 on:
   pull_request:
@@ -23,7 +23,7 @@ env:
   raster_ro_user_password: 'icanonlyreadrast'
 
 jobs:
-  build-test:
+  build-test-ecr:
     runs-on: ubuntu-latest
 
     # name: Setup database
@@ -97,26 +97,9 @@ jobs:
           echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
           echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }} )" >> $GITHUB_ENV
 
-      # - name: Docker Compose
-      #   id: docker-compose
-      #   uses: isbang/compose-action@v1.5.1
-      #   with:
-      #     compose-file: "./docker-compose.yml"
-      #     up-flags: "--build"
-      #     services: |
-      #       postgres
-      #       python
-
       - name: Docker Build
         id: docker-build
         run: docker build . -t  $IMAGE_TAG --build-arg SSH_PRIVATE_KEY="${{ env.SSH_PRIVATE_KEY }}"
-
-      # - name: Docker Run
-      #   id: docker-run
-      #   env:
-      #     REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     REPOSITORY: demeter
-      #   run: docker run $IMAGE_TAG demeter --help
 
       - name: Push to ECR
         id: ecr

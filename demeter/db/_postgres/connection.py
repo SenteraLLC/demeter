@@ -66,9 +66,10 @@ def _check_and_get_env_dictionary(
             raise SyntaxError(
                 f"\nCannot perform a literal_eval on {env_name} environment variable\n{e}"
             )
-        assert set(required_keys).issubset(
-            list(v_dict.keys())
-        ), f"These keys must be present in {env_name}: {required_keys}"
+        if not set(required_keys).issubset(list(v_dict.keys())):
+            raise RuntimeError(
+                f'These keys must be present in "{env_name}" environment variable: {required_keys}'
+            )
     return literal_eval(env_value)
 
 

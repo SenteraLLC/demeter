@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "demeter"
-version = "1.2.12"
+version = "1.2.13"
 description = "The database schema and API that supports agronomic modeling and data science activities."
-authors = ["Joel Larson <JoelLarson@sentera.com>"]
+authors = []
 packages = [
   {include = "demeter"},
   {include = "demeter/py.typed"},
@@ -17,7 +17,7 @@ joblib = "^1.2.0"
 jsonschema = "^4.4.0"
 pg-diagram = "^0.1.2"
 psycopg2 = "^2.9.3"
-python-dotenv = "^0.21.0"
+python-dotenv = "^1.0.0"
 requests = "^2.27.1"
 Rtree = "^1.0.0"
 typing_extensions = "^4.0.1"
@@ -28,7 +28,7 @@ types-psycopg2 = "^2.9.7"
 types-requests = "^2.27.10"
 types-urllib3 = "^1.26.9"
 sqlalchemy_schemadisplay = {git = "https://github.com/fschulze/sqlalchemy_schemadisplay.git", branch = "master"}
-SQLAlchemy = "^1.4.45"
+sqlalchemy = "^2.0.21"
 GeoAlchemy2 = "^0.12.5"
 sshtunnel = "^0.4.0"
 meteomatics = "^2.9.0"
@@ -47,12 +47,11 @@ graphviz = "^0.20.1"
 html-section = "^0.2.0"
 piccolo-theme = "^0.11.1"
 pydot = "^1.4.2"
-Sphinx = "^4.0.0"
 domdf-sphinx-theme = "^22.1.2"
+sphinx = "^7.2.6"
 sphinx-autodoc-typehints = "^1.18.3"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-toolbox = "^3.1.2"
-toctree-plus = {git = "https://github.com/sphinx-toolbox/toctree_plus.git", rev = "dependabot/pip/sphinx-gte-3.0.3-and-lt-5.2.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
@@ -73,6 +72,7 @@ types-boto3 = "^1.0.1"
 pandas-stubs = "^1.2.0"
 mypy = "^0.950"
 mypy-extensions = "^0.4.3"
+pgadmin4 = "^7.7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

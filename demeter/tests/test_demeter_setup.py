@@ -56,7 +56,7 @@ class TestUserPrivileges:
                 where field_group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
-                    conn.execute(stmt)
+                    conn.execute(text(stmt))
 
     def test_demeter_user_cannot_delete(self, test_db_class):
         with test_db_class.connect() as conn:
@@ -65,23 +65,23 @@ class TestUserPrivileges:
                 where field_group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
-                    conn.execute(stmt)
+                    conn.execute(text(stmt))
 
     def test_demeter_user_cannot_drop_schema(self, test_db_class, schema_name):
         with test_db_class.connect() as conn:
             with conn.begin():
-                stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
-                params = AsIs(schema_name)
+                stmt = """DROP SCHEMA IF EXISTS :schema CASCADE;"""
+                params = {"schema": AsIs(schema_name)}
 
                 with pytest.raises(ProgrammingError):
-                    conn.execute(stmt, params)
+                    conn.execute(text(stmt), params)
 
     def test_demeter_user_cannot_drop_table(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
                 stmt = """DROP TABLE IF EXISTS field CASCADE;"""
                 with pytest.raises(ProgrammingError):
-                    conn.execute(stmt)
+                    conn.execute(text(stmt))
 
     ## TEST FOR DEMETER_RO_USER
 
@@ -115,7 +115,7 @@ class TestUserPrivileges:
                 where field_group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
-                    conn.execute(stmt)
+                    conn.execute(text(stmt))
 
     def test_demeter_ro_user_cannot_delete(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
@@ -124,22 +124,22 @@ class TestUserPrivileges:
                 where field_group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
-                    conn.execute(stmt)
+                    conn.execute(text(stmt))
 
     def test_demeter_ro_user_cannot_drop_schema(
         self, test_read_only_access, schema_name
     ):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-                stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
-                params = AsIs(schema_name)
+                stmt = """DROP SCHEMA IF EXISTS :schema CASCADE;"""
+                params = {"schema": AsIs(schema_name)}
 
                 with pytest.raises(ProgrammingError):
-                    conn.execute(stmt, params)
+                    conn.execute(text(stmt), params)
 
     def test_demeter_ro_user_cannot_drop_table(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
                 stmt = """DROP TABLE IF EXISTS field CASCADE;"""
                 with pytest.raises(ProgrammingError):
-                    conn.execute(stmt)
+                    conn.execute(text(stmt))

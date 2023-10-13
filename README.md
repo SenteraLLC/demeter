@@ -9,7 +9,7 @@ A guide for configuring your project to connect to a `demeter` PostgreSQL databa
   - Includes Mac and Windows set-up
 - __[WSL Setup](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302850561/WSL+Setup)__
   - Contains information about how to set up PostgreSQL and PostGIS on Windows Subsystem for Linux.
-  - __[Upgrade GEOS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302522986/Upgrade+GEOSp)__ 
+  - __[Upgrade GEOS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3302522986/Upgrade+GEOSp)__
     - Contains information on upgrading GEOS to GEOS v3.9+ to enable some PostGIS functions.
 - __[Connecting to AWS RDS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3301048336/Connecting+to+AWS+RDS)__
 
@@ -83,6 +83,15 @@ Then, you can run `pytest` with
 poetry run pytest
 ```
 
+## Github Actions CI
+There are three Github Actions workflows that run for PRs:
+- `pre-commit.yml`: Runs `pre-commit` hooks on the codebase to ensure all commits adhere to **black** and **PEP8** style conventions.
+- `build-test-ecr.yml`: Performs a builds and runs `pytest`, then pushes the built Docker image to ECR.
+- `create_github_release.yml`: Creates a Github Release on every push to the main branch. The name of the Release/Tag will match the value of the version field specified in `pyproject.toml`. Release Notes will be generated automatically and linked to the Release/Tag.
+
+## Connecting to AWS RDS
+- See the Confluence document describing how to [connecting to AWS RDS](https://sentera.atlassian.net/wiki/spaces/GML/pages/3301048336/Connecting+to+AWS+RDS)
+
 ## Troubleshooting
 ### Installing `geopandas` on Mac
 [See this SO thread](https://stackoverflow.com/questions/71137617/error-installing-geopandas-in-python-on-mac-m1)
@@ -95,7 +104,6 @@ A `schema-demeter.png` can be automatically generated with the following:
 ```bash
 pg_dump --schema-only --schema demeter -h localhost -U postgres -d demeter-dev | poetry run python -m scripts.to_graphviz | dot -Tpng > schema-demeter.png
 ```
-
 
 #### Example Schema
 ![Example Schema](./schema-demeter.png)

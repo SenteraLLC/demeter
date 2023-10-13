@@ -1,0 +1,115 @@
+name: Build, Test, & Push to ECR
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  working_directory: ./
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: demeter
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_TRAVIS_USER }}
+  DB_PW: ${{ secrets.GHA_POSTGRES_PASSWORD }}
+  DEMETER-DEV_LOCAL_SUPER: "{'host': 'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev'}"
+  TEST_DEMETER_SETUP: "{'host':'localhost', 'port':'5432', 'username':'postgres', 'password':'${{ secrets.GHA_POSTGRES_PASSWORD }}', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
+  TEST_DEMETER_RW: "{'host':'localhost', 'port':'5432', 'username':'demeter_user', 'password':'icanreadwrite', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
+  TEST_DEMETER_RO: "{'host':'localhost', 'port':'5432', 'username':'demeter_ro_user', 'password':'icanonlyread', 'database':'demeter-dev', 'search_path':'test_demeter,weather,public'}"
+  demeter_user_password: 'icanreadwrite'
+  demeter_ro_user_password: 'icanonlyread'
+  weather_user_password: 'icanreadwritewx'
+  weather_ro_user_password: 'icanonlyreadwx'
+  raster_user_password: 'icanreadwriterast'
+  raster_ro_user_password: 'icanonlyreadrast'
+
+jobs:
+  build-test-ecr:
+    runs-on: ubuntu-latest
+
+    # name: Setup database
+    services:
+      db:
+        # name: Attach to PostGIS Docker Image
+        image: postgis/postgis:14-3.4
+        env:
+          # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ env.DB_PW }}
+        ports:
+          - 5432:5432
+        volumes:
+          - db:/var/lib/postgresql/data
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Register SSH key(s) for private dependencies
+        # Make sure the @v0.8.0 matches the current version of the action (https://github.com/marketplace/actions/webfactory-ssh-agent)
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
+      - name: Install Poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          cache: 'poetry'
+      - name: Install project
+        run: poetry install
+      - name: Install PostGIS  # Needed to use raster2pgsql
+        run: sudo apt install postgis
+      - name: Create Test Database
+        run: PGPASSWORD=${{ env.DB_PW }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
+      - name: Initialize Database Users and `demeter` Schema
+        run: |
+          poetry run python3 -m initialize.users
+          poetry run python3 -m initialize.schema.demeter --schema_name demeter
+      - name: Initialize `raster` Schemas
+        run: |
+          poetry run python3 -m initialize.schema.raster
+      - name: Initialize `weather` Schemas
+        run: |
+          poetry run python3 -m initialize.schema.weather
+      - name: Run Tests
+        run: poetry run pytest
+
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: 'true'
+
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Prepare Images
+        id: prepare-images
+        run: |
+          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
+          echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }} )" >> $GITHUB_ENV
+
+      - name: Docker Build
+        id: docker-build
+        run: docker build . -t  $IMAGE_TAG --build-arg SSH_PRIVATE_KEY="${{ env.SSH_PRIVATE_KEY }}"
+
+      - name: Push to ECR
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1.3.6
+        # env:
+        #   # Be sure this matches the image name in the docker-compose.yml file
+        #   IMAGE_TAG: ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }}
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ env.AWS_REGION }}
+          local-image: ${{ env.IMAGE_TAG }}
+          image: ${{ env.IMAGE_TAG }}, ${{ env.ECR_REPOSITORY }}:latest

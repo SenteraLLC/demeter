@@ -10,6 +10,7 @@ from typing import Callable
 
 from psycopg2.extensions import AsIs
 from sqlalchemy.engine import Connection
+from sqlalchemy.sql import text
 
 from .format import (
     format_demeter_schema_sql,
@@ -39,10 +40,10 @@ def _check_exists_schema(conn: Connection, schema_name: str) -> bool:
         # check if the given schema name already exists
         stmt = """
             select * from information_schema.schemata
-            where schema_name = %(schema_name)s
+            where schema_name = %(schema)s;
         """
         cursor = conn.connection.cursor()
-        cursor.execute(stmt, {"schema_name": schema_name})
+        cursor.execute(stmt, {"schema": schema_name})
         results = cursor.fetchall()
 
     if len(results) > 0:
@@ -56,9 +57,9 @@ def _drop_schema(conn: Connection, schema_name: str):
 
     Requires superuser connection.
     """
-    stmt = """DROP SCHEMA IF EXISTS %s CASCADE;"""
-    params = AsIs(schema_name)
-    conn.execute(stmt, params)
+    stmt = """DROP SCHEMA IF EXISTS :schema CASCADE;"""
+    conn.execute(text(stmt), {"schema": AsIs(schema_name)})
+    conn.commit()
 
 
 def _maybe_initialize_schema(

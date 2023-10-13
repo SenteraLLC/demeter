@@ -37,6 +37,11 @@ class ObservationType(db.TypeTable):
 
     type_name: str
     type_category: str = None
+    # TODO: Analytic and Sensor should be their own tables (can probably generate from the Product Catalog via GQL API)
+    analytic_name: str = None
+    sensor_name: str = None
+    statistic_type: str = None
+    subplot: bool = None
 
 
 @dataclass(frozen=True)

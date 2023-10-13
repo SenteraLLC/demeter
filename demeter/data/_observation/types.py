@@ -32,7 +32,7 @@ class Observation(db.Detailed):
 # TODO: We need to impose constraints on which values can be passed to `type_name` to ensure that we aren't
 # creating duplicates of types.
 @dataclass(frozen=True)
-class ObservationType(db.TypeTable):
+class ObservationType(db.Detailed):
     """Measurement type as it relates to collection methodology and/or agronomic interpretation."""
 
     observation_type_name: str

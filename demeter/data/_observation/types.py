@@ -35,13 +35,13 @@ class Observation(db.Detailed):
 class ObservationType(db.TypeTable):
     """Measurement type as it relates to collection methodology and/or agronomic interpretation."""
 
-    type_name: str
-    type_category: str = None
+    observation_type_name: str
+    category: str = None
     # TODO: Analytic and Sensor should be their own tables (can probably generate from the Product Catalog via GQL API)
-    analytic_name: str = None
-    sensor_name: str = None
-    statistic_type: str = None
-    subplot: bool = None
+    # analytic_name: str = None
+    # sensor_name: str = None
+    # statistic_type: str = None
+    # masked: bool = None
 
 
 @dataclass(frozen=True)

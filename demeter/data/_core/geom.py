@@ -122,7 +122,7 @@ def insertOrGetGeom(
     )
     returning geom_id
     """
-    precision = 7
+    precision = 9
     args = {
         # "geom": round_geometry(geometry, n_decimal_places=precision).wkb_hex,
         "geom": geometry.wkb_hex,

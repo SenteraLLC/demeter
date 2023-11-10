@@ -32,11 +32,16 @@ class Observation(db.Detailed):
 # TODO: We need to impose constraints on which values can be passed to `type_name` to ensure that we aren't
 # creating duplicates of types.
 @dataclass(frozen=True)
-class ObservationType(db.TypeTable):
+class ObservationType(db.Detailed):
     """Measurement type as it relates to collection methodology and/or agronomic interpretation."""
 
-    type_name: str
-    type_category: str = None
+    observation_type_name: str
+    category: str = None
+    # TODO: Analytic and Sensor should be their own tables (can probably generate from the Product Catalog via GQL API)
+    # analytic_name: str = None
+    # sensor_name: str = None
+    # statistic_type: str = None
+    # masked: bool = None
 
 
 @dataclass(frozen=True)

@@ -179,7 +179,7 @@ obs_geom = Point(-65.645145335822, -36.052968641022)
 obs_geom_id = insertOrGetGeom(cursor, obs_geom)
 print("Observation geom id: ", obs_geom_id)
 
-agronomic_yield_type = ObservationType(type_name="agronomic barley yield")
+agronomic_yield_type = ObservationType(observation_type_name="agronomic barley yield")
 ag_yield_id = insertOrGetObservationType(cursor, agronomic_yield_type)
 
 assert agronomic_yield_type == getObservationType(
@@ -194,7 +194,7 @@ unit_1_id = insertOrGetUnitType(cursor, kg_ha_ag_yield_unit)
 
 assert kg_ha_ag_yield_unit == getUnitType(cursor, unit_1_id), "Error in UnitType insert"
 
-malt_barley_yield_type = ObservationType(type_name="malt barley yield")
+malt_barley_yield_type = ObservationType(observation_type_name="malt barley yield")
 malt_yield_id = insertOrGetObservationType(cursor, malt_barley_yield_type)
 
 kg_ha_malt_yield_unit = UnitType(

@@ -174,19 +174,65 @@ ALTER TABLE crop_type
 
 create table observation_type (
   observation_type_id bigserial primary key,
-  type_name     text not null,
-  type_category text,
-  unique (type_name, type_category)
+  observation_type_name text not null,
+  category text,
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+  unique (observation_type_name, category, details),
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
 );
 
-CREATE UNIQUE INDEX observation_type_category_null_unique_idx
-  ON observation_type(type_name)
-  WHERE (type_category is NULL);
+-- All are NULL
+-- TODO: Are these necesary if GetOrInsertObservationType() is already checking for this?
+CREATE UNIQUE INDEX observation_type_all_null_unique_idx
+  ON observation_type(observation_type_name)
+  WHERE (category is NULL)
+  AND (details is NULL);
+
+-- -- All except one is NULL
+-- CREATE UNIQUE INDEX observation_type_all_except_type_category_null_unique_idx
+--   ON observation_type(type_name, type_category)
+--   WHERE (analytic_name is NULL)
+--   AND (sensor_name is NULL)
+--   AND (statistic_type is NULL)
+--   AND (masked is NULL);
+-- CREATE UNIQUE INDEX observation_type_all_except_analytic_null_unique_idx
+--   ON observation_type(type_name, analytic_name)
+--   WHERE (type_category is NULL)
+--   AND (sensor_name is NULL)
+--   AND (statistic_type is NULL)
+--   AND (masked is NULL);
+-- CREATE UNIQUE INDEX observation_type_all_except_sensor_null_unique_idx
+--   ON observation_type(type_name, sensor_name)
+--   WHERE (type_category is NULL)
+--   AND (analytic_name is NULL)
+--   AND (statistic_type is NULL)
+--   AND (masked is NULL);
+-- CREATE UNIQUE INDEX observation_type_all_except_statistic_null_unique_idx
+--   ON observation_type(type_name, statistic_type)
+--   WHERE (type_category is NULL)
+--   AND (analytic_name is NULL)
+--   AND (sensor_name is NULL)
+--   AND (masked is NULL);
+-- CREATE UNIQUE INDEX observation_type_all_except_masked_null_unique_idx
+--   ON observation_type(type_name, masked)
+--   WHERE (type_category is NULL)
+--   AND (analytic_name is NULL)
+--   AND (sensor_name is NULL)
+--   AND (statistic_type is NULL);
 
 ALTER TABLE observation_type
-  ADD CONSTRAINT observation_type_lowercase_ck
-  CHECK (type_name = lower(type_name));
-
+	ADD CONSTRAINT observation_type_observation_type_name_lowercase_ck CHECK (observation_type_name = lower(observation_type_name)),
+  ADD CONSTRAINT observation_type_category_lowercase_ck CHECK (category = lower(category));
 
 -- UNIT TYPE
 

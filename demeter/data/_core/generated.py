@@ -21,7 +21,7 @@ from .._core.types import (
     FieldTrial,
     Plot,
 )
-from .field_group import FieldGroup, FieldTrialGroup
+from .grouper import Grouper
 from .st_types import GeoSpatialKey, TemporalKey
 
 g = SQLGenerator(
@@ -33,42 +33,32 @@ g = SQLGenerator(
 )
 
 # core types
-getMaybeFieldGroupId: GetId[FieldGroup] = g.getMaybeIdFunction(FieldGroup)
+getMaybeGrouperId: GetId[Grouper] = g.getMaybeIdFunction(Grouper)
 getMaybeFieldId: GetId[Field] = g.getMaybeIdFunction(Field)
-getMaybeFieldTrialGroupId: GetId[FieldTrialGroup] = g.getMaybeIdFunction(
-    FieldTrialGroup
-)
 getMaybeFieldTrialId: GetId[FieldTrial] = g.getMaybeIdFunction(FieldTrial)
 getMaybePlotId: GetId[Plot] = g.getMaybeIdFunction(Plot)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
 
-getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
+getGrouper: GetTable[Grouper] = g.getTableFunction(Grouper)
 getField: GetTable[Field] = g.getTableFunction(Field)
-getFieldTrialGroup: GetTable[FieldTrialGroup] = g.getTableFunction(FieldTrialGroup)
 getFieldTrial: GetTable[FieldTrial] = g.getTableFunction(FieldTrial)
 getPlot: GetTable[Plot] = g.getTableFunction(Plot)
 getCropType: GetTable[CropType] = g.getTableFunction(CropType)
 getAct: GetTable[Act] = g.getTableFunction(Act)
 
-insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
+insertGrouper: ReturnId[Grouper] = g.getInsertReturnIdFunction(Grouper)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
-insertFieldTrialGroup: ReturnId[FieldTrialGroup] = g.getInsertReturnIdFunction(
-    FieldTrialGroup
-)
 insertFieldTrial: ReturnId[FieldTrial] = g.getInsertReturnIdFunction(FieldTrial)
 insertPlot: ReturnId[Plot] = g.getInsertReturnIdFunction(Plot)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
 
 
-insertOrGetFieldGroup: ReturnId[FieldGroup] = g.partialInsertOrGetId(
-    getMaybeFieldGroupId, insertFieldGroup
+insertOrGetGrouper: ReturnId[Grouper] = g.partialInsertOrGetId(
+    getMaybeGrouperId, insertGrouper
 )
 insertOrGetField: ReturnId[Field] = g.partialInsertOrGetId(getMaybeFieldId, insertField)
-insertOrGetFieldTrialGroup: ReturnId[FieldTrialGroup] = g.partialInsertOrGetId(
-    getMaybeFieldTrialGroupId, insertFieldTrialGroup
-)
 insertOrGetFieldTrial: ReturnId[FieldTrial] = g.partialInsertOrGetId(
     getMaybeFieldTrialId, insertFieldTrial
 )

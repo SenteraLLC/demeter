@@ -8,17 +8,17 @@ from demeter.data import (
     Act,
     CropType,
     Field,
-    FieldGroup,
+    Grouper,
     Observation,
     ObservationType,
     UnitType,
     getAct,
     getCropType,
     getField,
-    getFieldGroup,
-    getFieldGroupAncestors,
-    getFieldGroupDescendants,
-    getFieldGroupFields,
+    getGrouper,
+    getGrouperAncestors,
+    getGrouperDescendants,
+    getGrouperFields,
     getMaybeGeom,
     getObservation,
     getObservationType,
@@ -26,8 +26,8 @@ from demeter.data import (
     insertOrGetAct,
     insertOrGetCropType,
     insertOrGetField,
-    insertOrGetFieldGroup,
     insertOrGetGeom,
+    insertOrGetGrouper,
     insertOrGetObservation,
     insertOrGetObservationType,
     insertOrGetUnitType,
@@ -54,36 +54,36 @@ trans = conn.begin()
 
 # %% add field groups
 
-sa_group = FieldGroup(
+sa_group = Grouper(
     name="South America", parent_group_id=None, details={"external_id": 107}
 )
-sa_group_id = insertOrGetFieldGroup(cursor, sa_group)
+sa_group_id = insertOrGetGrouper(cursor, sa_group)
 print(
     f"Org name: {sa_group.name}\n  group_id: {sa_group_id}\n  parent_group_id: {sa_group.parent_group_id}"
 )
 
-assert sa_group == getFieldGroup(cursor, sa_group_id), "Error in FieldGroup insert"
+assert sa_group == getGrouper(cursor, sa_group_id), "Error in Grouper insert"
 
-argentina_group = FieldGroup(
+argentina_group = Grouper(
     name="Argentina", parent_group_id=sa_group_id, details={"external_id": 1007}
 )
-argentina_group_id = insertOrGetFieldGroup(cursor, argentina_group)
+argentina_group_id = insertOrGetGrouper(cursor, argentina_group)
 print(
     f"Org name: {argentina_group.name}\n  group_id: {argentina_group}\n  parent_group_id: {argentina_group.parent_group_id}"
 )
 
-test_field_group = FieldGroup(
+test_grouper = Grouper(
     name="Argonomist 1",
     parent_group_id=argentina_group_id,
     details={"external_id": 10007},
 )
-group_id = insertOrGetFieldGroup(cursor, test_field_group)
+group_id = insertOrGetGrouper(cursor, test_grouper)
 print(
     f"Org name: {argentina_group.name}\n  group_id: {argentina_group}\n  parent_group_id: {argentina_group.parent_group_id}"
 )
 
-getFieldGroupAncestors(cursor, group_id)
-getFieldGroupDescendants(cursor, argentina_group_id)
+getGrouperAncestors(cursor, group_id)
+getGrouperDescendants(cursor, argentina_group_id)
 
 # %% add field data with geometry
 
@@ -136,7 +136,7 @@ print(
     f"  date_end: {getField(cursor, field_id).date_end}",
 )
 
-getFieldGroupFields(cursor, sa_group_id)
+getGrouperFields(cursor, sa_group_id)
 
 # %% add crop season information
 

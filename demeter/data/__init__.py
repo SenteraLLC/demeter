@@ -1,38 +1,34 @@
-from ._core.field_group import (  # searchFieldGroup,
-    FieldGroup,
-    FieldTrialGroup,
-    getFieldGroupAncestors,
-    getFieldGroupDescendants,
-    getFieldGroupFields,
-)
 from ._core.generated import (  # getGeom,
     getAct,
     getCropType,
     getField,
-    getFieldGroup,
     getFieldTrial,
-    getFieldTrialGroup,
+    getGrouper,
     getMaybeActId,
     getMaybeCropTypeId,
-    getMaybeFieldGroupId,
     getMaybeFieldId,
-    getMaybeFieldTrialGroupId,
     getMaybeFieldTrialId,
     getMaybeGeoSpatialKeyId,
+    getMaybeGrouperId,
     getMaybeTemporalKeyId,
     insertOrGetAct,
     insertOrGetCropType,
     insertOrGetField,
-    insertOrGetFieldGroup,
     insertOrGetFieldTrial,
-    insertOrGetFieldTrialGroup,
     insertOrGetGeoSpatialKey,
+    insertOrGetGrouper,
     insertOrGetTemporalKey,
 )
 from ._core.geom import (
     getMaybeGeom,
     getMaybeGeomId,
     insertOrGetGeom,
+)
+from ._core.grouper import (  # searchGrouper,
+    Grouper,
+    getGrouperAncestors,
+    getGrouperDescendants,
+    getGrouperFields,
 )
 from ._core.st_types import (
     Geom,
@@ -66,21 +62,14 @@ from ._observation.types import (
 )
 
 __all__ = (
-    # FieldGroup
-    "FieldGroup",
-    "getFieldGroup",
-    "getMaybeFieldGroupId",
-    "insertOrGetFieldGroup",
-    "getFieldGroupAncestors",
-    "getFieldGroupDescendants",
-    # FieldTrialGroup
-    "FieldTrialGroup",
-    "getFieldTrialGroup",
-    "getMaybeFieldTrialGroupId",
-    "insertOrGetFieldTrialGroup",
-    # "getOrgFields",
-    # "searchFieldGroup",
-    "getFieldGroupFields",
+    # Grouper
+    "Grouper",
+    "getGrouper",
+    "getMaybeGrouperId",
+    "insertOrGetGrouper",
+    "getGrouperAncestors",
+    "getGrouperDescendants",
+    "getGrouperFields",
     # Field
     "Field",
     "getField",

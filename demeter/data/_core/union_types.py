@@ -7,7 +7,7 @@ from .._core.types import (  # ReportType,
     FieldTrial,
     Plot,
 )
-from .field_group import FieldGroup, FieldTrialGroup
+from .grouper import Grouper
 from .st_types import (
     Geom,
     GeoSpatialKey,
@@ -20,8 +20,7 @@ AnyDataTable = Union[
     Field,
     FieldTrial,
     Plot,
-    FieldGroup,
-    FieldTrialGroup,
+    Grouper,
     GeoSpatialKey,
     TemporalKey,
     Key,

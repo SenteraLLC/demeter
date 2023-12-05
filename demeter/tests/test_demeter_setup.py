@@ -11,9 +11,9 @@ from sqlalchemy.sql import text
 from sure import expect
 
 from demeter.data import (
-    FieldGroup,
-    getMaybeFieldGroupId,
-    insertOrGetFieldGroup,
+    Grouper,
+    getMaybeGrouperId,
+    insertOrGetGrouper,
 )
 from demeter.tests.conftest import SCHEMA_NAME
 
@@ -28,30 +28,28 @@ class TestUserPrivileges:
         with test_db_class.connect() as conn:
             with conn.begin():
                 cursor = conn.connection.cursor()
-                stmt = """insert into field_group (name)
+                stmt = """insert into grouper (name)
                 values ('Testing User Privileges');
                 """
                 cursor.execute(stmt)
 
-                stmt = """select name from field_group where name = 'Testing User Privileges'"""
+                stmt = """select name from grouper where name = 'Testing User Privileges'"""
                 cursor.execute(stmt)
                 len(cursor.fetchall()).should.be.equal(1)
 
     def test_demeter_user_can_read(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                test_field_group = FieldGroup(
+                test_grouper = Grouper(
                     name="Testing User Privileges", parent_group_id=None
                 )
-                test_fg_id = getMaybeFieldGroupId(
-                    conn.connection.cursor(), test_field_group
-                )
+                test_fg_id = getMaybeGrouperId(conn.connection.cursor(), test_grouper)
                 test_fg_id.should.be.equal(1)
 
     def test_demeter_user_cannot_update(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                stmt = """update field_group
+                stmt = """update grouper
                 set name = 'name change'
                 where group_id = 1"""
 
@@ -61,7 +59,7 @@ class TestUserPrivileges:
     def test_demeter_user_cannot_delete(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                stmt = """delete from field_group
+                stmt = """delete from grouper
                 where group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
@@ -88,19 +86,17 @@ class TestUserPrivileges:
     def test_demeter_ro_user_can_read(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-                test_field_group = FieldGroup(
+                test_grouper = Grouper(
                     name="Testing User Privileges", parent_group_id=None
                 )
-                test_fg_id = getMaybeFieldGroupId(
-                    conn.connection.cursor(), test_field_group
-                )
+                test_fg_id = getMaybeGrouperId(conn.connection.cursor(), test_grouper)
                 test_fg_id.should.be.equal(1)
 
     def test_demeter_ro_user_cannot_insert(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
                 cursor = conn.connection.cursor()
-                stmt = """insert into field_group (name)
+                stmt = """insert into grouper (name)
                 values ('Testing User Privileges - 2');
                 """
 
@@ -110,7 +106,7 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_update(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-                stmt = """update field_group
+                stmt = """update grouper
                 set name = 'name change'
                 where group_id = 1"""
 
@@ -120,7 +116,7 @@ class TestUserPrivileges:
     def test_demeter_ro_user_cannot_delete(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
-                stmt = """delete from field_group
+                stmt = """delete from grouper
                 where group_id = 1"""
 
                 with pytest.raises(ProgrammingError):

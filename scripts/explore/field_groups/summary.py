@@ -48,13 +48,13 @@ def getFieldGroupSummaries(
   with recursive descendent as (
     select *,
            0 as depth
-    from test_demeter.field_group G
+    from test_demeter.grouper G
     where parent_group_id is null
     UNION ALL
     select G.*,
            depth + 1
     from descendent D
-    join test_demeter.field_group G on D.group_id = G.parent_group_id
+    join test_demeter.grouper G on D.group_id = G.parent_group_id
 
   ), fields as (
     select D.group_id,

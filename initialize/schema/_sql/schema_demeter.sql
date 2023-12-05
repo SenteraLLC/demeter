@@ -64,20 +64,20 @@ create constraint trigger geom_must_be_unique
        for each row execute procedure geom_must_be_unique();
 
 
--- FIELD GROUP
+-- GROUPER
 
-create table field_group (
-  group_id bigserial primary key,
+create table grouper (
+  grouper_id bigserial primary key,
   -- TODO: Add cycle detection constraint
 
   name text
         not null,
 
-  parent_group_id bigint
-                  references field_group(group_id),
+  parent_grouper_id bigint
+                    references grouper(grouper_id),
 
-  unique (group_id, parent_group_id),
-  unique (parent_group_id, name),
+  unique (grouper_id, parent_grouper_id),
+  unique (parent_grouper_id, name),
 
   details jsonb
           not null
@@ -92,12 +92,12 @@ create table field_group (
                 default (now() at time zone 'utc')
 );
 
-CREATE UNIQUE INDEX unique_name_for_field_group_null_roots_idx on field_group (name) where parent_group_id is null;
+CREATE UNIQUE INDEX unique_name_for_grouper_null_roots_idx on grouper (name) where parent_grouper_id is null;
 
 -- FIELD
 
 create table field (
-  field_uid bigserial
+  field_id bigserial
             primary key,
 
   name  text,
@@ -113,8 +113,8 @@ create table field (
             not null
             default ('infinity'::timestamp at time zone 'utc'),
 
-  group_id  bigint
-            references field_group(group_id),
+  grouper_id  bigint
+              references grouper(grouper_id),
 
   details jsonb
           not null
@@ -130,46 +130,15 @@ create table field (
 );
 
 
--- FIELD TRIAL GROUP
-
-create table field_trial_group (
-  group_id bigserial primary key,
-  -- TODO: Add cycle detection constraint
-
-  name  text
-        not null,
-
-  parent_group_id bigint
-                  references field_trial_group(group_id),
-
-  unique (group_id, parent_group_id),
-  unique (parent_group_id, name),
-
-  details jsonb
-          not null
-          default '{}'::jsonb,
-
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
-
-  last_updated  timestamp without time zone
-                not null
-                default (now() at time zone 'utc')
-);
-
-CREATE UNIQUE INDEX unique_name_for_field_trial_group_null_roots_idx on field_trial_group (name) where parent_group_id is null;
-
-
 -- FIELD TRIAL
 
 create table field_trial (
-  field_trial_uid bigserial
+  field_trial_id bigserial
                   primary key,
 
-  field_uid bigint
+  field_id bigint
             not null
-            references field(field_uid),
+            references field(field_id),
 
   -- Either geom_id or name must be non-null, not both.
   name  text
@@ -178,8 +147,8 @@ create table field_trial (
   geom_id   bigint
             references geom(geom_id),
 
-  group_id  bigint
-            references field_trial_group(group_id),
+  grouper_id  bigint
+              references grouper(grouper_id),
 
   date_start  timestamp without time zone
               not null,
@@ -205,16 +174,16 @@ create table field_trial (
 -- PLOT
 
 create table plot (
-  plot_uid  bigserial
-            primary key,
+  plot_id bigserial
+          primary key,
 
-  field_uid  bigint
+  field_id  bigint
             not null
-            references field(field_uid),
+            references field(field_id),
 
-  field_trial_uid  bigint
+  field_trial_id  bigint
                   not null
-                  references field_trial(field_trial_uid),
+                  references field_trial(field_trial_id),
 
   -- Either geom_id or name must be non-null, not both.
   name  text

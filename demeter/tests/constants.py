@@ -10,7 +10,7 @@
 
 TABLES_LIST = [
     "geom",
-    "field_group",
+    "grouper",
     "field",
     "crop_type",
     "observation_type",

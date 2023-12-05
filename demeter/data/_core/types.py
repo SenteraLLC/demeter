@@ -33,6 +33,20 @@ class Field(Detailed):
 
 
 @dataclass(frozen=True)
+class FieldTrial(Detailed):
+    """A group of treatment plots geometrically organized according to an experimental design, whereby one and only one
+    treatment is assigned to each plot. Two field trials shall not overlap one another spatially nor temporally, and a
+    FieldTrial must fall fully within the spatial extent of the Field it is associated with.
+    """
+
+    geom_id: TableId
+    date_start: datetime
+    date_end: datetime = field(default=datetime.max)
+    name: str = None
+    field_trial_group_id: Optional[TableId] = None
+
+
+@dataclass(frozen=True)
 class CropType(TypeTable, Detailed):
     """Information related to the plant cultivated through a Planting activity."""
 

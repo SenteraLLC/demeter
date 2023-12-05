@@ -18,8 +18,9 @@ from .._core.types import (
     Act,
     CropType,
     Field,
+    FieldTrial,
 )
-from .field_group import FieldGroup
+from .field_group import FieldGroup, FieldTrialGroup
 from .st_types import GeoSpatialKey, TemporalKey
 
 g = SQLGenerator(
@@ -33,16 +34,26 @@ g = SQLGenerator(
 # core types
 getMaybeFieldGroupId: GetId[FieldGroup] = g.getMaybeIdFunction(FieldGroup)
 getMaybeFieldId: GetId[Field] = g.getMaybeIdFunction(Field)
+getMaybeFieldTrialGroupId: GetId[FieldTrialGroup] = g.getMaybeIdFunction(
+    FieldTrialGroup
+)
+getMaybeFieldTrialId: GetId[FieldTrial] = g.getMaybeIdFunction(FieldTrial)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
 
 getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
 getField: GetTable[Field] = g.getTableFunction(Field)
+getFieldTrial: GetTable[FieldTrial] = g.getTableFunction(FieldTrial)
+getFieldTrialGroup: GetTable[FieldTrialGroup] = g.getTableFunction(FieldTrialGroup)
 getCropType: GetTable[CropType] = g.getTableFunction(CropType)
 getAct: GetTable[Act] = g.getTableFunction(Act)
 
 insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
+insertFieldTrial: ReturnId[FieldTrial] = g.getInsertReturnIdFunction(FieldTrial)
+insertFieldTrialGroup: ReturnId[FieldTrialGroup] = g.getInsertReturnIdFunction(
+    FieldTrialGroup
+)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
 
@@ -51,8 +62,14 @@ insertOrGetFieldGroup: ReturnId[FieldGroup] = g.partialInsertOrGetId(
     getMaybeFieldGroupId, insertFieldGroup
 )
 insertOrGetField: ReturnId[Field] = g.partialInsertOrGetId(getMaybeFieldId, insertField)
+insertOrGetFieldTrial: ReturnId[FieldTrial] = g.partialInsertOrGetId(
+    getMaybeFieldTrialId, insertFieldTrial
+)
+insertOrGetFieldTrialGroup: ReturnId[FieldTrialGroup] = g.partialInsertOrGetId(
+    getMaybeFieldTrialGroupId, insertFieldTrialGroup
+)
 """
-A note on the date_end (and created) columns of Field
+A note on the date_end (and created) columns of Field and FieldTrial:
     1. `date_end=None` is NOT VALID because setting explicitly to `None` bypasses the default `datetime.max`
     2. When insertOrGetField() is called, date_end is assigned an infinity value because of the schema.sql default.
         I don't know how to reconcile the SQL default with the Field() class default if `None` is passed.

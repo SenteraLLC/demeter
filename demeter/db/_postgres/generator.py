@@ -94,7 +94,8 @@ class SQLGenerator:
     def getMaybeIdFunction(
         self, table: Type[T]
     ) -> Callable[[Any, AnyIdTable], Optional[TableId]]:
-        """Takes db.Table type, identifies appropriate table, checks for object in table, maybe inserts, and then returns TableId"""
+        """Takes db.Table type, identifies appropriate table, checks for object in table, maybe inserts, and then
+        returns TableId"""
         table_name = self.id_table_lookup[table]
         return self._fix_annotations(partial(getMaybeId, table_name), table.__name__)
 

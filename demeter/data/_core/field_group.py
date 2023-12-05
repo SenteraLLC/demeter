@@ -15,12 +15,21 @@ from demeter.data._core.types import Field
 
 @dataclass(frozen=True)
 class FieldGroup(db.Detailed):
-    """Arbitrary collection of Field objects or other FieldGroup
-    objects which allows demeter to represent field organization
-    schemes for any customer."""
+    """Arbitrary collection of Field objects or other FieldGroup objects which allows demeter to represent field
+    organization schemes for any customer."""
 
     name: str
     parent_field_group_id: Optional[db.TableId] = None
+
+
+@dataclass(frozen=True)
+class FieldTrialGroup(db.Detailed):
+    """Arbitrary collection of FieldTrial objects or other FieldGroup objects which allows demeter to represent the
+    relationship amongst field trials for any experiment, customer, etc.
+    """
+
+    name: str
+    parent_field_trial_group_id: Optional[db.TableId] = None
 
 
 def _row_to_field_group(

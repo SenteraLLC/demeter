@@ -19,6 +19,7 @@ from .._core.types import (
     CropType,
     Field,
     FieldTrial,
+    Plot,
 )
 from .field_group import FieldGroup, FieldTrialGroup
 from .st_types import GeoSpatialKey, TemporalKey
@@ -38,22 +39,25 @@ getMaybeFieldTrialGroupId: GetId[FieldTrialGroup] = g.getMaybeIdFunction(
     FieldTrialGroup
 )
 getMaybeFieldTrialId: GetId[FieldTrial] = g.getMaybeIdFunction(FieldTrial)
+getMaybePlotId: GetId[Plot] = g.getMaybeIdFunction(Plot)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
 
 getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
 getField: GetTable[Field] = g.getTableFunction(Field)
-getFieldTrial: GetTable[FieldTrial] = g.getTableFunction(FieldTrial)
 getFieldTrialGroup: GetTable[FieldTrialGroup] = g.getTableFunction(FieldTrialGroup)
+getFieldTrial: GetTable[FieldTrial] = g.getTableFunction(FieldTrial)
+getPlot: GetTable[Plot] = g.getTableFunction(Plot)
 getCropType: GetTable[CropType] = g.getTableFunction(CropType)
 getAct: GetTable[Act] = g.getTableFunction(Act)
 
 insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
-insertFieldTrial: ReturnId[FieldTrial] = g.getInsertReturnIdFunction(FieldTrial)
 insertFieldTrialGroup: ReturnId[FieldTrialGroup] = g.getInsertReturnIdFunction(
     FieldTrialGroup
 )
+insertFieldTrial: ReturnId[FieldTrial] = g.getInsertReturnIdFunction(FieldTrial)
+insertPlot: ReturnId[Plot] = g.getInsertReturnIdFunction(Plot)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
 
@@ -62,12 +66,13 @@ insertOrGetFieldGroup: ReturnId[FieldGroup] = g.partialInsertOrGetId(
     getMaybeFieldGroupId, insertFieldGroup
 )
 insertOrGetField: ReturnId[Field] = g.partialInsertOrGetId(getMaybeFieldId, insertField)
-insertOrGetFieldTrial: ReturnId[FieldTrial] = g.partialInsertOrGetId(
-    getMaybeFieldTrialId, insertFieldTrial
-)
 insertOrGetFieldTrialGroup: ReturnId[FieldTrialGroup] = g.partialInsertOrGetId(
     getMaybeFieldTrialGroupId, insertFieldTrialGroup
 )
+insertOrGetFieldTrial: ReturnId[FieldTrial] = g.partialInsertOrGetId(
+    getMaybeFieldTrialId, insertFieldTrial
+)
+insertOrGetPlot: ReturnId[Plot] = g.partialInsertOrGetId(getMaybePlotId, insertPlot)
 """
 A note on the date_end (and created) columns of Field and FieldTrial:
     1. `date_end=None` is NOT VALID because setting explicitly to `None` bypasses the default `datetime.max`

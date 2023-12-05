@@ -5,6 +5,7 @@ from .._core.types import (  # ReportType,
     CropType,
     Field,
     FieldTrial,
+    Plot,
 )
 from .field_group import FieldGroup, FieldTrialGroup
 from .st_types import (
@@ -24,6 +25,7 @@ data_table_lookup: TableLookup = {
     Field: "field",
     FieldTrialGroup: "field_trial_group",
     FieldTrial: "field_trial",
+    Plot: "plot",
     GeoSpatialKey: "geospatial_key",
     TemporalKey: "temporal_key",
     Act: "act",

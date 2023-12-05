@@ -5,8 +5,9 @@ from .._core.types import (  # ReportType,
     CropType,
     Field,
     FieldTrial,
+    Plot,
 )
-from .field_group import FieldGroup
+from .field_group import FieldGroup, FieldTrialGroup
 from .st_types import (
     Geom,
     GeoSpatialKey,
@@ -15,7 +16,16 @@ from .st_types import (
 )
 
 AnyDataTable = Union[
-    Geom, Field, FieldTrial, FieldGroup, GeoSpatialKey, TemporalKey, Key, Act
+    Geom,
+    Field,
+    FieldTrial,
+    Plot,
+    FieldGroup,
+    FieldTrialGroup,
+    GeoSpatialKey,
+    TemporalKey,
+    Key,
+    Act,
 ]
 
 AnyTypeTable = CropType

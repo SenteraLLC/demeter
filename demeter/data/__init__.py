@@ -46,6 +46,7 @@ from ._core.types import (  # ReportType,
     CropType,
     Field,
     FieldTrial,
+    Plot,
 )
 from ._observation.generated import (
     getMaybeObservationId,
@@ -90,6 +91,11 @@ __all__ = (
     "getFieldTrial",
     "getMaybeFieldTrialId",
     "insertOrGetFieldTrial",
+    # Plot
+    "Plot",
+    "getPlot",
+    "getMaybePlotId",
+    "insertOrGetPlot",
     # CropType
     "CropType",
     "getCropType",

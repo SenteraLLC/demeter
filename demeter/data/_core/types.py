@@ -21,9 +21,8 @@ Note that if we tend to use infinity as date_end, this is probably a pretty rare
 
 @dataclass(frozen=True)
 class Field(Detailed):
-    """Arbitrary spatiotemporal unit representing an agronomically-relevant
-    area that is generally, but not always, managed as a single unit within
-    the defined spatial and temporal constraints."""
+    """Arbitrary spatiotemporal unit representing an agronomically-relevant area that is generally, but not always,
+    managed as a single unit within the defined spatial and temporal constraints."""
 
     geom_id: TableId
     date_start: datetime
@@ -39,11 +38,24 @@ class FieldTrial(Detailed):
     FieldTrial must fall fully within the spatial extent of the Field it is associated with.
     """
 
+    field_id: TableId
     geom_id: TableId
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
     name: str = None
     field_trial_group_id: Optional[TableId] = None
+
+
+@dataclass(frozen=True)
+class Plot(Detailed):
+    """A spatiotemporal unit having a specified experimental treatment, usually defined by its management (planting,
+    tillage, application, irrigation, and/or harvest). The management within a Plot shall be uniform across its
+    spatiotemporal extent.
+    """
+
+    field_trial_id: TableId
+    geom_id: TableId
+    name: str = None
 
 
 @dataclass(frozen=True)

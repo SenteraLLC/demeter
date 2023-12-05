@@ -27,7 +27,7 @@ class Field(Detailed):
     geom_id: TableId
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
-    name: str = None
+    name: Optional[str] = None
     field_group_id: Optional[TableId] = None
 
 
@@ -39,10 +39,10 @@ class FieldTrial(Detailed):
     """
 
     field_id: TableId
-    geom_id: Optional[TableId] = None
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
-    name: str = None
+    name: Optional[str] = None
+    geom_id: Optional[TableId] = None
     field_trial_group_id: Optional[TableId] = None
 
 
@@ -55,8 +55,8 @@ class Plot(Detailed):
 
     field_id: TableId
     field_trial_id: TableId
+    name: Optional[str] = None
     geom_id: Optional[TableId] = None
-    name: str = None
     treatment_id: Optional[int] = None
     block_id: Optional[int] = None
     replication_id: Optional[int] = None

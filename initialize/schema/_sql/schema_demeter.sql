@@ -92,7 +92,7 @@ create table field_group (
                 default (now() at time zone 'utc')
 );
 
-CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;
+CREATE UNIQUE INDEX unique_name_for_field_group_null_roots_idx on field_group (name) where parent_field_group_id is null;
 
 -- FIELD
 
@@ -115,6 +115,117 @@ create table field (
 
   field_group_id bigint
                   references field_group(field_group_id),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
+);
+
+
+-- FIELD TRIAL GROUP
+
+create table field_trial_group (
+  field_trial_group_id bigserial primary key,
+  -- TODO: Add cycle detection constraint
+
+  name text
+        not null,
+
+  parent_field_trial_group_id bigint
+                        references field_trial_group(field_trial_group_id),
+
+  unique (field_trial_group_id, parent_field_trial_group_id),
+  unique (parent_field_trial_group_id, name),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
+);
+
+CREATE UNIQUE INDEX unique_name_for_field_trial_group_null_roots_idx on field_trial_group (name) where parent_field_trial_group_id is null;
+
+
+-- FIELD TRIAL
+
+create table field_trial (
+  field_trial_id bigserial
+           primary key,
+
+  field_id       bigint
+                  not null
+                  references field(field_id),
+
+  geom_id   bigint
+            -- not null
+            references geom(geom_id),
+
+  field_trial_group_id  bigint
+                        references field_trial_group(field_trial_group_id),
+
+  name text,
+
+  date_start      timestamp without time zone
+                  not null,
+
+  date_end        timestamp without time zone
+                  not null
+                  default ('infinity'::timestamp at time zone 'utc'),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc')
+);
+
+
+-- PLOT
+
+create table plot (
+  plot_uid bigserial
+           primary key,
+
+  field_id  bigint
+            not null
+            references field(field_id),
+
+  field_trial_id  bigint
+                  not null
+                  references field_trial(field_trial_id),
+
+  geom_id   bigint
+            -- not null
+            references geom(geom_id),
+
+  name text,
+
+  treatment_id smallint,
+
+  block_id smallint,  -- a subset of plots; blocks are used to reduce unexplained variability.
+
+  replication_id smallint,
 
   details jsonb
           not null

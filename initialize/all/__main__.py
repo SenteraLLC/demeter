@@ -1,12 +1,12 @@
 """Initializes `demeter` users and all `demeter` schemas (i.e., demeter, weather, and raster).
 
 To initialize users and all schemas on local `demeter-dev`:
-python3 -m intialize.all
+python3 -m initialize.all
 
 To re-initialize users and re-initialize all three schemas from scratch on local `demeter-dev`:
-python3 -m intialize.all --drop_users --drop_schemas
+python3 -m initialize.all --drop_users --drop_schemas
 
-For help: python3 -m intialize.all --help
+For help: python3 -m initialize.all --help
 
 This script requires that you have the appropriate superuser credentials for the database in your .env file for all demeter users.
 """

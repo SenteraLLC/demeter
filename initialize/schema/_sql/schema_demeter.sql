@@ -67,17 +67,17 @@ create constraint trigger geom_must_be_unique
 -- FIELD GROUP
 
 create table field_group (
-  field_group_id bigserial primary key,
+  group_id bigserial primary key,
   -- TODO: Add cycle detection constraint
 
   name text
         not null,
 
-  parent_field_group_id bigint
-                        references field_group(field_group_id),
+  parent_group_id bigint
+                  references field_group(group_id),
 
-  unique (field_group_id, parent_field_group_id),
-  unique (parent_field_group_id, name),
+  unique (group_id, parent_group_id),
+  unique (parent_group_id, name),
 
   details jsonb
           not null
@@ -92,37 +92,37 @@ create table field_group (
                 default (now() at time zone 'utc')
 );
 
-CREATE UNIQUE INDEX unique_name_for_field_group_null_roots_idx on field_group (name) where parent_field_group_id is null;
+CREATE UNIQUE INDEX unique_name_for_field_group_null_roots_idx on field_group (name) where parent_group_id is null;
 
 -- FIELD
 
 create table field (
-  field_id bigserial
-           primary key,
+  field_uid bigserial
+            primary key,
 
-  name text,
+  name  text,
 
-  geom_id   bigint
+  geom_id bigint
+          not null
+          references geom(geom_id),
+
+  date_start  timestamp without time zone
+              not null,
+
+  date_end  timestamp without time zone
             not null
-            references geom(geom_id),
+            default ('infinity'::timestamp at time zone 'utc'),
 
-  date_start      timestamp without time zone
-                  not null,
-
-  date_end        timestamp without time zone
-                  not null
-                  default ('infinity'::timestamp at time zone 'utc'),
-
-  field_group_id bigint
-                  references field_group(field_group_id),
+  group_id  bigint
+            references field_group(group_id),
 
   details jsonb
           not null
           default '{}'::jsonb,
 
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
+  created timestamp without time zone
+          not null
+          default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
                 not null
@@ -133,17 +133,17 @@ create table field (
 -- FIELD TRIAL GROUP
 
 create table field_trial_group (
-  field_trial_group_id bigserial primary key,
+  group_id bigserial primary key,
   -- TODO: Add cycle detection constraint
 
-  name text
+  name  text
         not null,
 
-  parent_field_trial_group_id bigint
-                        references field_trial_group(field_trial_group_id),
+  parent_group_id bigint
+                  references field_trial_group(group_id),
 
-  unique (field_trial_group_id, parent_field_trial_group_id),
-  unique (parent_field_trial_group_id, name),
+  unique (group_id, parent_group_id),
+  unique (parent_group_id, name),
 
   details jsonb
           not null
@@ -158,42 +158,43 @@ create table field_trial_group (
                 default (now() at time zone 'utc')
 );
 
-CREATE UNIQUE INDEX unique_name_for_field_trial_group_null_roots_idx on field_trial_group (name) where parent_field_trial_group_id is null;
+CREATE UNIQUE INDEX unique_name_for_field_trial_group_null_roots_idx on field_trial_group (name) where parent_group_id is null;
 
 
 -- FIELD TRIAL
 
 create table field_trial (
-  field_trial_id bigserial
-           primary key,
+  field_trial_uid bigserial
+                  primary key,
 
-  field_id       bigint
-                  not null
-                  references field(field_id),
+  field_uid bigint
+            not null
+            references field(field_uid),
+
+  -- Either geom_id or name must be non-null, not both.
+  name  text
+        not null,
 
   geom_id   bigint
-            -- not null
             references geom(geom_id),
 
-  field_trial_group_id  bigint
-                        references field_trial_group(field_trial_group_id),
+  group_id  bigint
+            references field_trial_group(group_id),
 
-  name text,
+  date_start  timestamp without time zone
+              not null,
 
-  date_start      timestamp without time zone
-                  not null,
-
-  date_end        timestamp without time zone
-                  not null
-                  default ('infinity'::timestamp at time zone 'utc'),
+  date_end    timestamp without time zone
+              not null
+              default ('infinity'::timestamp at time zone 'utc'),
 
   details jsonb
           not null
           default '{}'::jsonb,
 
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
+  created timestamp without time zone
+          not null
+          default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
                 not null
@@ -204,22 +205,24 @@ create table field_trial (
 -- PLOT
 
 create table plot (
-  plot_uid bigserial
-           primary key,
+  plot_uid  bigserial
+            primary key,
 
-  field_id  bigint
+  field_uid  bigint
             not null
-            references field(field_id),
+            references field(field_uid),
 
-  field_trial_id  bigint
+  field_trial_uid  bigint
                   not null
-                  references field_trial(field_trial_id),
+                  references field_trial(field_trial_uid),
+
+  -- Either geom_id or name must be non-null, not both.
+  name  text
+        not null,
 
   geom_id   bigint
             -- not null
             references geom(geom_id),
-
-  name text,
 
   treatment_id smallint,
 
@@ -231,9 +234,9 @@ create table plot (
           not null
           default '{}'::jsonb,
 
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
+  created timestamp without time zone
+          not null
+          default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
                 not null

@@ -39,7 +39,7 @@ class FieldTrial(Detailed):
     """
 
     field_id: TableId
-    geom_id: TableId
+    geom_id: Optional[TableId] = None
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
     name: str = None
@@ -53,9 +53,13 @@ class Plot(Detailed):
     spatiotemporal extent.
     """
 
+    field_id: TableId
     field_trial_id: TableId
-    geom_id: TableId
+    geom_id: Optional[TableId] = None
     name: str = None
+    treatment_id: Optional[int] = None
+    block_id: Optional[int] = None
+    replication_id: Optional[int] = None
 
 
 @dataclass(frozen=True)

@@ -53,9 +53,9 @@ with field_operation_maybe_dupe as (
            'country_name', COUNTRY.name
          ) as field_meta
   from field F
-  join field_group FARM on F.field_group_id = FARM.field_group_id
-  join field_group REGION on FARM.parent_field_group_id = REGION.field_group_id
-  join field_group COUNTRY on REGION.parent_field_group_id = COUNTRY.field_group_id
+  join field_group FARM on F.group_id = FARM.group_id
+  join field_group REGION on FARM.parent_group_id = REGION.group_id
+  join field_group COUNTRY on REGION.parent_group_id = COUNTRY.group_id
   left join (
     select field_id,
            jsonb_agg(

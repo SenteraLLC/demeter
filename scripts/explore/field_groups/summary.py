@@ -23,14 +23,14 @@ memory = Memory(location, verbose=0)
 
 @dataclass(frozen=True)
 class FieldGroupSummary(Summary):
-    field_group_id: TableId
-    parent_field_group_id: Optional[TableId]
+    group_id: TableId
+    parent_group_id: Optional[TableId]
 
     name: str
     external_id: str
     depth: int
 
-    field_group_ids: Sequence[TableId]
+    group_ids: Sequence[TableId]
     fields: Sequence[Field]
 
     total_group_count: int
@@ -49,15 +49,15 @@ def getFieldGroupSummaries(
     select *,
            0 as depth
     from test_demeter.field_group G
-    where parent_field_group_id is null
+    where parent_group_id is null
     UNION ALL
     select G.*,
            depth + 1
     from descendent D
-    join test_demeter.field_group G on D.field_group_id = G.parent_field_group_id
+    join test_demeter.field_group G on D.group_id = G.parent_group_id
 
   ), fields as (
-    select D.field_group_id,
+    select D.group_id,
            coalesce(
              jsonb_agg(to_jsonb(F.*))
                filter
@@ -65,58 +65,58 @@ def getFieldGroupSummaries(
              '[]'
            ) as fields
     from descendent D
-    left join test_demeter.field F on D.field_group_id = F.field_group_id
-    group by D.field_group_id
+    left join test_demeter.field F on D.group_id = F.group_id
+    group by D.group_id
 
   ), ancestor_counts as (
-    select D.field_group_id as ancestor_field_group_id,
-           D.parent_field_group_id,
-           D.field_group_id,
+    select D.group_id as ancestor_group_id,
+           D.parent_group_id,
+           D.group_id,
            jsonb_array_length(F.fields) as field_count
     from descendent D
-    join fields F on D.field_group_id = F.field_group_id
+    join fields F on D.group_id = F.group_id
     where not exists (
       select *
       from descendent D2
-      where D2.parent_field_group_id = D.field_group_id
+      where D2.parent_group_id = D.group_id
     )
     UNION ALL
-    select D.parent_field_group_id as ancestor_field_group_id,
-           D.parent_field_group_id,
-           D.field_group_id,
+    select D.parent_group_id as ancestor_group_id,
+           D.parent_group_id,
+           D.group_id,
            AC.field_count
            from ancestor_counts AC
-           join descendent D on AC.ancestor_field_group_id = D.field_group_id
-           join fields F on D.field_group_id = F.field_group_id
+           join descendent D on AC.ancestor_group_id = D.group_id
+           join fields F on D.group_id = F.group_id
   ), aggregate_counts as (
-    select ancestor_field_group_id as field_group_id,
-           sum(AC.field_count) filter (where ancestor_field_group_id = field_group_id) as field_count,
+    select ancestor_group_id as group_id,
+           sum(AC.field_count) filter (where ancestor_group_id = group_id) as field_count,
 
            sum(field_count) as total_field_count,
            count(*) as total_group_count
     from ancestor_counts AC
-    group by ancestor_field_group_id
+    group by ancestor_group_id
 
   ) select D.*,
            F.fields as fields,
-           field_group_ids,
+           group_ids,
            AC.total_group_count,
-           jsonb_array_length(field_group_ids) as group_count,
+           jsonb_array_length(group_ids) as group_count,
            AC.total_field_count,
            AC.field_count as field_count
     from descendent D
-    join aggregate_counts AC on D.field_group_id = AC.field_group_id
-    join fields F on D.field_group_id = F.field_group_id
+    join aggregate_counts AC on D.group_id = AC.group_id
+    join fields F on D.group_id = F.group_id
     left join lateral (
       select coalesce(
-               jsonb_agg(D2.field_group_id)
+               jsonb_agg(D2.group_id)
                  filter
-                 (where D2.field_group_id is not null),
+                 (where D2.group_id is not null),
               '[]'
-             ) as field_group_ids
+             ) as group_ids
       from descendent D2
-      where D.field_group_id = D2.parent_field_group_id
-      group by D.field_group_id
+      where D.group_id = D2.parent_group_id
+      group by D.group_id
     ) children on true
     order by depth asc,
              AC.total_group_count,
@@ -127,13 +127,13 @@ def getFieldGroupSummaries(
     cursor.execute(stmt)
     results = cursor.fetchall()
     return {
-        r.field_group_id: FieldGroupSummary(
-            field_group_id=r.field_group_id,
-            parent_field_group_id=r.parent_field_group_id,
+        r.group_id: FieldGroupSummary(
+            group_id=r.group_id,
+            parent_group_id=r.parent_group_id,
             name=r.name,
             external_id=r.external_id,
             depth=r.depth,
-            field_group_ids=r.field_group_ids or [],
+            group_ids=r.group_ids or [],
             fields=r.fields or [],
             total_group_count=r.total_group_count or 0,
             group_count=r.group_count or 0,

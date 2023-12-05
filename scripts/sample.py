@@ -55,34 +55,34 @@ trans = conn.begin()
 # %% add field groups
 
 sa_group = FieldGroup(
-    name="South America", parent_field_group_id=None, details={"external_id": 107}
+    name="South America", parent_group_id=None, details={"external_id": 107}
 )
 sa_group_id = insertOrGetFieldGroup(cursor, sa_group)
 print(
-    f"Org name: {sa_group.name}\n  field_group_id: {sa_group_id}\n  parent_field_group_id: {sa_group.parent_field_group_id}"
+    f"Org name: {sa_group.name}\n  group_id: {sa_group_id}\n  parent_group_id: {sa_group.parent_group_id}"
 )
 
 assert sa_group == getFieldGroup(cursor, sa_group_id), "Error in FieldGroup insert"
 
 argentina_group = FieldGroup(
-    name="Argentina", parent_field_group_id=sa_group_id, details={"external_id": 1007}
+    name="Argentina", parent_group_id=sa_group_id, details={"external_id": 1007}
 )
 argentina_group_id = insertOrGetFieldGroup(cursor, argentina_group)
 print(
-    f"Org name: {argentina_group.name}\n  field_group_id: {argentina_group}\n  parent_field_group_id: {argentina_group.parent_field_group_id}"
+    f"Org name: {argentina_group.name}\n  group_id: {argentina_group}\n  parent_group_id: {argentina_group.parent_group_id}"
 )
 
 test_field_group = FieldGroup(
     name="Argonomist 1",
-    parent_field_group_id=argentina_group_id,
+    parent_group_id=argentina_group_id,
     details={"external_id": 10007},
 )
-field_group_id = insertOrGetFieldGroup(cursor, test_field_group)
+group_id = insertOrGetFieldGroup(cursor, test_field_group)
 print(
-    f"Org name: {argentina_group.name}\n  field_group_id: {argentina_group}\n  parent_field_group_id: {argentina_group.parent_field_group_id}"
+    f"Org name: {argentina_group.name}\n  group_id: {argentina_group}\n  parent_group_id: {argentina_group.parent_group_id}"
 )
 
-getFieldGroupAncestors(cursor, field_group_id)
+getFieldGroupAncestors(cursor, group_id)
 getFieldGroupDescendants(cursor, argentina_group_id)
 
 # %% add field data with geometry
@@ -115,7 +115,7 @@ field = Field(
     geom_id=field_geom_id,
     date_start=datetime(2020, 1, 1),
     # date_end=datetime(2021, 1, 1),  # Can't set to `None`. Have to either set it or exclude entirely.
-    field_group_id=field_group_id,
+    group_id=group_id,
     details={"external_id": 10736},  # Also can't be `None`
 )
 # print(field)

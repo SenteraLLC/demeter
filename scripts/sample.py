@@ -55,35 +55,35 @@ trans = conn.begin()
 # %% add field groups
 
 sa_group = Grouper(
-    name="South America", parent_group_id=None, details={"external_id": 107}
+    name="South America", parent_grouper_id=None, details={"external_id": 107}
 )
-sa_group_id = insertOrGetGrouper(cursor, sa_group)
+sa_grouper_id = insertOrGetGrouper(cursor, sa_group)
 print(
-    f"Org name: {sa_group.name}\n  group_id: {sa_group_id}\n  parent_group_id: {sa_group.parent_group_id}"
+    f"Org name: {sa_group.name}\n  grouper_id: {sa_grouper_id}\n  parent_grouper_id: {sa_group.parent_grouper_id}"
 )
 
-assert sa_group == getGrouper(cursor, sa_group_id), "Error in Grouper insert"
+assert sa_group == getGrouper(cursor, sa_grouper_id), "Error in Grouper insert"
 
 argentina_group = Grouper(
-    name="Argentina", parent_group_id=sa_group_id, details={"external_id": 1007}
+    name="Argentina", parent_grouper_id=sa_grouper_id, details={"external_id": 1007}
 )
-argentina_group_id = insertOrGetGrouper(cursor, argentina_group)
+argentina_grouper_id = insertOrGetGrouper(cursor, argentina_group)
 print(
-    f"Org name: {argentina_group.name}\n  group_id: {argentina_group}\n  parent_group_id: {argentina_group.parent_group_id}"
+    f"Org name: {argentina_group.name}\n  grouper_id: {argentina_group}\n  parent_grouper_id: {argentina_group.parent_grouper_id}"
 )
 
 test_grouper = Grouper(
     name="Argonomist 1",
-    parent_group_id=argentina_group_id,
+    parent_grouper_id=argentina_grouper_id,
     details={"external_id": 10007},
 )
-group_id = insertOrGetGrouper(cursor, test_grouper)
+grouper_id = insertOrGetGrouper(cursor, test_grouper)
 print(
-    f"Org name: {argentina_group.name}\n  group_id: {argentina_group}\n  parent_group_id: {argentina_group.parent_group_id}"
+    f"Org name: {argentina_group.name}\n  grouper_id: {argentina_group}\n  parent_grouper_id: {argentina_group.parent_grouper_id}"
 )
 
-getGrouperAncestors(cursor, group_id)
-getGrouperDescendants(cursor, argentina_group_id)
+getGrouperAncestors(cursor, grouper_id)
+getGrouperDescendants(cursor, argentina_grouper_id)
 
 # %% add field data with geometry
 
@@ -115,7 +115,7 @@ field = Field(
     geom_id=field_geom_id,
     date_start=datetime(2020, 1, 1),
     # date_end=datetime(2021, 1, 1),  # Can't set to `None`. Have to either set it or exclude entirely.
-    group_id=group_id,
+    grouper_id=grouper_id,
     details={"external_id": 10736},  # Also can't be `None`
 )
 # print(field)
@@ -136,7 +136,7 @@ print(
     f"  date_end: {getField(cursor, field_id).date_end}",
 )
 
-getGrouperFields(cursor, sa_group_id)
+getGrouperFields(cursor, sa_grouper_id)
 
 # %% add crop season information
 

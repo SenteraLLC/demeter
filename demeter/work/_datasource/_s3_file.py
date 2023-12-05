@@ -137,8 +137,8 @@ class ObservationFile(object):
         self,
         type_name: str,
         value: float,
-        observation_group_id: Optional[int],
+        observation_grouper_id: Optional[int],
     ):
         self.type_name = type_name
         self.value = value
-        self.observation_group_id = observation_group_id
+        self.observation_grouper_id = observation_grouper_id

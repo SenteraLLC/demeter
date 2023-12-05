@@ -25,7 +25,7 @@ class Grouper(db.Detailed):
 
 def _row_to_grouper(
     row: Dict[str, Any],
-    id_name: str = "group_id",
+    id_name: str = "grouper_id",
 ) -> Tuple[db.TableId, Grouper]:
     """Takes a row of "grouper" table and returns field group ID and Grouper object.
 
@@ -46,7 +46,7 @@ def _row_to_grouper(
 
     f = Grouper(
         name=r["name"],
-        parent_group_id=r[parent_id_name],
+        parent_grouper_id=r[parent_id_name],
         last_updated=r["last_updated"],
         details=r["details"],
     )
@@ -55,38 +55,38 @@ def _row_to_grouper(
 
 def getGrouperAncestors(
     cursor: Any,
-    group_id: db.TableId,
+    grouper_id: db.TableId,
 ) -> DataFrame:
-    """Takes a `group_id` value and returns a dataframe of that Grouper's ancestors
+    """Takes a `grouper_id` value and returns a dataframe of that Grouper's ancestors
     sorted by their distance from the given child."""
     stmt = """
     with recursive ancestry as (
       select root.*,
              0 as distance
       from grouper root
-      where root.group_id = %(group_id)s
+      where root.grouper_id = %(grouper_id)s
       UNION ALL
       select ancestor.*,
              distance + 1
       from ancestry descendant, grouper ancestor
-      where descendant.parent_group_id = ancestor.group_id
+      where descendant.parent_grouper_id = ancestor.grouper_id
     )
     select * from ancestry
     order by distance
     """
-    cursor.execute(stmt, {"group_id": group_id})
+    cursor.execute(stmt, {"grouper_id": grouper_id})
     results = cursor.fetchall()
 
     if len(results) < 1:
-        raise Exception(f"Failed to get field group ancestors for: {group_id}")
+        raise Exception(f"Failed to get field group ancestors for: {grouper_id}")
 
     df_results = DataFrame(results)
-    ancestors = DataFrame(columns=["distance", "group_id", "grouper"])
+    ancestors = DataFrame(columns=["distance", "grouper_id", "grouper"])
     for _, row in df_results.iterrows():
         dist = row["distance"]
         fg_id, fg = _row_to_grouper(row.to_dict())
 
-        this_data = {"distance": [dist], "group_id": [fg_id], "grouper": [fg]}
+        this_data = {"distance": [dist], "grouper_id": [fg_id], "grouper": [fg]}
         ancestors = pd_concat(
             [ancestors, DataFrame(this_data)], ignore_index=True, axis=0
         )
@@ -96,38 +96,38 @@ def getGrouperAncestors(
 
 def getGrouperDescendants(
     cursor: Any,
-    group_id: db.TableId,
+    grouper_id: db.TableId,
 ) -> DataFrame:
-    """Takes a `group_id` value and returns a dataframe of that Grouper's descendants
+    """Takes a `grouper_id` value and returns a dataframe of that Grouper's descendants
     sorted by their distance from the given parent."""
     stmt = """
     with recursive descendants as (
       select root.*,
              0 as distance
       from grouper root
-      where root.group_id = %(group_id)s
+      where root.grouper_id = %(grouper_id)s
       UNION ALL
       select descendant.*,
              distance + 1
       from descendants ancestor, grouper descendant
-      where ancestor.group_id = descendant.parent_group_id
+      where ancestor.grouper_id = descendant.parent_grouper_id
     )
     select * from descendants
     order by distance
     """
-    cursor.execute(stmt, {"group_id": group_id})
+    cursor.execute(stmt, {"grouper_id": grouper_id})
     results = cursor.fetchall()
 
     if len(results) < 1:
-        raise Exception(f"Failed to get field group descendants for: {group_id}")
+        raise Exception(f"Failed to get field group descendants for: {grouper_id}")
 
     df_results = DataFrame(results)
-    descendants = DataFrame(columns=["distance", "group_id", "grouper"])
+    descendants = DataFrame(columns=["distance", "grouper_id", "grouper"])
     for _, row in df_results.iterrows():
         dist = row["distance"]
         fg_id, fg = _row_to_grouper(row.to_dict())
 
-        this_data = {"distance": [dist], "group_id": [fg_id], "grouper": [fg]}
+        this_data = {"distance": [dist], "grouper_id": [fg_id], "grouper": [fg]}
         descendants = pd_concat(
             [descendants, DataFrame(this_data)], ignore_index=True, axis=0
         )
@@ -144,7 +144,7 @@ def _row_to_field(
         geom_id=r["geom_id"],
         date_start=r["date_start"],
         date_end=r["date_end"],
-        group_id=r["group_id"],
+        grouper_id=r["grouper_id"],
         details=r["details"],
         last_updated=r["last_updated"],
     )
@@ -153,10 +153,10 @@ def _row_to_field(
 
 def getGrouperFields(
     cursor: Any,
-    group_id: db.TableId,
+    grouper_id: db.TableId,
     include_descendants: bool = True,
 ) -> DataFrame:
-    """Takes a `group_id` value and returns a dataframe of all of the fields which
+    """Takes a `grouper_id` value and returns a dataframe of all of the fields which
     directly belong to that Grouper if `include_descendants` = False or belong to the Grouper or
     one of its child organizations if `include_descendants` = True (default behavior).
     """
@@ -164,29 +164,29 @@ def getGrouperFields(
     with recursive descendants as (
       select root.*
       from grouper root
-      where root.group_id = %(group_id)s
+      where root.grouper_id = %(grouper_id)s
       UNION ALL
       select descendant.*
       from descendants ancestor, grouper descendant
-      where ancestor.group_id = descendant.parent_group_id
+      where ancestor.grouper_id = descendant.parent_grouper_id
     )
     select * from field
-    where group_id in (select group_id from descendants)
+    where grouper_id in (select grouper_id from descendants)
     """
 
     stmt_descendants_false = """
     select * from field
-    where group_id = %(group_id)s
+    where grouper_id = %(grouper_id)s
     """
 
     if include_descendants:
-        cursor.execute(stmt_descendants_true, {"group_id": group_id})
+        cursor.execute(stmt_descendants_true, {"grouper_id": grouper_id})
     else:
-        cursor.execute(stmt_descendants_false, {"group_id": group_id})
+        cursor.execute(stmt_descendants_false, {"grouper_id": grouper_id})
     results = cursor.fetchall()
 
     if len(results) < 1:
-        raise Exception(f"Failed to get fields for Grouper: {group_id}")
+        raise Exception(f"Failed to get fields for Grouper: {grouper_id}")
 
     df_results = DataFrame(results)
     fields = DataFrame(columns=["field_id", "field"])
@@ -202,8 +202,8 @@ def getGrouperFields(
 # def searchGrouper(
 #     cursor: Any,
 #     grouper_name: str,
-#     parent_group_id: Optional[db.TableId] = None,
-#     ancestor_group_id: Optional[db.TableId] = None,
+#     parent_grouper_id: Optional[db.TableId] = None,
+#     ancestor_grouper_id: Optional[db.TableId] = None,
 #     do_fuzzy_search: bool = False,
 # ) -> Optional[Tuple[db.TableId, Grouper]]:
 #     search_part = "where name = %(name)s"
@@ -224,16 +224,16 @@ def getGrouperFields(
 
 #     maybe_result: Optional[Tuple[db.TableId, Grouper]] = None
 #     for r in results:
-#         _id = r["group_id"]
+#         _id = r["grouper_id"]
 #         f = Grouper(
-#             group_id=r["group_id"],
-#             parent_group_id=r["parent_group_id"],
+#             grouper_id=r["grouper_id"],
+#             parent_grouper_id=r["parent_grouper_id"],
 #             name=r["name"],
 #             details=r["details"],
 #             last_updated=r["last_updated"],
 #         )
 
-#         if (p_id := parent_group_id) or (a_id := ancestor_group_id):
+#         if (p_id := parent_grouper_id) or (a_id := ancestor_grouper_id):
 #             ancestors = getGrouperAncestors(cursor, _id)
 #             ancestor_ids = [a[0] for a in ancestors]
 #             if p_id is not None:
@@ -248,7 +248,7 @@ def getGrouperFields(
 #                 f"Ambiguous field group search: {grouper_name},{p_id},{a_id}"
 #             )
 
-#         _id = r["group_id"]
+#         _id = r["grouper_id"]
 #         maybe_result = (_id, f)
 
 #     return maybe_result

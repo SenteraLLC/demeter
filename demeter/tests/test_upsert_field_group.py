@@ -29,7 +29,7 @@ class TestUpsertGrouper:
     def test_insert_get_grouper(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                root_grouper = Grouper(name="Root Field Group", parent_group_id=None)
+                root_grouper = Grouper(name="Root Field Group", parent_grouper_id=None)
                 root_fg_id = insertOrGetGrouper(conn.connection.cursor(), root_grouper)
                 root_fg_id.should.be.equal(1)
 
@@ -41,12 +41,12 @@ class TestUpsertGrouper:
     def test_insert_child_grouper(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                root_grouper = Grouper(name="Root Field Group", parent_group_id=None)
+                root_grouper = Grouper(name="Root Field Group", parent_grouper_id=None)
                 root_fg_id = insertOrGetGrouper(conn.connection.cursor(), root_grouper)
                 root_fg_id.should.be.equal(1)
 
                 child_grouper = Grouper(
-                    name="Child Field Group", parent_group_id=root_fg_id
+                    name="Child Field Group", parent_grouper_id=root_fg_id
                 )
                 child_fg_id = insertOrGetGrouper(
                     conn.connection.cursor(), child_grouper
@@ -56,7 +56,9 @@ class TestUpsertGrouper:
     def test_insert_orphan_grouper(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                child_grouper = Grouper(name="Child Field Group 2", parent_group_id=10)
+                child_grouper = Grouper(
+                    name="Child Field Group 2", parent_grouper_id=10
+                )
                 with pytest.raises(ForeignKeyViolation):
                     _ = insertOrGetGrouper(conn.connection.cursor(), child_grouper)
 
@@ -72,7 +74,7 @@ class TestUpsertGrouper:
                 with pytest.raises(Exception):
                     _ = getGrouperAncestors(conn.connection.cursor(), 3)
 
-                cols = ["distance", "group_id"]
+                cols = ["distance", "grouper_id"]
                 assert_frame_equal(
                     left=getGrouperAncestors(conn.connection.cursor(), 2)[
                         cols
@@ -95,7 +97,7 @@ class TestUpsertGrouper:
                 with pytest.raises(Exception):
                     _ = getGrouperDescendants(conn.connection.cursor(), 3)
 
-                cols = ["distance", "group_id"]
+                cols = ["distance", "grouper_id"]
                 assert_frame_equal(
                     left=getGrouperDescendants(conn.connection.cursor(), 2)[cols],
                     right=getGrouperDescendants(conn.connection.cursor(), 2)[
@@ -114,7 +116,7 @@ class TestUpsertGrouper:
                     geom_id=field_geom_id,
                     date_start=datetime(2022, 1, 1),
                     name="Test Field",
-                    group_id=2,
+                    grouper_id=2,
                 )
                 _ = insertOrGetField(conn.connection.cursor(), field)
 
@@ -132,7 +134,7 @@ class TestUpsertGrouper:
                     geom_id=field_geom_id_2,
                     date_start=datetime(2022, 1, 1),
                     name="Test Field 2",
-                    group_id=1,
+                    grouper_id=1,
                 )
                 _ = insertOrGetField(conn.connection.cursor(), field_2)
 

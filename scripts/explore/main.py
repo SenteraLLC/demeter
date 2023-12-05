@@ -48,7 +48,7 @@ def main(
     if (lt := results.get(DataOption.OBSERVATION_TYPE)) is not None:
         observation_type_ids = {s.observation_type_id for s in lt.selected}
 
-    # group_ids : Set[TableId] = set(results.get(DataOption.FIELD_GROUP, []))
+    # grouper_ids : Set[TableId] = set(results.get(DataOption.FIELD_GROUP, []))
     field_ids = getFieldIds(results)
 
     _ = output_directory

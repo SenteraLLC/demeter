@@ -28,7 +28,7 @@ class Field(Detailed):
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
     name: Optional[str] = None
-    group_id: Optional[TableId] = None
+    grouper_id: Optional[TableId] = None
 
 
 @dataclass(frozen=True)
@@ -43,7 +43,7 @@ class FieldTrial(Detailed):
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
     geom_id: Optional[TableId] = None
-    group_id: Optional[TableId] = None
+    grouper_id: Optional[TableId] = None
 
 
 @dataclass(frozen=True)

@@ -125,9 +125,9 @@ class PickerTree(Generic[RawRowType]):
         if cmd == Command.ENTER:
             if not p.is_selected():
                 r = p.get_cursor_row()
-                child_ids = r.group_ids  # type: ignore
+                child_ids = r.grouper_ids  # type: ignore
                 if child_ids:
-                    _id = r.group_id  # type: ignore
+                    _id = r.grouper_id  # type: ignore
 
                     child_table, child_selected = self._get_table_and_selected(
                         _id, child_ids
@@ -152,8 +152,8 @@ class PickerTree(Generic[RawRowType]):
         selected: Set[int],
     ) -> Sequence[RawRowType]:
         selected_rows = [table.raw_rows[i] for i in selected]
-        selected_ids = {r.group_id for r in selected_rows}  # type: ignore
-        child_ids = {r.group_id for r in table.raw_rows}  # type: ignore
+        selected_ids = {r.grouper_id for r in selected_rows}  # type: ignore
+        child_ids = {r.grouper_id for r in table.raw_rows}  # type: ignore
         for _id in child_ids:
             _ = self.id_to_row[_id]
 

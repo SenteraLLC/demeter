@@ -44,26 +44,26 @@ if __name__ == "__main__":
     with conn.cursor() as cursor:
         grouper_owner = Grouper(
             name="Tyler Nigon2",
-            parent_group_id=None,
+            parent_grouper_id=None,
             details={"grouper_type": "owner"},
         )
-        owner_group_id = insertOrGetGrouper(cursor, grouper_owner)
+        owner_grouper_id = insertOrGetGrouper(cursor, grouper_owner)
         for owner in field_bounds["owner"].unique():
             grouper_grower = Grouper(
                 name=owner,
-                parent_group_id=owner_group_id,
+                parent_grouper_id=owner_grouper_id,
                 details={"grouper_type": "grower"},
             )
-            grower_group_id = insertOrGetGrouper(cursor, grouper_grower)
+            grower_grouper_id = insertOrGetGrouper(cursor, grouper_grower)
             for farm in field_bounds[field_bounds["owner"] == owner]["farm"].unique():
                 grouper_farm = Grouper(
                     name=farm,
-                    parent_group_id=grower_group_id,
+                    parent_grouper_id=grower_grouper_id,
                     details={"grouper_type": "farm"},
                 )
                 # if farm == "Nigon-View":
                 #     break
-                farm_group_id = insertOrGetGrouper(cursor, grouper_farm)
+                farm_grouper_id = insertOrGetGrouper(cursor, grouper_farm)
                 for i, row_fb in field_bounds[field_bounds["farm"] == farm].iterrows():
                     # if row_fb["field_id"] == "01-12":
                     #     break
@@ -74,7 +74,7 @@ if __name__ == "__main__":
                         geom_id=field_geom_id,
                         date_start=datetime(row_fb["year"] - 1, 12, 1),
                         # date_end=datetime(row["year"], 12, 1),
-                        group_id=farm_group_id,
+                        grouper_id=farm_grouper_id,
                     )
                     field_id = insertOrGetField(cursor, field)
                     # for i, row_ap in as_planted[as_planted["field_id"] == row_fb["field_id"]].iterrows():

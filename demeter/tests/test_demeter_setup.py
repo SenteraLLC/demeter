@@ -41,7 +41,7 @@ class TestUserPrivileges:
         with test_db_class.connect() as conn:
             with conn.begin():
                 test_grouper = Grouper(
-                    name="Testing User Privileges", parent_group_id=None
+                    name="Testing User Privileges", parent_grouper_id=None
                 )
                 test_fg_id = getMaybeGrouperId(conn.connection.cursor(), test_grouper)
                 test_fg_id.should.be.equal(1)
@@ -51,7 +51,7 @@ class TestUserPrivileges:
             with conn.begin():
                 stmt = """update grouper
                 set name = 'name change'
-                where group_id = 1"""
+                where grouper_id = 1"""
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))
@@ -60,7 +60,7 @@ class TestUserPrivileges:
         with test_db_class.connect() as conn:
             with conn.begin():
                 stmt = """delete from grouper
-                where group_id = 1"""
+                where grouper_id = 1"""
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))
@@ -87,7 +87,7 @@ class TestUserPrivileges:
         with test_read_only_access.connect() as conn:
             with conn.begin():
                 test_grouper = Grouper(
-                    name="Testing User Privileges", parent_group_id=None
+                    name="Testing User Privileges", parent_grouper_id=None
                 )
                 test_fg_id = getMaybeGrouperId(conn.connection.cursor(), test_grouper)
                 test_fg_id.should.be.equal(1)
@@ -108,7 +108,7 @@ class TestUserPrivileges:
             with conn.begin():
                 stmt = """update grouper
                 set name = 'name change'
-                where group_id = 1"""
+                where grouper_id = 1"""
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))
@@ -117,7 +117,7 @@ class TestUserPrivileges:
         with test_read_only_access.connect() as conn:
             with conn.begin():
                 stmt = """delete from grouper
-                where group_id = 1"""
+                where grouper_id = 1"""
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))

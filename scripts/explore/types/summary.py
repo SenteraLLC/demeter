@@ -24,7 +24,7 @@ class UnitSummary(Summary):
 
 @dataclass(frozen=True)
 class ObservationGroupSummary(Summary):
-    observation_group_id: TableId
+    observation_grouper_id: TableId
     name: str
     category: Optional[str]
     count: int
@@ -59,7 +59,7 @@ def getTypeSummaries(
               select F.field_id,
                      V.observation_value_id,
                      V.unit_type_id,
-                     V.observation_group_id,
+                     V.observation_grouper_id,
                      V.acquired
               from test_demeter.field F
               join test_demeter.observation_value V on F.field_id = V.field_id
@@ -94,9 +94,9 @@ def getTypeSummaries(
             ), groups as (
               select observation_type_id,
                      jsonb_object_agg(
-                       observation_group_id,
+                       observation_grouper_id,
                        jsonb_build_object(
-                         'observation_group_id', observation_group_id,
+                         'observation_grouper_id', observation_grouper_id,
                          'name', group_name,
                          'category', group_category,
                          'count', group_count,
@@ -106,7 +106,7 @@ def getTypeSummaries(
                      ) as id_to_group
               from (
                 select US.observation_type_id,
-                       G.observation_group_id,
+                       G.observation_grouper_id,
                        G.group_name,
                        G.group_category,
                        min(FV.acquired)::date as earliest,
@@ -115,7 +115,7 @@ def getTypeSummaries(
                 from field_value FV
                 natural join units US
                 natural join test_demeter.observation_group G
-                group by US.observation_type_id, G.observation_group_id
+                group by US.observation_type_id, G.observation_grouper_id
 
               ) x
               group by observation_type_id

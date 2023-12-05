@@ -24,7 +24,7 @@ def getFieldGroups(
     logger.warning("TARGET: %s", target)
     out: List[TableId] = []
     out.extend([f.parcel_id for f in target.fields])
-    for i in target.group_ids:
+    for i in target.grouper_ids:
         g = field_group_summaries[i]
         out.extend(getFieldGroups(g, field_group_summaries))
     logger.warning("LEN: %s", len(out))

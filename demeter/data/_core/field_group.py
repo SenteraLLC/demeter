@@ -19,7 +19,7 @@ class FieldGroup(db.Detailed):
     organization schemes for any customer."""
 
     name: str
-    parent_field_group_id: Optional[db.TableId] = None
+    parent_group_id: Optional[db.TableId] = None
 
 
 @dataclass(frozen=True)
@@ -29,7 +29,7 @@ class FieldTrialGroup(db.Detailed):
     """
 
     name: str
-    parent_field_trial_group_id: Optional[db.TableId] = None
+    parent_group_id: Optional[db.TableId] = None
 
 
 def _row_to_field_group(

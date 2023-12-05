@@ -28,7 +28,7 @@ class Field(Detailed):
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
     name: Optional[str] = None
-    field_group_id: Optional[TableId] = None
+    group_id: Optional[TableId] = None
 
 
 @dataclass(frozen=True)
@@ -38,12 +38,12 @@ class FieldTrial(Detailed):
     FieldTrial must fall fully within the spatial extent of the Field it is associated with.
     """
 
-    field_id: TableId
+    field_uid: TableId
+    name: str
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
-    name: Optional[str] = None
     geom_id: Optional[TableId] = None
-    field_trial_group_id: Optional[TableId] = None
+    group_id: Optional[TableId] = None
 
 
 @dataclass(frozen=True)
@@ -53,9 +53,9 @@ class Plot(Detailed):
     spatiotemporal extent.
     """
 
-    field_id: TableId
-    field_trial_id: TableId
-    name: Optional[str] = None
+    field_uid: TableId
+    field_trial_uid: TableId
+    name: str
     geom_id: Optional[TableId] = None
     treatment_id: Optional[int] = None
     block_id: Optional[int] = None

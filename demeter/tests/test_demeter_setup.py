@@ -41,7 +41,7 @@ class TestUserPrivileges:
         with test_db_class.connect() as conn:
             with conn.begin():
                 test_field_group = FieldGroup(
-                    name="Testing User Privileges", parent_field_group_id=None
+                    name="Testing User Privileges", parent_group_id=None
                 )
                 test_fg_id = getMaybeFieldGroupId(
                     conn.connection.cursor(), test_field_group
@@ -53,7 +53,7 @@ class TestUserPrivileges:
             with conn.begin():
                 stmt = """update field_group
                 set name = 'name change'
-                where field_group_id = 1"""
+                where group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))
@@ -62,7 +62,7 @@ class TestUserPrivileges:
         with test_db_class.connect() as conn:
             with conn.begin():
                 stmt = """delete from field_group
-                where field_group_id = 1"""
+                where group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))
@@ -89,7 +89,7 @@ class TestUserPrivileges:
         with test_read_only_access.connect() as conn:
             with conn.begin():
                 test_field_group = FieldGroup(
-                    name="Testing User Privileges", parent_field_group_id=None
+                    name="Testing User Privileges", parent_group_id=None
                 )
                 test_fg_id = getMaybeFieldGroupId(
                     conn.connection.cursor(), test_field_group
@@ -112,7 +112,7 @@ class TestUserPrivileges:
             with conn.begin():
                 stmt = """update field_group
                 set name = 'name change'
-                where field_group_id = 1"""
+                where group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))
@@ -121,7 +121,7 @@ class TestUserPrivileges:
         with test_read_only_access.connect() as conn:
             with conn.begin():
                 stmt = """delete from field_group
-                where field_group_id = 1"""
+                where group_id = 1"""
 
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))

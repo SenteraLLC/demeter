@@ -34,7 +34,7 @@ class FieldTrialGroup(db.Detailed):
 
 def _row_to_field_group(
     row: Dict[str, Any],
-    id_name: str = "field_group_id",
+    id_name: str = "group_id",
 ) -> Tuple[db.TableId, FieldGroup]:
     """Takes a row of "field_group" table and returns field group ID and FieldGroup object.
 
@@ -55,7 +55,7 @@ def _row_to_field_group(
 
     f = FieldGroup(
         name=r["name"],
-        parent_field_group_id=r[parent_id_name],
+        parent_group_id=r[parent_id_name],
         last_updated=r["last_updated"],
         details=r["details"],
     )
@@ -64,38 +64,38 @@ def _row_to_field_group(
 
 def getFieldGroupAncestors(
     cursor: Any,
-    field_group_id: db.TableId,
+    group_id: db.TableId,
 ) -> DataFrame:
-    """Takes a `field_group_id` value and returns a dataframe of that FieldGroup's ancestors
+    """Takes a `group_id` value and returns a dataframe of that FieldGroup's ancestors
     sorted by their distance from the given child."""
     stmt = """
     with recursive ancestry as (
       select root.*,
              0 as distance
       from field_group root
-      where root.field_group_id = %(field_group_id)s
+      where root.group_id = %(group_id)s
       UNION ALL
       select ancestor.*,
              distance + 1
       from ancestry descendant, field_group ancestor
-      where descendant.parent_field_group_id = ancestor.field_group_id
+      where descendant.parent_group_id = ancestor.group_id
     )
     select * from ancestry
     order by distance
     """
-    cursor.execute(stmt, {"field_group_id": field_group_id})
+    cursor.execute(stmt, {"group_id": group_id})
     results = cursor.fetchall()
 
     if len(results) < 1:
-        raise Exception(f"Failed to get field group ancestors for: {field_group_id}")
+        raise Exception(f"Failed to get field group ancestors for: {group_id}")
 
     df_results = DataFrame(results)
-    ancestors = DataFrame(columns=["distance", "field_group_id", "field_group"])
+    ancestors = DataFrame(columns=["distance", "group_id", "field_group"])
     for _, row in df_results.iterrows():
         dist = row["distance"]
         fg_id, fg = _row_to_field_group(row.to_dict())
 
-        this_data = {"distance": [dist], "field_group_id": [fg_id], "field_group": [fg]}
+        this_data = {"distance": [dist], "group_id": [fg_id], "field_group": [fg]}
         ancestors = pd_concat(
             [ancestors, DataFrame(this_data)], ignore_index=True, axis=0
         )
@@ -105,38 +105,38 @@ def getFieldGroupAncestors(
 
 def getFieldGroupDescendants(
     cursor: Any,
-    field_group_id: db.TableId,
+    group_id: db.TableId,
 ) -> DataFrame:
-    """Takes a `field_group_id` value and returns a dataframe of that FieldGroup's descendants
+    """Takes a `group_id` value and returns a dataframe of that FieldGroup's descendants
     sorted by their distance from the given parent."""
     stmt = """
     with recursive descendants as (
       select root.*,
              0 as distance
       from field_group root
-      where root.field_group_id = %(field_group_id)s
+      where root.group_id = %(group_id)s
       UNION ALL
       select descendant.*,
              distance + 1
       from descendants ancestor, field_group descendant
-      where ancestor.field_group_id = descendant.parent_field_group_id
+      where ancestor.group_id = descendant.parent_group_id
     )
     select * from descendants
     order by distance
     """
-    cursor.execute(stmt, {"field_group_id": field_group_id})
+    cursor.execute(stmt, {"group_id": group_id})
     results = cursor.fetchall()
 
     if len(results) < 1:
-        raise Exception(f"Failed to get field group descendants for: {field_group_id}")
+        raise Exception(f"Failed to get field group descendants for: {group_id}")
 
     df_results = DataFrame(results)
-    descendants = DataFrame(columns=["distance", "field_group_id", "field_group"])
+    descendants = DataFrame(columns=["distance", "group_id", "field_group"])
     for _, row in df_results.iterrows():
         dist = row["distance"]
         fg_id, fg = _row_to_field_group(row.to_dict())
 
-        this_data = {"distance": [dist], "field_group_id": [fg_id], "field_group": [fg]}
+        this_data = {"distance": [dist], "group_id": [fg_id], "field_group": [fg]}
         descendants = pd_concat(
             [descendants, DataFrame(this_data)], ignore_index=True, axis=0
         )
@@ -153,7 +153,7 @@ def _row_to_field(
         geom_id=r["geom_id"],
         date_start=r["date_start"],
         date_end=r["date_end"],
-        field_group_id=r["field_group_id"],
+        group_id=r["group_id"],
         details=r["details"],
         last_updated=r["last_updated"],
     )
@@ -162,10 +162,10 @@ def _row_to_field(
 
 def getFieldGroupFields(
     cursor: Any,
-    field_group_id: db.TableId,
+    group_id: db.TableId,
     include_descendants: bool = True,
 ) -> DataFrame:
-    """Takes a `field_group_id` value and returns a dataframe of all of the fields which
+    """Takes a `group_id` value and returns a dataframe of all of the fields which
     directly belong to that FieldGroup if `include_descendants` = False or belong to the FieldGroup or
     one of its child organizations if `include_descendants` = True (default behavior).
     """
@@ -173,29 +173,29 @@ def getFieldGroupFields(
     with recursive descendants as (
       select root.*
       from field_group root
-      where root.field_group_id = %(field_group_id)s
+      where root.group_id = %(group_id)s
       UNION ALL
       select descendant.*
       from descendants ancestor, field_group descendant
-      where ancestor.field_group_id = descendant.parent_field_group_id
+      where ancestor.group_id = descendant.parent_group_id
     )
     select * from field
-    where field_group_id in (select field_group_id from descendants)
+    where group_id in (select group_id from descendants)
     """
 
     stmt_descendants_false = """
     select * from field
-    where field_group_id = %(field_group_id)s
+    where group_id = %(group_id)s
     """
 
     if include_descendants:
-        cursor.execute(stmt_descendants_true, {"field_group_id": field_group_id})
+        cursor.execute(stmt_descendants_true, {"group_id": group_id})
     else:
-        cursor.execute(stmt_descendants_false, {"field_group_id": field_group_id})
+        cursor.execute(stmt_descendants_false, {"group_id": group_id})
     results = cursor.fetchall()
 
     if len(results) < 1:
-        raise Exception(f"Failed to get fields for FieldGroup: {field_group_id}")
+        raise Exception(f"Failed to get fields for FieldGroup: {group_id}")
 
     df_results = DataFrame(results)
     fields = DataFrame(columns=["field_id", "field"])
@@ -211,8 +211,8 @@ def getFieldGroupFields(
 # def searchFieldGroup(
 #     cursor: Any,
 #     field_group_name: str,
-#     parent_field_group_id: Optional[db.TableId] = None,
-#     ancestor_field_group_id: Optional[db.TableId] = None,
+#     parent_group_id: Optional[db.TableId] = None,
+#     ancestor_group_id: Optional[db.TableId] = None,
 #     do_fuzzy_search: bool = False,
 # ) -> Optional[Tuple[db.TableId, FieldGroup]]:
 #     search_part = "where name = %(name)s"
@@ -233,16 +233,16 @@ def getFieldGroupFields(
 
 #     maybe_result: Optional[Tuple[db.TableId, FieldGroup]] = None
 #     for r in results:
-#         _id = r["field_group_id"]
+#         _id = r["group_id"]
 #         f = FieldGroup(
-#             field_group_id=r["field_group_id"],
-#             parent_field_group_id=r["parent_field_group_id"],
+#             group_id=r["group_id"],
+#             parent_group_id=r["parent_group_id"],
 #             name=r["name"],
 #             details=r["details"],
 #             last_updated=r["last_updated"],
 #         )
 
-#         if (p_id := parent_field_group_id) or (a_id := ancestor_field_group_id):
+#         if (p_id := parent_group_id) or (a_id := ancestor_group_id):
 #             ancestors = getFieldGroupAncestors(cursor, _id)
 #             ancestor_ids = [a[0] for a in ancestors]
 #             if p_id is not None:
@@ -257,7 +257,7 @@ def getFieldGroupFields(
 #                 f"Ambiguous field group search: {field_group_name},{p_id},{a_id}"
 #             )
 
-#         _id = r["field_group_id"]
+#         _id = r["group_id"]
 #         maybe_result = (_id, f)
 
 #     return maybe_result

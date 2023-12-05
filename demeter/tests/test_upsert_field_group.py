@@ -30,7 +30,7 @@ class TestUpsertFieldGroup:
         with test_db_class.connect() as conn:
             with conn.begin():
                 root_field_group = FieldGroup(
-                    name="Root Field Group", parent_field_group_id=None
+                    name="Root Field Group", parent_group_id=None
                 )
                 root_fg_id = insertOrGetFieldGroup(
                     conn.connection.cursor(), root_field_group
@@ -46,7 +46,7 @@ class TestUpsertFieldGroup:
         with test_db_class.connect() as conn:
             with conn.begin():
                 root_field_group = FieldGroup(
-                    name="Root Field Group", parent_field_group_id=None
+                    name="Root Field Group", parent_group_id=None
                 )
                 root_fg_id = insertOrGetFieldGroup(
                     conn.connection.cursor(), root_field_group
@@ -54,7 +54,7 @@ class TestUpsertFieldGroup:
                 root_fg_id.should.be.equal(1)
 
                 child_field_group = FieldGroup(
-                    name="Child Field Group", parent_field_group_id=root_fg_id
+                    name="Child Field Group", parent_group_id=root_fg_id
                 )
                 child_fg_id = insertOrGetFieldGroup(
                     conn.connection.cursor(), child_field_group
@@ -65,7 +65,7 @@ class TestUpsertFieldGroup:
         with test_db_class.connect() as conn:
             with conn.begin():
                 child_field_group = FieldGroup(
-                    name="Child Field Group 2", parent_field_group_id=10
+                    name="Child Field Group 2", parent_group_id=10
                 )
                 with pytest.raises(ForeignKeyViolation):
                     _ = insertOrGetFieldGroup(
@@ -84,7 +84,7 @@ class TestUpsertFieldGroup:
                 with pytest.raises(Exception):
                     _ = getFieldGroupAncestors(conn.connection.cursor(), 3)
 
-                cols = ["distance", "field_group_id"]
+                cols = ["distance", "group_id"]
                 assert_frame_equal(
                     left=getFieldGroupAncestors(conn.connection.cursor(), 2)[
                         cols
@@ -107,7 +107,7 @@ class TestUpsertFieldGroup:
                 with pytest.raises(Exception):
                     _ = getFieldGroupDescendants(conn.connection.cursor(), 3)
 
-                cols = ["distance", "field_group_id"]
+                cols = ["distance", "group_id"]
                 assert_frame_equal(
                     left=getFieldGroupDescendants(conn.connection.cursor(), 2)[cols],
                     right=getFieldGroupDescendants(conn.connection.cursor(), 2)[
@@ -126,7 +126,7 @@ class TestUpsertFieldGroup:
                     geom_id=field_geom_id,
                     date_start=datetime(2022, 1, 1),
                     name="Test Field",
-                    field_group_id=2,
+                    group_id=2,
                 )
                 _ = insertOrGetField(conn.connection.cursor(), field)
 
@@ -144,7 +144,7 @@ class TestUpsertFieldGroup:
                     geom_id=field_geom_id_2,
                     date_start=datetime(2022, 1, 1),
                     name="Test Field 2",
-                    field_group_id=1,
+                    group_id=1,
                 )
                 _ = insertOrGetField(conn.connection.cursor(), field_2)
 

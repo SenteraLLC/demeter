@@ -44,21 +44,21 @@ if __name__ == "__main__":
     with conn.cursor() as cursor:
         field_group_owner = FieldGroup(
             name="Tyler Nigon2",
-            parent_field_group_id=None,
+            parent_group_id=None,
             details={"field_group_type": "owner"},
         )
         owner_group_id = insertOrGetFieldGroup(cursor, field_group_owner)
         for owner in field_bounds["owner"].unique():
             field_group_grower = FieldGroup(
                 name=owner,
-                parent_field_group_id=owner_group_id,
+                parent_group_id=owner_group_id,
                 details={"field_group_type": "grower"},
             )
             grower_group_id = insertOrGetFieldGroup(cursor, field_group_grower)
             for farm in field_bounds[field_bounds["owner"] == owner]["farm"].unique():
                 field_group_farm = FieldGroup(
                     name=farm,
-                    parent_field_group_id=grower_group_id,
+                    parent_group_id=grower_group_id,
                     details={"field_group_type": "farm"},
                 )
                 # if farm == "Nigon-View":
@@ -74,7 +74,7 @@ if __name__ == "__main__":
                         geom_id=field_geom_id,
                         date_start=datetime(row_fb["year"] - 1, 12, 1),
                         # date_end=datetime(row["year"], 12, 1),
-                        field_group_id=farm_group_id,
+                        group_id=farm_group_id,
                     )
                     field_id = insertOrGetField(cursor, field)
                     # for i, row_ap in as_planted[as_planted["field_id"] == row_fb["field_id"]].iterrows():

@@ -20,7 +20,7 @@ class Grouper(db.Detailed):
     """
 
     name: str
-    parent_group_id: Optional[db.TableId] = None
+    parent_grouper_id: Optional[db.TableId] = None
 
 
 def _row_to_grouper(

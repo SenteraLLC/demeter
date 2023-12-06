@@ -103,16 +103,16 @@ create table field (
   name  text
         not null,
 
-  geom_id bigint
-          not null
-          references geom(geom_id),
-
   date_start  timestamp without time zone
               not null,
 
   date_end  timestamp without time zone
             not null
             default ('infinity'::timestamp at time zone 'utc'),
+
+  geom_id bigint
+          not null
+          references geom(geom_id),
 
   grouper_id  bigint
               references grouper(grouper_id),
@@ -138,19 +138,13 @@ create table field_trial (
   field_trial_id bigserial
                   primary key,
 
-  field_id bigint
-            not null
-            references field(field_id),
-
   -- Either geom_id or name must be non-null, not both.
   name  text
         not null,
 
-  geom_id   bigint
-            references geom(geom_id),
-
-  grouper_id  bigint
-              references grouper(grouper_id),
+  field_id bigint
+            not null
+            references field(field_id),
 
   date_start  timestamp without time zone
               not null,
@@ -158,6 +152,12 @@ create table field_trial (
   date_end    timestamp without time zone
               not null
               default ('infinity'::timestamp at time zone 'utc'),
+
+  geom_id   bigint
+            references geom(geom_id),
+
+  grouper_id  bigint
+              references grouper(grouper_id),
 
   details jsonb
           not null

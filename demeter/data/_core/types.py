@@ -24,10 +24,10 @@ class Field(Detailed):
     """Arbitrary spatiotemporal unit representing an agronomically-relevant area that is generally, but not always,
     managed as a single unit within the defined spatial and temporal constraints."""
 
+    name: str
     geom_id: TableId
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
-    name: Optional[str] = None
     grouper_id: Optional[TableId] = None
 
 
@@ -38,8 +38,8 @@ class FieldTrial(Detailed):
     FieldTrial must fall fully within the spatial extent of the Field it is associated with.
     """
 
-    field_id: TableId
     name: str
+    field_id: TableId
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
     geom_id: Optional[TableId] = None

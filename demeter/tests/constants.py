@@ -12,6 +12,7 @@ TABLES_LIST = [
     "geom",
     "grouper",
     "field",
+    "field_trial" "plot",
     "crop_type",
     "observation_type",
     "unit_type",

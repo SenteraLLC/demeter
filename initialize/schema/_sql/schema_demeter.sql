@@ -94,6 +94,10 @@ create table grouper (
 
 CREATE UNIQUE INDEX unique_grouper_null_parent_grouper_id on grouper (name) where parent_grouper_id is null;
 
+CREATE TRIGGER update_grouper_last_updated BEFORE UPDATE
+ON grouper FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
 -- FIELD
 
 create table field (
@@ -131,6 +135,10 @@ create table field (
 );
 
 CREATE UNIQUE INDEX unique_field_null_grouper_id on field (name) where grouper_id is null;
+
+CREATE TRIGGER update_field_last_updated BEFORE UPDATE
+ON field FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
 -- FIELD TRIAL
 
@@ -172,6 +180,9 @@ create table field_trial (
                 default (now() at time zone 'utc')
 );
 
+CREATE TRIGGER update_field_trial_last_updated BEFORE UPDATE
+ON field_trial FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
 -- PLOT
 
@@ -214,6 +225,10 @@ create table plot (
                 default (now() at time zone 'utc')
 );
 
+CREATE TRIGGER update_plot_last_updated BEFORE UPDATE
+ON plot FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
 -- CROP TYPE
 
 create table crop_type (
@@ -249,11 +264,11 @@ ON crop_type FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 ALTER TABLE crop_type
-  ADD CONSTRAINT crop_type_crop_lowercase_ck
-  CHECK (crop = lower(crop));
+  ADD CONSTRAINT crop_type_crop_uppercase_ck
+  CHECK (crop = upper(crop));
 ALTER TABLE crop_type
-  ADD CONSTRAINT crop_type_product_name_lowercase_ck
-  CHECK (product_name = lower(product_name));
+  ADD CONSTRAINT crop_type_product_name_uppercase_ck
+  CHECK (product_name = upper(product_name));
 
 -- OBSERVATION TYPE
 
@@ -267,9 +282,9 @@ create table observation_type (
           default '{}'::jsonb,
   unique (observation_type_name, category, details),
 
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
+  created timestamp without time zone
+          not null
+          default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
                 not null
@@ -283,41 +298,13 @@ CREATE UNIQUE INDEX observation_type_all_null_unique_idx
   WHERE (category is NULL)
   AND (details is NULL);
 
--- -- All except one is NULL
--- CREATE UNIQUE INDEX observation_type_all_except_type_category_null_unique_idx
---   ON observation_type(type_name, type_category)
---   WHERE (analytic_name is NULL)
---   AND (sensor_name is NULL)
---   AND (statistic_type is NULL)
---   AND (masked is NULL);
--- CREATE UNIQUE INDEX observation_type_all_except_analytic_null_unique_idx
---   ON observation_type(type_name, analytic_name)
---   WHERE (type_category is NULL)
---   AND (sensor_name is NULL)
---   AND (statistic_type is NULL)
---   AND (masked is NULL);
--- CREATE UNIQUE INDEX observation_type_all_except_sensor_null_unique_idx
---   ON observation_type(type_name, sensor_name)
---   WHERE (type_category is NULL)
---   AND (analytic_name is NULL)
---   AND (statistic_type is NULL)
---   AND (masked is NULL);
--- CREATE UNIQUE INDEX observation_type_all_except_statistic_null_unique_idx
---   ON observation_type(type_name, statistic_type)
---   WHERE (type_category is NULL)
---   AND (analytic_name is NULL)
---   AND (sensor_name is NULL)
---   AND (masked is NULL);
--- CREATE UNIQUE INDEX observation_type_all_except_masked_null_unique_idx
---   ON observation_type(type_name, masked)
---   WHERE (type_category is NULL)
---   AND (analytic_name is NULL)
---   AND (sensor_name is NULL)
---   AND (statistic_type is NULL);
+CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
+ON observation FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
 ALTER TABLE observation_type
-	ADD CONSTRAINT observation_type_observation_type_name_lowercase_ck CHECK (observation_type_name = lower(observation_type_name)),
-  ADD CONSTRAINT observation_type_category_lowercase_ck CHECK (category = lower(category));
+	ADD CONSTRAINT observation_type_observation_type_name_uppercase_ck CHECK (observation_type_name = upper(observation_type_name)),
+  ADD CONSTRAINT observation_type_category_uppercase_ck CHECK (category = upper(category));
 
 -- UNIT TYPE
 
@@ -364,16 +351,12 @@ ALTER TABLE unit_type
 
 -- ACT
 
-CREATE TYPE act_type_enum AS ENUM ('fertilize', 'harvest', 'irrigate', 'plant');
+CREATE TYPE act_type_enum AS ENUM ('APPLICATION', 'HARVEST', 'IRRIGATE', 'MECHANICAL', 'PLANT', 'TILL');
 
 create table act (
   act_id         bigserial primary key,
 
   act_type       act_type_enum not null,
-
-  field_id       bigint
-                  not null
-                  references field(field_id),
 
   date_performed timestamp without time zone
                   not null,
@@ -381,8 +364,17 @@ create table act (
   crop_type_id   bigint
                   references crop_type(crop_type_id),
 
-  geom_id       bigint
-                  references geom(geom_id),
+  field_id  bigint
+            references field(field_id),
+
+  field_trial_id  bigint
+                  references field_trial(field_trial_id),
+
+  plot_id bigint
+          references plot(plot_id),
+
+  geom_id bigint
+          references geom(geom_id),
 
   details jsonb
           not null
@@ -396,6 +388,10 @@ create table act (
                 not null
                 default (now() at time zone 'utc')
 );
+
+ALTER TABLE act
+  ADD CONSTRAINT act_nullable_ids_at_least_one_not_null_ck
+  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) >= 1);
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE

@@ -92,7 +92,7 @@ create table grouper (
                 default (now() at time zone 'utc')
 );
 
-CREATE UNIQUE INDEX unique_name_for_grouper_null_roots_idx on grouper (name) where parent_grouper_id is null;
+CREATE UNIQUE INDEX unique_grouper_null_parent_grouper_id on grouper (name) where parent_grouper_id is null;
 
 -- FIELD
 
@@ -100,7 +100,8 @@ create table field (
   field_id bigserial
             primary key,
 
-  name  text,
+  name  text
+        not null,
 
   geom_id bigint
           not null
@@ -129,6 +130,7 @@ create table field (
                 default (now() at time zone 'utc')
 );
 
+CREATE UNIQUE INDEX unique_field_null_grouper_id on field (name) where grouper_id is null;
 
 -- FIELD TRIAL
 

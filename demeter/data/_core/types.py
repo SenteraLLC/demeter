@@ -38,7 +38,7 @@ class FieldTrial(Detailed):
     FieldTrial must fall fully within the spatial extent of the Field it is associated with.
     """
 
-    field_uid: TableId
+    field_id: TableId
     name: str
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
@@ -53,8 +53,8 @@ class Plot(Detailed):
     spatiotemporal extent.
     """
 
-    field_uid: TableId
-    field_trial_uid: TableId
+    field_id: TableId
+    field_trial_id: TableId
     name: str
     geom_id: Optional[TableId] = None
     treatment_id: Optional[int] = None

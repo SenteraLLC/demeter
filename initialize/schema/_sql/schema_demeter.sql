@@ -190,6 +190,9 @@ create table plot (
   plot_id bigserial
           primary key,
 
+  name  text
+        not null,
+
   field_id  bigint
             not null
             references field(field_id),
@@ -198,12 +201,7 @@ create table plot (
                   not null
                   references field_trial(field_trial_id),
 
-  -- Either geom_id or name must be non-null, not both.
-  name  text
-        not null,
-
   geom_id   bigint
-            -- not null
             references geom(geom_id),
 
   treatment_id smallint,

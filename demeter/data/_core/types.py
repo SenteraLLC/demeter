@@ -30,6 +30,9 @@ class Field(Detailed):
     date_end: datetime = field(default=datetime.max)
     grouper_id: Optional[TableId] = None
 
+    def __post_init__(self):
+        self.table_name = "field"
+
 
 @dataclass(frozen=True)
 class FieldTrial(Detailed):
@@ -44,6 +47,9 @@ class FieldTrial(Detailed):
     date_end: datetime = field(default=datetime.max)
     geom_id: Optional[TableId] = None
     grouper_id: Optional[TableId] = None
+
+    def __post_init__(self):
+        self.table_name = "field_trial"
 
 
 @dataclass(frozen=True)
@@ -61,6 +67,9 @@ class Plot(Detailed):
     block_id: Optional[int] = None
     replication_id: Optional[int] = None
 
+    def __post_init__(self):
+        self.table_name = "plot"
+
 
 @dataclass(frozen=True)
 class CropType(TypeTable, Detailed):
@@ -68,6 +77,9 @@ class CropType(TypeTable, Detailed):
 
     crop: str
     product_name: str = None
+
+    def __post_init__(self):
+        self.table_name = "crop_type"
 
 
 list_act_types = ("APPLICATION", "HARVEST", "IRRIGATE", "MECHANICAL", "PLANT", "TILL")
@@ -92,6 +104,7 @@ class Act(Detailed):
         - `crop_type_id` is set for `act_type` = "plant" or "harvest"
         - at least one of `field_id`, `field_trial_id`, or `plot_id` is set
         """
+        self.table_name = "act"
 
         chk_act_type = object.__getattribute__(self, "act_type")
 

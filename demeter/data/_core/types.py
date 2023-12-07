@@ -53,9 +53,9 @@ class Plot(Detailed):
     spatiotemporal extent.
     """
 
+    name: str
     field_id: TableId
     field_trial_id: TableId
-    name: str
     geom_id: Optional[TableId] = None
     treatment_id: Optional[int] = None
     block_id: Optional[int] = None

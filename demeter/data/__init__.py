@@ -27,12 +27,7 @@ from ._core.geom import (
     getMaybeGeomId,
     insertOrGetGeom,
 )
-from ._core.grouper import (  # searchGrouper,
-    Grouper,
-    getGrouperAncestors,
-    getGrouperDescendants,
-    getGrouperFields,
-)
+from ._core.grouper import Grouper  # searchGrouper,
 from ._core.st_types import (
     Geom,
     GeoSpatialKey,
@@ -70,9 +65,6 @@ __all__ = (
     "getGrouper",
     "getMaybeGrouperId",
     "insertOrGetGrouper",
-    "getGrouperAncestors",
-    "getGrouperDescendants",
-    "getGrouperFields",
     # Field
     "Field",
     "getField",

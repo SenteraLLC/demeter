@@ -17,8 +17,8 @@ from demeter.data import (
     getField,
     getGrouper,
     getGrouperAncestors,
+    getGrouperByID,
     getGrouperDescendants,
-    getGrouperFields,
     getMaybeGeom,
     getObservation,
     getObservationType,
@@ -136,7 +136,7 @@ print(
     f"  date_end: {getField(cursor, field_id).date_end}",
 )
 
-getGrouperFields(cursor, sa_grouper_id)
+getGrouperByID(cursor, table="field", grouper_id=sa_grouper_id)
 
 # %% add crop season information
 

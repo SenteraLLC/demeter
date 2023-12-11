@@ -6,8 +6,15 @@ from psycopg2.errors import ForeignKeyViolation
 from sqlalchemy.sql import text
 from sure import expect
 
-from demeter.data import Grouper, insertOrGetGrouper
+from demeter.data import (
+    Grouper,
+    Organization,
+    insertOrGetGrouper,
+    insertOrGetOrganization,
+)
 from demeter.tests.conftest import SCHEMA_NAME
+
+ORGANIZATION = Organization(name="Test Organization")
 
 
 class TestUpsertGrouper:
@@ -15,10 +22,24 @@ class TestUpsertGrouper:
     Note: After all the tests in TestUpsertGrouper run, `test_db_class` will clear all data since it has "class" scope.
     """
 
+    def test_insert_get_organization(self, test_db_class):
+        with test_db_class.connect() as conn:
+            with conn.begin():
+                organization_id = insertOrGetOrganization(
+                    conn.connection.cursor(), ORGANIZATION
+                )
+
     def test_insert_get_grouper(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                root_grouper = Grouper(name="Root Field Group", parent_grouper_id=None)
+                organization_id = insertOrGetOrganization(
+                    conn.connection.cursor(), ORGANIZATION
+                )
+                root_grouper = Grouper(
+                    name="Root Grouper",
+                    organization_id=organization_id,
+                    parent_grouper_id=None,
+                )
                 root_fg_id = insertOrGetGrouper(conn.connection.cursor(), root_grouper)
                 root_fg_id.should.be.equal(1)
 
@@ -30,12 +51,21 @@ class TestUpsertGrouper:
     def test_insert_child_grouper(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                root_grouper = Grouper(name="Root Field Group", parent_grouper_id=None)
+                organization_id = insertOrGetOrganization(
+                    conn.connection.cursor(), ORGANIZATION
+                )
+                root_grouper = Grouper(
+                    name="Root Grouper",
+                    organization_id=organization_id,
+                    parent_grouper_id=None,
+                )
                 root_fg_id = insertOrGetGrouper(conn.connection.cursor(), root_grouper)
                 root_fg_id.should.be.equal(1)
 
                 child_grouper = Grouper(
-                    name="Child Field Group", parent_grouper_id=root_fg_id
+                    name="Child Field Group",
+                    organization_id=organization_id,
+                    parent_grouper_id=root_fg_id,
                 )
                 child_fg_id = insertOrGetGrouper(
                     conn.connection.cursor(), child_grouper
@@ -45,8 +75,13 @@ class TestUpsertGrouper:
     def test_insert_orphan_grouper(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
+                organization_id = insertOrGetOrganization(
+                    conn.connection.cursor(), ORGANIZATION
+                )
                 child_grouper = Grouper(
-                    name="Child Field Group 2", parent_grouper_id=10
+                    name="Child Field Group 2",
+                    organization_id=organization_id,
+                    parent_grouper_id=10,
                 )
                 with pytest.raises(ForeignKeyViolation):
                     _ = insertOrGetGrouper(conn.connection.cursor(), child_grouper)

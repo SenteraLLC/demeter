@@ -5,17 +5,23 @@ from pandas import read_sql_query
 from pandas.testing import assert_frame_equal
 from psycopg2.errors import InsufficientPrivilege
 from psycopg2.extensions import AsIs
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.sql import text
 from sure import expect
 
 from demeter.data import (
     Grouper,
+    Organization,
     getMaybeGrouperId,
+    getMaybeOrganizationId,
+    insertOrGetGeom,
     insertOrGetGrouper,
+    insertOrGetOrganization,
 )
 from demeter.tests.conftest import SCHEMA_NAME
+
+ORGANIZATION = Organization(name="Test Organization")
 
 
 class TestUserPrivileges:
@@ -27,21 +33,32 @@ class TestUserPrivileges:
     def test_demeter_user_can_insert(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
-                cursor = conn.connection.cursor()
-                stmt = """insert into grouper (name)
-                values ('Testing User Privileges');
-                """
-                cursor.execute(stmt)
+                organization_id = insertOrGetOrganization(
+                    conn.connection.cursor(), ORGANIZATION
+                )
 
-                stmt = """select name from grouper where name = 'Testing User Privileges'"""
-                cursor.execute(stmt)
-                len(cursor.fetchall()).should.be.equal(1)
+                grouper = Grouper(
+                    name="Testing User Privileges",
+                    organization_id=organization_id,
+                    parent_grouper_id=None,
+                )
+                _ = insertOrGetGrouper(conn.connection.cursor(), grouper)
+
+                with conn.connection.cursor() as cursor:
+                    stmt2 = """select name from grouper where name = 'Testing User Privileges'"""
+                    cursor.execute(stmt2)
+                    len(cursor.fetchall()).should.be.equal(1)
 
     def test_demeter_user_can_read(self, test_db_class):
         with test_db_class.connect() as conn:
             with conn.begin():
+                organization_id = insertOrGetOrganization(
+                    conn.connection.cursor(), ORGANIZATION
+                )
                 test_grouper = Grouper(
-                    name="Testing User Privileges", parent_grouper_id=None
+                    name="Testing User Privileges",
+                    organization_id=organization_id,
+                    parent_grouper_id=None,
                 )
                 test_fg_id = getMaybeGrouperId(conn.connection.cursor(), test_grouper)
                 test_fg_id.should.be.equal(1)
@@ -86,8 +103,13 @@ class TestUserPrivileges:
     def test_demeter_ro_user_can_read(self, test_read_only_access):
         with test_read_only_access.connect() as conn:
             with conn.begin():
+                organization_id = getMaybeOrganizationId(
+                    conn.connection.cursor(), ORGANIZATION
+                )
                 test_grouper = Grouper(
-                    name="Testing User Privileges", parent_grouper_id=None
+                    name="Testing User Privileges",
+                    organization_id=organization_id,
+                    parent_grouper_id=None,
                 )
                 test_fg_id = getMaybeGrouperId(conn.connection.cursor(), test_grouper)
                 test_fg_id.should.be.equal(1)
@@ -139,3 +161,38 @@ class TestUserPrivileges:
                 stmt = """DROP TABLE IF EXISTS field CASCADE;"""
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))
+
+
+# TODO: Test unique constraints
+# class TestUniqueConstraints:
+#     """
+#     Note: After all the tests in TestUniqueConstraints run, `test_db_class` will clear all data since it has "class" scope.
+#     """
+
+#     ## TESTS FOR DEMETER_USER
+#     def test_field_unique_constraint(self, test_db_class):
+#         """UNIQUE NULLS NOT DISTINCT (name, date_start, date_end, geom_id, grouper_id)"""
+#         with test_db_class.connect() as conn:
+#             with conn.begin():
+#                 cursor = conn.connection.cursor()
+
+#                 polygon = Polygon(
+#                     [
+#                         Point(-93.204429, 44.963191),
+#                         Point(-93.202980, 44.963212),
+#                         Point(-93.202970, 44.961986),
+#                         Point(-93.204411, 44.961998),
+#                         Point(-93.204429, 44.963191),
+#                     ]
+#                 )
+#                 geom_id = insertOrGetGeom(conn.connection.cursor(), polygon)
+#                 geom_id.should.be.greater_than(-1)
+
+#                 stmt = """INSERT INTO field (name, date_start, date_end, geom_id, grouper_id)
+#                 VALUES ('Test Field Unique Constraint', '2000-01-01', '2000-12-31', 1, NULL)
+#                 """
+#                 cursor.execute(stmt)
+
+#                 stmt = """select name from grouper where name = 'Testing User Privileges'"""
+#                 cursor.execute(stmt)
+#                 len(cursor.fetchall()).should.be.equal(1)

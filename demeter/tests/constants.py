@@ -16,6 +16,7 @@ TABLES_LIST = [
     "plot",
     "crop_type",
     "observation_type",
+    "organization",
     "unit_type",
     "observation",
     "act",

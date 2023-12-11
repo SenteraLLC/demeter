@@ -314,7 +314,7 @@ ALTER TABLE crop_type
   CHECK (product_name = upper(product_name));
 
 -- OBSERVATION TYPE
-CREATE TYPE cateogry_type_enum AS ENUM (NULL, 'REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
+CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
 
 create table observation_type (
   observation_type_id bigserial
@@ -324,7 +324,7 @@ create table observation_type (
                         not null,
 
   category  cateogry_type_enum
-            default 'NULL'::cateogry_type_enum,
+            default NULL::cateogry_type_enum,
 
   details jsonb
           not null

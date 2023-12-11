@@ -349,7 +349,7 @@ ALTER TABLE unit_type
 
 -- ACT
 
-CREATE TYPE act_type_enum AS ENUM ('APPLICATION', 'HARVEST', 'IRRIGATE', 'MECHANICAL', 'PLANT', 'TILL');
+CREATE TYPE act_type_enum AS ENUM ('APPLY', 'HARVEST', 'MECHANICAL', 'PLANT', 'TILL');
 
 create table act (
   act_id         bigserial primary key,

@@ -70,7 +70,7 @@ class CropType(TypeTable, Detailed):
     product_name: str = None
 
 
-list_act_types = ("APPLICATION", "HARVEST", "IRRIGATE", "MECHANICAL", "PLANT", "TILL")
+list_act_types = ("APPLY", "HARVEST", "MECHANICAL", "PLANT", "TILL")
 
 
 @dataclass(frozen=True)

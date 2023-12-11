@@ -20,11 +20,19 @@ Note that if we tend to use infinity as date_end, this is probably a pretty rare
 
 
 @dataclass(frozen=True)
+class Organization(Detailed):
+    """Parent object that segregates all information/data in the database."""
+
+    name: str
+
+
+@dataclass(frozen=True)
 class Field(Detailed):
     """Arbitrary spatiotemporal unit representing an agronomically-relevant area that is generally, but not always,
     managed as a single unit within the defined spatial and temporal constraints."""
 
     name: str
+    organization_id: TableId
     geom_id: TableId
     date_start: datetime
     date_end: datetime = field(default=datetime.max)

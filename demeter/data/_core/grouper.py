@@ -11,4 +11,5 @@ class Grouper(db.Detailed):
     """
 
     name: str
+    organization_id: db.TableId
     parent_grouper_id: Optional[db.TableId] = None

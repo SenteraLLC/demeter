@@ -19,6 +19,7 @@ from .._core.types import (
     CropType,
     Field,
     FieldTrial,
+    Organization,
     Plot,
 )
 from .grouper import Grouper
@@ -33,6 +34,7 @@ g = SQLGenerator(
 )
 
 # core types
+getMaybeOrganizationId: GetId[Organization] = g.getMaybeIdFunction(Organization)
 getMaybeGrouperId: GetId[Grouper] = g.getMaybeIdFunction(Grouper)
 getMaybeFieldId: GetId[Field] = g.getMaybeIdFunction(Field)
 getMaybeFieldTrialId: GetId[FieldTrial] = g.getMaybeIdFunction(FieldTrial)
@@ -40,6 +42,7 @@ getMaybePlotId: GetId[Plot] = g.getMaybeIdFunction(Plot)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
 
+getOrganization: GetTable[Organization] = g.getTableFunction(Organization)
 getGrouper: GetTable[Grouper] = g.getTableFunction(Grouper)
 getField: GetTable[Field] = g.getTableFunction(Field)
 getFieldTrial: GetTable[FieldTrial] = g.getTableFunction(FieldTrial)
@@ -47,6 +50,7 @@ getPlot: GetTable[Plot] = g.getTableFunction(Plot)
 getCropType: GetTable[CropType] = g.getTableFunction(CropType)
 getAct: GetTable[Act] = g.getTableFunction(Act)
 
+insertOrganization: ReturnId[Organization] = g.getInsertReturnIdFunction(Organization)
 insertGrouper: ReturnId[Grouper] = g.getInsertReturnIdFunction(Grouper)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
 insertFieldTrial: ReturnId[FieldTrial] = g.getInsertReturnIdFunction(FieldTrial)
@@ -55,6 +59,9 @@ insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
 
 
+insertOrGetOrganization: ReturnId[Organization] = g.partialInsertOrGetId(
+    getMaybeOrganizationId, insertOrganization
+)
 insertOrGetGrouper: ReturnId[Grouper] = g.partialInsertOrGetId(
     getMaybeGrouperId, insertGrouper
 )

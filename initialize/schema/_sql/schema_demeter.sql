@@ -130,7 +130,6 @@ ON grouper FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 -- FIELD
-# Grouper can
 create table field (
   field_id bigserial
             primary key,

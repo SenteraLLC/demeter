@@ -5,6 +5,7 @@ from .._core.types import (  # ReportType,
     CropType,
     Field,
     FieldTrial,
+    Organization,
     Plot,
 )
 from .grouper import Grouper
@@ -17,6 +18,7 @@ from .st_types import (
 
 AnyDataTable = Union[
     Geom,
+    Organization,
     Field,
     FieldTrial,
     Plot,

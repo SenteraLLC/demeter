@@ -5,6 +5,7 @@ from .._core.types import (  # ReportType,
     CropType,
     Field,
     FieldTrial,
+    Organization,
     Plot,
 )
 from .grouper import Grouper
@@ -21,6 +22,7 @@ type_table_lookup: TableLookup = {
 
 data_table_lookup: TableLookup = {
     Geom: "geom",
+    Organization: "organization",
     Grouper: "grouper",
     Field: "field",
     FieldTrial: "field_trial",

@@ -1,27 +1,33 @@
 """High-level functions to perform inventory and generate `gdf` for different steps of weather process."""
-from datetime import datetime, timedelta
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
 
 from geopandas import GeoDataFrame
-from pandas import DataFrame
+from pandas import DataFrame, Timestamp
 from pandas import concat as pd_concat
 from pandas import merge as pd_merge
 from pyproj import CRS
 from pytz import UTC
 from sqlalchemy.engine import Connection
 
-from ...query import (
+from demeter.weather.query import (
     get_centroid,
     get_daily_weather_type_for_cell_id,
     get_daily_weather_types,
     get_info_for_world_utm,
 )
-from ...utils.time import (
+from demeter.weather.utils.time import (
     get_date_list_for_date_range,
     get_min_current_date_for_world_utm,
     localize_utc_datetime_with_utc_offset,
 )
-from ._demeter_inventory import get_weather_grid_info_for_all_demeter_fields
-from ._weather_inventory import (
+from demeter.weather.workflow.inventory._demeter_inventory import (
+    get_weather_grid_info_for_all_demeter_fields,
+)
+from demeter.weather.workflow.inventory._weather_inventory import (
     get_date_last_requested_for_cell_id,
     get_first_available_data_year_for_cell_id,
     get_first_unstable_date_at_request_time,
@@ -134,31 +140,33 @@ def get_gdf_for_add(conn: Connection):
         gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date range informaton for MM requests needed to
             perform "add" step
     """
-
-    cursor = conn.connection.cursor()
-
     # Find cell IDs currently present in `weather.daily` that need more historical years of data
-    df_populated = get_populated_cell_ids(cursor, table="daily")
+    with conn.connection.cursor() as cursor:
+        df_populated = get_populated_cell_ids(cursor, table="daily")
     if df_populated is not None:
         cell_ids_weather = df_populated["cell_id"].to_list()
     else:
         cell_ids_weather = []
 
     # Find cell IDs represented by all demeter fields (their cell IDs may or may not be present in `weather.daily`)
-    gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)
+    with conn.connection.cursor() as cursor:
+        gdf_need = get_weather_grid_info_for_all_demeter_fields(cursor)
     if len(gdf_need) == 0:
         return GDF_EMPTY
 
-    gdf_available = get_first_available_data_year_for_cell_id(
-        cursor_weather=cursor, cell_id_list=gdf_need["cell_id"].to_list()
-    )
+    with conn.connection.cursor() as cursor:
+        gdf_available = get_first_available_data_year_for_cell_id(
+            cursor_weather=cursor, cell_id_list=gdf_need["cell_id"].to_list()
+        )
 
     # If any cell IDs from `gdf_need` exist already in the database, we need to see which cell IDs need weather data for
     # any "new years" (gdf_new_years), as well as identify cell_ids/fields that are not yet present in the daily table at all (gdf_new_cells).
     if len(gdf_available) > 0:
         gdf_new_years = pd_merge(gdf_need, gdf_available, on="cell_id")
         keep = gdf_new_years.apply(
-            lambda row: row["date_first"] < datetime(row["first_year"], 1, 1), axis=1
+            lambda row: row["date_first"]
+            < Timestamp(datetime(row["first_year"], 1, 1)),
+            axis=1,
         )
         gdf_new_years = gdf_new_years.loc[keep]
         gdf_new_years["date_last"] = gdf_new_years["first_year"].map(
@@ -178,6 +186,49 @@ def get_gdf_for_add(conn: Connection):
 
     # represents the grid info for all cell_ids that need new weather added (could be new years, new cell_ids, or both)
     return gdf_add
+
+
+def _prep_gdf_for_fill(conn: Connection) -> GeoDataFrame:
+    """Performs inventory of Demeter and weather database to determine which cell IDs, parameters, and dates are needed"""
+    with conn.connection.cursor() as cursor:
+        # perform two inventories
+        gdf_need_fields = get_weather_grid_info_for_all_demeter_fields(cursor)
+        gdf_need_weather = get_weather_grid_info_for_populated_cell_ids(cursor)
+
+    # merge inventories together; keeping the later `date_first` for duplicates
+    gdf_need = (
+        pd_concat([gdf_need_fields, gdf_need_weather], axis=0)
+        .sort_values(["cell_id", "date_first"])
+        .drop_duplicates(["cell_id"], keep="last")
+    )
+    return gdf_need
+
+
+def _find_weather_to_keep(
+    df_weather: DataFrame, utc_offset: timezone, last_date_stable_local: datetime
+):
+    # localize date requested
+    df_weather["local_date_requested"] = df_weather.apply(
+        lambda row: localize_utc_datetime_with_utc_offset(
+            row["date_requested"], utc_offset
+        ),
+        axis=1,
+    )
+
+    # mark if data row is "stable" (i.e., less than first unstable date)
+    which_stable = df_weather.apply(
+        lambda row: get_first_unstable_date_at_request_time(
+            row["local_date_requested"]
+        ).date()
+        > row["date"],
+        axis=1,
+    )
+
+    # mark if data row is forecast or recent historical
+    which_recent = df_weather["date"].map(lambda dt: dt > last_date_stable_local.date())
+
+    which_keep = list(which_stable | which_recent)
+    return which_keep
 
 
 def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
@@ -212,26 +263,13 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
         gdf (geopandas.GeoDataFrame): GeoDataFrame of cell ID x date x parameter informaton for MM requests needed to
             perform "fill" step
     """
-
-    cursor = conn.connection.cursor()
-
-    # perform two inventories
-    gdf_need_fields = get_weather_grid_info_for_all_demeter_fields(cursor)
-    gdf_need_weather = get_weather_grid_info_for_populated_cell_ids(cursor)
-
-    # merge inventories together; keeping the later `date_first` for duplicates
-    gdf_need = (
-        pd_concat([gdf_need_fields, gdf_need_weather], axis=0)
-        .sort_values(["cell_id", "date_first"])
-        .drop_duplicates(["cell_id"], keep="last")
-    )
-
+    gdf_need = _prep_gdf_for_fill(conn)
     # get unique world_utm_id
     world_utm_id = list(gdf_need["world_utm_id"].unique())
 
     # get all daily weather types in the database
-    df_parameters = get_daily_weather_types(cursor)
-    df_fill = None
+    with conn.connection.cursor() as cursor:
+        df_parameters = get_daily_weather_types(cursor)
 
     # like in "update" step, we ensure data is available until 7 days from min current date
     min_current_date = get_min_current_date_for_world_utm()
@@ -240,12 +278,16 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
     # the following is a brute force inventory at this point to avoid querying too much data at once
     # at most, this loop will have n_params (12) x 1201 iterations => 14412 (not that bad)
     # first, we loop through world utm polygons
+    df_fill = DataFrame()
     for world_utm in world_utm_id:
         gdf_world_utm = gdf_need.loc[gdf_need["world_utm_id"] == world_utm]
 
-        utc_offset = (
-            get_info_for_world_utm(cursor, int(world_utm)).at[0, "utc_offset"].tzinfo
-        )
+        with conn.connection.cursor() as cursor:
+            utc_offset = (
+                get_info_for_world_utm(cursor, int(world_utm))
+                .at[0, "utc_offset"]
+                .tzinfo
+            )
 
         # determine last date that should be stable after this fill step
         current_datetime_local = datetime.now(tz=utc_offset)
@@ -268,47 +310,33 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
         # then, we loop through parameters
         for _, row in df_parameters.iterrows():
             # get all weather and, for each cell ID x date, keep most recent row
-            df_weather = get_daily_weather_type_for_cell_id(
-                cursor,
-                cell_id_list=gdf_world_utm["cell_id"].to_list(),
-                weather_type_id=row["weather_type_id"],
-                keep="recent",
-            )
+            with conn.connection.cursor() as cursor:
+                df_weather = get_daily_weather_type_for_cell_id(
+                    cursor,
+                    cell_id_list=gdf_world_utm["cell_id"].to_list(),
+                    weather_type_id=row["weather_type_id"],
+                    keep="recent",
+                )
 
-            # localize date requested
-            df_weather["local_date_requested"] = df_weather.apply(
-                lambda row: localize_utc_datetime_with_utc_offset(
-                    row["date_requested"], utc_offset
-                ),
-                axis=1,
-            )
+            # If there is nothing in df_weather,
+            if not len(df_weather.columns) > 0:
+                continue
 
-            # mark if data row is "stable" (i.e., less than first unstable date)
-            which_stable = df_weather.apply(
-                lambda row: get_first_unstable_date_at_request_time(
-                    row["local_date_requested"]
-                ).date()
-                > row["date"],
-                axis=1,
+            which_keep = _find_weather_to_keep(
+                df_weather, utc_offset, last_date_stable_local
             )
-
-            # mark if data row is forecast or recent historical
-            which_recent = df_weather["date"].map(
-                lambda dt: dt > last_date_stable_local.date()
-            )
-
-            which_keep = list(which_stable | which_recent)
             df_keep = df_weather.loc[which_keep]
 
             # join "stable" data with `df_long` to highlight data gaps
             df_join = pd_merge(df_long, df_keep, how="left", on=["cell_id", "date"])
             df_gaps = df_join.loc[df_join["daily_id"].isna()][["cell_id", "date"]]
             df_gaps.insert(df_gaps.shape[1], "parameter", row["weather_type"])
+            df_fill = pd_concat([df_fill, df_gaps], axis=0, ignore_index=True)
 
-            if df_fill is None:
-                df_fill = df_gaps.copy()
-            else:
-                df_fill = pd_concat([df_fill, df_gaps], axis=0)
+            # if df_fill is None:
+            #     df_fill = df_gaps.copy()
+            # else:
+            #     df_fill = pd_concat([df_fill, df_gaps], axis=0)
 
     cell_id_keys = ["utm_zone", "utc_offset", "world_utm_id", "cell_id", "centroid"]
 

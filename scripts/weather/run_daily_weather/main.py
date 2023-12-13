@@ -127,7 +127,7 @@ def run_daily_weather(
                 params_to_weather_types=params_to_weather_types,
                 n_jobs=n_jobs,
             )
-            all_completed_requests += update_requests
+            all_completed_requests += add_requests
         else:
             add_requests = []
     else:
@@ -150,7 +150,7 @@ def run_daily_weather(
                     params_to_weather_types=params_to_weather_types,
                     n_jobs=n_jobs,
                 )
-                all_completed_requests += update_requests
+                all_completed_requests += fill_requests
             else:
                 fill_requests = []
         else:

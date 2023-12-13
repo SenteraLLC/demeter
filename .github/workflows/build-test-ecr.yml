@@ -30,7 +30,6 @@ jobs:
     services:
       db:
         # name: Attach to PostGIS Docker Image
-        # image: postgis/postgis:14-3.4
         image: postgis/postgis:16-3.4
         env:
           # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
@@ -95,8 +94,17 @@ jobs:
       - name: Prepare Images
         id: prepare-images
         run: |
-          echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
-          echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }} )" >> $GITHUB_ENV
+          (
+            if [ ${{ env.GITHUB_HEAD_REF_SLUG }} ]; then
+              echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }})" >> $GITHUB_ENV;
+              echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }})" >> $GITHUB_ENV;
+            else
+              echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }})" >> $GITHUB_ENV;
+              echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }})" >> $GITHUB_ENV;
+            fi;
+          )
+        # echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
+         # echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }} )" >> $GITHUB_ENV
 
       - name: Docker Build
         id: docker-build

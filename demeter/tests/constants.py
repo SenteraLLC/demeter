@@ -10,10 +10,13 @@
 
 TABLES_LIST = [
     "geom",
-    "field_group",
+    "grouper",
     "field",
+    "field_trial",
+    "plot",
     "crop_type",
     "observation_type",
+    "organization",
     "unit_type",
     "observation",
     "act",

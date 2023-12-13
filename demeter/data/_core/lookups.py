@@ -4,8 +4,11 @@ from .._core.types import (  # ReportType,
     Act,
     CropType,
     Field,
+    FieldTrial,
+    Organization,
+    Plot,
 )
-from .field_group import FieldGroup
+from .grouper import Grouper
 from .st_types import (
     Geom,
     GeoSpatialKey,
@@ -19,8 +22,11 @@ type_table_lookup: TableLookup = {
 
 data_table_lookup: TableLookup = {
     Geom: "geom",
-    FieldGroup: "field_group",
+    Organization: "organization",
+    Grouper: "grouper",
     Field: "field",
+    FieldTrial: "field_trial",
+    Plot: "plot",
     GeoSpatialKey: "geospatial_key",
     TemporalKey: "temporal_key",
     Act: "act",

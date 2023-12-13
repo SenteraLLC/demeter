@@ -18,8 +18,11 @@ from .._core.types import (
     Act,
     CropType,
     Field,
+    FieldTrial,
+    Organization,
+    Plot,
 )
-from .field_group import FieldGroup
+from .grouper import Grouper
 from .st_types import GeoSpatialKey, TemporalKey
 
 g = SQLGenerator(
@@ -31,28 +34,44 @@ g = SQLGenerator(
 )
 
 # core types
-getMaybeFieldGroupId: GetId[FieldGroup] = g.getMaybeIdFunction(FieldGroup)
+getMaybeOrganizationId: GetId[Organization] = g.getMaybeIdFunction(Organization)
+getMaybeGrouperId: GetId[Grouper] = g.getMaybeIdFunction(Grouper)
 getMaybeFieldId: GetId[Field] = g.getMaybeIdFunction(Field)
+getMaybeFieldTrialId: GetId[FieldTrial] = g.getMaybeIdFunction(FieldTrial)
+getMaybePlotId: GetId[Plot] = g.getMaybeIdFunction(Plot)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
 
-getFieldGroup: GetTable[FieldGroup] = g.getTableFunction(FieldGroup)
+getOrganization: GetTable[Organization] = g.getTableFunction(Organization)
+getGrouper: GetTable[Grouper] = g.getTableFunction(Grouper)
 getField: GetTable[Field] = g.getTableFunction(Field)
+getFieldTrial: GetTable[FieldTrial] = g.getTableFunction(FieldTrial)
+getPlot: GetTable[Plot] = g.getTableFunction(Plot)
 getCropType: GetTable[CropType] = g.getTableFunction(CropType)
 getAct: GetTable[Act] = g.getTableFunction(Act)
 
-insertFieldGroup: ReturnId[FieldGroup] = g.getInsertReturnIdFunction(FieldGroup)
+insertOrganization: ReturnId[Organization] = g.getInsertReturnIdFunction(Organization)
+insertGrouper: ReturnId[Grouper] = g.getInsertReturnIdFunction(Grouper)
 insertField: ReturnId[Field] = g.getInsertReturnIdFunction(Field)
+insertFieldTrial: ReturnId[FieldTrial] = g.getInsertReturnIdFunction(FieldTrial)
+insertPlot: ReturnId[Plot] = g.getInsertReturnIdFunction(Plot)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
 
 
-insertOrGetFieldGroup: ReturnId[FieldGroup] = g.partialInsertOrGetId(
-    getMaybeFieldGroupId, insertFieldGroup
+insertOrGetOrganization: ReturnId[Organization] = g.partialInsertOrGetId(
+    getMaybeOrganizationId, insertOrganization
+)
+insertOrGetGrouper: ReturnId[Grouper] = g.partialInsertOrGetId(
+    getMaybeGrouperId, insertGrouper
 )
 insertOrGetField: ReturnId[Field] = g.partialInsertOrGetId(getMaybeFieldId, insertField)
+insertOrGetFieldTrial: ReturnId[FieldTrial] = g.partialInsertOrGetId(
+    getMaybeFieldTrialId, insertFieldTrial
+)
+insertOrGetPlot: ReturnId[Plot] = g.partialInsertOrGetId(getMaybePlotId, insertPlot)
 """
-A note on the date_end (and created) columns of Field
+A note on the date_end (and created) columns of Field and FieldTrial:
     1. `date_end=None` is NOT VALID because setting explicitly to `None` bypasses the default `datetime.max`
     2. When insertOrGetField() is called, date_end is assigned an infinity value because of the schema.sql default.
         I don't know how to reconcile the SQL default with the Field() class default if `None` is passed.

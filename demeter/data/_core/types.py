@@ -20,16 +20,54 @@ Note that if we tend to use infinity as date_end, this is probably a pretty rare
 
 
 @dataclass(frozen=True)
-class Field(Detailed):
-    """Arbitrary spatiotemporal unit representing an agronomically-relevant
-    area that is generally, but not always, managed as a single unit within
-    the defined spatial and temporal constraints."""
+class Organization(Detailed):
+    """Parent object that segregates all information/data in the database."""
 
+    name: str
+
+
+@dataclass(frozen=True)
+class Field(Detailed):
+    """Arbitrary spatiotemporal unit representing an agronomically-relevant area that is generally, but not always,
+    managed as a single unit within the defined spatial and temporal constraints."""
+
+    name: str
+    organization_id: TableId
     geom_id: TableId
     date_start: datetime
     date_end: datetime = field(default=datetime.max)
-    name: str = None
-    field_group_id: Optional[TableId] = None
+    grouper_id: Optional[TableId] = None
+
+
+@dataclass(frozen=True)
+class FieldTrial(Detailed):
+    """A group of treatment plots geometrically organized according to an experimental design, whereby one and only one
+    treatment is assigned to each plot. Two field trials shall not overlap one another spatially nor temporally, and a
+    FieldTrial must fall fully within the spatial extent of the Field it is associated with.
+    """
+
+    name: str
+    field_id: TableId
+    date_start: datetime
+    date_end: datetime = field(default=datetime.max)
+    geom_id: Optional[TableId] = None
+    grouper_id: Optional[TableId] = None
+
+
+@dataclass(frozen=True)
+class Plot(Detailed):
+    """A spatiotemporal unit having a specified experimental treatment, usually defined by its management (planting,
+    tillage, application, irrigation, and/or harvest). The management within a Plot shall be uniform across its
+    spatiotemporal extent.
+    """
+
+    name: str
+    field_id: TableId
+    field_trial_id: TableId
+    geom_id: Optional[TableId] = None
+    treatment_id: Optional[int] = None
+    block_id: Optional[int] = None
+    replication_id: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -40,7 +78,7 @@ class CropType(TypeTable, Detailed):
     product_name: str = None
 
 
-list_act_types = ("plant", "harvest", "fertilize", "irrigate")
+list_act_types = ("APPLY", "HARVEST", "MECHANICAL", "PLANT", "TILL")
 
 
 @dataclass(frozen=True)
@@ -49,15 +87,19 @@ class Act(Detailed):
     Types of management activities are limited to the types listed in `ActType`."""
 
     act_type: str
-    field_id: TableId
     date_performed: datetime
     crop_type_id: TableId = None
+    field_id: TableId = None
+    field_trial_id: TableId = None
+    plot_id: TableId = None
     geom_id: TableId = None
 
     def __post_init__(self):
         """Be sure that:
         - `act_type` is one of the correct possible values
-        - `crop_type_id` is set for `act_type` = "plant" or "harvest"""
+        - `crop_type_id` is set for `act_type` = "plant" or "harvest"
+        - at least one of `field_id`, `field_trial_id`, or `plot_id` is set
+        """
 
         chk_act_type = object.__getattribute__(self, "act_type")
 
@@ -66,11 +108,19 @@ class Act(Detailed):
                 f"`act_type` must be one of the following: {str(list_act_types)}"
             )
 
-        if chk_act_type in ["plant", "harvest"]:
+        if chk_act_type in ["PLANT", "HARVEST"]:
             if object.__getattribute__(self, "crop_type_id") is None:
                 raise AttributeError(
                     f"Must pass `crop_type_id` with `act_type` = {chk_act_type} "
                 )
+
+        chk_field_id = object.__getattribute__(self, "field_id")
+        chk_field_trial_id = object.__getattribute__(self, "field_trial_id")
+        chk_plot_id = object.__getattribute__(self, "plot_id")
+        if not any([chk_field_id, chk_field_trial_id, chk_plot_id]):
+            raise AttributeError(
+                "At least one of `field_id`, `field_trial_id`, or `plot_id` must be set"
+            )
 
 
 # @dataclass(frozen=True)

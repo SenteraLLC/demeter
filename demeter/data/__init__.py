@@ -1,25 +1,28 @@
-from ._core.field_group import (  # searchFieldGroup,
-    FieldGroup,
-    getFieldGroupAncestors,
-    getFieldGroupDescendants,
-    getFieldGroupFields,
-)
 from ._core.generated import (  # getGeom,
     getAct,
     getCropType,
     getField,
-    getFieldGroup,
+    getFieldTrial,
+    getGrouper,
     getMaybeActId,
     getMaybeCropTypeId,
-    getMaybeFieldGroupId,
     getMaybeFieldId,
+    getMaybeFieldTrialId,
     getMaybeGeoSpatialKeyId,
+    getMaybeGrouperId,
+    getMaybeOrganizationId,
+    getMaybePlotId,
     getMaybeTemporalKeyId,
+    getOrganization,
+    getPlot,
     insertOrGetAct,
     insertOrGetCropType,
     insertOrGetField,
-    insertOrGetFieldGroup,
+    insertOrGetFieldTrial,
     insertOrGetGeoSpatialKey,
+    insertOrGetGrouper,
+    insertOrGetOrganization,
+    insertOrGetPlot,
     insertOrGetTemporalKey,
 )
 from ._core.geom import (
@@ -27,6 +30,7 @@ from ._core.geom import (
     getMaybeGeomId,
     insertOrGetGeom,
 )
+from ._core.grouper import Grouper  # searchGrouper,
 from ._core.st_types import (
     Geom,
     GeoSpatialKey,
@@ -38,6 +42,9 @@ from ._core.types import (  # ReportType,
     Act,
     CropType,
     Field,
+    FieldTrial,
+    Organization,
+    Plot,
 )
 from ._observation.generated import (
     getMaybeObservationId,
@@ -57,21 +64,31 @@ from ._observation.types import (
 )
 
 __all__ = (
-    # FieldGroup
-    "FieldGroup",
-    "getFieldGroup",
-    "getMaybeFieldGroupId",
-    "insertOrGetFieldGroup",
-    "getFieldGroupAncestors",
-    "getFieldGroupDescendants",
-    # "getOrgFields",
-    # "searchFieldGroup",
-    "getFieldGroupFields",
+    # Organization
+    "Organization",
+    "getOrganization",
+    "getMaybeOrganizationId",
+    "insertOrGetOrganization",
+    # Grouper
+    "Grouper",
+    "getGrouper",
+    "getMaybeGrouperId",
+    "insertOrGetGrouper",
     # Field
     "Field",
     "getField",
     "getMaybeFieldId",
     "insertOrGetField",
+    # FieldTrial
+    "FieldTrial",
+    "getFieldTrial",
+    "getMaybeFieldTrialId",
+    "insertOrGetFieldTrial",
+    # Plot
+    "Plot",
+    "getPlot",
+    "getMaybePlotId",
+    "insertOrGetPlot",
     # CropType
     "CropType",
     "getCropType",

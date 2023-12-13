@@ -14,7 +14,7 @@ with type_feature as (
     (test_demeter.observation LV
      join test_demeter.unit_type U on U.unit_type_id = LV.unit_type_id
      join test_demeter.observation_type LT on LT.observation_type_id = U.observation_type_id
-     left join test_demeter.observation_group LG on LG.observation_group_id = LV.observation_group_id
+     left join test_demeter.observation_group LG on LG.observation_grouper_id = LV.observation_grouper_id
      left join test_demeter.geom LVG on LV.geom_id = LVG.geom_id
     ) on LV.field_id = F.field_id
   where LV.acquired > '2000-01-01' and

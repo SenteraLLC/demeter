@@ -30,7 +30,7 @@ jobs:
     services:
       db:
         # name: Attach to PostGIS Docker Image
-        image: postgis/postgis:14-3.4
+        image: postgis/postgis:16-3.4
         env:
           # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
           POSTGRES_USER: postgres

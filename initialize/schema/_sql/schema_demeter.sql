@@ -64,21 +64,14 @@ create constraint trigger geom_must_be_unique
        for each row execute procedure geom_must_be_unique();
 
 
--- FIELD GROUP
+-- ORGANIZATION
 
-create table field_group (
-  field_group_id bigserial primary key,
-  -- TODO: Add cycle detection constraint
+create table organization (
+  organization_id bigserial primary key,
 
-  name text
+  name  text
         not null,
 
-  parent_field_group_id bigint
-                        references field_group(field_group_id),
-
-  unique (field_group_id, parent_field_group_id),
-  unique (parent_field_group_id, name),
-
   details jsonb
           not null
           default '{}'::jsonb,
@@ -92,42 +85,191 @@ create table field_group (
                 default (now() at time zone 'utc')
 );
 
-CREATE UNIQUE INDEX unique_name_for_null_roots_idx on field_group (name) where parent_field_group_id is null;
+CREATE TRIGGER update_organization_last_updated BEFORE UPDATE
+ON organization FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
+
+-- GROUPER
+
+create table grouper (
+  grouper_id bigserial primary key,
+  -- TODO: Add cycle detection constraint
+
+  name  text
+        not null,
+
+  organization_id bigint
+                  not null
+                  references organization(organization_id),
+
+  parent_grouper_id bigint
+                    references grouper(grouper_id),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc'),
+
+  UNIQUE NULLS NOT DISTINCT (name, organization_id, parent_grouper_id)
+);
+
+-- CREATE UNIQUE INDEX unique_grouper_null_parent_grouper_id
+--   ON grouper (name)
+--   WHERE parent_grouper_id is null;
+
+CREATE TRIGGER update_grouper_last_updated BEFORE UPDATE
+ON grouper FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
 -- FIELD
-
 create table field (
   field_id bigserial
-           primary key,
+            primary key,
 
-  name text,
+  name  text
+        not null,
 
-  geom_id   bigint
+  date_start  timestamp without time zone
+              not null,
+
+  date_end  timestamp without time zone
             not null
-            references geom(geom_id),
+            default ('infinity'::timestamp at time zone 'utc'),
 
-  date_start      timestamp without time zone
-                  not null,
+  geom_id bigint
+          not null
+          references geom(geom_id),
 
-  date_end        timestamp without time zone
+  organization_id bigint
                   not null
-                  default ('infinity'::timestamp at time zone 'utc'),
+                  references organization(organization_id),
 
-  field_group_id bigint
-                  references field_group(field_group_id),
+  grouper_id  bigint
+              references grouper(grouper_id),
 
   details jsonb
           not null
           default '{}'::jsonb,
 
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
+  created timestamp without time zone
+          not null
+          default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc')
+                default (now() at time zone 'utc'),
+
+  -- Same organization-level geometry and date range cannot have same field name
+  -- Cannot add another field if the only things to change are grouper_id and/or details
+  UNIQUE NULLS NOT DISTINCT (name, date_start, date_end, geom_id, organization_id)
 );
+
+-- CREATE UNIQUE INDEX unique_field_null_grouper_id
+--   ON field (name)
+--   WHERE grouper_id is null;
+
+CREATE TRIGGER update_field_last_updated BEFORE UPDATE
+ON field FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
+-- FIELD TRIAL
+
+create table field_trial (
+  field_trial_id bigserial
+                  primary key,
+
+  -- Either geom_id or name must be non-null, not both.
+  name  text
+        not null,
+
+  field_id bigint
+            not null
+            references field(field_id),
+
+  date_start  timestamp without time zone
+              not null,
+
+  date_end    timestamp without time zone
+              not null
+              default ('infinity'::timestamp at time zone 'utc'),
+
+  geom_id   bigint
+            references geom(geom_id),
+
+  grouper_id  bigint
+              references grouper(grouper_id),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created timestamp without time zone
+          not null
+          default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc'),
+  -- Same field and date range cannot have same name, regardless of geom_id
+  UNIQUE (name, field_id, date_start, date_end)
+);
+
+CREATE TRIGGER update_field_trial_last_updated BEFORE UPDATE
+ON field_trial FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
+-- PLOT
+
+create table plot (
+  plot_id bigserial
+          primary key,
+
+  name  text
+        not null,
+
+  field_id  bigint
+            not null
+            references field(field_id),
+
+  field_trial_id  bigint
+                  not null
+                  references field_trial(field_trial_id),
+
+  geom_id   bigint
+            references geom(geom_id),
+
+  treatment_id smallint,
+
+  block_id smallint,  -- a subset of plots; blocks are used to reduce unexplained variability.
+
+  replication_id smallint,
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created timestamp without time zone
+          not null
+          default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc'),
+  -- Same field and field_trial cannot have same name (name must be unique within a field_trial)
+  UNIQUE (name, field_id, field_trial_id)
+);
+
+CREATE TRIGGER update_plot_last_updated BEFORE UPDATE
+ON plot FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
 -- CROP TYPE
 
@@ -135,12 +277,10 @@ create table crop_type (
   crop_type_id bigserial
                primary key,
 
-  crop        text
-               not null,
+  crop  text
+        not null,
 
   product_name text,
-
-  unique (crop, product_name),
 
   details jsonb
           not null
@@ -152,99 +292,85 @@ create table crop_type (
 
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc')
+                default (now() at time zone 'utc'),
+  -- Product name must be unique within a crop
+  -- Cannot add another crop_type if the only thing to change is details
+  UNIQUE NULLS NOT DISTINCT (crop, product_name)
 );
 
-CREATE UNIQUE INDEX crop_product_name_null_unique_idx
-  ON crop_type(crop)
-  WHERE (product_name is NULL);
+-- CREATE UNIQUE INDEX crop_product_name_null_unique_idx
+--   ON crop_type(crop)
+--   WHERE (product_name is NULL);
 
 CREATE TRIGGER update_crop_type_last_updated BEFORE UPDATE
 ON crop_type FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 ALTER TABLE crop_type
-  ADD CONSTRAINT crop_type_crop_lowercase_ck
-  CHECK (crop = lower(crop));
+  ADD CONSTRAINT crop_type_crop_uppercase_ck
+  CHECK (crop = upper(crop));
 ALTER TABLE crop_type
-  ADD CONSTRAINT crop_type_product_name_lowercase_ck
-  CHECK (product_name = lower(product_name));
+  ADD CONSTRAINT crop_type_product_name_uppercase_ck
+  CHECK (product_name = upper(product_name));
 
 -- OBSERVATION TYPE
+CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
 
 create table observation_type (
-  observation_type_id bigserial primary key,
-  observation_type_name text not null,
-  category text,
+  observation_type_id bigserial
+                      primary key,
+
+  observation_type_name text
+                        not null,
+
+  category  cateogry_type_enum
+            default NULL::cateogry_type_enum,
 
   details jsonb
           not null
           default '{}'::jsonb,
-  unique (observation_type_name, category, details),
 
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
+  created timestamp without time zone
+          not null
+          default (now() at time zone 'utc'),
 
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc')
+                default (now() at time zone 'utc'),
+
+  -- Cannot add another observation_type if the only thing to change is details
+  UNIQUE NULLS NOT DISTINCT (observation_type_name, category)
 );
 
--- All are NULL
--- TODO: Are these necesary if GetOrInsertObservationType() is already checking for this?
-CREATE UNIQUE INDEX observation_type_all_null_unique_idx
-  ON observation_type(observation_type_name)
-  WHERE (category is NULL)
-  AND (details is NULL);
+-- -- All are NULL
+-- -- TODO: Are these necesary if GetOrInsertObservationType() is already checking for this?
+-- CREATE UNIQUE INDEX observation_type_all_null_unique_idx
+--   ON observation_type(observation_type_name)
+--   WHERE (category is NULL);
 
--- -- All except one is NULL
--- CREATE UNIQUE INDEX observation_type_all_except_type_category_null_unique_idx
---   ON observation_type(type_name, type_category)
---   WHERE (analytic_name is NULL)
---   AND (sensor_name is NULL)
---   AND (statistic_type is NULL)
---   AND (masked is NULL);
--- CREATE UNIQUE INDEX observation_type_all_except_analytic_null_unique_idx
---   ON observation_type(type_name, analytic_name)
---   WHERE (type_category is NULL)
---   AND (sensor_name is NULL)
---   AND (statistic_type is NULL)
---   AND (masked is NULL);
--- CREATE UNIQUE INDEX observation_type_all_except_sensor_null_unique_idx
---   ON observation_type(type_name, sensor_name)
---   WHERE (type_category is NULL)
---   AND (analytic_name is NULL)
---   AND (statistic_type is NULL)
---   AND (masked is NULL);
--- CREATE UNIQUE INDEX observation_type_all_except_statistic_null_unique_idx
---   ON observation_type(type_name, statistic_type)
---   WHERE (type_category is NULL)
---   AND (analytic_name is NULL)
---   AND (sensor_name is NULL)
---   AND (masked is NULL);
--- CREATE UNIQUE INDEX observation_type_all_except_masked_null_unique_idx
---   ON observation_type(type_name, masked)
---   WHERE (type_category is NULL)
---   AND (analytic_name is NULL)
---   AND (sensor_name is NULL)
---   AND (statistic_type is NULL);
+CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
+ON observation_type FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
 ALTER TABLE observation_type
-	ADD CONSTRAINT observation_type_observation_type_name_lowercase_ck CHECK (observation_type_name = lower(observation_type_name)),
-  ADD CONSTRAINT observation_type_category_lowercase_ck CHECK (category = lower(category));
+	ADD CONSTRAINT observation_type_observation_type_name_uppercase_ck CHECK (observation_type_name = upper(observation_type_name));
+  -- ADD CONSTRAINT observation_type_category_uppercase_ck CHECK (category = upper(category));
 
 -- UNIT TYPE
 
 create table unit_type (
-  unit_type_id   bigserial
-                 primary key,
-  unit_name     text
-                 not null,
-  observation_type_id  bigint
-                 not null
-                 references observation_type(observation_type_id),
-  unique(unit_name, observation_type_id)
+  unit_type_id  bigserial
+                primary key,
+
+  unit_name text
+            not null,
+
+  observation_type_id bigint
+                      not null
+                      references observation_type(observation_type_id),
+
+  -- Cannot add another unit_type if unit_name/observation_type_id combination are not unique
+  UNIQUE NULLS NOT DISTINCT (unit_name, observation_type_id)
 );
 ALTER TABLE unit_type
   ADD CONSTRAINT unit_type_start_end_w_alphanumeric_ck
@@ -279,25 +405,31 @@ ALTER TABLE unit_type
 
 -- ACT
 
-CREATE TYPE act_type_enum AS ENUM ('fertilize', 'harvest', 'irrigate', 'plant');
+CREATE TYPE act_type_enum AS ENUM ('APPLY', 'HARVEST', 'MECHANICAL', 'PLANT', 'TILL');
 
 create table act (
   act_id         bigserial primary key,
 
-  act_type       act_type_enum not null,
+  act_type  act_type_enum
+            not null,
 
-  field_id       bigint
-                  not null
-                  references field(field_id),
-
-  date_performed timestamp without time zone
+  date_performed  timestamp without time zone
                   not null,
 
-  crop_type_id   bigint
-                  references crop_type(crop_type_id),
+  crop_type_id  bigint
+                references crop_type(crop_type_id),
 
-  geom_id       bigint
-                  references geom(geom_id),
+  field_id  bigint
+            references field(field_id),
+
+  field_trial_id  bigint
+                  references field_trial(field_trial_id),
+
+  plot_id bigint
+          references plot(plot_id),
+
+  geom_id bigint
+          references geom(geom_id),
 
   details jsonb
           not null
@@ -309,8 +441,15 @@ create table act (
 
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc')
+                default (now() at time zone 'utc'),
+
+  -- Cannot add an act if the only thing to change is details (should edit existing act instead)
+  UNIQUE NULLS NOT DISTINCT (act_type, date_performed, crop_type_id, field_id, field_trial_id, plot_id, geom_id)
 );
+
+ALTER TABLE act
+  ADD CONSTRAINT act_nullable_ids_at_least_one_not_null_ck
+  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) >= 1);
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
@@ -348,23 +487,34 @@ create table observation (
   observation_id bigserial
                  primary key,
 
-  field_id      bigint
-                 not null
-                 references field(field_id),
-  unit_type_id   bigint
-                 references unit_type(unit_type_id)
-                 not null,
-  observation_type_id bigint
-                not null
-                references observation_type(observation_type_id),
   value_observed float
                  not null,
-  date_observed timestamp without time zone,
-  geom_id        bigint
-                 references geom(geom_id),
 
-  act_id         bigint
-                  references act(act_id),
+  date_observed timestamp without time zone,
+
+  observation_type_id bigint
+                      not null
+                      references observation_type(observation_type_id),
+
+  unit_type_id  bigint
+                references unit_type(unit_type_id)
+                not null,
+
+  field_id  bigint
+            references field(field_id),
+
+  field_trial_id  bigint
+                  references field_trial(field_trial_id),
+
+  plot_id bigint
+          references plot(plot_id),
+
+  geom_id bigint
+          references geom(geom_id),
+
+  act_id  bigint
+          references act(act_id),
+
   details jsonb
           not null
           default '{}'::jsonb,
@@ -375,9 +525,13 @@ create table observation (
 
   last_updated  timestamp without time zone
                 not null
-                default (now() at time zone 'utc')
-);
+                default (now() at time zone 'utc'),
 
+  -- Cannot have duplicate observations across date, observation_type, and field/field_trial/plot/geom/act
+  -- Unit type doesn't matter (don't store duplicate observations if only the unit changes)
+  UNIQUE NULLS NOT DISTINCT (value_observed, date_observed, observation_type_id, field_id, field_trial_id, plot_id, geom_id, act_id)
+
+);
 
 CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
 ON observation FOR EACH ROW EXECUTE PROCEDURE

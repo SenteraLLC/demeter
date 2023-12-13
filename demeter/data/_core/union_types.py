@@ -4,8 +4,11 @@ from .._core.types import (  # ReportType,
     Act,
     CropType,
     Field,
+    FieldTrial,
+    Organization,
+    Plot,
 )
-from .field_group import FieldGroup
+from .grouper import Grouper
 from .st_types import (
     Geom,
     GeoSpatialKey,
@@ -13,7 +16,18 @@ from .st_types import (
     TemporalKey,
 )
 
-AnyDataTable = Union[Geom, Field, FieldGroup, GeoSpatialKey, TemporalKey, Key, Act]
+AnyDataTable = Union[
+    Geom,
+    Organization,
+    Field,
+    FieldTrial,
+    Plot,
+    Grouper,
+    GeoSpatialKey,
+    TemporalKey,
+    Key,
+    Act,
+]
 
 AnyTypeTable = CropType
 

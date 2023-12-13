@@ -11,8 +11,11 @@ A few notes:
 - We extract "update" first because it is bound to have far fewer requests.
 
 Example usage:
-python3 -m scripts.weather.run_daily_weather
-
+poetry run python3 -m scripts.weather.run_daily_weather \
+    --database_host AWS \
+    --database_env DEV \
+    --n_jobs 4 \
+    --fill
 """
 import argparse
 import logging
@@ -21,14 +24,13 @@ from dotenv import load_dotenv
 from utils.logging.tqdm import logging_init
 
 from demeter.db import getConnection
-
-from .defaults import (
+from scripts.weather.run_daily_weather.defaults import (
     N_CELLS_FILL,
     N_CELLS_PER_SET_ADD,
     N_CELLS_PER_SET_UPDATE,
     PARAMETER_SETS,
 )
-from .main import run_daily_weather
+from scripts.weather.run_daily_weather.main import run_daily_weather
 
 if __name__ == "__main__":
     """Run daily weather processing."""
@@ -61,29 +63,26 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--in_parallel",
-        action="store_true",
-        help="Should requests be run in parallel?",
-        default=False,
+        "--n_jobs",
+        type=int,
+        help="Set > 1 to run requests in parallel.",
+        default=1,
     )
+    # database_host = "AWS"
+    # database_env = "DEV"
+    # fill = True
+    # n_jobs = 4
 
     # set up args
     args = parser.parse_args()
     database_host = args.database_host
     database_env = args.database_env
+    n_jobs = args.n_jobs
 
     if args.fill:
         fill = True
     else:
         fill = False
-
-    if args.in_parallel:
-        parallel = False
-        logging.info(
-            "Parallelization has not yet been implemented. Setting `parallel` to False."
-        )
-    else:
-        parallel = False
 
     assert database_host in ["AWS", "LOCAL"], "`database_host` can be 'AWS' or 'LOCAL'"
     assert database_env in ["DEV", "PROD"], "`database_env` can be 'DEV' or 'PROD'"
@@ -103,5 +102,5 @@ if __name__ == "__main__":
         n_cells_per_set_update=N_CELLS_PER_SET_UPDATE,
         n_cells_fill=N_CELLS_FILL,
         fill=fill,
-        parallel=parallel,
+        n_jobs=n_jobs,
     )

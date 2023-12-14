@@ -5,7 +5,7 @@ from typing import (
     get_origin,
 )
 
-from .._union_types import AnyTable
+from demeter.db._union_types import AnyTable
 
 
 def is_none(table: AnyTable, key: str) -> bool:

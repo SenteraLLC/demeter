@@ -16,8 +16,8 @@ from psycopg2.sql import (
     Placeholder,
 )
 
-from .. import TableId
-from .._generic_types import (
+from demeter.db import TableId
+from demeter.db._generic_types import (
     SK,
     GetId,
     GetTableByKey,
@@ -26,13 +26,13 @@ from .._generic_types import (
     ReturnKey,
     S,
 )
-from .._union_types import (
+from demeter.db._postgres.helpers import is_none, is_optional
+from demeter.db._postgres.tools import doPgFormat, doPgJoin
+from demeter.db._union_types import (
     AnyIdTable,
     AnyKeyTable,
     AnyTable,
 )
-from .helpers import is_none, is_optional
-from .tools import doPgFormat, doPgJoin
 
 
 # TODO: Add options for 'is_none' and 'is_optional'

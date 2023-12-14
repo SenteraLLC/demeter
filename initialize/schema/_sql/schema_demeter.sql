@@ -25,6 +25,19 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+CREATE OR REPLACE FUNCTION act_valid_date()
+  RETURNS TRIGGER AS $$
+BEGIN
+  IF (NEW.date_performed < (SELECT f.date_start FROM field f WHERE f.field_id = NEW.field_id)
+    OR NEW.date_performed > (SELECT f.date_end FROM field f WHERE f.field_id = NEW.field_id))
+  THEN
+    RAISE EXCEPTION 'Act date_performed (%) is not valid. Must be within bounds of date_start (%) and date_end (%) from field table.',
+    NEW.date_performed, (SELECT f.date_start FROM field f WHERE f.field_id = NEW.field_id), (SELECT f.date_end FROM field f WHERE f.field_id = NEW.field_id);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Geometry Tables
 -- TODO: Enforce SRID like this:
 --  ALTER xxxx ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 28355)
@@ -452,6 +465,11 @@ create table act (
 ALTER TABLE act
   ADD CONSTRAINT act_nullable_ids_one_and_only_one_not_null_ck
   CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
+
+-- Trigger to ensure date_performed is > field.date_start and < field.date_end
+CREATE TRIGGER verify_valid_act_date_performed
+BEFORE INSERT OR UPDATE ON act
+FOR EACH ROW EXECUTE PROCEDURE act_valid_date();
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE

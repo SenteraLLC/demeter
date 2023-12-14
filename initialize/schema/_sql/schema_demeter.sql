@@ -25,14 +25,39 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+
+CREATE OR REPLACE FUNCTION get_field_id(f_id bigint, ft_id bigint, p_id bigint) RETURNS bigint AS $$
+BEGIN
+  IF (f_id IS NOT NULL) THEN
+    RETURN (
+	  SELECT f.field_id FROM field f WHERE f.field_id = f_id
+    );
+  ELSIF (ft_id IS NOT NULL) THEN
+    RETURN (
+	  SELECT f.field_id FROM field_trial ft JOIN field f USING(field_id) WHERE ft.field_trial_id = ft_id
+	);
+  ELSIF (p_id IS NOT NULL) THEN
+    RETURN (
+	  SELECT f.field_id FROM plot JOIN field_trial USING(field_trial_id) JOIN field f ON f.field_id = field_trial.field_id WHERE plot.plot_id = p_id
+	);
+  ELSE
+    RETURN NULL;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION act_valid_date()
   RETURNS TRIGGER AS $$
 BEGIN
-  IF (NEW.date_performed < (SELECT f.date_start FROM field f WHERE f.field_id = NEW.field_id)
-    OR NEW.date_performed > (SELECT f.date_end FROM field f WHERE f.field_id = NEW.field_id))
+  if (NEW.date_performed NOT BETWEEN
+	  (SELECT f.date_start FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id))
+	  AND (SELECT f.date_end FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)))
   THEN
-    RAISE EXCEPTION 'Act date_performed (%) is not valid. Must be within bounds of date_start (%) and date_end (%) from field table.',
-    NEW.date_performed, (SELECT f.date_start FROM field f WHERE f.field_id = NEW.field_id), (SELECT f.date_end FROM field f WHERE f.field_id = NEW.field_id);
+    RAISE EXCEPTION 'Act date_performed (%) is not valid for Field ID "%". Must be within bounds of date_start (%) and date_end (%) from field table.',
+    NEW.date_performed,
+	(SELECT f.field_id FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)),
+	(SELECT f.date_start FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)),
+	(SELECT f.date_end FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id));
   END IF;
   RETURN NEW;
 END;

@@ -4,7 +4,11 @@ To initialize `demeter`:
 python3 -m initialize.schema.demeter --database_host LOCAL --database_env DEV --schema_name demeter
 
 To re-initialize `demeter` from scratch on local `demeter-dev`:
-python3 -m initialize.schema.demeter  --database_host LOCAL --database_env DEV --schema_name demeter --drop_existing
+python3 -m initialize.schema.demeter \
+    --database_host LOCAL \
+    --database_env DEV \
+    --schema_name demeter \
+    --drop_existing
 
 For help: python3 -m initialize.schema.demeter --help
 

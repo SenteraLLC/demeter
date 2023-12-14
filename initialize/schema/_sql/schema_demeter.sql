@@ -25,7 +25,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-
+-- get_field_id() takes a field_id, field_trial_id, and plot_id, and returns the corresponding field_id
 CREATE OR REPLACE FUNCTION get_field_id(f_id bigint, ft_id bigint, p_id bigint) RETURNS bigint AS $$
 BEGIN
   IF (f_id IS NOT NULL) THEN

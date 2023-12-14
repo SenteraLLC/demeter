@@ -103,8 +103,6 @@ jobs:
               echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }})" >> $GITHUB_ENV;
             fi;
           )
-        # echo "IMAGE_TAG=$(echo ${{ env.ECR_REPOSITORY }}:${{ env.GITHUB_HEAD_REF_SLUG }} )" >> $GITHUB_ENV
-         # echo "IMAGE_URI=$(echo ${{ steps.login-ecr.outputs.registry }}.dkr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_TAG }} )" >> $GITHUB_ENV
 
       - name: Docker Build
         id: docker-build

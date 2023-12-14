@@ -333,11 +333,6 @@ def get_gdf_for_fill(conn: Connection) -> GeoDataFrame:
             df_gaps.insert(df_gaps.shape[1], "parameter", row["weather_type"])
             df_fill = pd_concat([df_fill, df_gaps], axis=0, ignore_index=True)
 
-            # if df_fill is None:
-            #     df_fill = df_gaps.copy()
-            # else:
-            #     df_fill = pd_concat([df_fill, df_gaps], axis=0)
-
     cell_id_keys = ["utm_zone", "utc_offset", "world_utm_id", "cell_id", "centroid"]
 
     if len(df_fill) > 0:

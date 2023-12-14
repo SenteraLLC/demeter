@@ -63,25 +63,6 @@ class TestUserPrivileges:
                 test_fg_id = getMaybeGrouperId(conn.connection.cursor(), test_grouper)
                 test_fg_id.should.be.equal(1)
 
-    def test_demeter_user_cannot_update(self, test_db_class):
-        with test_db_class.connect() as conn:
-            with conn.begin():
-                stmt = """update grouper
-                set name = 'name change'
-                where grouper_id = 1"""
-
-                with pytest.raises(ProgrammingError):
-                    conn.execute(text(stmt))
-
-    def test_demeter_user_cannot_delete(self, test_db_class):
-        with test_db_class.connect() as conn:
-            with conn.begin():
-                stmt = """delete from grouper
-                where grouper_id = 1"""
-
-                with pytest.raises(ProgrammingError):
-                    conn.execute(text(stmt))
-
     def test_demeter_user_cannot_drop_schema(self, test_db_class, schema_name):
         with test_db_class.connect() as conn:
             with conn.begin():
@@ -161,6 +142,29 @@ class TestUserPrivileges:
                 stmt = """DROP TABLE IF EXISTS field CASCADE;"""
                 with pytest.raises(ProgrammingError):
                     conn.execute(text(stmt))
+
+    ## TEST FOR DEMETER_USER to UPDATE and DELETE
+
+    def test_demeter_user_can_update(self, test_db_class):
+        with test_db_class.connect() as conn:
+            with conn.begin():
+                stmt = """update grouper
+                set name = 'name change'
+                where grouper_id = 1"""
+
+                with conn.connection.cursor() as cursor:
+                    cursor.execute(stmt)
+                    cursor.rowcount.should.be.ok
+
+    def test_demeter_user_can_delete(self, test_db_class):
+        with test_db_class.connect() as conn:
+            with conn.begin():
+                stmt = """delete from grouper
+                where grouper_id = 1"""
+
+                with conn.connection.cursor() as cursor:
+                    cursor.execute(stmt)
+                    cursor.rowcount.should.be.ok
 
 
 # TODO: Test unique constraints

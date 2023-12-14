@@ -19,8 +19,7 @@ from demeter.weather.workflow.split import (
     split_gdf_for_fill,
     split_gdf_for_update,
 )
-
-from .defaults import (
+from scripts.weather.run_daily_weather.defaults import (
     N_CELLS_FILL,
     N_CELLS_PER_SET_ADD,
     N_CELLS_PER_SET_UPDATE,
@@ -35,7 +34,7 @@ def run_daily_weather(
     n_cells_per_set_update: List[int] = N_CELLS_PER_SET_UPDATE,
     n_cells_fill: int = N_CELLS_FILL,
     fill: bool = False,
-    parallel: bool = False,
+    n_jobs: int = 1,
 ):
     """
     Perform weather processing steps to maintain `demeter.weather`.
@@ -78,9 +77,10 @@ def run_daily_weather(
     """
 
     # get information on parameters from DB and check that they exist there (errors if they don't)
-    cursor = conn.connection.cursor()
     parameters = [elem for sublist in parameter_sets for elem in sublist]
-    params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
+
+    with conn.connection.cursor() as cursor:
+        params_to_weather_types = get_weather_type_id_from_db(cursor, parameters)
 
     # track all requests that are completed to create error report if needed
     all_completed_requests = []
@@ -101,7 +101,7 @@ def run_daily_weather(
                 request_list=update_requests,
                 gdf_request=gdf_update,
                 params_to_weather_types=params_to_weather_types,
-                parallel=parallel,
+                n_jobs=n_jobs,
             )
             all_completed_requests += update_requests
         else:
@@ -125,9 +125,9 @@ def run_daily_weather(
                 request_list=add_requests,
                 gdf_request=gdf_add,
                 params_to_weather_types=params_to_weather_types,
-                parallel=parallel,
+                n_jobs=n_jobs,
             )
-            all_completed_requests += update_requests
+            all_completed_requests += add_requests
         else:
             add_requests = []
     else:
@@ -148,9 +148,9 @@ def run_daily_weather(
                     request_list=fill_requests,
                     gdf_request=gdf_fill,
                     params_to_weather_types=params_to_weather_types,
-                    parallel=parallel,
+                    n_jobs=n_jobs,
                 )
-                all_completed_requests += update_requests
+                all_completed_requests += fill_requests
             else:
                 fill_requests = []
         else:

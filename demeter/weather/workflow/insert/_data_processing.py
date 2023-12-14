@@ -6,6 +6,7 @@ from geopandas import GeoDataFrame
 from pandas import DataFrame
 from pandas import melt as pd_melt
 from pandas import merge as pd_merge
+from pandas import to_datetime
 
 
 def clean_meteomatics_data(
@@ -71,12 +72,11 @@ def filter_meteomatics_data_by_gdf_bounds(
         df_clean (DataFrame): Cleaned MM weather (i.e., passed through `clean_meteomatics_data()`)
         gdf_request (GeoDataFrame): Full `gdf` that was used to generate the requests for `df_clean`
     """
-
     if set(["date_first", "date_last"]).issubset(gdf_request.columns):
         df_combined = pd_merge(df_clean, gdf_request, on="cell_id")
-        keep = (df_combined["date"] >= df_combined["date_first"]) * (
-            df_combined["date"] <= df_combined["date_last"]
-        )
+        keep = (
+            to_datetime(df_combined["date"]) >= df_combined["date_first"].dt.date
+        ) * (to_datetime(df_combined["date"]) <= df_combined["date_last"])
         return df_clean.loc[keep]
 
     else:

@@ -56,11 +56,9 @@ def log_meteomatics_request(conn: Connection, request: dict) -> None:
         [(key in request.keys()) for key in rq_keys]
     ), f"`request` must contain the following keys: {rq_keys}"
 
-    request["str_parameters"] = str(request["parameters"])
-    stmt = """insert into request_log (zone, utm_request_id, n_pts_requested, startdate, enddate, parameters, date_requested, status, request_seconds)
-    values (%(zone)s, %(utm_request_id)s, %(n_pts_requested)s, %(startdate)s, %(enddate)s, %(str_parameters)s, %(date_requested)s, %(status)s, %(request_seconds)s);
-    """
-    conn.execute(stmt, request)
+    df_log = DataFrame([request])[rq_keys]
+    engine = conn.engine
+    df_log.to_sql("request_log", con=engine, if_exists="append", index=False)
 
 
 def insert_daily_weather(conn: Connection, df_clean: DataFrame):

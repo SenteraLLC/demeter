@@ -4,6 +4,7 @@ Focuses on "add" step in weather extraction process.
 """
 import logging
 import warnings
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import (
     Any,
@@ -15,18 +16,19 @@ from geopandas import GeoDataFrame
 from pandas import DataFrame
 from pandas import concat as pd_concat
 from pandas import merge as pd_merge
+from psycopg2.extensions import AsIs
 from pyproj import CRS
 from pytz import UTC
 from shapely.errors import ShapelyDeprecationWarning
 from shapely.geometry import Point
 from shapely.wkb import loads as wkb_loads
 
-from ...query import (
+from demeter.weather.query import (
     get_cell_id,
     get_centroid,
     get_world_utm_info_for_cell_id,
 )
-from ...utils.time import (
+from demeter.weather.utils.time import (
     get_min_current_date_for_world_utm,
     localize_utc_datetime_with_timezonefinder,
 )
@@ -59,14 +61,26 @@ def get_first_plant_date_for_field_id(
         cursor (Any): Connection to `demeter` schema
         field_id (int): Demeter field ID to get planting date for
     """
-    if not isinstance(field_id, list):
+    if not isinstance(field_id, Sequence):
         field_id = [field_id]
     field_id = tuple(field_id)
 
+    # TODO: Consider using date_start and date_end from field table to determine
+    # Must fill in NULL field_ids in the Act table
     stmt = """
-    select field_id, date_performed from act where act_type = 'plant' and field_id in %(field_id)s
+    with get_field_id as (
+        select act.act_type, NULLIF(concat(act.field_id, field.field_id, field_trial.field_id, plot.field_id), '')::bigint as field_id, act.date_performed
+        from act
+        LEFT JOIN field USING(field_id)
+        LEFT JOIN field_trial USING(field_trial_id)
+        LEFT JOIN plot USING(plot_id)
+        where act_type = 'PLANT'
+        order by field_id, date_performed asc
+    ) select distinct on (field_id) act_type, field_id, date_performed
+    from get_field_id
+    where get_field_id.field_id in %(field_id)s
     """
-    args = {"field_id": field_id}
+    args = {"field_id": AsIs(field_id)}
     cursor.execute(stmt, args)
     df_result = DataFrame(cursor.fetchall())
 
@@ -100,10 +114,10 @@ def get_temporal_bounds_for_field_id(
         field_centroid (Point or list of Points): Centroid (or location on field) to use to determine time zone
         n_hist_years (int): The number of years before the first planting date to get data
     """
-    if not isinstance(field_id, list):
+    if not isinstance(field_id, Sequence):
         field_id = [field_id]
 
-    if not isinstance(field_centroid, list):
+    if not isinstance(field_centroid, Sequence):
         field_centroid = [field_centroid]
 
     msg = "There must be one field centroid for each field ID passed."
@@ -113,7 +127,6 @@ def get_temporal_bounds_for_field_id(
         data={"field_id": field_id, "field_centroid": field_centroid},
         geometry="field_centroid",
     )
-
     df_plant = get_first_plant_date_for_field_id(cursor, field_id).rename(
         columns={"date_performed": "date_planted"}
     )
@@ -197,7 +210,7 @@ def get_weather_grid_info_for_all_demeter_fields(cursor: Any) -> DataFrame:
     field_id = get_all_field_ids(cursor)
 
     if len(field_id) == 0:
-        logging.info("There are no fields in `demeter`.")
+        logging.info("There are %s fields present in the database.", len(field_id))
         return GeoDataFrame(
             [], columns=cols, geometry="centroid", crs=CRS.from_epsg(4326)
         )

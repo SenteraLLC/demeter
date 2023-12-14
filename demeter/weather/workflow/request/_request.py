@@ -4,17 +4,24 @@ import logging
 from typing import List, Tuple
 
 from geopandas import GeoDataFrame
+from joblib import Parallel, delayed
 from meteomatics.exceptions import TooManyRequests
 from sqlalchemy.engine import Connection
 from tqdm import tqdm
 
-from ..insert._data_processing import (
+from demeter.weather.workflow.insert._data_processing import (
     clean_meteomatics_data,
     filter_meteomatics_data_by_gdf_bounds,
 )
-from ..insert._insert import insert_daily_weather, log_meteomatics_request
-from ._failed import ERROR_CODES, reformat_failed_requests
-from ._request_utils import (
+from demeter.weather.workflow.insert._insert import (
+    insert_daily_weather,
+    log_meteomatics_request,
+)
+from demeter.weather.workflow.request._failed import (
+    ERROR_CODES,
+    reformat_failed_requests,
+)
+from demeter.weather.workflow.request._request_utils import (
     cut_request_list_along_utm_zone,
     get_n_requests_remaining_for_demeter,
     submit_single_meteomatics_request,
@@ -51,7 +58,7 @@ def submit_and_maybe_insert_meteomatics_request(
 
     df_wx, request = submit_single_meteomatics_request(request=request)
 
-    # insert into database
+    # log request in request_log
     log_meteomatics_request(conn, request)
 
     # if request was successful, add to database
@@ -71,7 +78,10 @@ def submit_and_maybe_insert_meteomatics_request(
             params_to_weather_types
         )
         insert_daily_weather(conn, df_filter)
-
+    if request["request_seconds"] == ERROR_CODES[TooManyRequests]:
+        logging.warning(
+            "     Unable to complete request because daily limit was reached."
+        )
     return request
 
 
@@ -110,32 +120,50 @@ def submit_request_list(
         logging.warning(
             "`parallel = True` has not yet been implemented in this workflow. No requests will be made."
         )
-        # return `completed = False` and an empty list for completed requests to end process
-        return [], False
-    else:
-        for ind in tqdm(range(len(request_list)), desc="Submitting requests:"):
-            request = request_list[ind]
-            request = submit_and_maybe_insert_meteomatics_request(
-                conn=conn,
-                request=request,
-                gdf_request=gdf_request,
-                params_to_weather_types=params_to_weather_types,
-            )
-            request_list[ind] = request
 
+        n_jobs = 4
+
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(submit_and_maybe_insert_meteomatics_request)(
+                conn, request, gdf_request, params_to_weather_types
+            )
+            for request in request_list
+        )
+
+        for ind in tqdm(range(len(results)), desc="Submitting requests:"):
+            request = results[ind]
+            # TODO: When run in parallel, this check is too late (should be part of submit_and_maybe_insert_meteomatics_request)
             # if we ran out of requests, return just those which were completed
             if request["request_seconds"] == ERROR_CODES[TooManyRequests]:
                 logging.info(
                     "     Unable to complete requests. No more requests available for today."
                 )
-                completed_request_list = [
-                    r for r in request_list if "status" in r.keys()
-                ]
+                completed_request_list = [r for r in results if "status" in r.keys()]
+                _logging_request_summary(completed_request_list)
+                return completed_request_list, False
+    else:
+        results = [request for request in request_list]
+        for ind in tqdm(range(len(request_list)), desc="Submitting requests:"):
+            request = request_list[ind]
+            result = submit_and_maybe_insert_meteomatics_request(
+                conn=conn,
+                request=request,
+                gdf_request=gdf_request,
+                params_to_weather_types=params_to_weather_types,
+            )
+            results[ind] = result
+
+            # if we ran out of requests, return just those which were completed
+            if result["request_seconds"] == ERROR_CODES[TooManyRequests]:
+                logging.info(
+                    "     Unable to complete requests. No more requests available for today."
+                )
+                completed_request_list = [r for r in results if "status" in r.keys()]
                 _logging_request_summary(completed_request_list)
                 return completed_request_list, False
 
-    _logging_request_summary(request_list)
-    return request_list, True
+    _logging_request_summary(results)
+    return results, True
 
 
 def run_request_step(
@@ -143,7 +171,7 @@ def run_request_step(
     request_list: List[dict],
     gdf_request: GeoDataFrame,
     params_to_weather_types: dict,
-    parallel: bool = False,
+    n_jobs: int = 1,
     max_attempts: int = 3,
 ) -> List[dict]:
     """Submits `request_list` and attempts to re-format and re-submit failed requests where possible.
@@ -212,10 +240,22 @@ def run_request_step(
 
         if len(cut_requests) > 0:
             logging.info("   (%s) REQUEST SUMMARY:", tries)
-            # run these requests and add to list of completed requests
-            cut_requests, completed = submit_request_list(
-                conn, cut_requests, gdf_request, params_to_weather_types, parallel
+            # if parallel is True:
+            logging.info(
+                "   NUMBER OF REQUESTS (split across %s cores): %s",
+                n_jobs,
+                len(cut_requests),
             )
+            results = Parallel(n_jobs=n_jobs, prefer="threads")(
+                delayed(submit_and_maybe_insert_meteomatics_request)(
+                    conn, request, gdf_request, params_to_weather_types
+                )
+                for request in tqdm(cut_requests)
+            )
+            cut_requests = [r for r in results if "status" in r.keys()]
+            _logging_request_summary(cut_requests)
+            completed = True if len(cut_requests) == len(cut_requests) else False
+
             completed_requests += cut_requests
 
             # stop while loop if we ran out of requests during `submit_request_list` (completed = False)

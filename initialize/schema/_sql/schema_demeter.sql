@@ -20,10 +20,48 @@ set search_path = test_demeter, public;
 CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$
 BEGIN
-   NEW.last_updated = now();
+   NEW.last_updated = (now() at time zone 'utc');
    RETURN NEW;
 END;
 $$ language 'plpgsql';
+
+-- get_field_id() takes a field_id, field_trial_id, and plot_id, and returns the corresponding field_id
+CREATE OR REPLACE FUNCTION get_field_id(f_id bigint, ft_id bigint, p_id bigint) RETURNS bigint AS $$
+BEGIN
+  IF (f_id IS NOT NULL) THEN
+    RETURN (
+	  SELECT f.field_id FROM field f WHERE f.field_id = f_id
+    );
+  ELSIF (ft_id IS NOT NULL) THEN
+    RETURN (
+	  SELECT f.field_id FROM field_trial ft JOIN field f USING(field_id) WHERE ft.field_trial_id = ft_id
+	);
+  ELSIF (p_id IS NOT NULL) THEN
+    RETURN (
+	  SELECT f.field_id FROM plot JOIN field_trial USING(field_trial_id) JOIN field f ON f.field_id = field_trial.field_id WHERE plot.plot_id = p_id
+	);
+  ELSE
+    RETURN NULL;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION act_valid_date()
+  RETURNS TRIGGER AS $$
+BEGIN
+  if (NEW.date_performed NOT BETWEEN
+	  (SELECT f.date_start FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id))
+	  AND (SELECT f.date_end FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)))
+  THEN
+    RAISE EXCEPTION 'Act date_performed (%) is not valid for Field ID "%". Must be within bounds of date_start (%) and date_end (%) from field table.',
+    NEW.date_performed,
+	(SELECT f.field_id FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)),
+	(SELECT f.date_start FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)),
+	(SELECT f.date_end FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id));
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Geometry Tables
 -- TODO: Enforce SRID like this:
@@ -443,13 +481,20 @@ create table act (
                 not null
                 default (now() at time zone 'utc'),
 
-  -- Cannot add an act if the only thing to change is details (should edit existing act instead)
+-- Cannot add an act if the only thing to change is details (should edit existing act instead)
   UNIQUE NULLS NOT DISTINCT (act_type, date_performed, crop_type_id, field_id, field_trial_id, plot_id, geom_id)
 );
 
+-- Force exactly one of field_id, field_trial_id, plot_id to be non-null; more than one is ambiguous.
+-- TODO: Alternatively, could look at creating a trigger to post-fill relevant id columns by referencing that table.
 ALTER TABLE act
-  ADD CONSTRAINT act_nullable_ids_at_least_one_not_null_ck
-  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) >= 1);
+  ADD CONSTRAINT act_nullable_ids_one_and_only_one_not_null_ck
+  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
+
+-- Trigger to ensure date_performed is > field.date_start and < field.date_end
+CREATE TRIGGER verify_valid_act_date_performed
+BEFORE INSERT OR UPDATE ON act
+FOR EACH ROW EXECUTE PROCEDURE act_valid_date();
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
@@ -533,6 +578,11 @@ create table observation (
 
 );
 
+-- Force exactly one of field_id, field_trial_id, plot_id to be non-null; more than one is ambiguous.
+ALTER TABLE observation
+  ADD CONSTRAINT observation_nullable_ids_one_and_only_one_not_null_ck
+  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
+
 CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
 ON observation FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
@@ -561,7 +611,7 @@ create constraint trigger observation_types_match
 -- MUST GRANT USERS ACCESS ONCE THE TABLES ARE ALREADY CREATED
 
 -- adjust permissions for `demeter_user`
-grant select, insert on all tables in schema test_demeter to demeter_user;
+grant select, insert, update, delete on all tables in schema test_demeter to demeter_user;
 grant usage, select on all sequences in schema test_demeter to demeter_user;
 alter default privileges in schema test_demeter grant usage on sequences to demeter_user;
 grant usage on schema test_demeter to demeter_user;

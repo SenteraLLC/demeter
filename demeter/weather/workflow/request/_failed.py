@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-from typing import List
 
 from meteomatics.exceptions import (
     InternalServerError,
@@ -27,7 +26,7 @@ def get_meteomatics_error_info(e: Exception, request: dict) -> dict:
     return request
 
 
-def _reformat_not_found_request(request: dict) -> List[dict]:
+def _reformat_not_found_request(request: dict) -> list[dict]:
     """Reformats a failed request due to `NotFound` error so other parameter requests can be resubmitted.
 
     This function identifies the problem parameter[s] as those which are included by name in the
@@ -51,7 +50,7 @@ def _reformat_not_found_request(request: dict) -> List[dict]:
         return [r]
 
 
-def _reformat_read_time_out_request(request: dict) -> List[dict]:
+def _reformat_read_time_out_request(request: dict) -> list[dict]:
     """Reformats a failed request due to `ReadTimeout` error into two smaller requests.
 
     The splits follow this logic given `request`:
@@ -104,7 +103,7 @@ ERROR_FORMAT = {
 }
 
 
-def reformat_failed_requests(request_list: List[dict]) -> List[dict]:
+def reformat_failed_requests(request_list: list[dict]) -> list[dict]:
     """Identify and reformat failed requests in `request_list`.
 
     Currently, the following two handled errors are not reformatted:
@@ -134,7 +133,7 @@ def reformat_failed_requests(request_list: List[dict]) -> List[dict]:
     return reformat_request_list
 
 
-def print_meteomatics_request_report(request_list: List[dict]) -> None:
+def print_meteomatics_request_report(request_list: list[dict]):
     """Prints report on weather data request performance.
 
     This report will provide the user with an overview on the weather processing

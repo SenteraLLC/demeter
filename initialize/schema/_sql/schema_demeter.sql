@@ -47,7 +47,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION act_valid_date()
-  RETURNS TRIGGER AS $$
+  RETURNS TRIGGER AS $act_valid_date_performed$
 BEGIN
   if (NEW.date_performed NOT BETWEEN
 	  (SELECT f.date_start FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id))
@@ -61,7 +61,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$act_valid_date_performed$ LANGUAGE plpgsql;
 
 -- Geometry Tables
 -- TODO: Enforce SRID like this:
@@ -352,7 +352,7 @@ ALTER TABLE crop_type
   CHECK (product_name = upper(product_name));
 
 -- OBSERVATION TYPE
-CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
+-- CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
 
 create table observation_type (
   observation_type_id bigserial
@@ -492,9 +492,9 @@ ALTER TABLE act
   CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
 
 -- Trigger to ensure date_performed is > field.date_start and < field.date_end
-CREATE TRIGGER verify_valid_act_date_performed
+CREATE TRIGGER act_valid_date_performed
 BEFORE INSERT OR UPDATE ON act
-FOR EACH ROW EXECUTE PROCEDURE act_valid_date();
+FOR EACH ROW EXECUTE FUNCTION act_valid_date();
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
@@ -607,6 +607,51 @@ END;$$;
 create constraint trigger observation_types_match
   after insert or update on observation
   for each row execute procedure observation_types_match();
+
+-- S3
+
+CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
+CREATE TYPE format_type_enum AS ENUM ('PARQUET', 'TIF', 'CSV', 'GEOJSON', 'JSON');
+
+create table s3 (
+  s3_id bigserial
+        primary key,
+
+  s3_url  text
+          not null,
+
+  format  format_type_enum
+          not null,
+
+  organization_id bigint
+                  not null
+                  references organization(organization_id),
+
+  category  cateogry_type_enum
+            default NULL::cateogry_type_enum [],  -- Allows multiple categories to be listed
+
+  -- TODO: version, last_modified, size, other s3 information
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc'),
+
+  -- Cannot have duplicate s3_urls
+  UNIQUE NULLS NOT DISTINCT (s3_url)
+
+);
+
+CREATE TRIGGER update_s3_last_updated BEFORE UPDATE
+ON s3 FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
 
 -- MUST GRANT USERS ACCESS ONCE THE TABLES ARE ALREADY CREATED
 

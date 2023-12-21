@@ -25,6 +25,33 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+
+-- get_geometry_from_id() takes a field geom_id, field_trial geom_id, and plot geom_id, then returns the most specific geometry
+CREATE OR REPLACE FUNCTION get_geometry_from_id(f_geom_id bigint, ft_geom_id bigint, p_geom_id bigint)
+RETURNS geometry AS
+$$
+DECLARE
+geom_out geometry;
+BEGIN
+  IF (p_geom_id IS NOT NULL) THEN
+    RETURN (
+		SELECT g.geom FROM geom g WHERE g.geom_id = p_geom_id
+	);
+  ELSIF (ft_geom_id IS NOT NULL) THEN
+    RETURN (
+		SELECT g.geom FROM geom g WHERE g.geom_id = ft_geom_id
+	);
+  ELSIF (f_geom_id IS NOT NULL) THEN
+    RETURN (
+		SELECT g.geom FROM geom g WHERE g.geom_id = f_geom_id
+	);
+  ELSE
+    RETURN NULL;
+  END IF;
+END;
+$$
+LANGUAGE plpgsql ;
+
 -- get_field_id() takes a field_id, field_trial_id, and plot_id, and returns the corresponding field_id
 CREATE OR REPLACE FUNCTION get_field_id(f_id bigint, ft_id bigint, p_id bigint) RETURNS bigint AS $$
 BEGIN
@@ -257,7 +284,7 @@ create table field_trial (
                 not null
                 default (now() at time zone 'utc'),
   -- Same field and date range cannot have same name, regardless of geom_id
-  UNIQUE (name, field_id, date_start, date_end)
+  UNIQUE NULLS NOT DISTINCT (name, field_id, date_start, date_end)
 );
 
 CREATE TRIGGER update_field_trial_last_updated BEFORE UPDATE

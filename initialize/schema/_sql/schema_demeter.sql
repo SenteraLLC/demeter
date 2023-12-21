@@ -692,3 +692,24 @@ grant usage on schema test_demeter to demeter_user;
 grant select on all tables in schema test_demeter to demeter_ro_user;
 grant select on all sequences in schema test_demeter to demeter_ro_user;
 grant usage on schema test_demeter to demeter_ro_user;
+
+
+CREATE OR REPLACE VIEW plot_details AS
+SELECT f.organization_id,
+  f.field_id,
+  ft.field_trial_id,
+  p.plot_id,
+	p.name as name_plot,
+  p.treatment_id,
+  p.block_id,
+  p.replication_id,
+	ft.name as name_field_trial,
+  ft.date_start as date_start_field_trial,
+  ft.date_end as date_end_field_trial,
+	ft.grouper_id as grouper_id_field_trial,
+  ft.details as details_field_trial,
+	get_geometry_from_id(f.geom_id, ft.geom_id, p.geom_id) as geometry
+FROM plot p
+JOIN field_trial ft USING(field_trial_id)
+JOIN field f ON f.field_id = ft.field_id
+JOIN geom g ON g.geom_id = p.geom_id;

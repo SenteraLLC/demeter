@@ -712,4 +712,4 @@ SELECT f.organization_id,
 FROM plot p
 JOIN field_trial ft USING(field_trial_id)
 JOIN field f ON f.field_id = ft.field_id
-JOIN geom g ON g.geom_id = p.geom_id;
+JOIN geom g ON g.geom_id IN (f.geom_id, ft.geom_id, p.geom_id);

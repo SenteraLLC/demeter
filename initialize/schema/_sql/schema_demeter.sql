@@ -27,6 +27,30 @@ $$ language 'plpgsql';
 
 
 -- get_geometry_from_id() takes a field geom_id, field_trial geom_id, and plot geom_id, then returns the most specific geometry
+CREATE OR REPLACE FUNCTION get_geom_id(f_geom_id bigint, ft_geom_id bigint, p_geom_id bigint)
+RETURNS bigint AS
+$$
+BEGIN
+  IF (p_geom_id IS NOT NULL) THEN
+    RETURN (
+		SELECT g.geom_id FROM geom g WHERE g.geom_id = p_geom_id
+	);
+  ELSIF (ft_geom_id IS NOT NULL) THEN
+    RETURN (
+		SELECT g.geom_id FROM geom g WHERE g.geom_id = ft_geom_id
+	);
+  ELSIF (f_geom_id IS NOT NULL) THEN
+    RETURN (
+		SELECT g.geom_id FROM geom g WHERE g.geom_id = f_geom_id
+	);
+  ELSE
+    RETURN NULL;
+  END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+-- get_geometry_from_id() takes a field geom_id, field_trial geom_id, and plot geom_id, then returns the most specific geometry
 CREATE OR REPLACE FUNCTION get_geometry_from_id(f_geom_id bigint, ft_geom_id bigint, p_geom_id bigint)
 RETURNS geometry AS
 $$
@@ -50,7 +74,7 @@ BEGIN
   END IF;
 END;
 $$
-LANGUAGE plpgsql ;
+LANGUAGE plpgsql;
 
 -- get_field_id() takes a field_id, field_trial_id, and plot_id, and returns the corresponding field_id
 CREATE OR REPLACE FUNCTION get_field_id(f_id bigint, ft_id bigint, p_id bigint) RETURNS bigint AS $$
@@ -695,21 +719,24 @@ grant usage on schema test_demeter to demeter_ro_user;
 
 
 CREATE OR REPLACE VIEW plot_details AS
-SELECT f.organization_id,
+SELECT
+  f.organization_id,
   f.field_id,
   ft.field_trial_id,
   p.plot_id,
-	p.name as name_plot,
+  p.name as name_plot,
   p.treatment_id,
   p.block_id,
   p.replication_id,
-	ft.name as name_field_trial,
+  ft.name as name_field_trial,
   ft.date_start as date_start_field_trial,
   ft.date_end as date_end_field_trial,
-	ft.grouper_id as grouper_id_field_trial,
+  ft.grouper_id as grouper_id_field_trial,
   ft.details as details_field_trial,
-	get_geometry_from_id(f.geom_id, ft.geom_id, p.geom_id) as geometry
+  get_geometry_from_id(f.geom_id, ft.geom_id, p.geom_id) as geometry
 FROM plot p
 JOIN field_trial ft USING(field_trial_id)
 JOIN field f ON f.field_id = ft.field_id
-JOIN geom g ON g.geom_id IN (f.geom_id, ft.geom_id, p.geom_id);
+JOIN geom g
+  ON g.geom_id IN (f.geom_id, ft.geom_id, p.geom_id)
+  AND (g.geom_id = get_geom_id(f.geom_id, ft.geom_id, p.geom_id));

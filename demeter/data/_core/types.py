@@ -86,19 +86,19 @@ class NutrientType(TypeTable, Detailed):
     """
 
     nutrient: str
-    N: float = 0.0
-    P2O5: float = 0.0
-    K2O: float = 0.0
-    S: float = 0.0
-    Ca: float = 0.0
-    Mg: float = 0.0
-    B: float = 0.0
-    Cu: float = 0.0
-    Fe: float = 0.0
-    Mn: float = 0.0
-    Mo: float = 0.0
-    Zn: float = 0.0
-    Ch: float = 0.0
+    n: float = 0.0
+    p2o5: float = 0.0
+    k2o: float = 0.0
+    s: float = 0.0
+    ca: float = 0.0
+    mg: float = 0.0
+    b: float = 0.0
+    cu: float = 0.0
+    fe: float = 0.0
+    mn: float = 0.0
+    mo: float = 0.0
+    zn: float = 0.0
+    ch: float = 0.0
 
 
 list_act_types = ("APPLY", "HARVEST", "MECHANICAL", "PLANT", "TILL")

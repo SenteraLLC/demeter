@@ -555,43 +555,43 @@ create table nutrient_type (
   nutrient_type_id bigserial primary key,
   nutrient  text
             not null,
-  N float
+  n float
     not null
     default 0.0,
-  P2O5  float
+  p2o5  float
         not null
         default 0.0,
-  K2O float
+  k2o float
       not null
       default 0.0,
-  S float
+  s float
     not null
     default 0.0,
-  Ca  float
+  ca  float
       not null
       default 0.0,
-  Mg  float
+  mg  float
       not null
       default 0.0,
-  B float
+  b float
     not null
     default 0.0,
-  Cu  float
+  cu  float
       not null
       default 0.0,
-  Fe  float
+  fe  float
       not null
       default 0.0,
-  Mn  float
+  mn  float
       not null
       default 0.0,
-  Mo  float
+  mo  float
       not null
       default 0.0,
-  Zn  float
+  zn  float
       not null
       default 0.0,
-  Ch  float
+  ch  float
       not null
       default 0.0,
 
@@ -608,7 +608,7 @@ create table nutrient_type (
                 default (now() at time zone 'utc'),
 
 -- Cannot add a nutrient if the only thing to change is details (should edit existing nutrient or add a new nutrient_name instead)
-  UNIQUE NULLS NOT DISTINCT (nutrient, N, P2O5, K2O, S, Ca, Mg, B, Cu, Fe, Mn, Mo, Zn, Ch)
+  UNIQUE NULLS NOT DISTINCT (nutrient, n, p2o5, k2o, s, ca, mg, b, cu, fe, mn, mo, zn, ch)
 );
 
 CREATE TRIGGER nutrient_type_valid_date_performed BEFORE UPDATE
@@ -618,19 +618,19 @@ update_last_updated_column();
 ALTER TABLE nutrient_type
   ADD CONSTRAINT nutrient_analysis_between_zero_100_ck
   CHECK (
-    N >= 0 AND N <= 100
-    AND P2O5 >= 0 AND P2O5 <= 100
-    AND K2O >= 0 AND K2O <= 100
-    AND S >= 0 AND S <= 100
-    AND Ca >= 0 AND Ca <= 100
-    AND Mg >= 0 AND Mg <= 100
-    AND B >= 0 AND B <= 100
-    AND Cu >= 0 AND Cu <= 100
-    AND Fe >= 0 AND Fe <= 100
-    AND Mn >= 0 AND Mn <= 100
-    AND Mo >= 0 AND Mo <= 100
-    AND Zn >= 0 AND Zn <= 100
-    AND Ch >= 0 AND Ch <= 100
+    n >= 0 AND n <= 100
+  AND p2o5 >= 0 AND p2o5 <= 100
+  AND k2o >= 0 AND k2o <= 100
+  AND s >= 0 AND s <= 100
+  AND ca >= 0 AND ca <= 100
+  AND mg >= 0 AND mg <= 100
+  AND b >= 0 AND b <= 100
+  AND cu >= 0 AND cu <= 100
+  AND fe >= 0 AND fe <= 100
+  AND mn >= 0 AND mn <= 100
+  AND mo >= 0 AND mo <= 100
+  AND zn >= 0 AND zn <= 100
+  AND ch >= 0 AND ch <= 100
   );
 
 -- TODO: Rethink the 1e-7 tol if we ever store geoms at variable precision (i.e., expose tol as arg to insertOrGetGeom())
@@ -744,7 +744,7 @@ create constraint trigger observation_types_match
 -- S3
 
 CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
-CREATE TYPE format_type_enum AS ENUM ('PARQUET', 'TIF', 'CSV', 'GEOJSON', 'JSON');
+CREATE TYPE file_format_type_enum AS ENUM ('PARQUET', 'TIF', 'CSV', 'GEOJSON', 'JSON');
 
 create table s3 (
   s3_id bigserial
@@ -753,8 +753,8 @@ create table s3 (
   s3_url  text
           not null,
 
-  format  format_type_enum
-          not null,
+  file_format format_type_enum
+              not null,
 
   organization_id bigint
                   not null

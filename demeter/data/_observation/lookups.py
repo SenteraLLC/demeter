@@ -1,5 +1,6 @@
 from ...db._lookup_types import TableLookup, sumMappings
 from .types import (
+    S3,
     Observation,
     ObservationType,
     UnitType,
@@ -11,6 +12,7 @@ type_table_lookup: TableLookup = {
 }
 
 data_table_lookup: TableLookup = {
+    S3: "s3",
     Observation: "observation",
 }
 

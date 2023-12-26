@@ -5,6 +5,7 @@ from .._core.types import (  # ReportType,
     CropType,
     Field,
     FieldTrial,
+    NutrientType,
     Organization,
     Plot,
 )
@@ -17,6 +18,7 @@ from .st_types import (
 
 type_table_lookup: TableLookup = {
     CropType: "crop_type",
+    NutrientType: "nutrient_type",
     # ReportType: "report_type",
 }
 

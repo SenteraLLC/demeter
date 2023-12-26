@@ -551,6 +551,88 @@ CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
+create table nutrient_type (
+  nutrient_type_id bigserial primary key,
+  nutrient  text
+            not null,
+  N float
+    not null
+    default 0.0,
+  P2O5  float
+        not null
+        default 0.0,
+  K20 float
+      not null
+      default 0.0,
+  S float
+    not null
+    default 0.0,
+  Ca  float
+      not null
+      default 0.0,
+  Mg  float
+      not null
+      default 0.0,
+  B float
+    not null
+    default 0.0,
+  Cu  float
+      not null
+      default 0.0,
+  Fe  float
+      not null
+      default 0.0,
+  Mn  float
+      not null
+      default 0.0,
+  Mo  float
+      not null
+      default 0.0,
+  Zn  float
+      not null
+      default 0.0,
+  Ch  float
+      not null
+      default 0.0,
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc'),
+
+-- Cannot add a nutrient if the only thing to change is details (should edit existing nutrient or add a new nutrient_name instead)
+  UNIQUE NULLS NOT DISTINCT (nutrient_name, N, P2O5, K2O, S, Ca, Mg, B, Cu, Fe, Mn, Mo, Zn, Ch)
+);
+
+CREATE TRIGGER nutrient_type_valid_date_performed BEFORE UPDATE
+ON nutrient_type FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
+ALTER TABLE nutrient_type
+  ADD CONSTRAINT nutrient_analysis_between_zero_100_ck
+  CHECK (
+    N >= 0 AND N <= 100
+    AND P2O5 >= 0 AND P2O5 <= 100
+    AND K2O >= 0 AND K2O <= 100
+    AND S >= 0 AND S <= 100
+    AND Ca >= 0 AND Ca <= 100
+    AND Mg >= 0 AND Mg <= 100
+    AND B >= 0 AND B <= 100
+    AND Cu >= 0 AND Cu <= 100
+    AND Fe >= 0 AND Fe <= 100
+    AND Mn >= 0 AND Mn <= 100
+    AND Mo >= 0 AND Mo <= 100
+    AND Zn >= 0 AND Zn <= 100
+    AND Ch >= 0 AND Ch <= 100
+  );
+
 -- TODO: Rethink the 1e-7 tol if we ever store geoms at variable precision (i.e., expose tol as arg to insertOrGetGeom())
 create function field_geom_covers_act_geom() RETURNS trigger
   LANGUAGE plpgsql as

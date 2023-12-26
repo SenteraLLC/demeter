@@ -5,6 +5,7 @@ from .._core.types import (  # ReportType,
     CropType,
     Field,
     FieldTrial,
+    NutrientType,
     Organization,
     Plot,
 )
@@ -29,7 +30,10 @@ AnyDataTable = Union[
     Act,
 ]
 
-AnyTypeTable = CropType
+AnyTypeTable = Union[
+    CropType,
+    NutrientType,
+]
 
 # AnyKeyTable = Union[Planting, Harvest]
 

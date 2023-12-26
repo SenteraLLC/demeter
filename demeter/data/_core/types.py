@@ -78,6 +78,29 @@ class CropType(TypeTable, Detailed):
     product_name: str = None
 
 
+@dataclass(frozen=True)
+class NutrientType(TypeTable, Detailed):
+    """
+    Information related to nutrients, particularly the primary and secondary macro-nutrients, as well as micro-nutrients
+    required for plant growth.
+    """
+
+    nutrient: str
+    N: float = 0.0
+    P2O5: float = 0.0
+    K2O: float = 0.0
+    S: float = 0.0
+    Ca: float = 0.0
+    Mg: float = 0.0
+    B: float = 0.0
+    Cu: float = 0.0
+    Fe: float = 0.0
+    Mn: float = 0.0
+    Mo: float = 0.0
+    Zn: float = 0.0
+    Ch: float = 0.0
+
+
 list_act_types = ("APPLY", "HARVEST", "MECHANICAL", "PLANT", "TILL")
 
 

@@ -561,7 +561,7 @@ create table nutrient_type (
   P2O5  float
         not null
         default 0.0,
-  K20 float
+  K2O float
       not null
       default 0.0,
   S float
@@ -608,7 +608,7 @@ create table nutrient_type (
                 default (now() at time zone 'utc'),
 
 -- Cannot add a nutrient if the only thing to change is details (should edit existing nutrient or add a new nutrient_name instead)
-  UNIQUE NULLS NOT DISTINCT (nutrient_name, N, P2O5, K2O, S, Ca, Mg, B, Cu, Fe, Mn, Mo, Zn, Ch)
+  UNIQUE NULLS NOT DISTINCT (nutrient, N, P2O5, K2O, S, Ca, Mg, B, Cu, Fe, Mn, Mo, Zn, Ch)
 );
 
 CREATE TRIGGER nutrient_type_valid_date_performed BEFORE UPDATE

@@ -83,7 +83,7 @@ class CropType(TypeTable, Detailed):
     product_name: str = None
 
 
-@dataclass(frozen=True)
+@dataclass(order=True, frozen=True)
 class NutrientType(TypeTable, Detailed):
     """
     Information related to nutrients, particularly the primary and secondary macro-nutrients, as well as micro-nutrients
@@ -91,19 +91,19 @@ class NutrientType(TypeTable, Detailed):
     """
 
     nutrient: str
-    n: float = 0.0
-    p2o5: float = 0.0
-    k2o: float = 0.0
-    s: float = 0.0
-    ca: float = 0.0
-    mg: float = 0.0
-    b: float = 0.0
-    cu: float = 0.0
-    fe: float = 0.0
-    mn: float = 0.0
-    mo: float = 0.0
-    zn: float = 0.0
-    ch: float = 0.0
+    n: float = field(default=0.0)
+    p2o5: float = field(default=0.0)
+    k2o: float = field(default=0.0)
+    s: float = field(default=0.0)
+    ca: float = field(default=0.0)
+    mg: float = field(default=0.0)
+    b: float = field(default=0.0)
+    cu: float = field(default=0.0)
+    fe: float = field(default=0.0)
+    mn: float = field(default=0.0)
+    mo: float = field(default=0.0)
+    zn: float = field(default=0.0)
+    ch: float = field(default=0.0)
 
     def __post_init__(self):
         # Loop through the fields, assigning a default value if the value is None

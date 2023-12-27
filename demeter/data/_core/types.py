@@ -1,15 +1,10 @@
 """High-level API core Demeter data types"""
 
-from dataclasses import (
-    _MISSING_TYPE,
-    dataclass,
-    field,
-    fields,
-)
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
-from ...db import (
+from demeter.db import (
     Detailed,
     TableId,
     TypeTable,
@@ -83,10 +78,7 @@ class CropType(TypeTable, Detailed):
     product_name: str = None
 
 
-@dataclass(
-    order=True,
-    # frozen=True
-)
+@dataclass(frozen=True)
 class NutrientType(TypeTable, Detailed):
     """
     Information related to nutrients, particularly the primary and secondary macro-nutrients, as well as micro-nutrients
@@ -108,15 +100,15 @@ class NutrientType(TypeTable, Detailed):
     zn: float = field(default=0.0)
     ch: float = field(default=0.0)
 
-    def __post_init__(self):
-        # Loop through the fields, assigning a default value if the value is None
-        for field_ in fields(self):
-            # If there is a default and the value of the field is none we can assign a value
-            if (
-                not isinstance(field_.default, _MISSING_TYPE)
-                and getattr(self, field_.name) is None
-            ):
-                setattr(self, field_.name, field_.default)
+    # def __post_init__(self):
+    #     # Loop through the fields, assigning a default value if the value is None
+    #     for field_ in fields(self):
+    #         # If there is a default and the value of the field is none we can assign a value
+    #         if (
+    #             not isinstance(field_.default, _MISSING_TYPE)
+    #             and getattr(self, field_.name) is None
+    #         ):
+    #             setattr(self, field_.name, field_.default)
 
 
 list_act_types = ("APPLY", "HARVEST", "MECHANICAL", "PLANT", "TILL")

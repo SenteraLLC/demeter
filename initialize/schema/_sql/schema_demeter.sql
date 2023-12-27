@@ -551,8 +551,8 @@ CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
-create table nutrient_type (
-  nutrient_type_id bigserial primary key,
+create table nutrient_source (
+  nutrient_source_id bigserial primary key,
   nutrient  text
             not null,
   n float
@@ -611,11 +611,11 @@ create table nutrient_type (
   UNIQUE NULLS NOT DISTINCT (nutrient, n, p2o5, k2o, s, ca, mg, b, cu, fe, mn, mo, zn, ch)
 );
 
-CREATE TRIGGER nutrient_type_valid_date_performed BEFORE UPDATE
-ON nutrient_type FOR EACH ROW EXECUTE PROCEDURE
+CREATE TRIGGER nutrient_source_valid_date_performed BEFORE UPDATE
+ON nutrient_source FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
-ALTER TABLE nutrient_type
+ALTER TABLE nutrient_source
   ADD CONSTRAINT nutrient_analysis_between_zero_100_ck
   CHECK (
     n >= 0 AND n <= 100

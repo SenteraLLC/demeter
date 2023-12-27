@@ -79,7 +79,7 @@ class CropType(TypeTable, Detailed):
 
 
 @dataclass(frozen=True)
-class NutrientType(TypeTable, Detailed):
+class NutrientSource(TypeTable, Detailed):
     """
     Information related to nutrients, particularly the primary and secondary macro-nutrients, as well as micro-nutrients
     required for plant growth.

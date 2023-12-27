@@ -19,7 +19,7 @@ from .._core.types import (
     CropType,
     Field,
     FieldTrial,
-    NutrientType,
+    NutrientSource,
     Organization,
     Plot,
 )
@@ -42,7 +42,7 @@ getMaybeFieldTrialId: GetId[FieldTrial] = g.getMaybeIdFunction(FieldTrial)
 getMaybePlotId: GetId[Plot] = g.getMaybeIdFunction(Plot)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
-getMaybeNutrientTypeId: GetId[NutrientType] = g.getMaybeIdFunction(NutrientType)
+getMaybeNutrientSourceId: GetId[NutrientSource] = g.getMaybeIdFunction(NutrientSource)
 
 getOrganization: GetTable[Organization] = g.getTableFunction(Organization)
 getGrouper: GetTable[Grouper] = g.getTableFunction(Grouper)
@@ -51,7 +51,7 @@ getFieldTrial: GetTable[FieldTrial] = g.getTableFunction(FieldTrial)
 getPlot: GetTable[Plot] = g.getTableFunction(Plot)
 getCropType: GetTable[CropType] = g.getTableFunction(CropType)
 getAct: GetTable[Act] = g.getTableFunction(Act)
-getNutrientType: GetTable[NutrientType] = g.getTableFunction(NutrientType)
+getNutrientSource: GetTable[NutrientSource] = g.getTableFunction(NutrientSource)
 
 insertOrganization: ReturnId[Organization] = g.getInsertReturnIdFunction(Organization)
 insertGrouper: ReturnId[Grouper] = g.getInsertReturnIdFunction(Grouper)
@@ -60,7 +60,9 @@ insertFieldTrial: ReturnId[FieldTrial] = g.getInsertReturnIdFunction(FieldTrial)
 insertPlot: ReturnId[Plot] = g.getInsertReturnIdFunction(Plot)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
-insertNutrientType: ReturnId[NutrientType] = g.getInsertReturnIdFunction(NutrientType)
+insertNutrientSource: ReturnId[NutrientSource] = g.getInsertReturnIdFunction(
+    NutrientSource
+)
 
 
 insertOrGetOrganization: ReturnId[Organization] = g.partialInsertOrGetId(
@@ -87,8 +89,8 @@ insertOrGetCropType: ReturnId[CropType] = g.partialInsertOrGetId(
     getMaybeCropTypeId, insertCropType
 )
 insertOrGetAct: ReturnId[Act] = g.partialInsertOrGetId(getMaybeActId, insertAct)
-insertOrGetNutrientType: ReturnId[NutrientType] = g.partialInsertOrGetId(
-    getMaybeNutrientTypeId, insertNutrientType
+insertOrGetNutrientSource: ReturnId[NutrientSource] = g.partialInsertOrGetId(
+    getMaybeNutrientSourceId, insertNutrientSource
 )
 
 

@@ -2,6 +2,7 @@ from typing import Union
 
 from .._core.types import (  # ReportType,
     Act,
+    App,
     CropType,
     Field,
     FieldTrial,
@@ -28,6 +29,7 @@ AnyDataTable = Union[
     TemporalKey,
     Key,
     Act,
+    App,
 ]
 
 AnyTypeTable = Union[

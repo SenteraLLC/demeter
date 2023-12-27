@@ -114,6 +114,23 @@ BEGIN
 END;
 $act_valid_date_performed$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION app_valid_date()
+  RETURNS TRIGGER AS $app_valid_date_applied$
+BEGIN
+  if (NEW.date_applied NOT BETWEEN
+	  (SELECT f.date_start FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id))
+	  AND (SELECT f.date_end FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)))
+  THEN
+    RAISE EXCEPTION 'App date_applied (%) is not valid for Field ID "%". Must be within bounds of date_start (%) and date_end (%) from field table.',
+    NEW.date_applied,
+	(SELECT f.field_id FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)),
+	(SELECT f.date_start FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id)),
+	(SELECT f.date_end FROM field f WHERE f.field_id = get_field_id(NEW.field_id, NEW.field_trial_id, NEW.plot_id));
+  END IF;
+  RETURN NEW;
+END;
+$app_valid_date_applied$ LANGUAGE plpgsql;
+
 -- Geometry Tables
 -- TODO: Enforce SRID like this:
 --  ALTER xxxx ADD CONSTRAINT enforce_srid_geom CHECK (st_srid(geom) = 28355)
@@ -549,6 +566,73 @@ FOR EACH ROW EXECUTE FUNCTION act_valid_date();
 
 CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
+-- APPLY
+CREATE TYPE app_type_enum AS ENUM ('BIOLOGICAL', 'FERTILIZER', 'FUNGICIDE', 'HERBICIDE', 'INHIBITOR', 'INSECTICIDE', 'IRRIGATION', 'LIME', 'MANURE', 'NEMATICIDE', 'STABILIZER');
+
+create table app (
+  app_id  bigserial primary key,
+
+  app_type  app_type_enum
+            not null,
+
+  date_applied  timestamp without time zone
+                not null,
+
+  rate  float
+        not null,
+
+  rate_unit text
+            not null,
+
+  crop_type_id  bigint
+                references crop_type(crop_type_id),
+
+  nutrient_source_id  bigint
+                      references nutrient_source(nutrient_source_id),
+
+  field_id  bigint
+            references field(field_id),
+
+  field_trial_id  bigint
+                  references field_trial(field_trial_id),
+
+  plot_id bigint
+          references plot(plot_id),
+
+  geom_id bigint
+          references geom(geom_id),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc'),
+
+-- Cannot add an application if the only thing to change is details (should edit existing application instead)
+  UNIQUE NULLS NOT DISTINCT (app_type, date_applied, rate, rate_unit, crop_type_id, nutrient_source_id, field_id, field_trial_id, plot_id, geom_id)
+);
+
+-- Force exactly one of field_id, field_trial_id, plot_id to be non-null; more than one is ambiguous.
+-- TODO: Alternatively, could look at creating a trigger to post-fill relevant id columns by referencing that table.
+ALTER TABLE app
+  ADD CONSTRAINT app_nullable_ids_one_and_only_one_not_null_ck
+  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
+
+-- Trigger to ensure date_applied is > field.date_start and < field.date_end
+CREATE TRIGGER app_valid_date_performed
+BEFORE INSERT OR UPDATE ON app
+FOR EACH ROW EXECUTE FUNCTION app_valid_date();
+
+CREATE TRIGGER update_app_last_updated BEFORE UPDATE
+ON app FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
 create table nutrient_source (

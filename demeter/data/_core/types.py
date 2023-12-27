@@ -156,6 +156,59 @@ class Act(Detailed):
             )
 
 
+list_app_types = (
+    "BIOLOGICAL",
+    "FERTILIZER",
+    "FUNGICIDE",
+    "HERBICIDE",
+    "INHIBITOR",
+    "INSECTICIDE",
+    "IRRIGATION",
+    "LIME",
+    "MANURE",
+    "NEMATICIDE",
+    "STABILIZER",
+)
+
+
+@dataclass(frozen=True)
+class App(Detailed):
+    """Spatiotemporal information for a application to a field.
+    Types of applications are limited to the types listed in `AppType`."""
+
+    app_type: str
+    date_applied: datetime
+    rate: float
+    rate_unit: str
+    crop_type_id: TableId = None
+    nutrient_source_id: TableId = None
+    field_id: TableId = None
+    field_trial_id: TableId = None
+    plot_id: TableId = None
+    geom_id: TableId = None
+
+    def __post_init__(self):
+        """Be sure that:
+        - `app_type` is one of the correct possible values
+        - at least one of `field_id`, `field_trial_id`, or `plot_id` is set
+        """
+
+        chk_app_type = object.__getattribute__(self, "app_type")
+
+        if chk_app_type not in list_app_types:
+            raise AttributeError(
+                f"`app_type` must be one of the following: {str(list_app_types)}"
+            )
+
+        chk_field_id = object.__getattribute__(self, "field_id")
+        chk_field_trial_id = object.__getattribute__(self, "field_trial_id")
+        chk_plot_id = object.__getattribute__(self, "plot_id")
+        if not any([chk_field_id, chk_field_trial_id, chk_plot_id]):
+            raise AttributeError(
+                "At least one of `field_id`, `field_trial_id`, or `plot_id` must be set"
+            )
+
+
 # @dataclass(frozen=True)
 # class PlantingKey(db.TableKey):
 #     """Unique key to group any planting and/or harvest activity for a given field."""

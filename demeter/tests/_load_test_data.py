@@ -9,11 +9,13 @@ from pandas import isnull as pd_isnull
 
 from demeter.data import (
     Act,
+    App,
     CropType,
     Field,
     Grouper,
     getMaybeGeom,
     insertOrGetAct,
+    insertOrGetApp,
     insertOrGetCropType,
     insertOrGetField,
     insertOrGetGeom,
@@ -161,7 +163,7 @@ if __name__ == "__main__":
                             #     date_performed = datetime(2022, 6, 1)
 
                             planting = Act(
-                                act_type="plant",
+                                act_type="PLANT",
                                 field_id=field_id,
                                 date_performed=date_performed,
                                 crop_type_id=crop_type_id,

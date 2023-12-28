@@ -170,17 +170,31 @@ list_app_types = (
     "NEMATICIDE",
     "STABILIZER",
 )
+list_app_methods = (
+    "BAND",
+    "BROADCAST",
+    "CULTIVATE",
+    "DRY-DROP",
+    "FOLIAR",
+    "KNIFE",
+    "SEED",
+    "Y-DROP",
+    None,
+)
 
 
 @dataclass(frozen=True)
 class App(Detailed):
-    """Spatiotemporal information for a application to a field.
-    Types of applications are limited to the types listed in `AppType`."""
+    """
+    Spatiotemporal information for a application to a field.
+    Types and Methods of applications are limited to the types listed in `list_app_types` and `list_app_methods`.
+    """
 
     app_type: str
     date_applied: datetime
     rate: float
     rate_unit: str
+    app_method: str = None
     crop_type_id: TableId = None
     nutrient_source_id: TableId = None
     field_id: TableId = None
@@ -191,14 +205,20 @@ class App(Detailed):
     def __post_init__(self):
         """Be sure that:
         - `app_type` is one of the correct possible values
+        - `app_method` is one of the correct possible values
         - at least one of `field_id`, `field_trial_id`, or `plot_id` is set
         """
 
         chk_app_type = object.__getattribute__(self, "app_type")
+        chk_app_method = object.__getattribute__(self, "app_method")
 
         if chk_app_type not in list_app_types:
             raise AttributeError(
                 f"`app_type` must be one of the following: {str(list_app_types)}"
+            )
+        if chk_app_method not in list_app_methods:
+            raise AttributeError(
+                f"`app_method` must be one of the following: {str(list_app_methods)}"
             )
 
         chk_field_id = object.__getattribute__(self, "field_id")

@@ -635,6 +635,8 @@ CREATE TRIGGER update_app_last_updated BEFORE UPDATE
 ON app FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
+-- Nutrient Source
+
 create table nutrient_source (
   nutrient_source_id bigserial primary key,
   nutrient  text
@@ -691,8 +693,8 @@ create table nutrient_source (
                 not null
                 default (now() at time zone 'utc'),
 
--- Cannot add a nutrient if the only thing to change is details (should edit existing nutrient or add a new nutrient_name instead)
-  UNIQUE NULLS NOT DISTINCT (nutrient, n, p2o5, k2o, s, ca, mg, b, cu, fe, mn, mo, zn, ch)
+-- Cannot add a nutrient with the same name because of its ambiguity (should add a new name instead)
+  UNIQUE NULLS NOT DISTINCT (nutrient)
 );
 
 CREATE TRIGGER nutrient_source_valid_date_performed BEFORE UPDATE

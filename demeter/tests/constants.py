@@ -15,7 +15,7 @@ TABLES_LIST = [
     "field_trial",
     "geom",
     "grouper",
-    "nutrient_type",
+    "nutrient_source",
     "plot",
     "observation",
     "observation_type",

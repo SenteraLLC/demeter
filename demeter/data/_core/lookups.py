@@ -19,7 +19,7 @@ from .st_types import (
 
 type_table_lookup: TableLookup = {
     CropType: "crop_type",
-    NutrientSource: "nutrient_type",
+    NutrientSource: "nutrient_source",
     # ReportType: "report_type",
 }
 

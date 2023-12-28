@@ -680,7 +680,9 @@ create table nutrient_source (
   ch  float
       not null
       default 0.0,
-
+  organization_id bigint
+                  not null
+                  references organization(organization_id),
   details jsonb
           not null
           default '{}'::jsonb,

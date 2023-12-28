@@ -86,6 +86,7 @@ class NutrientSource(TypeTable, Detailed):
     """
 
     nutrient: str
+    organization_id: TableId
     n: float = field(default=0.0)
     p2o5: float = field(default=0.0)
     k2o: float = field(default=0.0)

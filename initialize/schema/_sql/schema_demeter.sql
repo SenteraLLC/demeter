@@ -852,15 +852,15 @@ create table s3 (
   s3_url  text
           not null,
 
-  file_format format_type_enum
+  file_format file_format_type_enum
               not null,
 
   organization_id bigint
                   not null
                   references organization(organization_id),
 
-  category  cateogry_type_enum
-            default NULL::cateogry_type_enum [],  -- Allows multiple categories to be listed
+  category  cateogry_type_enum[]
+            default NULL::cateogry_type_enum[],  -- Allows multiple categories to be listed
 
   -- TODO: version, last_modified, size, other s3 information
 
@@ -884,6 +884,7 @@ create table s3 (
 CREATE TRIGGER update_s3_last_updated BEFORE UPDATE
 ON s3 FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
+
 
 -- MUST GRANT USERS ACCESS ONCE THE TABLES ARE ALREADY CREATED
 

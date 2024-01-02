@@ -18,9 +18,6 @@ TABLES_LIST = [
     "grouper",
     "nutrient_source",
     "plot",
-    "observation",
-    "observation_type",
     "organization",
     "s3",
-    "unit_type",
 ]

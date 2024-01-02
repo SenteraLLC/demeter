@@ -422,31 +422,31 @@ ALTER TABLE crop_type
 -- OBSERVATION TYPE
 -- CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
 
-create table observation_type (
-  observation_type_id bigserial
-                      primary key,
+-- create table observation_type (
+--   observation_type_id bigserial
+--                       primary key,
 
-  observation_type_name text
-                        not null,
+--   observation_type_name text
+--                         not null,
 
-  category  cateogry_type_enum
-            default NULL::cateogry_type_enum,
+--   category  cateogry_type_enum
+--             default NULL::cateogry_type_enum,
 
-  details jsonb
-          not null
-          default '{}'::jsonb,
+--   details jsonb
+--           not null
+--           default '{}'::jsonb,
 
-  created timestamp without time zone
-          not null
-          default (now() at time zone 'utc'),
+--   created timestamp without time zone
+--           not null
+--           default (now() at time zone 'utc'),
 
-  last_updated  timestamp without time zone
-                not null
-                default (now() at time zone 'utc'),
+--   last_updated  timestamp without time zone
+--                 not null
+--                 default (now() at time zone 'utc'),
 
-  -- Cannot add another observation_type if the only thing to change is details
-  UNIQUE NULLS NOT DISTINCT (observation_type_name, category)
-);
+--   -- Cannot add another observation_type if the only thing to change is details
+--   UNIQUE NULLS NOT DISTINCT (observation_type_name, category)
+-- );
 
 -- -- All are NULL
 -- -- TODO: Are these necesary if GetOrInsertObservationType() is already checking for this?
@@ -454,33 +454,33 @@ create table observation_type (
 --   ON observation_type(observation_type_name)
 --   WHERE (category is NULL);
 
-CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
-ON observation_type FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
+-- CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
+-- ON observation_type FOR EACH ROW EXECUTE PROCEDURE
+-- update_last_updated_column();
 
-ALTER TABLE observation_type
-	ADD CONSTRAINT observation_type_observation_type_name_uppercase_ck CHECK (observation_type_name = upper(observation_type_name));
-  -- ADD CONSTRAINT observation_type_category_uppercase_ck CHECK (category = upper(category));
+-- ALTER TABLE observation_type
+-- 	ADD CONSTRAINT observation_type_observation_type_name_uppercase_ck CHECK (observation_type_name = upper(observation_type_name));
+--   -- ADD CONSTRAINT observation_type_category_uppercase_ck CHECK (category = upper(category));
 
--- UNIT TYPE
+-- -- UNIT TYPE
 
-create table unit_type (
-  unit_type_id  bigserial
-                primary key,
+-- create table unit_type (
+--   unit_type_id  bigserial
+--                 primary key,
 
-  unit_name text
-            not null,
+--   unit_name text
+--             not null,
 
-  observation_type_id bigint
-                      not null
-                      references observation_type(observation_type_id),
+--   observation_type_id bigint
+--                       not null
+--                       references observation_type(observation_type_id),
 
-  -- Cannot add another unit_type if unit_name/observation_type_id combination are not unique
-  UNIQUE NULLS NOT DISTINCT (unit_name, observation_type_id)
-);
-ALTER TABLE unit_type
-  ADD CONSTRAINT unit_type_start_end_w_alphanumeric_ck
-  CHECK (unit_name ~ '^[A-Za-z](.*[A-Za-z0-9])?$');
+--   -- Cannot add another unit_type if unit_name/observation_type_id combination are not unique
+--   UNIQUE NULLS NOT DISTINCT (unit_name, observation_type_id)
+-- );
+-- ALTER TABLE unit_type
+--   ADD CONSTRAINT unit_type_start_end_w_alphanumeric_ck
+--   CHECK (unit_name ~ '^[A-Za-z](.*[A-Za-z0-9])?$');
 
 ---------------------
 -- Value Tables --
@@ -572,79 +572,6 @@ CREATE TRIGGER update_act_last_updated BEFORE UPDATE
 ON act FOR EACH ROW EXECUTE PROCEDURE
 update_last_updated_column();
 
--- APPLY
-CREATE TYPE app_type_enum AS ENUM ('BIOLOGICAL', 'FERTILIZER', 'FUNGICIDE', 'HERBICIDE', 'INHIBITOR', 'INSECTICIDE', 'IRRIGATION', 'LIME', 'MANURE', 'NEMATICIDE', 'STABILIZER');
-CREATE TYPE app_method_enum AS ENUM ('BAND', 'BROADCAST', 'CULTIVATE', 'DRY-DROP', 'FOLIAR', 'KNIFE', 'SEED', 'Y-DROP');
-
-create table app (
-  app_id  bigserial primary key,
-
-  app_type  app_type_enum
-            not null,
-
-  app_method  app_method_enum,
-
-  date_applied  timestamp without time zone
-                not null,
-
-  rate  float
-        not null,
-
-  rate_unit text
-            not null,
-
-  crop_type_id  bigint
-                references crop_type(crop_type_id),
-
-  nutrient_source_id  bigint
-                      references nutrient_source(nutrient_source_id),
-
-  field_id  bigint
-            references field(field_id),
-
-  field_trial_id  bigint
-                  references field_trial(field_trial_id),
-
-  plot_id bigint
-          references plot(plot_id),
-
-  geom_id bigint
-          references geom(geom_id),
-
-  details jsonb
-          not null
-          default '{}'::jsonb,
-
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
-
-  last_updated  timestamp without time zone
-                not null
-                default (now() at time zone 'utc'),
-
--- Cannot add an application if the only thing to change is details (should edit existing application instead)
-  UNIQUE NULLS NOT DISTINCT (app_type, app_method, date_applied, rate, rate_unit, crop_type_id, nutrient_source_id, field_id, field_trial_id, plot_id, geom_id)
-);
-
--- Force exactly one of field_id, field_trial_id, plot_id to be non-null; more than one is ambiguous.
--- TODO: Alternatively, could look at creating a trigger to post-fill relevant id columns by referencing that table.
-ALTER TABLE app
-  ADD CONSTRAINT app_nullable_ids_one_and_only_one_not_null_ck
-  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
-
-ALTER TABLE app
-  ADD CONSTRAINT app_type_not_null_ck
-  CHECK (app_type IS NOT NULL);
-
--- Trigger to ensure date_applied is > field.date_start and < field.date_end
-CREATE TRIGGER app_valid_date_performed
-BEFORE INSERT OR UPDATE ON app
-FOR EACH ROW EXECUTE FUNCTION app_valid_date();
-
-CREATE TRIGGER update_app_last_updated BEFORE UPDATE
-ON app FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
 
 -- Nutrient Source
 
@@ -732,6 +659,80 @@ ALTER TABLE nutrient_source
   AND ch >= 0 AND ch <= 100
   );
 
+-- APPLY
+CREATE TYPE app_type_enum AS ENUM ('BIOLOGICAL', 'FERTILIZER', 'FUNGICIDE', 'HERBICIDE', 'INHIBITOR', 'INSECTICIDE', 'IRRIGATION', 'LIME', 'MANURE', 'NEMATICIDE', 'STABILIZER');
+CREATE TYPE app_method_enum AS ENUM ('BAND', 'BROADCAST', 'CULTIVATE', 'DRY-DROP', 'FOLIAR', 'KNIFE', 'SEED', 'Y-DROP');
+
+create table app (
+  app_id  bigserial primary key,
+
+  app_type  app_type_enum
+            not null,
+
+  app_method  app_method_enum,
+
+  date_applied  timestamp without time zone
+                not null,
+
+  rate  float
+        not null,
+
+  rate_unit text
+            not null,
+
+  crop_type_id  bigint
+                references crop_type(crop_type_id),
+
+  nutrient_source_id  bigint
+                      references nutrient_source(nutrient_source_id),
+
+  field_id  bigint
+            references field(field_id),
+
+  field_trial_id  bigint
+                  references field_trial(field_trial_id),
+
+  plot_id bigint
+          references plot(plot_id),
+
+  geom_id bigint
+          references geom(geom_id),
+
+  details jsonb
+          not null
+          default '{}'::jsonb,
+
+  created  timestamp without time zone
+              not null
+              default (now() at time zone 'utc'),
+
+  last_updated  timestamp without time zone
+                not null
+                default (now() at time zone 'utc'),
+
+-- Cannot add an application if the only thing to change is details (should edit existing application instead)
+  UNIQUE NULLS NOT DISTINCT (app_type, app_method, date_applied, rate, rate_unit, crop_type_id, nutrient_source_id, field_id, field_trial_id, plot_id, geom_id)
+);
+
+-- Force exactly one of field_id, field_trial_id, plot_id to be non-null; more than one is ambiguous.
+-- TODO: Alternatively, could look at creating a trigger to post-fill relevant id columns by referencing that table.
+ALTER TABLE app
+  ADD CONSTRAINT app_nullable_ids_one_and_only_one_not_null_ck
+  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
+
+ALTER TABLE app
+  ADD CONSTRAINT app_type_not_null_ck
+  CHECK (app_type IS NOT NULL);
+
+-- Trigger to ensure date_applied is > field.date_start and < field.date_end
+CREATE TRIGGER app_valid_date_performed
+BEFORE INSERT OR UPDATE ON app
+FOR EACH ROW EXECUTE FUNCTION app_valid_date();
+
+CREATE TRIGGER update_app_last_updated BEFORE UPDATE
+ON app FOR EACH ROW EXECUTE PROCEDURE
+update_last_updated_column();
+
 -- TODO: Rethink the 1e-7 tol if we ever store geoms at variable precision (i.e., expose tol as arg to insertOrGetGeom())
 create function field_geom_covers_act_geom() RETURNS trigger
   LANGUAGE plpgsql as
@@ -758,87 +759,87 @@ create constraint trigger field_geom_covers_act_geom
   after insert or update on act
   for each row execute procedure field_geom_covers_act_geom();
 
--- OBSERVATION
+-- -- OBSERVATION
 
-create table observation (
-  observation_id bigserial
-                 primary key,
+-- create table observation (
+--   observation_id bigserial
+--                  primary key,
 
-  value_observed float
-                 not null,
+--   value_observed float
+--                  not null,
 
-  date_observed timestamp without time zone,
+--   date_observed timestamp without time zone,
 
-  observation_type_id bigint
-                      not null
-                      references observation_type(observation_type_id),
+--   observation_type_id bigint
+--                       not null
+--                       references observation_type(observation_type_id),
 
-  unit_type_id  bigint
-                references unit_type(unit_type_id)
-                not null,
+--   unit_type_id  bigint
+--                 references unit_type(unit_type_id)
+--                 not null,
 
-  field_id  bigint
-            references field(field_id),
+--   field_id  bigint
+--             references field(field_id),
 
-  field_trial_id  bigint
-                  references field_trial(field_trial_id),
+--   field_trial_id  bigint
+--                   references field_trial(field_trial_id),
 
-  plot_id bigint
-          references plot(plot_id),
+--   plot_id bigint
+--           references plot(plot_id),
 
-  geom_id bigint
-          references geom(geom_id),
+--   geom_id bigint
+--           references geom(geom_id),
 
-  act_id  bigint
-          references act(act_id),
+--   act_id  bigint
+--           references act(act_id),
 
-  details jsonb
-          not null
-          default '{}'::jsonb,
+--   details jsonb
+--           not null
+--           default '{}'::jsonb,
 
-  created  timestamp without time zone
-              not null
-              default (now() at time zone 'utc'),
+--   created  timestamp without time zone
+--               not null
+--               default (now() at time zone 'utc'),
 
-  last_updated  timestamp without time zone
-                not null
-                default (now() at time zone 'utc'),
+--   last_updated  timestamp without time zone
+--                 not null
+--                 default (now() at time zone 'utc'),
 
-  -- Cannot have duplicate observations across date, observation_type, and field/field_trial/plot/geom/act
-  -- Unit type doesn't matter (don't store duplicate observations if only the unit changes)
-  UNIQUE NULLS NOT DISTINCT (value_observed, date_observed, observation_type_id, field_id, field_trial_id, plot_id, geom_id, act_id)
+--   -- Cannot have duplicate observations across date, observation_type, and field/field_trial/plot/geom/act
+--   -- Unit type doesn't matter (don't store duplicate observations if only the unit changes)
+--   UNIQUE NULLS NOT DISTINCT (value_observed, date_observed, observation_type_id, field_id, field_trial_id, plot_id, geom_id, act_id)
 
-);
+-- );
 
--- Force exactly one of field_id, field_trial_id, plot_id to be non-null; more than one is ambiguous.
-ALTER TABLE observation
-  ADD CONSTRAINT observation_nullable_ids_one_and_only_one_not_null_ck
-  CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
+-- -- Force exactly one of field_id, field_trial_id, plot_id to be non-null; more than one is ambiguous.
+-- ALTER TABLE observation
+--   ADD CONSTRAINT observation_nullable_ids_one_and_only_one_not_null_ck
+--   CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
 
-CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
-ON observation FOR EACH ROW EXECUTE PROCEDURE
-update_last_updated_column();
+-- CREATE TRIGGER update_observation_last_updated BEFORE UPDATE
+-- ON observation FOR EACH ROW EXECUTE PROCEDURE
+-- update_last_updated_column();
 
 
-create function observation_types_match() RETURNS trigger
-  LANGUAGE plpgsql as
-$$BEGIN
-  IF (
-    SELECT not exists(
-      SELECT U.observation_type_id FROM unit_type U
-      WHERE U.unit_type_id = NEW.unit_type_id and U.observation_type_id = NEW.observation_type_id
-    )
-  )
-  THEN
-    RAISE EXCEPTION 'Unit type observation type does not match given observation type.';
-  END IF;
+-- create function observation_types_match() RETURNS trigger
+--   LANGUAGE plpgsql as
+-- $$BEGIN
+--   IF (
+--     SELECT not exists(
+--       SELECT U.observation_type_id FROM unit_type U
+--       WHERE U.unit_type_id = NEW.unit_type_id and U.observation_type_id = NEW.observation_type_id
+--     )
+--   )
+--   THEN
+--     RAISE EXCEPTION 'Unit type observation type does not match given observation type.';
+--   END IF;
 
-  RETURN NEW;
-END;$$;
+--   RETURN NEW;
+-- END;$$;
 
-create constraint trigger observation_types_match
-  after insert or update on observation
-  for each row execute procedure observation_types_match();
+-- create constraint trigger observation_types_match
+--   after insert or update on observation
+--   for each row execute procedure observation_types_match();
 
 -- S3
 

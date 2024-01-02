@@ -101,16 +101,6 @@ class NutrientSource(TypeTable, Detailed):
     zn: float = field(default=0.0)
     ch: float = field(default=0.0)
 
-    # def __post_init__(self):
-    #     # Loop through the fields, assigning a default value if the value is None
-    #     for field_ in fields(self):
-    #         # If there is a default and the value of the field is none we can assign a value
-    #         if (
-    #             not isinstance(field_.default, _MISSING_TYPE)
-    #             and getattr(self, field_.name) is None
-    #         ):
-    #             setattr(self, field_.name, field_.default)
-
 
 list_act_types = ("APPLY", "HARVEST", "MECHANICAL", "PLANT", "TILL")
 
@@ -228,34 +218,3 @@ class App(Detailed):
             raise AttributeError(
                 "At least one of `field_id`, `field_trial_id`, or `plot_id` must be set"
             )
-
-
-# @dataclass(frozen=True)
-# class PlantingKey(db.TableKey):
-#     """Unique key to group any planting and/or harvest activity for a given field."""
-
-#     crop_type_id: db.TableId
-#     field_id: db.TableId
-
-
-# @dataclass(frozen=True)
-# class Planting(PlantingKey, db.Detailed):
-#     """Spatiotemporal information for a planting activity on a field."""
-
-#     act_id: db.TableId
-#     date_performed: datetime
-#     geom_id: Optional[db.TableId] = None
-
-
-# @dataclass(frozen=True)
-# class Harvest(PlantingKey, db.Detailed):
-#     """Spatiotemporal information for a harvest activity on a field."""
-
-#     act_id: db.TableId
-#     date_performed: datetime
-#     geom_id: Optional[db.TableId] = None
-
-
-# @dataclass(frozen=True)
-# class ReportType(db.TypeTable):
-#     report: str

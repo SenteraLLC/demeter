@@ -10,6 +10,7 @@
 
 TABLES_LIST = [
     "act",
+    "app",
     "crop_type",
     "field",
     "field_trial",
@@ -20,5 +21,6 @@ TABLES_LIST = [
     "observation",
     "observation_type",
     "organization",
+    "s3",
     "unit_type",
 ]

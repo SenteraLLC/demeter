@@ -559,6 +559,10 @@ ALTER TABLE act
   ADD CONSTRAINT act_nullable_ids_one_and_only_one_not_null_ck
   CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
 
+ALTER TABLE act
+  ADD CONSTRAINT act_type_not_null_ck
+  CHECK (act_type IS NOT NULL);
+
 -- Trigger to ensure date_performed is > field.date_start and < field.date_end
 CREATE TRIGGER act_valid_date_performed
 BEFORE INSERT OR UPDATE ON act
@@ -570,12 +574,15 @@ update_last_updated_column();
 
 -- APPLY
 CREATE TYPE app_type_enum AS ENUM ('BIOLOGICAL', 'FERTILIZER', 'FUNGICIDE', 'HERBICIDE', 'INHIBITOR', 'INSECTICIDE', 'IRRIGATION', 'LIME', 'MANURE', 'NEMATICIDE', 'STABILIZER');
+CREATE TYPE app_method_enum AS ENUM ('BAND', 'BROADCAST', 'CULTIVATE', 'DRY-DROP', 'FOLIAR', 'KNIFE', 'SEED', 'Y-DROP');
 
 create table app (
   app_id  bigserial primary key,
 
   app_type  app_type_enum
             not null,
+
+  app_method  app_method_enum,
 
   date_applied  timestamp without time zone
                 not null,
@@ -617,7 +624,7 @@ create table app (
                 default (now() at time zone 'utc'),
 
 -- Cannot add an application if the only thing to change is details (should edit existing application instead)
-  UNIQUE NULLS NOT DISTINCT (app_type, date_applied, rate, rate_unit, crop_type_id, nutrient_source_id, field_id, field_trial_id, plot_id, geom_id)
+  UNIQUE NULLS NOT DISTINCT (app_type, app_method, date_applied, rate, rate_unit, crop_type_id, nutrient_source_id, field_id, field_trial_id, plot_id, geom_id)
 );
 
 -- Force exactly one of field_id, field_trial_id, plot_id to be non-null; more than one is ambiguous.
@@ -625,6 +632,10 @@ create table app (
 ALTER TABLE app
   ADD CONSTRAINT app_nullable_ids_one_and_only_one_not_null_ck
   CHECK (num_nonnulls(field_id, field_trial_id, plot_id) = 1);
+
+ALTER TABLE app
+  ADD CONSTRAINT app_type_not_null_ck
+  CHECK (app_type IS NOT NULL);
 
 -- Trigger to ensure date_applied is > field.date_start and < field.date_end
 CREATE TRIGGER app_valid_date_performed

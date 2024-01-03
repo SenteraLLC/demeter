@@ -46,7 +46,7 @@ def _check_schema_users(conn: Connection, user_list: Iterable[str]) -> Iterable[
 
     msg = (
         f"The following users have not yet been created: {missing_users}.\n"
-        "Please run `python3 -m initialize.users`."
+        "Please run `python3 -m demeter_initialize.users`."
     )
     assert len(missing_users) == 0, msg
 

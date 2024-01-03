@@ -1,13 +1,13 @@
 """Initializes (or re-initializes) a Demeter raster schema instance for a given host and database environment.
 
 To initialize raster schema on local "demeter-dev":
-python3 -m initialize.schema.raster
+python3 -m demeter_initialize.schema.raster
 
 To re-initialize raster schema on local "demeter-dev":
-python3 -m initialize.schema.raster --drop_existing
+python3 -m demeter_initialize.schema.raster --drop_existing
 
 
-For help: python3 -m initialize.schema.raster --help
+For help: python3 -m demeter_initialize.schema.raster --help
 
 This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that you have set up
 the following users: demeter_user, demeter_ro_user, raster_user, and raster_ro_user.

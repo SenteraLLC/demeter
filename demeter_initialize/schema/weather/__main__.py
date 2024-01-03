@@ -1,13 +1,13 @@
 """Initializes (or re-initializes) a Demeter weather schema instance for a given host and database environment and populates the weather grid and weather types.
 
 To initialize and populate weather schema on local "demeter-dev":
-python3 -m initialize.schema.weather
+python3 -m demeter_initialize.schema.weather
 
 To re-initialize and populate weather schema on local "demeter-dev":
-python3 -m initialize.schema.weather --drop_existing
+python3 -m demeter_initialize.schema.weather --drop_existing
 
 
-For help: python3 -m initialize.schema.weather --help
+For help: python3 -m demeter_initialize.schema.weather --help
 
 This script requires that you have the appropriate superuser credentials for the database in your .env file. It also requires that you have set up
 the following users: demeter_user, demeter_ro_user, weather_user, and weather_ro_user.

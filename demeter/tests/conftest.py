@@ -14,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
 
 from demeter.db import getConnection
-from initialize.schema._utils.initialize import initialize_schema_type
+from demeter_initialize.schema._utils.initialize import initialize_schema_type
 
 load_dotenv()
 

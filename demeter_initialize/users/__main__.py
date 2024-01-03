@@ -1,15 +1,15 @@
 """Create all database users for Demeter database.
 
 Initialize users for the first time on local `demeter-dev`:
-python3 -m initialize.users
+python3 -m demeter_initialize.users
 
 Drop all users and re-create them on local `demeter-dev`:
-python3 -m initialize.users --drop_existing
+python3 -m demeter_initialize.users --drop_existing
 
 Drop just the weather users and re-create them on local `demeter-dev`:
-python3 -m initialize.users --drop_existing --user_list weather_user weather_ro_user
+python3 -m demeter_initialize.users --drop_existing --user_list weather_user weather_ro_user
 
-For help: python3 -m initialize.users --help
+For help: python3 -m demeter_initialize.users --help
 
 This script requires that you have the appropriate superuser credentials for the database in your .env file, as well as
 the necessary passwords for all database users. See "Setting up Demeter" in Confluence.

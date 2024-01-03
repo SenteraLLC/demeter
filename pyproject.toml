@@ -5,6 +5,7 @@ description = "The database schema and API that supports agronomic modeling and 
 authors = []
 packages = [
   {include = "demeter"},
+  {include = "demeter_initialize"},
   {include = "demeter/py.typed"},
 ]
 

@@ -1,16 +1,16 @@
 """Initializes (or re-initializes) a Demeter schema instance for a given host and database environment.
 
 To initialize `demeter`:
-python3 -m initialize.schema.demeter --database_host LOCAL --database_env DEV --schema_name demeter
+python3 -m demeter_initialize.schema.demeter --database_host LOCAL --database_env DEV --schema_name demeter
 
 To re-initialize `demeter` from scratch on local `demeter-dev`:
-python3 -m initialize.schema.demeter \
+python3 -m demeter_initialize.schema.demeter \
     --database_host LOCAL \
     --database_env DEV \
     --schema_name demeter \
     --drop_existing
 
-For help: python3 -m initialize.schema.demeter --help
+For help: python3 -m demeter_initialize.schema.demeter --help
 
 This script requires that you have the appropriate superuser credentials for the database in your .env file
 and have set up `demeter_user` and `demeter_ro_user` as users on the database.

@@ -634,7 +634,7 @@ create table nutrient_source (
                 default (now() at time zone 'utc'),
 
 -- Cannot add a nutrient with the same name because of its ambiguity (should add a new name instead)
-  UNIQUE NULLS NOT DISTINCT (nutrient)
+  UNIQUE NULLS NOT DISTINCT (nutrient, organization_id)
 );
 
 CREATE TRIGGER nutrient_source_valid_date_performed BEFORE UPDATE

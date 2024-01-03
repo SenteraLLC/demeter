@@ -16,9 +16,11 @@ from ...db._generic_types import (
 from .._core import lookups as _lookups
 from .._core.types import (
     Act,
+    App,
     CropType,
     Field,
     FieldTrial,
+    NutrientSource,
     Organization,
     Plot,
 )
@@ -41,6 +43,8 @@ getMaybeFieldTrialId: GetId[FieldTrial] = g.getMaybeIdFunction(FieldTrial)
 getMaybePlotId: GetId[Plot] = g.getMaybeIdFunction(Plot)
 getMaybeCropTypeId: GetId[CropType] = g.getMaybeIdFunction(CropType)
 getMaybeActId: GetId[Act] = g.getMaybeIdFunction(Act)
+getMaybeAppId: GetId[App] = g.getMaybeIdFunction(App)
+getMaybeNutrientSourceId: GetId[NutrientSource] = g.getMaybeIdFunction(NutrientSource)
 
 getOrganization: GetTable[Organization] = g.getTableFunction(Organization)
 getGrouper: GetTable[Grouper] = g.getTableFunction(Grouper)
@@ -49,6 +53,8 @@ getFieldTrial: GetTable[FieldTrial] = g.getTableFunction(FieldTrial)
 getPlot: GetTable[Plot] = g.getTableFunction(Plot)
 getCropType: GetTable[CropType] = g.getTableFunction(CropType)
 getAct: GetTable[Act] = g.getTableFunction(Act)
+getApp: GetTable[App] = g.getTableFunction(App)
+getNutrientSource: GetTable[NutrientSource] = g.getTableFunction(NutrientSource)
 
 insertOrganization: ReturnId[Organization] = g.getInsertReturnIdFunction(Organization)
 insertGrouper: ReturnId[Grouper] = g.getInsertReturnIdFunction(Grouper)
@@ -57,6 +63,10 @@ insertFieldTrial: ReturnId[FieldTrial] = g.getInsertReturnIdFunction(FieldTrial)
 insertPlot: ReturnId[Plot] = g.getInsertReturnIdFunction(Plot)
 insertCropType: ReturnId[CropType] = g.getInsertReturnIdFunction(CropType)
 insertAct: ReturnId[Act] = g.getInsertReturnIdFunction(Act)
+insertApp: ReturnId[App] = g.getInsertReturnIdFunction(App)
+insertNutrientSource: ReturnId[NutrientSource] = g.getInsertReturnIdFunction(
+    NutrientSource
+)
 
 
 insertOrGetOrganization: ReturnId[Organization] = g.partialInsertOrGetId(
@@ -83,6 +93,10 @@ insertOrGetCropType: ReturnId[CropType] = g.partialInsertOrGetId(
     getMaybeCropTypeId, insertCropType
 )
 insertOrGetAct: ReturnId[Act] = g.partialInsertOrGetId(getMaybeActId, insertAct)
+insertOrGetApp: ReturnId[App] = g.partialInsertOrGetId(getMaybeAppId, insertApp)
+insertOrGetNutrientSource: ReturnId[NutrientSource] = g.partialInsertOrGetId(
+    getMaybeNutrientSourceId, insertNutrientSource
+)
 
 
 # spatiotemporal types

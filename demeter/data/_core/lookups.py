@@ -2,9 +2,11 @@
 from ...db._lookup_types import TableLookup, sumMappings
 from .._core.types import (  # ReportType,
     Act,
+    App,
     CropType,
     Field,
     FieldTrial,
+    NutrientSource,
     Organization,
     Plot,
 )
@@ -17,6 +19,7 @@ from .st_types import (
 
 type_table_lookup: TableLookup = {
     CropType: "crop_type",
+    NutrientSource: "nutrient_source",
     # ReportType: "report_type",
 }
 
@@ -30,6 +33,7 @@ data_table_lookup: TableLookup = {
     GeoSpatialKey: "geospatial_key",
     TemporalKey: "temporal_key",
     Act: "act",
+    App: "app",
 }
 
 id_table_lookup = sumMappings(type_table_lookup, data_table_lookup)

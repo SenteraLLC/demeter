@@ -1,12 +1,13 @@
 from typing import Union
 
 from .._observation.types import (
+    S3,
     Observation,
     ObservationType,
     UnitType,
 )
 
-AnyDataTable = Observation
+AnyDataTable = Union[S3, Observation]
 
 AnyTypeTable = Union[ObservationType, UnitType]
 

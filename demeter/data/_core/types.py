@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
-from ...db import (
+from demeter.db import (
     Detailed,
     TableId,
     TypeTable,
@@ -78,6 +78,30 @@ class CropType(TypeTable, Detailed):
     product_name: str = None
 
 
+@dataclass(frozen=True)
+class NutrientSource(TypeTable, Detailed):
+    """
+    Information related to nutrients, particularly the primary and secondary macro-nutrients, as well as micro-nutrients
+    required for plant growth.
+    """
+
+    nutrient: str
+    organization_id: TableId
+    n: float = field(default=0.0)
+    p2o5: float = field(default=0.0)
+    k2o: float = field(default=0.0)
+    s: float = field(default=0.0)
+    ca: float = field(default=0.0)
+    mg: float = field(default=0.0)
+    b: float = field(default=0.0)
+    cu: float = field(default=0.0)
+    fe: float = field(default=0.0)
+    mn: float = field(default=0.0)
+    mo: float = field(default=0.0)
+    zn: float = field(default=0.0)
+    ch: float = field(default=0.0)
+
+
 list_act_types = ("APPLY", "HARVEST", "MECHANICAL", "PLANT", "TILL")
 
 
@@ -123,32 +147,74 @@ class Act(Detailed):
             )
 
 
-# @dataclass(frozen=True)
-# class PlantingKey(db.TableKey):
-#     """Unique key to group any planting and/or harvest activity for a given field."""
+list_app_types = (
+    "BIOLOGICAL",
+    "FERTILIZER",
+    "FUNGICIDE",
+    "HERBICIDE",
+    "INHIBITOR",
+    "INSECTICIDE",
+    "IRRIGATION",
+    "LIME",
+    "MANURE",
+    "NEMATICIDE",
+    "STABILIZER",
+)
+list_app_methods = (
+    "BAND",
+    "BROADCAST",
+    "CULTIVATE",
+    "DRY-DROP",
+    "FOLIAR",
+    "KNIFE",
+    "SEED",
+    "Y-DROP",
+    None,
+)
 
-#     crop_type_id: db.TableId
-#     field_id: db.TableId
 
+@dataclass(frozen=True)
+class App(Detailed):
+    """
+    Spatiotemporal information for a application to a field.
+    Types and Methods of applications are limited to the types listed in `list_app_types` and `list_app_methods`.
+    """
 
-# @dataclass(frozen=True)
-# class Planting(PlantingKey, db.Detailed):
-#     """Spatiotemporal information for a planting activity on a field."""
+    app_type: str
+    date_applied: datetime
+    rate: float
+    rate_unit: str
+    app_method: str = None
+    crop_type_id: TableId = None
+    nutrient_source_id: TableId = None
+    field_id: TableId = None
+    field_trial_id: TableId = None
+    plot_id: TableId = None
+    geom_id: TableId = None
 
-#     act_id: db.TableId
-#     date_performed: datetime
-#     geom_id: Optional[db.TableId] = None
+    def __post_init__(self):
+        """Be sure that:
+        - `app_type` is one of the correct possible values
+        - `app_method` is one of the correct possible values
+        - at least one of `field_id`, `field_trial_id`, or `plot_id` is set
+        """
 
+        chk_app_type = object.__getattribute__(self, "app_type")
+        chk_app_method = object.__getattribute__(self, "app_method")
 
-# @dataclass(frozen=True)
-# class Harvest(PlantingKey, db.Detailed):
-#     """Spatiotemporal information for a harvest activity on a field."""
+        if chk_app_type not in list_app_types:
+            raise AttributeError(
+                f"`app_type` must be one of the following: {str(list_app_types)}"
+            )
+        if chk_app_method not in list_app_methods:
+            raise AttributeError(
+                f"`app_method` must be one of the following: {str(list_app_methods)}"
+            )
 
-#     act_id: db.TableId
-#     date_performed: datetime
-#     geom_id: Optional[db.TableId] = None
-
-
-# @dataclass(frozen=True)
-# class ReportType(db.TypeTable):
-#     report: str
+        chk_field_id = object.__getattribute__(self, "field_id")
+        chk_field_trial_id = object.__getattribute__(self, "field_trial_id")
+        chk_plot_id = object.__getattribute__(self, "plot_id")
+        if not any([chk_field_id, chk_field_trial_id, chk_plot_id]):
+            raise AttributeError(
+                "At least one of `field_id`, `field_trial_id`, or `plot_id` must be set"
+            )

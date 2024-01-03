@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "demeter"
-version = "2.1.0"
+version = "2.2.0"
 description = "The database schema and API that supports agronomic modeling and data science activities."
 authors = []
 packages = [
   {include = "demeter"},
+  {include = "demeter_initialize"},
   {include = "demeter/py.typed"},
 ]
 

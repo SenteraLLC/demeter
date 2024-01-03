@@ -63,14 +63,14 @@ jobs:
         run: PGPASSWORD=${{ env.DB_PW }} psql -h localhost -U postgres -p 5432 -c 'CREATE DATABASE "demeter-dev";'
       - name: Initialize Database Users and `demeter` Schema
         run: |
-          poetry run python3 -m initialize.users
-          poetry run python3 -m initialize.schema.demeter --schema_name demeter
+          poetry run python3 -m demeter_initialize.users
+          poetry run python3 -m demeter_initialize.schema.demeter --schema_name demeter
       - name: Initialize `raster` Schemas
         run: |
-          poetry run python3 -m initialize.schema.raster
+          poetry run python3 -m demeter_initialize.schema.raster
       - name: Initialize `weather` Schemas
         run: |
-          poetry run python3 -m initialize.schema.weather
+          poetry run python3 -m demeter_initialize.schema.weather
       - name: Run Tests
         run: poetry run pytest
 

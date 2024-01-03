@@ -9,15 +9,15 @@
 # TABLES_LIST = list(df["tablename"].unique())
 
 TABLES_LIST = [
-    "geom",
-    "grouper",
+    "act",
+    "app",
+    "crop_type",
     "field",
     "field_trial",
+    "geom",
+    "grouper",
+    "nutrient_source",
     "plot",
-    "crop_type",
-    "observation_type",
     "organization",
-    "unit_type",
-    "observation",
-    "act",
+    "s3",
 ]

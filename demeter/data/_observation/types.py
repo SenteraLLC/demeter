@@ -35,13 +35,14 @@ class S3(db.Detailed):
             raise AttributeError(
                 f"`file_format` must be one of the following: {str(list_file_format_type)}"
             )
-        if chk_category not in list_category_type:
+        for category in chk_category:
+            if category not in list_category_type:
+                raise AttributeError(
+                    f"`category` must be one of the following: {str(list_category_type)}"
+                )
+        if chk_file_format.lower() != Path(chk_s3_url).suffix[1:]:
             raise AttributeError(
-                f"`category` must be one of the following: {str(list_category_type)}"
-            )
-        if chk_file_format.lower() != Path(chk_s3_url).suffix:
-            raise AttributeError(
-                f"`file_format` {chk_file_format} does not match file_format provided via `s3_url` {chk_s3_url}."
+                f"`file_format` {chk_file_format.lower()} does not match file_format provided via `s3_url` {Path(chk_s3_url).suffix[1:]}"
             )
 
 

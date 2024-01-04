@@ -16,7 +16,7 @@ class S3(db.Detailed):
     category: str = None
 
     def __post_init__(self):
-        object.format = object.__getattribute__(self, "file_format").upper()
+        object.file_format = object.__getattribute__(self, "file_format").upper()
         object.category = object.__getattribute__(self, "category").upper()
 
         chk_format = object.__getattribute__(self, "file_format").lower()

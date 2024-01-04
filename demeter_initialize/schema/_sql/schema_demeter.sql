@@ -420,7 +420,7 @@ ALTER TABLE crop_type
   CHECK (product_name = upper(product_name));
 
 -- OBSERVATION TYPE
--- CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
+-- CREATE TYPE category_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
 
 -- create table observation_type (
 --   observation_type_id bigserial
@@ -429,8 +429,8 @@ ALTER TABLE crop_type
 --   observation_type_name text
 --                         not null,
 
---   category  cateogry_type_enum
---             default NULL::cateogry_type_enum,
+--   category  category_type_enum
+--             default NULL::category_type_enum,
 
 --   details jsonb
 --           not null
@@ -860,10 +860,10 @@ create table s3 (
                   not null
                   references organization(organization_id),
 
-  -- category  cateogry_type_enum[]
-  --           default NULL::cateogry_type_enum[],  -- Allows multiple categories to be listed
-  category  cateogry_type_enum
-            default NULL::cateogry_type_enum,
+  -- category  category_type_enum[]
+  --           default NULL::category_type_enum[],  -- Allows multiple categories to be listed
+  category  category_type_enum
+            default NULL::category_type_enum,
 
   -- TODO: version, last_modified, size, other s3 information
 

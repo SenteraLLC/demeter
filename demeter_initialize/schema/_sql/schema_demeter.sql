@@ -843,7 +843,7 @@ create constraint trigger field_geom_covers_act_geom
 
 -- S3
 
-CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
+CREATE TYPE category_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
 CREATE TYPE file_format_type_enum AS ENUM ('PARQUET', 'TIF', 'CSV', 'GEOJSON', 'JSON');
 
 create table s3 (
@@ -860,8 +860,10 @@ create table s3 (
                   not null
                   references organization(organization_id),
 
-  category  cateogry_type_enum[]
-            default NULL::cateogry_type_enum[],  -- Allows multiple categories to be listed
+  -- category  cateogry_type_enum[]
+  --           default NULL::cateogry_type_enum[],  -- Allows multiple categories to be listed
+  category  cateogry_type_enum
+            default NULL::cateogry_type_enum,
 
   -- TODO: version, last_modified, size, other s3 information
 

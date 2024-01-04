@@ -420,7 +420,7 @@ ALTER TABLE crop_type
   CHECK (product_name = upper(product_name));
 
 -- OBSERVATION TYPE
--- CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
+-- CREATE TYPE category_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
 
 -- create table observation_type (
 --   observation_type_id bigserial
@@ -429,8 +429,8 @@ ALTER TABLE crop_type
 --   observation_type_name text
 --                         not null,
 
---   category  cateogry_type_enum
---             default NULL::cateogry_type_enum,
+--   category  category_type_enum
+--             default NULL::category_type_enum,
 
 --   details jsonb
 --           not null
@@ -634,7 +634,7 @@ create table nutrient_source (
                 default (now() at time zone 'utc'),
 
 -- Cannot add a nutrient with the same name because of its ambiguity (should add a new name instead)
-  UNIQUE NULLS NOT DISTINCT (nutrient)
+  UNIQUE NULLS NOT DISTINCT (nutrient, organization_id)
 );
 
 CREATE TRIGGER nutrient_source_valid_date_performed BEFORE UPDATE
@@ -843,7 +843,7 @@ create constraint trigger field_geom_covers_act_geom
 
 -- S3
 
-CREATE TYPE cateogry_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
+CREATE TYPE category_type_enum AS ENUM ('REMOTE_SENSING', 'SOIL', 'TISSUE', 'GRAIN', 'STOVER', 'WEATHER', 'SENSOR');
 CREATE TYPE file_format_type_enum AS ENUM ('PARQUET', 'TIF', 'CSV', 'GEOJSON', 'JSON');
 
 create table s3 (
@@ -860,8 +860,10 @@ create table s3 (
                   not null
                   references organization(organization_id),
 
-  category  cateogry_type_enum[]
-            default NULL::cateogry_type_enum[],  -- Allows multiple categories to be listed
+  -- category  category_type_enum[]
+  --           default NULL::category_type_enum[],  -- Allows multiple categories to be listed
+  category  category_type_enum
+            default NULL::category_type_enum,
 
   -- TODO: version, last_modified, size, other s3 information
 

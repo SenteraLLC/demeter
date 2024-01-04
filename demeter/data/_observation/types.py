@@ -3,7 +3,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
-from ... import db
+from demeter import db
+
+list_file_format_type = ("PARQUET", "TIF", "CSV", "GEOJSON", "JSON")
+list_category_type = (
+    "REMOTE_SENSING",
+    "SOIL",
+    "TISSUE",
+    "GRAIN",
+    "STOVER",
+    "WEATHER",
+    "SENSOR",
+)
 
 
 @dataclass(frozen=True)
@@ -16,14 +27,21 @@ class S3(db.Detailed):
     category: str = None
 
     def __post_init__(self):
-        object.format = object.__getattribute__(self, "format").upper()
-        object.category = object.__getattribute__(self, "category").upper()
-
-        chk_format = object.__getattribute__(self, "format").lower()
+        chk_file_format = object.__getattribute__(self, "file_format")
+        chk_category = object.__getattribute__(self, "category")
         chk_s3_url = object.__getattribute__(self, "s3_url").lower()
-        if chk_format != Path(chk_s3_url).suffix:
+
+        if chk_file_format not in list_file_format_type:
             raise AttributeError(
-                f"`format` {chk_format} does not match format provided via `s3_url` {chk_s3_url}."
+                f"`file_format` must be one of the following: {str(list_file_format_type)}"
+            )
+        if chk_category not in list_category_type:
+            raise AttributeError(
+                f"`category` must be one of the following: {str(list_category_type)}"
+            )
+        if chk_file_format.lower() != Path(chk_s3_url).suffix[1:]:
+            raise AttributeError(
+                f"`file_format` {chk_file_format.lower()} does not match file_format provided via `s3_url` {Path(chk_s3_url).suffix[1:]}"
             )
 
 

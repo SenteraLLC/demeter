@@ -26,7 +26,7 @@ END;
 $$ language 'plpgsql';
 
 
--- get_geometry_from_id() takes a field geom_id, field_trial geom_id, and plot geom_id, then returns the most specific geometry
+-- get_geom_id() takes a field geom_id, field_trial geom_id, and plot geom_id, then returns the most specific geom_id
 CREATE OR REPLACE FUNCTION get_geom_id(f_geom_id bigint, ft_geom_id bigint, p_geom_id bigint)
 RETURNS bigint AS
 $$
@@ -913,7 +913,6 @@ SELECT
   p.treatment_id,
   p.block_id,
   p.replication_id,
-  ft.name as name_field_trial,
   ft.date_start as date_start_field_trial,
   ft.date_end as date_end_field_trial,
   ft.grouper_id as grouper_id_field_trial,
@@ -925,3 +924,126 @@ JOIN field f ON f.field_id = ft.field_id
 JOIN geom g
   ON g.geom_id IN (f.geom_id, ft.geom_id, p.geom_id)
   AND (g.geom_id = get_geom_id(f.geom_id, ft.geom_id, p.geom_id));
+
+CREATE OR REPLACE VIEW plot_details_geometry AS
+SELECT
+  o.name as organization,
+  f.name as field,
+  ft.name as field_trial,
+  p.name as plot,
+  p.treatment_id,
+  p.block_id,
+  p.replication_id,
+  ft.date_start as date_start_field_trial,
+  ft.date_end as date_end_field_trial,
+  ft.details as details_field_trial,
+  ST_GeomFromWKB(get_geometry_from_id(f.geom_id, ft.geom_id, p.geom_id)) as geometry,
+  f.organization_id,
+  f.field_id,
+  ft.field_trial_id,
+  p.plot_id,
+  ft.grouper_id as grouper_id_field_trial
+FROM plot p
+JOIN field_trial ft USING(field_trial_id)
+JOIN field f ON f.field_id = ft.field_id
+JOIN organization o ON o.organization_id = f.organization_id
+JOIN geom g
+  ON g.geom_id IN (f.geom_id, ft.geom_id, p.geom_id)
+  AND (g.geom_id = get_geom_id(f.geom_id, ft.geom_id, p.geom_id));
+
+CREATE OR REPLACE VIEW plot_application_summary AS
+SELECT
+  pd.organization,
+  pd.field,
+  pd.field_trial,
+  pd.plot,
+  pd.treatment_id,
+  pd.block_id,
+  pd.replication_id,
+  pd.date_start_field_trial,
+  pd.date_end_field_trial,
+  pd.details_field_trial,
+  pd.geometry
+FROM plot_details_geometry pd
+JOIN app USING(field_id);
+JOIN field f ON f.field_id = ft.field_id
+JOIN organization o ON o.organization_id = f.organization_id
+JOIN geom g
+  ON g.geom_id IN (f.geom_id, ft.geom_id, p.geom_id)
+  AND (g.geom_id = get_geom_id(f.geom_id, ft.geom_id, p.geom_id));
+
+
+CREATE OR REPLACE VIEW plot_application_summary AS
+WITH field_apps as (
+  SELECT pd.organization_id, pd.plot_id, pd.organization, pd.field, pd.field_trial, pd.plot, app_type, app_method, date_applied, rate as rate_product, rate_unit, details as details_app, app_id, nutrient_source_id
+  FROM plot_details_geometry pd
+  JOIN app USING(field_id)
+), field_trial_apps as (
+  SELECT pd.organization_id, pd.plot_id, pd.organization, pd.field, pd.field_trial, pd.plot, app_type, app_method, date_applied, rate as rate_product, rate_unit, details as details_app, app_id, nutrient_source_id
+  FROM plot_details_geometry pd
+  JOIN app USING(field_trial_id)
+), plot_apps as (
+  SELECT pd.organization_id, pd.plot_id, pd.organization, pd.field, pd.field_trial, pd.plot, app_type, app_method, date_applied, rate as rate_product, rate_unit, details as details_app, app_id, nutrient_source_id
+  FROM plot_details_geometry pd
+  JOIN app USING(plot_id)
+), all_apps as (
+  SELECT * FROM field_apps UNION ALL
+  SELECT * FROM field_trial_apps UNION ALL
+  SELECT * FROM plot_apps
+), plot_nutrients as (
+  SELECT *
+  FROM all_apps
+  JOIN nutrient_source n USING(organization_id, nutrient_source_id)
+)
+SELECT
+organization, field, field_trial, plot,
+date_applied, nutrient, app_type, app_method, rate_unit,
+rate_product, rate_n, rate_p2o5, rate_k2o, rate_s, rate_ca, rate_mg, rate_b, rate_cu, rate_fe, rate_mn, rate_mo, rate_zn, rate_ch,
+details_app,
+organization_id, plot_id, app_id, nutrient_source_id
+FROM plot_nutrients,
+  LATERAL (SELECT rate_product * (n/100) as rate_n),
+  LATERAL (SELECT rate_product * (p2o5/100) as rate_p2o5),
+  LATERAL (SELECT rate_product * (k2o/100) as rate_k2o),
+  LATERAL (SELECT rate_product * (s/100) as rate_s),
+  LATERAL (SELECT rate_product * (ca/100) as rate_ca),
+  LATERAL (SELECT rate_product * (mg/100) as rate_mg),
+  LATERAL (SELECT rate_product * (b/100) as rate_b),
+  LATERAL (SELECT rate_product * (cu/100) as rate_cu),
+  LATERAL (SELECT rate_product * (fe/100) as rate_fe),
+  LATERAL (SELECT rate_product * (mn/100) as rate_mn),
+  LATERAL (SELECT rate_product * (mo/100) as rate_mo),
+  LATERAL (SELECT rate_product * (zn/100) as rate_zn),
+  LATERAL (SELECT rate_product * (ch/100) as rate_ch);
+
+
+CREATE OR REPLACE VIEW season_length AS
+with planted as (
+  select * from act
+  where act_type = 'PLANT'
+),
+harvest as (
+  select * from act
+  where act_type = 'HARVEST'
+),
+field_dates as (
+  select field_id, p.field_trial_id, p.plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
+  from planted p
+  join harvest h using(field_id)
+),
+field_trial_dates as (
+  select p.field_id, field_trial_id, p.plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
+  from planted p
+  join harvest h using(field_trial_id)
+),
+plot_dates as (
+  select p.field_id, p.field_trial_id, plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
+  from planted p
+  join harvest h using(plot_id)
+),
+all_objects as (
+  SELECT * FROM field_dates UNION ALL
+  SELECT * FROM field_trial_dates UNION ALL
+  SELECT * FROM plot_dates
+)
+select * from all_objects;

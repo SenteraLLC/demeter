@@ -1027,19 +1027,26 @@ harvest as (
   where act_type = 'HARVEST'
 ),
 field_dates as (
-  select field_id, p.field_trial_id, p.plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
+  select f.organization_id, field_id, p.field_trial_id, p.plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
   from planted p
   join harvest h using(field_id)
+  join field f using(field_id)
 ),
 field_trial_dates as (
-  select p.field_id, field_trial_id, p.plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
+  select f.organization_id, p.field_id, field_trial_id, p.plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
   from planted p
   join harvest h using(field_trial_id)
+  join field_trial ft using(field_trial_id)
+  join field f on f.field_id = ft.field_id
 ),
 plot_dates as (
-  select p.field_id, p.field_trial_id, plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
+  select f.organization_id, p.field_id, p.field_trial_id, plot_id, p.date_performed as date_plant, h.date_performed as date_harvest, h.date_performed - p.date_performed as season_length
   from planted p
   join harvest h using(plot_id)
+  join plot using(plot_id)
+--   join field_trial ft using(field_trial_id)
+  join field_trial ft on ft.field_trial_id = plot.field_trial_id
+  join field f on f.field_id = ft.field_id
 ),
 all_objects as (
   SELECT * FROM field_dates UNION ALL

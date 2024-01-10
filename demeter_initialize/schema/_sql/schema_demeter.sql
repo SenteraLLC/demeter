@@ -952,28 +952,6 @@ JOIN geom g
   AND (g.geom_id = get_geom_id(f.geom_id, ft.geom_id, p.geom_id));
 
 CREATE OR REPLACE VIEW plot_application_summary AS
-SELECT
-  pd.organization,
-  pd.field,
-  pd.field_trial,
-  pd.plot,
-  pd.treatment_id,
-  pd.block_id,
-  pd.replication_id,
-  pd.date_start_field_trial,
-  pd.date_end_field_trial,
-  pd.details_field_trial,
-  pd.geometry
-FROM plot_details_geometry pd
-JOIN app USING(field_id);
-JOIN field f ON f.field_id = ft.field_id
-JOIN organization o ON o.organization_id = f.organization_id
-JOIN geom g
-  ON g.geom_id IN (f.geom_id, ft.geom_id, p.geom_id)
-  AND (g.geom_id = get_geom_id(f.geom_id, ft.geom_id, p.geom_id));
-
-
-CREATE OR REPLACE VIEW plot_application_summary AS
 WITH field_apps as (
   SELECT pd.organization_id, pd.plot_id, pd.organization, pd.field, pd.field_trial, pd.plot, app_type, app_method, date_applied, rate as rate_product, rate_unit, details as details_app, app_id, nutrient_source_id
   FROM plot_details_geometry pd

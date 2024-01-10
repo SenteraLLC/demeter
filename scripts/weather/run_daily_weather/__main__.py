@@ -12,7 +12,7 @@ A few notes:
 
 Example usage:
 poetry run python3 -m scripts.weather.run_daily_weather \
-    --database_host AWS \
+    --database_host LOCAL \
     --database_env DEV \
     --n_jobs 4 \
     --fill

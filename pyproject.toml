@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demeter"
-version = "2.2.2"
+version = "2.2.3"
 description = "The database schema and API that supports agronomic modeling and data science activities."
 authors = []
 packages = [
@@ -28,7 +28,6 @@ types-jsonschema = "^4.4.1"
 types-psycopg2 = "^2.9.7"
 types-requests = "^2.27.10"
 types-urllib3 = "^1.26.9"
-sqlalchemy_schemadisplay = {git = "https://github.com/fschulze/sqlalchemy_schemadisplay.git", branch = "master"}
 sqlalchemy = "^2.0.21"
 GeoAlchemy2 = "^0.12.5"
 sshtunnel = "^0.4.0"
@@ -36,7 +35,7 @@ meteomatics = "^2.9.0"
 global-land-mask = "^1.0.0"
 timezonefinder = "^6.1.9"
 aws_utils = {git = "ssh://git@github.com/SenteraLLC/py-aws-utils.git", branch = "master"}
-geo_utils = {git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "main"}
+geo_utils = {git = "ssh://git@github.com/SenteraLLC/py-geo-utils.git", branch = "imgparse-ssh"}
 
 [tool.poetry.group.docs]
 optional = true
